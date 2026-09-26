@@ -5,7 +5,7 @@
 
 - 우선 입력: docs/feedback/INBOX.md, APPROVALS.md의 반려
 - 현재 다음 한 가지: docs/STATUS.md
-- 목표: G5 드래그 선택 20→50(최우선), 원본 구성1600×1200, 활성8인 전비5000 안정성,
+- 목표: G5 드래그 선택 20→50(최우선), 원본 구성1600×1200, 활성8인 전비10000 안정성,
   길찾기/자유대전AI (최대16인 G3는 중단)
 - 기억: docs/history/laps/ + 후보SHA/가설/측정/실패/다음 작업
 - 검증: make check, checks/safety.sh check; 실제 원본/부하/멀티는 별도
