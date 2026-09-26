@@ -1,0 +1,501 @@
+{
+  "c1_originals": {
+    "paths": {
+      "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus/syw2plus_original.exe": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+      "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/Syw2plus/syw2plus_original.exe": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac"
+    }
+  },
+  "c2_candidate_reproduction": {
+    "n1200_identity": {
+      "g2_full_capacity_persistence_compat_v1": {
+        "also_identical_to_original": false,
+        "identical": true,
+        "identical_to": "supply5000+owner1200 product candidate"
+      },
+      "g2_full_capacity_persistence_v1": {
+        "also_identical_to_original": false,
+        "identical": true,
+        "identical_to": "supply5000+owner1200 product candidate"
+      },
+      "g2_full_unit_capacity_v1": {
+        "also_identical_to_original": true,
+        "identical": true,
+        "identical_to": "original"
+      }
+    },
+    "rebuilt": {
+      "n1250_supply5000": "c3bd799fefd31ffb8d02ed7e1d08bb734890c7e637c7eb3ffe4dc236004df5d3",
+      "n4001_supply5000_owner1200": "20b95a94711590e1bd41559ce76a9de6e40c155948f8d559b1090909fc342794",
+      "persistence_compat_n4001": "4331d9cd646c03a0102394727894beaf893e5b9aa3505c4ddb41eb26a4ef9bbe",
+      "persistence_sidecar_n4001": "1e90f62fdcecb49d47d85af54bef17744bb7ae9d895a43b1923fd59405a30093"
+    }
+  },
+  "c3_section_coverage": {
+    "n1250_supply5000": {
+      "block": [
+        "0x0108c000",
+        "0x012ce012"
+      ],
+      "block_bytes": 2367506,
+      "capacity": 1250,
+      "sections": [
+        {
+          "end": "0x004e4ae5",
+          "name": ".text",
+          "start": "0x00401000"
+        },
+        {
+          "end": "0x004ebeec",
+          "name": ".rdata",
+          "start": "0x004e5000"
+        },
+        {
+          "end": "0x012ce012",
+          "name": ".data",
+          "start": "0x004ec000"
+        },
+        {
+          "end": "0x012d10f0",
+          "name": ".rsrc",
+          "start": "0x012cf000"
+        }
+      ],
+      "uncovered_by_region": {
+        "active_slot_list": 0,
+        "category_slot_list_a": 0,
+        "category_slot_list_b": 0,
+        "unit_age": 0,
+        "unit_existence": 0,
+        "unit_pool": 0
+      },
+      "uncovered_bytes": 0
+    },
+    "n4001_supply5000_owner1200": {
+      "block": [
+        "0x0108c000",
+        "0x017c612c"
+      ],
+      "block_bytes": 7577900,
+      "capacity": 4001,
+      "sections": [
+        {
+          "end": "0x004e4ae5",
+          "name": ".text",
+          "start": "0x00401000"
+        },
+        {
+          "end": "0x004ebeec",
+          "name": ".rdata",
+          "start": "0x004e5000"
+        },
+        {
+          "end": "0x017c612c",
+          "name": ".data",
+          "start": "0x004ec000"
+        },
+        {
+          "end": "0x017c90f0",
+          "name": ".rsrc",
+          "start": "0x017c7000"
+        }
+      ],
+      "uncovered_by_region": {
+        "active_slot_list": 0,
+        "category_slot_list_a": 0,
+        "category_slot_list_b": 0,
+        "unit_age": 0,
+        "unit_existence": 0,
+        "unit_pool": 0
+      },
+      "uncovered_bytes": 0
+    },
+    "persistence_compat_n4001": {
+      "block": [
+        "0x0108c000",
+        "0x017c612c"
+      ],
+      "block_bytes": 7577900,
+      "capacity": 4001,
+      "sections": [
+        {
+          "end": "0x004e4ae5",
+          "name": ".text",
+          "start": "0x00401000"
+        },
+        {
+          "end": "0x004ebeec",
+          "name": ".rdata",
+          "start": "0x004e5000"
+        },
+        {
+          "end": "0x017c6f04",
+          "name": ".data",
+          "start": "0x004ec000"
+        },
+        {
+          "end": "0x017c9700",
+          "name": ".rsrc",
+          "start": "0x017c7000"
+        }
+      ],
+      "uncovered_by_region": {
+        "active_slot_list": 0,
+        "category_slot_list_a": 0,
+        "category_slot_list_b": 0,
+        "unit_age": 0,
+        "unit_existence": 0,
+        "unit_pool": 0
+      },
+      "uncovered_bytes": 0
+    },
+    "persistence_sidecar_n4001": {
+      "block": [
+        "0x0108c000",
+        "0x017c612c"
+      ],
+      "block_bytes": 7577900,
+      "capacity": 4001,
+      "sections": [
+        {
+          "end": "0x004e4ae5",
+          "name": ".text",
+          "start": "0x00401000"
+        },
+        {
+          "end": "0x004ebeec",
+          "name": ".rdata",
+          "start": "0x004e5000"
+        },
+        {
+          "end": "0x017c612c",
+          "name": ".data",
+          "start": "0x004ec000"
+        },
+        {
+          "end": "0x017c9400",
+          "name": ".rsrc",
+          "start": "0x017c7000"
+        }
+      ],
+      "uncovered_by_region": {
+        "active_slot_list": 0,
+        "category_slot_list_a": 0,
+        "category_slot_list_b": 0,
+        "unit_age": 0,
+        "unit_existence": 0,
+        "unit_pool": 0
+      },
+      "uncovered_bytes": 0
+    },
+    "pytest_coverage_anchors": {
+      "capacities_built_by_this_probe": [
+        1250,
+        4001
+      ],
+      "capacities_with_anchor": [
+        1250
+      ],
+      "unanchored": [
+        4001
+      ]
+    }
+  },
+  "c4_runtime_artifacts": {
+    "matched": [
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_category_b_self_count/runtime_20260920_160602/active_integrity_soak.jsonl": "94d8b0981558af26a2cee1ee155c96dd46b93bd57c163b3dc9f0ded21539f06e"
+        },
+        "label": "active_integrity_soak.jsonl",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_category_b_self_count/runtime_20260920_160602/active_integrity_soak.jsonl"
+        ],
+        "recorded": "94d8b0981558af26a2cee1ee155c96dd46b93bd57c163b3dc9f0ded21539f06e"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_category_b_self_count/runtime_20260920_160602/active_integrity_soak_summary.json": "c4c4c9be9369b29675c4c551167542fdb3751fd31dd6429206e0529c059d0c51"
+        },
+        "label": "active_integrity_soak_summary.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_category_b_self_count/runtime_20260920_160602/active_integrity_soak_summary.json"
+        ],
+        "recorded": "c4c4c9be9369b29675c4c551167542fdb3751fd31dd6429206e0529c059d0c51"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_20260920_161945/seed_receipts.json": "865708392eb7acdf2e7434bc68f117173f33b4f796212067eb5941c198787c14",
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/seed_receipts.json": "dd2034995e93329ea5700c0b3e84a3c27af2b400694e2913e4e06991154f03bf"
+        },
+        "label": "seed_receipts.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/seed_receipts.json"
+        ],
+        "recorded": "dd2034995e93329ea5700c0b3e84a3c27af2b400694e2913e4e06991154f03bf"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/postseed_snapshot.json": "f5e2968962d5fefb10d7d00b8d0c70e3d70da6030d562ea176b186216bed089d"
+        },
+        "label": "postseed_snapshot.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/postseed_snapshot.json"
+        ],
+        "recorded": "f5e2968962d5fefb10d7d00b8d0c70e3d70da6030d562ea176b186216bed089d"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/n4001_integrity_soak.jsonl": "a797deef5e1295ae6dcbd23c2ca146960d2b9921b56778e8ca8d59519a8937ca"
+        },
+        "label": "n4001_integrity_soak.jsonl",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/n4001_integrity_soak.jsonl"
+        ],
+        "recorded": "a797deef5e1295ae6dcbd23c2ca146960d2b9921b56778e8ca8d59519a8937ca"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/n4001_integrity_soak_summary.json": "62e6cb714dc8d7822f3b62e932fd72b6e791bc3ce5cd3149ae70d95524b7765c"
+        },
+        "label": "n4001_integrity_soak_summary.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/n4001_integrity_soak_summary.json"
+        ],
+        "recorded": "62e6cb714dc8d7822f3b62e932fd72b6e791bc3ce5cd3149ae70d95524b7765c"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/n4001_integrity_144k_extension.jsonl": "29054e47ef8033a6e0512f307d633145a26233cf93c6cfea9b6559277a7a0018"
+        },
+        "label": "n4001_integrity_144k_extension.jsonl",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/n4001_integrity_144k_extension.jsonl"
+        ],
+        "recorded": "29054e47ef8033a6e0512f307d633145a26233cf93c6cfea9b6559277a7a0018"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/n4001_integrity_144k_extension_summary.json": "1a3e175cae0a69d4237fa48c30423355c962e30a14d0ef4ba0e141bc901f84b7"
+        },
+        "label": "n4001_integrity_144k_extension_summary.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_eight_owner_supply5000/runtime_n4001_bridge_20260920_162125/n4001_integrity_144k_extension_summary.json"
+        ],
+        "recorded": "1a3e175cae0a69d4237fa48c30423355c962e30a14d0ef4ba0e141bc901f84b7"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_sidecar/runtime_20260920_174739/persistence_roundtrip_summary.json": "edf6a02a8af99cc89be06ec29d84a1faeeafd428c66720edb82952fb2f7cdeef"
+        },
+        "label": "persistence_roundtrip_summary.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_sidecar/runtime_20260920_174739/persistence_roundtrip_summary.json"
+        ],
+        "recorded": "edf6a02a8af99cc89be06ec29d84a1faeeafd428c66720edb82952fb2f7cdeef"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_sidecar/runtime_20260920_174739/frozen4000_verification.json": "b4a3a3a27a3bc0fb07ba954bc97fd1fb48b344a06c30b168310460f49322691d"
+        },
+        "label": "frozen4000_verification.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_sidecar/runtime_20260920_174739/frozen4000_verification.json"
+        ],
+        "recorded": "b4a3a3a27a3bc0fb07ba954bc97fd1fb48b344a06c30b168310460f49322691d"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_sidecar/runtime_20260920_174739/frozen4000_snapshot.json": "cf2c03563d86aa5e26b2ef0986b78f4d716e8af9b02f72abe7ad19449ef24799"
+        },
+        "label": "frozen4000_snapshot.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_sidecar/runtime_20260920_174739/frozen4000_snapshot.json"
+        ],
+        "recorded": "cf2c03563d86aa5e26b2ef0986b78f4d716e8af9b02f72abe7ad19449ef24799"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_postload_soak/runtime_20260920_180018/postload_integrity_soak.jsonl": "5ca1be02c4f99080a86dcb983194efb4726759ed8de91bd78be8803910e8cdc1"
+        },
+        "label": "postload_integrity_soak.jsonl",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_postload_soak/runtime_20260920_180018/postload_integrity_soak.jsonl"
+        ],
+        "recorded": "5ca1be02c4f99080a86dcb983194efb4726759ed8de91bd78be8803910e8cdc1"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_postload_soak/runtime_20260920_180018/postload_integrity_soak_summary.json": "667fdeaea1a87279a49ee4b93412754ea260b9a34b4cb88c0ff32f56e9625b58"
+        },
+        "label": "postload_integrity_soak_summary.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_postload_soak/runtime_20260920_180018/postload_integrity_soak_summary.json"
+        ],
+        "recorded": "667fdeaea1a87279a49ee4b93412754ea260b9a34b4cb88c0ff32f56e9625b58"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_compat/legacy_load_runtime_20260920_181944/legacy_fallback_verification.json": "58796a1f1db51f4c9b61edc211b7aee0bb8fdc3cab2c94396d3d86295c2234a2",
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_compat/legacy_load_v2_runtime_20260920_182308/legacy_fallback_verification.json": "b88580620191f9c997efca34f282d39240e7d7745fb74339aac722b3056bcce7"
+        },
+        "label": "legacy_fallback_verification.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_compat/legacy_load_v2_runtime_20260920_182308/legacy_fallback_verification.json"
+        ],
+        "recorded": "b88580620191f9c997efca34f282d39240e7d7745fb74339aac722b3056bcce7"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_compat/legacy_load_v2_runtime_20260920_182308/legacy_smoke.json": "1e2eeff7809cec2175867a2040e2418412b5e51ffc6a6a4f05cf02a68aec60ad"
+        },
+        "label": "legacy_smoke.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_compat/legacy_load_v2_runtime_20260920_182308/legacy_smoke.json"
+        ],
+        "recorded": "1e2eeff7809cec2175867a2040e2418412b5e51ffc6a6a4f05cf02a68aec60ad"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_compat/legacy_load_v2_runtime_20260920_182308/compat_new_format_verification.json": "44589873c8206ade6a9b9219ba13f92010a213aec99c98c25509e74cd781335d"
+        },
+        "label": "compat_new_format_verification.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_compat/legacy_load_v2_runtime_20260920_182308/compat_new_format_verification.json"
+        ],
+        "recorded": "44589873c8206ade6a9b9219ba13f92010a213aec99c98c25509e74cd781335d"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_1201/runtime/list_corruption_detail.json": "c0cff72bbea924243a7c99258f31e15aebaffb0e4dbd0847c0a514c761f6409a"
+        },
+        "label": "list_corruption_detail.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_1201/runtime/list_corruption_detail.json"
+        ],
+        "recorded": "c0cff72bbea924243a7c99258f31e15aebaffb0e4dbd0847c0a514c761f6409a"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_1201/runtime/live1201_list_validation.json": "ddd0966efd27e843731235e9fe584d8dc6ccbe2a7cdc9e0dc92551aa769b1f17"
+        },
+        "label": "live1201_list_validation.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_1201/runtime/live1201_list_validation.json"
+        ],
+        "recorded": "ddd0966efd27e843731235e9fe584d8dc6ccbe2a7cdc9e0dc92551aa769b1f17"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_1201_fix1/runtime/active_alias_fix_soak.jsonl": "95bdc81db5bc697d6c2b9951b3b34767091938f6b0829990cbec8d6115d1b3f3"
+        },
+        "label": "active_alias_fix_soak.jsonl",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_1201_fix1/runtime/active_alias_fix_soak.jsonl"
+        ],
+        "recorded": "95bdc81db5bc697d6c2b9951b3b34767091938f6b0829990cbec8d6115d1b3f3"
+      },
+      {
+        "copies": {
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_1201_fix1/runtime/second_corruption_detail.json": "5c169c85c0769a982f8dadbb9e1b34f56bed664d42bfd9382ae1ada31d47a3f4"
+        },
+        "label": "second_corruption_detail.json",
+        "matching_paths": [
+          "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_full_capacity_1201_fix1/runtime/second_corruption_detail.json"
+        ],
+        "recorded": "5c169c85c0769a982f8dadbb9e1b34f56bed664d42bfd9382ae1ada31d47a3f4"
+      }
+    ],
+    "mismatched": [],
+    "missing": [],
+    "offline_verifier": {
+      "report": {
+        "active_count": 3993,
+        "active_unique": 3993,
+        "capacity": 4001,
+        "category_a_count": 0,
+        "category_b_count": 3993,
+        "checks": {
+          "active_count": true,
+          "active_exact": true,
+          "active_unique": true,
+          "category_a_count": true,
+          "category_b_count": true,
+          "serialized_bytes_exact": true,
+          "serialized_once": true,
+          "sidecar_size": true,
+          "snapshot_count": true
+        },
+        "live": 3993,
+        "missing": [],
+        "ok": true,
+        "save_offsets": [
+          1704974
+        ],
+        "save_size": 9268562,
+        "serialized_sha256": "163da09837183d35f9a0cf343d77470e8b8803f6325f54a916f8e5a81a4ebab2",
+        "sidecar_sha256": "163da09837183d35f9a0cf343d77470e8b8803f6325f54a916f8e5a81a4ebab2",
+        "snapshot_units": 3993,
+        "unexpected": []
+      },
+      "run_dir": "/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260920_n4001_persistence_sidecar/runtime_20260920_174739"
+    }
+  },
+  "c5_repairs": {
+    "active_alias": {
+      "0x00443075": {
+        "expected": "4ad62c01",
+        "mem_displacements": [
+          "0x00974fa6"
+        ],
+        "old_encoding_positions": [
+          4
+        ],
+        "patched_to": "4ad62c01",
+        "size": 8,
+        "text": "mov cx, word ptr [ecx*2 + 0x974fa6]"
+      },
+      "0x0044308c": {
+        "expected": "4ad62c01",
+        "mem_displacements": [
+          "0x00974fa6"
+        ],
+        "old_encoding_positions": [
+          4
+        ],
+        "patched_to": "4ad62c01",
+        "size": 8,
+        "text": "mov word ptr [ecx*2 + 0x974fa6], bx"
+      },
+      "new_values_landing_in_scalar_predecessor": [],
+      "patched_file_windows": [
+        "0x00043079",
+        "0x00043090"
+      ]
+    },
+    "category_b_self_count": {
+      "mem_displacements": [
+        "0x00009eb8"
+      ],
+      "new_relative": "0x00a3b23a",
+      "present_at_n1200": false,
+      "size": 7,
+      "stock_absolute_target": "0x0089c2c8",
+      "stock_category_a_count_va": "0x0089c2c8",
+      "text": "mov bp, word ptr [ecx + 0x9eb8]",
+      "va": "0x004a3692"
+    },
+    "fixup_windows": {
+      "count": 1348,
+      "distinct_bytes": 5392,
+      "overlaps": []
+    }
+  },
+  "failures": [],
+  "lap": 406,
+  "notes": [
+    "C2: the persistence candidates are not byte-identical to the ORIGINAL at N=1200 because they always carry the supply-5000 and owner-1200 constant edits; the relocation stage itself is identity (see g2_full_unit_capacity_v1).",
+    "C3: section coverage measures clean at every capacity, but no pytest anchor gates capacities [4001] (the product capacity is 4001) -- work must add one."
+  ],
+  "probe": "20260920_lap406_middle_g2_full_capacity_runtime_review_probe.py",
+  "role": "middle"
+}

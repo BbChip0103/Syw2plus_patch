@@ -1,0 +1,13 @@
+# 2026-09-26 | lap 660 | 목표 G5
+
+- 실제 provider/model/effort / 지정 역할: Codex native session / hands-on work / high; 외부 모델 attestation은 하지 않음.
+- 가설 / 사용자 관찰: lap658 드래그 50 뒤 실제 입력을 이어서 UI 표시, Ctrl+1 지정·해제·호출, 저장·로드 후 50기 복원이 후보에서 성립하는지 확인한다.
+- 예상 PASS / FAIL 조건: 후보 드래그 선택 50/50, group1 count 50, 해제 후 1 호출 50, private save 생성, load 후 group/호출 50이면 PASS. 호출이 20으로 잘리거나 크래시/저장이 없으면 FAIL하고 숫자만 늘리는 수리는 금지한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `tools/g5_candidate_drag_probe.py` SHA `4d425cab9184f8c05c80ed7e4a210cb8e89adb362c8af73ecf85b20f653022ef`; 기존 `tests/test_g5_candidate_drag_probe.py` SHA `ab18449c12719359edc617965ade9fa8b5b7a2da5dd41bdf399872dd04ee52d1`; 제품 후보 builder/test SHA `5551373a…f223`/`a8929fd3…19d9`; 커밋 없음(`LOOP_ALLOW_COMMITS=0`).
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac` 불변; 후보 `6c8f73ba5626a978abaa09bb56adc46ee5da39bdd16d05c71285ce10d8f20b25`; private full copy/fresh Wine prefix/private Xvfb `1600x1200`, PS3 solo owner0, synthetic type2 55기, worker slot1198 중심 dense 7×8 fixture.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `.venv/bin/python -m pytest -q tests/test_g5_candidate_drag_probe.py patches/selection/test_g5_selection_cap50_v1.py` → `9 passed`; `PYTHONPATH=. .venv/bin/python tools/g5_candidate_drag_probe.py --variant candidate --ui-roundtrip --source ../Syw2plus_re/Syw2plus --runtime-root local/runtime/g5-lap660-candidate-ui --artifact-root /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20260926_lap660_g5_candidate_ui`; 결과 JSON SHA `c28f3ec3a6df00564e9d567742c740b0b784c38e28f7674be8061c5a96d5fce2`; 캡처·로그는 같은 artifact root, private game 사본 2.2G는 실행 후 휴지통 이동.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): 드래그 `selection=50, unique=50`; UI 캡처 전 50. Ctrl+1 저장 group1 `count=50`, `first_id=132270`이나 live selection은 `20`; 해제 `0`; 1 호출 `20`; private `save001.dat` 생성 `2,499,822B`, SHA `3bf4ea95c2f8f203244284151722d4d158b832ba5f602cfc75e42e697b2c854b`; load 후 group count/first ID는 유지하지만 호출은 `20`. `cleanup.ok=true`, `source_unchanged=true`, `bash checks/safety.sh check`=`SAFETY_PASS`. 최종 `FAIL_UI_ROUNDTRIP`.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 원본 실행은 추가하지 않고 기존 paired original20 증거를 대조로 유지했다. 정적 원본 `FUN_00445D30`은 PlayerStruct `[ebp+0x16]` 10×20과 count `+0x336`을 직접 순회한다. 후보 builder도 `control_group_fields`/`command_packet`를 unchanged로 명시한다. 따라서 20을 숫자만 50으로 바꾸면 인접 구조체 오염 위험이 있고, G5 제품 PASS·2단 검수·사용자 승인은 없다.
+- 다음 한 가지: 승격 strategy/middle이 `FUN_00445D30` 저장·호출 경로를 side-table `0x0108C100`(10×50)로 안전하게 재배선하는 최소 patch sites/프레임·save/load 계약을 확정한 뒤, 새 work가 구현·원본20 대조·50 호출·save/load를 fresh 실행한다.
+
+판정: **`FAIL_UI_ROUNDTRIP / ESCALATE`**.

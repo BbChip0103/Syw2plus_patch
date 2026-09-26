@@ -1,0 +1,11 @@
+# 2026-09-25 | lap 626 | 목표 G4
+
+- 실제 provider/model/effort / 지정 역할: Codex hands-on work tier, implementation/high.
+- 가설 / 사용자 관찰: W2 bridge의 i386 심볼 장식과 cdecl wrapper ABI를 최소 수리하면 링크·원본 slot 전달·원본 EAX 반환 보존 gate를 통과한다.
+- 예상 PASS / FAIL 조건: decorated original-target 호출, slot push/정리, helper 전후 EAX 복원, clean bridge build, safety, 전체 Fast가 PASS하면 pinned save000 fresh exact-one을 수행한다. 필수 gate 실패면 게임 실행을 하지 않고 승격한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): tools/inmm_stub/ai_shadow.c SHA256 57f48c3376b46fb3be786326fa206fba1ad498cc53566483fe0961dd46a49a01; tests/test_g4_ai_shadow.py SHA256 b78912882eca69acc3710ece62cb9abecba08570d39ab5285ed22b7f46f2ea43; uncommitted, commit 0.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: pinned original EXE SHA b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac는 카드 기준으로 보존; fresh 게임 fixture 없음, 활성 플레이어/지도/군대 미실행. 생성 bridge _inmm.dll SHA256 a23dfbcff26f731c04c7a41ff4ff1c9efa62d2963053adae6a49ab8a750dcee2; import library SHA256 3de155d77ceb95f8e16b73abfac30d71e0bd608dfe564cf07d0c56606c307a22.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: targeted .venv/bin/python -m pytest -q tests/test_g4_ai_shadow.py tests/test_runtime_env.py tests/test_s1_load_evidence.py → 231 passed/1.75s. make -C tools/inmm_stub clean all → exit 0. i686-w64-mingw32-objdump -t/-d tools/inmm_stub/_inmm.dll에서 _g4_load_call_wrapper 및 _g_load_original_target가 해소되고, slot push/call/add, push %eax, helper, add $8, pop %eax, ret 순서를 확인. bash checks/safety.sh check → SAFETY_PASS. make check → 855 passed/505.35s, Ruff PASS, compileall PASS 뒤 mypy exit 2. 캡처/실행 raw 없음.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): ABI 최소 수리 targeted/build/objdump/safety는 PASS. 전체 Fast는 tools/runtime_env.py:410 1건과 8801-8804, 8806, 8811-8814 9건의 mypy 오류로 FAIL; 최종 판정 BLOCKED(typecheck). fresh exact-one 게임 실행은 SKIP.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 회귀 231개와 전체 pytest 855개 PASS. runtime_env 타입 오류의 원인·lap625 대비 provenance는 독립 검수 필요. W2 post-load 제품 증거·G4 PASS·사용자 승인은 없음.
+- 다음 한 가지: 현재 STATUS의 최신 단일 큐는 G5 드래그 선택 상한 20→50이며 G4 W2는 후순위 보존한다. W2를 재개할 때는 승격 작업자가 runtime_env.py 10개 mypy 오류가 lap625 대비 새/기존인지 독립 대조하고, 필요한 권한·범위를 판정한 뒤 W2 ABI gate를 다시 검증한다. 그 전에는 게임 실행·기존 runtime 재사용·raw backfill·제품 AI 수정 금지.

@@ -1,0 +1,59 @@
+{
+  "lap": 379,
+  "purpose": "lap372 pre-image and lap373 endpoint provenance recovery",
+  "source_log": {
+    "path": "logs/laps/2026-09-14/lap-0373.log",
+    "sha256": "3ee03b31f1fbf96797e0b5c8a38573c0888b660590c8afd131c3a3b203d7fb0c",
+    "size_bytes": 837143,
+    "lines": 12690,
+    "evidence": "lap373 pre-edit SHA lines and the two actual apply-patch outputs"
+  },
+  "method": {
+    "copy": "cp current endpoint into snapshot path",
+    "reverse": "apply the exact lap373 runtime/test patch hunks in reverse to snapshot copies",
+    "comparison": "diff -u snapshot endpoint",
+    "production_files_modified": false,
+    "game_wine_xvfb_input_png_runs": 0
+  },
+  "files": {
+    "tools/runtime_env.py": {
+      "preimage_path": "tools/runtime_env.py",
+      "preimage_sha256_observed": "2d957c43a8b3526d95b0b1685e6d4d2f02d436150f535b81086f397d6f2ac5ce",
+      "preimage_sha256_expected_from_lap372": "2d957c43a8b3526d95b0b1685e6d4d2f02d436150f535b81086f397d6f2ac5ce",
+      "preimage_size_bytes": 286466,
+      "preimage_lines": 5978,
+      "endpoint_sha256": "2d4e478f073f1e4c981b42c39e0cff6a8ba0f058217a5d8e1aec0377b1ca790e",
+      "endpoint_size_bytes": 286453,
+      "endpoint_lines": 5979,
+      "diff_path": "runtime_endpoint.diff",
+      "diff_sha256": "b115744fb5ea6697ac342aac7695f7275b2b5533cd4d91370394a090287a9231",
+      "diff_hunks": 5,
+      "diff_lines_added": 9,
+      "diff_lines_removed": 8,
+      "status": "PASS"
+    },
+    "tests/test_s1_load_evidence.py": {
+      "preimage_path": "tests/test_s1_load_evidence.py",
+      "preimage_sha256_observed": "3ee382ed70a260ec5797e37d27df747238af6b88db0f52322537ab17c7497af1",
+      "preimage_sha256_expected_from_lap372": "d53e5cde55e1d14f4639b3ab794ad702075039721416cb035595cc803dc2958f",
+      "preimage_size_bytes": 34576,
+      "preimage_lines": 778,
+      "endpoint_sha256": "69e714045a464f6c047099c479929ba8bec4f64108b102a0036252d2558b755d",
+      "endpoint_size_bytes": 35369,
+      "endpoint_lines": 801,
+      "diff_path": "test_endpoint.diff",
+      "diff_sha256": "f5b4c298d327e3fc8bbafd735858c4a347636a50932471e5c017e2d2f58b5011",
+      "diff_hunks": 2,
+      "diff_lines_added": 25,
+      "diff_lines_removed": 2,
+      "status": "FAIL_EXPECTED_SHA_MISMATCH"
+    }
+  },
+  "validation": {
+    "endpoint_sha_matches_lap373": "3/3 source-test SHA values match lap373 record",
+    "runtime_reverse_sha": "PASS",
+    "test_reverse_sha": "FAIL_EXPECTED_SHA_MISMATCH",
+    "fresh_targeted_probe_doctor_fast_safety": "SKIP_due_to_required_provenance_failure",
+    "next_action": "Sol/Opus5 independently resolve the d53e5cde versus 3ee382ed contradiction without repinning or mutating production files"
+  }
+}

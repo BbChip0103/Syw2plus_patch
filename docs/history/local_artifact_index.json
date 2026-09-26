@@ -1,0 +1,26 @@
+[
+  {
+    "kind": "historical_screenshot",
+    "path": "/home/dev_00/sharedfolder/260320_Syw2plus/temp/20260910_043000_supply5000_real_army5000shot.png",
+    "sha256": "22576569a997924e85573805a80b93af1dd2630a1a8f81a69851f9e9873bac8f",
+    "bytes": 450190
+  },
+  {
+    "kind": "historical_screenshot",
+    "path": "/home/dev_00/sharedfolder/260320_Syw2plus/temp/20260910_043326_supply5000_combined_5000_qhd.png",
+    "sha256": "c0e97d46304d804906f469b3b0689e99f2c68f8938a64bf9bf714b9c6b5bd887",
+    "bytes": 1134990
+  },
+  {
+    "kind": "private_save_fixture_gitignored",
+    "path": "local/fixtures/20260910/save011.dat",
+    "sha256": "23dd24d58555588e0ca09491559aed66ad3f2544ff3195c5af2ab9e2be14dfa4",
+    "bytes": 1982062
+  },
+  {
+    "kind": "private_save_fixture_gitignored",
+    "path": "local/fixtures/20260910/save012.dat",
+    "sha256": "5a6863c1eafaa8bd9a087238a41d45c45635dd66a208cf79a186e158819c28f1",
+    "bytes": 1985822
+  }
+]

@@ -1,0 +1,103 @@
+{
+  "probe": "lap213_f6_producer_review",
+  "game_runs": 0,
+  "recorder_bodies_identical_modulo_name": true,
+  "baseline_recorder_source": "def input_record(tag: str, x: int, y: int, before: object, expected: str,\n                         after: object, actual: str, result: str) -> dict[str, Any]:\n            return _g1_record_selector_input(\n                inputs, tag=tag, x=x, y=y, content_crop=content_crop, scale=input_scale,\n                before=before, expected=expected, after=after, actual=actual, result=result,\n                flush=flush_input_stage,\n            )",
+  "candidate_recorder_source": "def record_input(tag: str, x: int, y: int, before: object, expected: str,\n                         after: object, actual: str, result: str) -> dict[str, Any]:\n            return _g1_record_selector_input(\n                inputs, tag=tag, x=x, y=y, content_crop=content_crop, scale=input_scale,\n                before=before, expected=expected, after=after, actual=actual, result=result,\n                flush=flush_input_stage,\n            )",
+  "branches": [
+    {
+      "initial_selector": "solo",
+      "tags": [
+        "multiplayer_mode_normalize",
+        "solo_mode_setup"
+      ],
+      "results": [
+        "PASS",
+        "PASS"
+      ],
+      "untagged_records": [],
+      "flush_calls": [
+        1,
+        2
+      ],
+      "comparator_input_errors": [],
+      "last_record_keys": [
+        "actual",
+        "after",
+        "before",
+        "content",
+        "content_crop",
+        "expected",
+        "result",
+        "scale",
+        "tag",
+        "x11"
+      ],
+      "last_geometry": {
+        "content": [
+          462,
+          169
+        ],
+        "x11": [
+          499,
+          210
+        ],
+        "scale": [
+          2.0,
+          2.0
+        ]
+      }
+    },
+    {
+      "initial_selector": "multiplayer",
+      "tags": [
+        "multiplayer_mode_normalize",
+        "solo_mode_setup"
+      ],
+      "results": [
+        "SKIP",
+        "PASS"
+      ],
+      "untagged_records": [],
+      "flush_calls": [
+        1,
+        2
+      ],
+      "comparator_input_errors": [],
+      "last_record_keys": [
+        "actual",
+        "after",
+        "before",
+        "content",
+        "content_crop",
+        "expected",
+        "result",
+        "scale",
+        "tag",
+        "x11"
+      ],
+      "last_geometry": {
+        "content": [
+          462,
+          169
+        ],
+        "x11": [
+          499,
+          210
+        ],
+        "scale": [
+          2.0,
+          2.0
+        ]
+      }
+    }
+  ],
+  "negative_control_untagged_stub": [
+    "inputs[0].tag is missing or is not a string"
+  ],
+  "comparator_stages": [
+    "unit_select",
+    "drag_select",
+    "minimap"
+  ]
+}

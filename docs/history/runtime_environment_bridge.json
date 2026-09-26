@@ -1,0 +1,13 @@
+{
+  "artifact_dir": "local/toolchain/runtime_bridge/20260910_222607",
+  "dll": "local/toolchain/runtime_bridge/20260910_222607/_inmm.dll",
+  "dll_sha256": "f44090a324428bb1628751014507c6f2e3bd5bbfab3d0c333641e8f9b1adac4b",
+  "source": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/patches/population/runtime_bridge.c",
+  "source_sha256": "0eedffedd9fcaa38be3b63c068ff1cb9199d4476ca0856368a558d4099917cea",
+  "built_source_sha256": "0eedffedd9fcaa38be3b63c068ff1cb9199d4476ca0856368a558d4099917cea",
+  "build_provenance": "local/toolchain/runtime_bridge/20260910_222607/supply_bridge_build.json",
+  "build_provenance_sha256": "9dfde454ef97f514529e91907f2804dea3f5a8c1ce068e0d58e19de9740b7629",
+  "external_build_dir": "/tmp/syw2_patch_bridge_setup_20260910_222607_2655647",
+  "created_at": "20260910_222607",
+  "deployment": "not deployed; copied to local toolchain only"
+}

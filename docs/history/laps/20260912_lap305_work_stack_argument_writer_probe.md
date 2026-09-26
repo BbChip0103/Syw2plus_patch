@@ -1,0 +1,11 @@
+# 2026-09-12 | lap 305 | G1/S1 V1 `push 0xE5BF18` writer 경로 정적 조사
+
+- 실제 provider/model/effort / 지정 역할: Codex work-tier, hands-on 정적 조사·probe 구현·검증(high). 현재 세션의 실제 모델 문자열은 별도 런타임 증거가 없어 추정하지 않았다.
+- 가설 / 사용자 관찰: lap304 R5의 20은 `mov ecx,0xE5BF18` 닫힘 하한이었다. `push 0xE5BF18` 291개도 `[arg+4]/[arg+8]` writer로 이어질 수 있는지 확인한다.
+- 예상 PASS / FAIL 조건: 원본 SHA 일치, 291개 site 전수·안전한 첫 call target 확인, shared callee의 entry-relative arg1/arg2 접근과 `+4/+8` writer가 0이면 V1 ACCEPT. 불일치면 FAIL/승격 중단.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 새 probe `docs/history/laps/probes/20260912_lap305_work_stack_argument_writer_probe.py` SHA `c151cc40f3220df97d687d4db86945ed7196bf4ab72bec74e95401c943e57b21`; report `logs/lap305/stack_argument_writer_probe.json` SHA `b3a6e8bcb6ccf095cc2806e614576e86693dae341fcc65538855b3ec58c1ae36`; attempt2 동일. 기존 원본/과거 probe는 수정하지 않았다. 커밋 없음(`LOOP_ALLOW_COMMITS=0`).
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 EXE `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac` 읽기 전용. 후보/활성 플레이어/지도/군대/fixture 없음. offline Linux `.venv` + `/usr/bin/objdump`.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `.venv/bin/python docs/history/laps/probes/20260912_lap305_work_stack_argument_writer_probe.py` 두 fresh run exit0, `cmp` 일치. `make check` 292 passed; Ruff/compileall/mypy/CONTEXT_PASS. `bash checks/safety.sh check`=`SAFETY_PASS`. PNG·게임·Wine·Xvfb·Stage B·runtime 실행 0.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): V1 **ACCEPT** — literal push site 291개, 첫 call `0x465250` 291/291, unsafe edge 0. shared callee의 entry-relative `[esp+4]/[esp+8]` 접근 0, `[arg+4]/[arg+8]` writer 0, object literal 재참조 0; direct callee `0x4DB933`, unresolved indirect calls는 object를 forwarding하지 않는 visible body에 남음. fresh writer accounting은 absolute 4 + mode-table 16 = confirmed lower bound 20, V1 추가 0, updated lower bound 20.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 첫 probe 실행에서 `sub esp,0x100` 뒤 local `[esp+4]`를 entry arg로 오인하는 정규화 버그가 발견되어 source만 수정했고, entry-relative stack delta 추적으로 fresh PASS했다. 제품 G1~G4 PASS/Stage B/마일스톤 승인은 없다. 20은 제품 완료가 아닌 확인된 하한이며 runtime 값·button hitbox·load transition은 미검증이다.
+- 다음 한 가지: 다음 새 work가 V2로 `FUN_00431AB0`의 `0x4324B8`/`0x431B79` writer 실행 조건과 `0x4D6312` 구성 순서를 정적으로 유도한다. V3는 그 다음 새 파일에서 수행한다. 실행/Wine/PNG/기존 산출물 수정은 계속 금지.

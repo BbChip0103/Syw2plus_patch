@@ -1,0 +1,121 @@
+.venv/bin/python tools/check_setup.py --require-runtime --runtime-manifest "local/runtime/20260910_222434_2612938_0/manifest.json"
+{
+  "ok": true,
+  "python": "3.13.5 | packaged by Anaconda, Inc. | (main, Jun 12 2025, 16:09:02) [GCC 11.2.0]",
+  "repo": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch",
+  "packages": {
+    "pefile": "2024.8.26",
+    "capstone": "5.0.7",
+    "pytest": "9.0.2",
+    "ruff": "0.15.7",
+    "mypy": "1.19.1"
+  },
+  "original_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "original_status": "verified",
+  "runtime_tools_optional": {
+    "wine": "/usr/bin/wine",
+    "wineboot": "/usr/bin/wineboot",
+    "Xvfb": "/usr/bin/Xvfb",
+    "scrot": "/usr/bin/scrot",
+    "xwininfo": "/usr/bin/xwininfo",
+    "xdotool": "/usr/bin/xdotool",
+    "wineserver": "/usr/bin/wineserver",
+    "i686-w64-mingw32-gcc": "/usr/bin/i686-w64-mingw32-gcc",
+    "make": "/usr/bin/make"
+  },
+  "runtime": {
+    "ok": true,
+    "tools": {
+      "wine": {
+        "name": "wine",
+        "path": "/usr/bin/wine",
+        "present": true
+      },
+      "wineboot": {
+        "name": "wineboot",
+        "path": "/usr/bin/wineboot",
+        "present": true
+      },
+      "Xvfb": {
+        "name": "Xvfb",
+        "path": "/usr/bin/Xvfb",
+        "present": true
+      },
+      "scrot": {
+        "name": "scrot",
+        "path": "/usr/bin/scrot",
+        "present": true
+      },
+      "xwininfo": {
+        "name": "xwininfo",
+        "path": "/usr/bin/xwininfo",
+        "present": true
+      },
+      "xdotool": {
+        "name": "xdotool",
+        "path": "/usr/bin/xdotool",
+        "present": true
+      },
+      "wineserver": {
+        "name": "wineserver",
+        "path": "/usr/bin/wineserver",
+        "present": true
+      },
+      "i686-w64-mingw32-gcc": {
+        "name": "i686-w64-mingw32-gcc",
+        "path": "/usr/bin/i686-w64-mingw32-gcc",
+        "present": true
+      },
+      "make": {
+        "name": "make",
+        "path": "/usr/bin/make",
+        "present": true
+      }
+    },
+    "libraries": {
+      "X11": {
+        "name": "X11",
+        "path": "libX11.so.6",
+        "present": true
+      },
+      "Xtst": {
+        "name": "Xtst",
+        "path": "libXtst.so.6",
+        "present": true
+      }
+    },
+    "missing_tools": [],
+    "missing_libraries": [],
+    "manifest": {
+      "path": "local/runtime/20260910_222434_2612938_0/manifest.json",
+      "present": true,
+      "valid": true,
+      "message": "runtime_env.check_runtime accepted",
+      "evidence": {
+        "ok": true,
+        "manifest": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/manifest.json",
+        "game_root": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/game",
+        "prefix": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/prefix",
+        "output": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/output",
+        "exe_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+        "diagnostic_bridge_overridden": false
+      }
+    },
+    "side_effects": false
+  },
+  "model_clis": {
+    "codex": {
+      "present": true,
+      "path": "/home/dev_00/.local/bin/codex",
+      "version": "codex-cli 0.153.4",
+      "version_exit": 0
+    },
+    "claude": {
+      "present": true,
+      "path": "/home/dev_00/.local/bin/claude",
+      "version": "2.1.267 (Claude Code)",
+      "version_exit": 0
+    }
+  },
+  "note": "Missing original means binary tests SKIP, not fresh runtime verification."
+}

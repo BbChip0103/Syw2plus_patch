@@ -1,0 +1,39 @@
+--- docs/history/laps/snapshots/20260915_lap379_lap372_preimage_recovery/tests/test_s1_load_evidence.py	2026-09-15 12:37:06.203215198 +0900
++++ tests/test_s1_load_evidence.py	2026-09-14 01:49:11.534068228 +0900
+@@ -768,7 +768,7 @@
+         stage_delays={"launch_to_ps9": 40.0, "input_to_ps35": 20.0},
+         pre_delay=2.0,
+         trigger_delay=5.0,
+-        wait_delay=5.0,
++        wait_delay=9.999,
+         evaluate_delay=3.0,
+         cleanup_delay=9.999,
+     )
+@@ -776,3 +776,26 @@
+     assert runtime_env.g1_s1_original_load_evidence(
+         source, runtime_root=tmp_path / "runtime",
+     )["status"] == "PASS"
++    assert state["clock"]["now"] == pytest.approx(149.998)
++
++
++def test_original_command_total_deadline_overrun_is_nonzero_without_artifact(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
++):
++    runtime_env, source, _run, state = _fake_original_command_lane(
++        monkeypatch,
++        tmp_path,
++        prepare_delay=60.0,
++        stage_delays={"launch_to_ps9": 40.0, "input_to_ps35": 20.0},
++        pre_delay=2.0,
++        trigger_delay=5.0,
++        wait_delay=9.999,
++        evaluate_delay=3.0,
++        cleanup_delay=10.001,
++    )
++
++    assert runtime_env.runtime_main([
++        "g1-s1-original-load-evidence", "--source", str(source),
++        "--runtime-root", str(tmp_path / "runtime"),
++    ]) == 2
++    assert not state["output"].joinpath("s1_original_load_evidence.json").exists()
+

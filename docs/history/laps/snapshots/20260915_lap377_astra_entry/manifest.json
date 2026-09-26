@@ -1,0 +1,26 @@
+{
+  "docs/STATUS.md": {
+    "sha256": "5afac04c5c845ca8e5625755192df516e8e255011d609be156a9f39146b4aeb4",
+    "lines": 128
+  },
+  "loop/ESCALATE_SOL": {
+    "sha256": "c26fa167621a46ebaedbbad869497b42cddd1971561d6362c2fb0410e61c38b2",
+    "lines": 854
+  },
+  "tools/runtime_env.py": {
+    "sha256": "2d4e478f073f1e4c981b42c39e0cff6a8ba0f058217a5d8e1aec0377b1ca790e",
+    "lines": 5979
+  },
+  "tools/s1_load_evidence.py": {
+    "sha256": "44e8c1a70372d0748b19497f3d7c91249807ff3600701ba238aa6e3fac2c4861",
+    "lines": 756
+  },
+  "tests/test_s1_load_evidence.py": {
+    "sha256": "69e714045a464f6c047099c479929ba8bec4f64108b102a0036252d2558b755d",
+    "lines": 801
+  },
+  "logs/laps/2026-09-14/lap-0373.log": {
+    "sha256": "3ee03b31f1fbf96797e0b5c8a38573c0888b660590c8afd131c3a3b203d7fb0c",
+    "lines": 12690
+  }
+}

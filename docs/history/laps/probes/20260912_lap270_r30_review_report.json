@@ -1,0 +1,135 @@
+{
+  "c2_mirror_control_matches_real": true,
+  "c3_matrix": {
+    "M0_control": {
+      "errors": 0,
+      "failed": 0,
+      "kill_reason": "none",
+      "passed": 8,
+      "tail": "8 passed in 0.37s"
+    },
+    "M10_rename_review_result_plus_late_refusal": {
+      "errors": 0,
+      "failed": 1,
+      "kill_reason": "completeness_assert",
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.45s"
+    },
+    "M11_alias_all_results_above_report_write": {
+      "errors": 0,
+      "failed": 0,
+      "kill_reason": "none",
+      "passed": 8,
+      "tail": "8 passed in 0.49s"
+    },
+    "M1_rename_only": {
+      "errors": 0,
+      "failed": 0,
+      "kill_reason": "none",
+      "passed": 8,
+      "tail": "8 passed in 0.37s"
+    },
+    "M2_late_refusal": {
+      "errors": 0,
+      "failed": 1,
+      "kill_reason": "r17_coverage_assert",
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.46s"
+    },
+    "M3_late_refusal_plus_rename": {
+      "errors": 0,
+      "failed": 1,
+      "kill_reason": "r17_coverage_assert",
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.45s"
+    },
+    "M6_relocate_tail_plus_late_refusal": {
+      "errors": 0,
+      "failed": 1,
+      "kill_reason": "r17_coverage_assert",
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.46s"
+    },
+    "M7_relocate_above_report_write": {
+      "errors": 0,
+      "failed": 1,
+      "kill_reason": "r17_coverage_assert",
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.50s"
+    },
+    "M8_decoy_anchor_above_report_write": {
+      "errors": 0,
+      "failed": 1,
+      "kill_reason": "r17_coverage_assert",
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.50s"
+    },
+    "M9_rename_review_result": {
+      "errors": 0,
+      "failed": 1,
+      "kill_reason": "completeness_assert",
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.38s"
+    }
+  },
+  "c3_survivors": [
+    "M1_rename_only",
+    "M11_alias_all_results_above_report_write"
+  ],
+  "c4_attribution_without_r17": {
+    "M0_control": {
+      "errors": 0,
+      "failed": 0,
+      "kill_reason": "none",
+      "passed": 8,
+      "tail": "8 passed in 0.36s"
+    },
+    "M2_late_refusal": {
+      "errors": 0,
+      "failed": 0,
+      "kill_reason": "none",
+      "passed": 8,
+      "tail": "8 passed in 0.44s"
+    },
+    "M3_late_refusal_plus_rename": {
+      "errors": 0,
+      "failed": 0,
+      "kill_reason": "none",
+      "passed": 8,
+      "tail": "8 passed in 0.45s"
+    },
+    "M6_relocate_tail_plus_late_refusal": {
+      "errors": 0,
+      "failed": 0,
+      "kill_reason": "none",
+      "passed": 8,
+      "tail": "8 passed in 0.43s"
+    },
+    "M7_relocate_above_report_write": {
+      "errors": 0,
+      "failed": 0,
+      "kill_reason": "none",
+      "passed": 8,
+      "tail": "8 passed in 0.48s"
+    },
+    "M8_decoy_anchor_above_report_write": {
+      "errors": 0,
+      "failed": 0,
+      "kill_reason": "none",
+      "passed": 8,
+      "tail": "8 passed in 0.49s"
+    }
+  },
+  "c4_survivors_without_r17": [
+    "M2_late_refusal",
+    "M3_late_refusal_plus_rename",
+    "M6_relocate_tail_plus_late_refusal",
+    "M7_relocate_above_report_write",
+    "M8_decoy_anchor_above_report_write"
+  ],
+  "helper_source": "repository (not swapped)",
+  "item": "R30_independent_review",
+  "lap": 270,
+  "real_repo_passed": 8,
+  "role": "middle"
+}

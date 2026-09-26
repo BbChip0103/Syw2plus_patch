@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "python": "3.13.5 | packaged by Anaconda, Inc. | (main, Jun 12 2025, 16:09:02) [GCC 11.2.0]",
+  "repo": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch",
+  "packages": {
+    "pefile": "2024.8.26",
+    "capstone": "5.0.7",
+    "pytest": "9.0.2",
+    "ruff": "0.15.7",
+    "mypy": "1.19.1"
+  },
+  "original_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "original_status": "verified",
+  "runtime_tools_optional": {
+    "wine": "/usr/bin/wine",
+    "Xvfb": "/usr/bin/Xvfb",
+    "scrot": "/usr/bin/scrot",
+    "make": "/usr/bin/make",
+    "i686-w64-mingw32-gcc": "/usr/bin/i686-w64-mingw32-gcc"
+  },
+  "note": "Missing original means binary tests SKIP, not fresh runtime verification."
+}

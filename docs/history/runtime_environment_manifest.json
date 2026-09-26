@@ -1,0 +1,47 @@
+{
+  "manifest_version": 1,
+  "run_id": "20260910_222434_2612938_0",
+  "source": {
+    "root": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/Syw2plus",
+    "exe": "syw2plus_original.exe",
+    "exe_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "read_only": true,
+    "copy_mode": "copytree; symlinks/hardlinks rejected"
+  },
+  "game": {
+    "root": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/game",
+    "exe": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/game/syw2plus_original.exe",
+    "exe_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "support_dll_sha256": {
+      "_inmm.dll": "03192987e9c877cf344874412d2c0e1a80b5d5f8b91f325771e9615feadbf160",
+      "_inmm_orig.dll": "03192987e9c877cf344874412d2c0e1a80b5d5f8b91f325771e9615feadbf160",
+      "dxwrapper.dll": "96c443193bad8794ebf04738566e092f8b34ae4541cb2433fd0708d49edbe8fe",
+      "ddraw.dll": "3bc7230d1a6023a8fc0ea52b18d7edda94fcb4c0ae3d178f6e1577d68a62bd19",
+      "syw2x.dll": "61ef47b28df8aa59059861d28070d5352bb31b3398315d91b80efc2631bf7228"
+    },
+    "instrumented": false,
+    "diagnostic_bridge_sha256": null
+  },
+  "wine": {
+    "prefix": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/prefix",
+    "arch": "win32",
+    "created_new": true,
+    "private": true
+  },
+  "output": {
+    "run_dir": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0",
+    "evidence_dir": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/output"
+  },
+  "runtime_config": {
+    "screen": "1024x768x24",
+    "private_display": true,
+    "input": "one XTest title random-game click (184,560)",
+    "timeouts_max_seconds": 90,
+    "private_inmm_registry_imported": true,
+    "loops_or_services_started": false,
+    "feature_or_patch_execution": false,
+    "locale": "ko_KR.UTF-8",
+    "wine_dll_overrides": "ddraw=b",
+    "feature_patch_execution_observed": "unknown (startup smoke only)"
+  }
+}

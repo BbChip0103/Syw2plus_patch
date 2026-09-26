@@ -1,0 +1,25 @@
+# 2026-09-25 | lap 627 | 목표 G5(최우선) — strategy 범위 판정
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-opus-5-5`, effort 비노출. 지정 역할은 strategy(major direction/master-plan)이며, 계약상 Fable/Astra 자리를 lap611과 같은 방식으로 대체했다.
+- 가설 / 사용자 관찰: 사용자(18:16)는 드래그 1회 선택 상한을 20에서 50으로 올려 달라고 했고, G5를 최우선으로 지정했다. 가설: 20 상한은 선택 배열 끝 주소로 강제된다. 제자리 확장은 인접 데이터 때문에 불가능하므로 재배치가 필요하다.
+- 예상 PASS / FAIL 조건: 정적 표본으로 상한의 구조를 설명하고 W0~W3 게이트와 측정식을 결정 가능한 카드로 남기면 PASS. 근거가 서로 충돌하면 BLOCKED.
+- 변경 파일 / source fingerprint / 커밋: 문서만 바꿨다 — `analysis/memory_maps/g5_selection_array_static_scan_lap627.md`, `docs/work/active/G5_STRATEGY_DRAG_SELECT_CAP50_LAP627.md`, 이 파일, `docs/STATUS.md`, `docs/feedback/INBOX.md`, `loop/ESCALATE_SOL` §175. 게임/하네스/테스트 source 변경 0, 커밋 0(uncommitted).
+- 원본 SHA / 후보 SHA / 환경 / fixture: 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`(sha256sum으로 재확인). 후보·게임 실행·fixture는 없다.
+- 실행 명령:
+  - `objdump -d -M intel Syw2plus/syw2plus_original.exe > /tmp/g5_lap627/orig.asm`
+  - `grep`으로 `0x899024`/`0x899028`/`0x899078`/`0x8990c8` 참조와 주변 `0x14` 상수를 추출
+  - `.venv/bin/python -m mypy <Makefile 10 files> --follow-imports=skip`
+- 측정값 / 판정:
+  - 선택 배열 `0x899028`은 4B×20이고 끝이 `0x899078`이다. 기저 참조 29, 끝 비교 14, count 참조 9.
+  - `div 0x14` 회전 3곳(`0x41ec6a/0x41ed57/0x41eea8`)이 있다.
+  - 부대지정은 `[ebp+0x16]`에 10×20칸, count는 `+0x336`에 있다. 복사 루프 `0x445d5b`는 선택 칸마다 대상 포인터를 +4 하므로 20을 넘으면 넘친다.
+  - 명령 압축 `0x4ae550`은 스택 20칸과 `mov ebp,0x14`를 쓴다.
+  - `0x8990c8`(slot word 배열, 34곳)이 인접해 있어 제자리 확장이 불가능하다.
+  - 판정은 **G5 FEASIBLE(정적, 조건부)**이며 W1 전수가 선행 조건이다.
+  - mypy는 `runtime_env.py:410`, `:8801-8814`에서 10건이 재현됐다. lap626 §174 blocker는 사실이다.
+- 회귀 / 남은 위험 / 검수:
+  - 표본 스캔이라 간접 참조, 스택 버퍼, 저장 포함 여부는 미확인이다.
+  - D2(부대지정)와 D3(명령 분할/확장)은 W1 뒤 middle이 확정한다.
+  - `SAFETY_PASS`/`CONTEXT_PASS`는 문서 반영 뒤 확인한다. 전체 Fast는 mypy 때문에 실패 상태로 알려져 있어 재실행하지 않았다(W0 몫).
+  - 사용자 3단 승인과는 무관하다.
+- 다음 한 가지: work W0(mypy 타입만 수리, 동작 불변) → `make check` PASS → 같은 회차에서 G5 W1 정적 전수(게임 0).

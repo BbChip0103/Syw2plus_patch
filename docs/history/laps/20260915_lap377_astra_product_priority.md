@@ -1,0 +1,12 @@
+# 2026-09-15 | lap 377 | 목표 G1 우선·G2 독립 구조 조사
+
+- 실제 provider/model/effort / 지정 역할: Codex gpt-6-astra / major direction/master-plan; 사용자 high 계약. 외부 모델 호출 0. runtime 메시지 lap376 대신 읽기 전용 `loop/.lap_counter=377` 사용. MODEL_ROUTING의 Opus5-only와 직접 Sol 승격 지시 차이는 공개하고 후자를 인계 대상으로 사용; 설정 수정 없음.
+- 가설 / 사용자 관찰: INBOX 2026-09-15 11:35의 느린 제품 진전 지적에 따라 하네스 반복 검수에서 G1 실제 증거 생성 경로로 우선순위를 돌리고 G2 독립 구조 조사로 병행한다. lap363~376의 실제 실행0·수리/반려 반복은 문서상 근거; 모든 수리가 불필요했다는 주장은 아니다.
+- 예상 PASS / FAIL 조건: 상위 문서는 G1 선행조건·실제 pair/입력·WM_CLOSE·사람 판단과 G2 조사 경계/정량 산출물/역할을 명시하고 기존 안전 게이트를 유지해야 한다. 문서 기계 검사와 구현 불변 확인은 계획 승인과 별개. 실행 근거 미완결은 BLOCKED로 보존한다.
+- 변경 파일 / source fingerprint / 커밋: `docs/work/active/G1_G2_ASTRA_DIRECTION_LAP377.md`, `docs/STATUS.md`, 이 기록, `loop/ESCALATE_SOL`, `docs/history/laps/snapshots/20260915_lap377_astra_entry/{STATUS.md,ESCALATE_SOL,manifest.json}`. uncommitted; 게임/하네스/tests/모델 설정/원본 수정0. 최종 SHA는 별도 `20260915_lap377_astra_artifact_hashes.json`에 기록.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본/후보 실행·접근0, 새 후보 없음, 활성 인원/지도/군대 N/A, fixture 생성0. 원본 기대 SHA `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`는 기존 문서에서만 읽었으며 이번 검증값 아님.
+- 이전 바퀴 검수: lap376의 현행 세 소스 SHA 및 lap373 raw log SHA를 독립 계산해 4/4 일치. 두 pre-image exact reverse·diff/게이트는 재실행하지 않았으며 lap376 복원 가능 PASS는 과거 판정으로 한정. 게임 증거/구현 ACCEPT는 UNKNOWN.
+- 실행 명령: `cat loop/PROMPT.md` 첫 수행, AGENTS→INBOX→APPROVALS(실제 위치 docs/feedback)→STATUS 전체→DESIGN §1~4→MODEL_ROUTING 및 관련 문서 열람; `git status --short`; `sha256sum` 현물4개; Python으로 진입 원문/manifest 보존; `python3 checks/context_limits.py`; 문서 무결성 assert. 처음 루트 APPROVALS.md 조회는 파일 부재로 rc1, 실제 경로로 해소한 문서 조회 오류이며 빌드/검증 실패 아님. STOP 파일 glob 조회는 없음; 새 작업 실행하지 않음.
+- 측정값 / 판정: `CONTEXT_PASS`; `DOC_INTEGRITY_PASS`(STATUS130줄, Blockers 제목1개, source/log 불변4개, 과거 ESCALATE 원문 suffix 보존, counter377). 진입 STATUS128줄 SHA `5afac04c5c845ca8e5625755192df516e8e255011d609be156a9f39146b4aeb4`와 승격854줄 SHA `c26fa167621a46ebaedbbad869497b42cddd1971561d6362c2fb0410e61c38b2`는 snapshot에 전체 보존. 상위 방향 **DRAFT / 실행 BLOCKED**, 계획 승인 아님.
+- 회귀 / 남은 위험: targeted/lap354/doctor/make check/safety/원본보호hash/패치생성·원복은 SKIP. 기존 provenance 선행조건과 사용자 미완결 근거 중단 지시에 따라 이번 상위 문서 작업에서 downstream 실행을 발효하지 않았다. FULL_TEST 요청도 발행하지 않았으며 Fast PASS를 주장하지 않는다. 새 필수 게이트 실패0. G1~G4 제품 미완료, S1 결정성/Stage B/WM_CLOSE 미검증. W3/N14 등 반려는 STATUS와 진입 원문 보존.
+- 다음 한 가지: 현재 큐는 STATUS만 진실로 삼는다. `loop/ESCALATE_SOL`에 새 Sol/high 세션의 방향 검수·G1 실행 카드/G2 구조 조사 work 분리 요구를 남겼다. 실제 실행·마일스톤 마감·이동 없이 종료한다. narrative-only 산출물을 구현 진전으로 세지 않는다.

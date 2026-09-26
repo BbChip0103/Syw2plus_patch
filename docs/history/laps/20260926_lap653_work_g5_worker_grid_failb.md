@@ -1,0 +1,14 @@
+# 날짜 | lap 653 | 목표 G5
+
+- 날짜/lap/목표: 2026-09-26 / 653 / 드래그 1회 선택 상한 20→50.
+- 실제 provider/model/지정 역할: Codex native session / hands-on work / high.
+- 가설 / 사용자 관찰: lap652의 y-20 fixture가 화면 밖이었으므로, 실제 anchor slot1198의 worker 좌표를 중심으로 dx=-3..3, dy=-4..3의 7×8 grid에서 anchor 칸만 제외한 55개를 각기 다른 map cell에 생성하면 선택 rectangle이 50개를 덮는다.
+- 예상 PASS / FAIL 조건: 생성 직후 화면에 55기가 보이고 candidate selection=50, unique=50, 이동 명령=50, crash/오염 없음이면 PASS; 필수 fresh runtime이 50에 못 미치면 FAIL-B/승격.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `tools/g5_candidate_drag_probe.py`에 worker-centered unique-cell fixture와 `after-fixture.png` capture를 추가했다. 파일 SHA `cd3148180fa94c23b6051e1770a1f32cd5819edfb4a36667473b86a0de9e6b0b`; 제품 바이너리·원본·참고 저장소·커밋 0.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; private candidate `6f6a4f859be4b2281ec2014e817b7692adf2d04226b0ac14b3ac32ac06f4e091`; isolated private full copy, fresh Wine prefix, Xvfb 1600×1200, PS3 solo owner0. Anchor slot1198 read as type31 `(142,42)`; synthetic type2 55 = x139..145/y38..45 excluding `(142,42)`, receipts 55/55, used `735/1500`.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `PYTHONPATH=. .venv/bin/python tools/g5_candidate_drag_probe.py --variant candidate --runtime-root local/runtime/g5-lap653-candidate-worker-grid --artifact-root /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20260926_lap653_g5_candidate_worker_grid`; artifact `/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20260926_lap653_g5_candidate_worker_grid/`; result SHA `7f06833899491af7ac7a28e9f4d91b341302558cb6a6a393ffc92c4360472683`; after-fixture `7ec3bbf873ee043795e71754001dda4df43ab4c87bb2bed4562446d8e179d342`; before `f0c14d808bf0ac2b3da1f220342846b76d39f29771fc9700810ca311530cc9e9`; after `e3cbfb3e1ef886cea57c4e66c772ad0822a5242b0b8d738e04ef26a47546ddea`.
+- 측정값 / 판정: camera after minimap `[140,40]`; after-fixture capture는 55기를 화면에 보였다. Candidate selection `49`, unique `49`; omitted synthetic slots `1141..1147`(fixture y=45 행); movement command nonzero `49`; crash 없음; cleanup residual `0`, source unchanged `true`; probe exit `2`, status `FAIL_SELECTION_CAP`. 50/51 boundary, command50, UI/group/save/load는 필수 runtime 실패로 SKIP.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: fixture contract `55 unique cells/count=1` PASS; `py_compile` PASS; targeted G5/inventory `11 passed`; `CONTEXT_PASS`; `SAFETY_PASS`. `make check`는 필수 fresh runtime FAIL-B 뒤 중단. G5 제품 PASS·middle independent review·사용자 milestone approval 없음. 49가 drag boundary/HUD occlusion인지 hit-test/visibility 계약인지 현재 증거만으로 확정하지 않는다.
+- 다음 한 가지: 승격 작업자가 동일 후보/원본 보호 조건으로 y=45 행이 빠지는 직접 원인을 camera 이동 또는 드래그/HUD 경계의 독립 trace로 특정하고, 그 뒤에만 새 fresh runtime을 정한다. 현재 변경을 그대로 반복하지 않는다.
+
+판정: **`BLOCKED(FAIL-B: worker-centered fixture visible but selection=49)`**.

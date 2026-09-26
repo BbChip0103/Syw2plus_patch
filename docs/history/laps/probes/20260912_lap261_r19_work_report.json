@@ -1,0 +1,27 @@
+{
+  "game_executions": 0,
+  "lap": 261,
+  "mutations": {
+    "M0_control": {
+      "exit": 0,
+      "failed_tests": [],
+      "summary": "8 passed in 0.36s"
+    },
+    "M1_rename_wait_and_drop_early_refusal": {
+      "exit": 1,
+      "failed_tests": [
+        "FAILED tests/test_review_probe_output.py::test_r6b_r7_refuses_to_overwrite_existing_report",
+        "FAILED tests/test_review_probe_output.py::test_r6b_r11_exclusive_create_rejects_dangling_output_symlink",
+        "FAILED tests/test_review_probe_output.py::test_r6b_r7_writes_to_explicit_new_report_path",
+        "FAILED tests/test_review_probe_output.py::test_r6b_r10_classifies_non_searchable_parent_without_traceback",
+        "FAILED tests/test_review_probe_output.py::test_r6b_r17_existing_evidence_refusal_precedes_review_body"
+      ],
+      "summary": "5 failed, 3 passed in 0.45s"
+    }
+  },
+  "role": "work",
+  "source_sha256": "16f74629aae8f823508762d719776547e1fd8365a07c7862bbf89a4d3ae06d12",
+  "target": "G1-R19 name-independent R17 regression",
+  "tests_sha256": "f5a0384eb31c637bd6c92c0142328fcd046b9a39eec3958d3eb9b846ab82c8f0",
+  "verdict": "PASS"
+}

@@ -1,0 +1,100 @@
+{
+  "P1_same_binary_pair": {
+    "nations": {
+      "run_a": {
+        "0": 2,
+        "1": 2
+      },
+      "run_b": {
+        "0": 3,
+        "1": 1
+      }
+    },
+    "question": "do two independent runs of the ORIGINAL binary compare as one scene?",
+    "replay_seed_observed": false,
+    "scene_checks": {
+      "owner0_unit_types": false,
+      "owner1_unit_types": false,
+      "relative_world_offsets": false,
+      "world_bounds": true
+    },
+    "status": "UNKNOWN_SCENE_MISMATCH"
+  },
+  "P2_F2_slot_identity": {
+    "identical_pair_verdict": "PASS",
+    "question": "is an absolute slot id a sound cross-run parity predicate?",
+    "slot_ids": {
+      "run_a": [
+        1196,
+        1197,
+        1198,
+        1199
+      ],
+      "run_b": [
+        1196,
+        1197,
+        1198,
+        1199
+      ]
+    },
+    "slot_ids_equal_across_runs": true,
+    "slot_only_divergence_verdict": "FAIL",
+    "slot_to_owner_equal": true,
+    "type_only_divergence_verdict": "FAIL",
+    "types": {
+      "run_a": [
+        31,
+        58,
+        31,
+        58
+      ],
+      "run_b": [
+        7,
+        49,
+        21,
+        70
+      ]
+    },
+    "types_equal_across_runs": false
+  },
+  "P3_F3_disputed_oracle": {
+    "after_has_selection_key": false,
+    "after_last_identity": [
+      1198,
+      21
+    ],
+    "after_last_observation": {
+      "address": "0x00899024",
+      "count": 1,
+      "first_address": "0x00899028",
+      "first_slot": 1198,
+      "selected_slot": 1198,
+      "selected_type": 21,
+      "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+    },
+    "before_identity": [
+      1199,
+      70
+    ],
+    "comparator_selection_reads_after_last": false,
+    "comparator_stage_verdict_on_this_record": "FAIL",
+    "identity_changed": true,
+    "question": "may a FAIL_NO_EFFECT label be inherited as a card FAIL?",
+    "recorded_result": "FAIL_NO_EFFECT",
+    "timeout_cause": "FAIL_NO_EFFECT"
+  },
+  "P4_R6B_drag_gate": {
+    "band_select_semantics_in_memory_maps": false,
+    "engine_responded": true,
+    "expected_string": "selection count >=2 for HQ and worker",
+    "observed_count": [
+      1,
+      1
+    ],
+    "observed_first_slot": [
+      1199,
+      1198
+    ],
+    "question": "is count>=2 a grounded drag-success predicate?"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "c0_baseline": {
+    "failed_tests": [],
+    "returncode": 0,
+    "summary": "7 passed, 129 deselected in 0.02s"
+  },
+  "c1_matrix": {
+    "cases": 81,
+    "corrupted_preserved_with_read_errors": 32,
+    "mismatches": [],
+    "sound_downgraded_to_unavailable": 20
+  },
+  "c2_mirror_control": {
+    "failed_tests": [],
+    "returncode": 0,
+    "summary": "136 passed in 0.43s"
+  },
+  "c3_mutations": {
+    "M1_guard_deleted": {
+      "failed_tests": [
+        "test_g1_wait_state_preserves_corruption_when_read_coverage_is_unknown"
+      ],
+      "killed_other": [],
+      "killed_r12": [
+        "test_g1_wait_state_preserves_corruption_when_read_coverage_is_unknown"
+      ],
+      "killed_unavailable": [],
+      "returncode": 1,
+      "summary": "2 failed, 134 passed in 0.36s"
+    },
+    "M2_never_downgrades": {
+      "failed_tests": [
+        "test_g1_wait_state_marks_selection_unavailable_after_unreadable_tail",
+        "test_g1_wait_state_rejects_read_error_heavy_window_even_with_readable_tail"
+      ],
+      "killed_other": [],
+      "killed_r12": [],
+      "killed_unavailable": [
+        "test_g1_wait_state_marks_selection_unavailable_after_unreadable_tail",
+        "test_g1_wait_state_rejects_read_error_heavy_window_even_with_readable_tail"
+      ],
+      "returncode": 1,
+      "summary": "2 failed, 134 passed in 0.36s"
+    },
+    "M3_guard_inverted": {
+      "failed_tests": [
+        "test_g1_wait_state_marks_selection_unavailable_after_unreadable_tail",
+        "test_g1_wait_state_preserves_corruption_when_read_coverage_is_unknown",
+        "test_g1_wait_state_rejects_read_error_heavy_window_even_with_readable_tail"
+      ],
+      "killed_other": [],
+      "killed_r12": [
+        "test_g1_wait_state_preserves_corruption_when_read_coverage_is_unknown"
+      ],
+      "killed_unavailable": [
+        "test_g1_wait_state_marks_selection_unavailable_after_unreadable_tail",
+        "test_g1_wait_state_rejects_read_error_heavy_window_even_with_readable_tail"
+      ],
+      "returncode": 1,
+      "summary": "4 failed, 132 passed in 0.40s"
+    }
+  },
+  "game_executions": 0,
+  "guard_anchor_present": true,
+  "lap": 248,
+  "role": "middle",
+  "source_sha256": {
+    "tests/test_runtime_env.py": "d75c75b43a0e32d72882361a2ac80a700825895ecb9cbae24a63a42732f5f842",
+    "tools/runtime_env.py": "2f59bbbd14c177119117a9435df0426a66142d4ed1d8cb1b19105a4b3a8025c4"
+  },
+  "subject": "G1-R6-B-R12 selection CORRUPTED preservation",
+  "verdict": {
+    "c0_baseline": "PASS",
+    "c1_matrix": "PASS",
+    "c2_mirror_control": "PASS",
+    "c3_mutations": "PASS",
+    "overall": "PASS"
+  },
+  "wine_executions": 0
+}

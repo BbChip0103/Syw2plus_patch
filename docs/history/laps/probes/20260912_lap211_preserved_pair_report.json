@@ -1,0 +1,76 @@
+{
+  "input_errors": {
+    "baseline": [],
+    "candidate": [
+      "inputs[1].tag is missing or is not a string",
+      "inputs[2].tag is missing or is not a string"
+    ]
+  },
+  "production": {
+    "reason": "production is fail-closed/BLOCKED and is outside the Stage B parity dimensions",
+    "status": "NOT_COMPARED"
+  },
+  "scene": {
+    "baseline": {
+      "owner0_unit_types": [
+        21,
+        70
+      ],
+      "owner1_unit_types": [
+        7,
+        49
+      ],
+      "relative_world_offsets": [
+        [
+          0,
+          21,
+          0,
+          0
+        ],
+        [
+          0,
+          70,
+          -2,
+          -2
+        ],
+        [
+          1,
+          7,
+          -21,
+          -50
+        ],
+        [
+          1,
+          49,
+          -23,
+          -52
+        ]
+      ],
+      "world_bounds": [
+        180,
+        180
+      ]
+    },
+    "candidate": null,
+    "errors": [
+      "candidate: scene is missing or is not an object"
+    ],
+    "status": "INCONCLUSIVE"
+  },
+  "schema": "g1-stage-b-compare/v1",
+  "stages": {
+    "drag_select": {
+      "reason": "required input stage is missing",
+      "status": "INCONCLUSIVE"
+    },
+    "minimap": {
+      "reason": "required input stage is missing",
+      "status": "INCONCLUSIVE"
+    },
+    "unit_select": {
+      "reason": "required input stage is missing",
+      "status": "INCONCLUSIVE"
+    }
+  },
+  "status": "INCONCLUSIVE"
+}

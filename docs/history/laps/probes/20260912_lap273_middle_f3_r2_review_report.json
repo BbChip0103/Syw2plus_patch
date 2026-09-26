@@ -1,0 +1,336 @@
+{
+  "A1_vocabulary": {
+    "comparator_declared": [
+      "FAIL_NO_EFFECT",
+      "UNKNOWN_BUDGET_EXHAUSTED",
+      "UNKNOWN_OBSERVATION_WINDOW_TRUNCATED",
+      "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED",
+      "UNKNOWN_STATE_READ_FAILURE"
+    ],
+    "declared_but_not_in_producer": [],
+    "missing_from_comparator": [
+      "UNKNOWN_STATE_READ_COVERAGE"
+    ],
+    "producer_derived": {
+      "FAIL_NO_EFFECT": [
+        3264
+      ],
+      "UNKNOWN_BUDGET_EXHAUSTED": [
+        3259
+      ],
+      "UNKNOWN_OBSERVATION_WINDOW_TRUNCATED": [
+        3260
+      ],
+      "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED": [
+        3263
+      ],
+      "UNKNOWN_STATE_READ_COVERAGE": [
+        3262
+      ],
+      "UNKNOWN_STATE_READ_FAILURE": [
+        2183,
+        3261
+      ]
+    },
+    "producer_plain_results": {
+      "BLOCKED": [
+        1612,
+        2270,
+        2342,
+        2691,
+        2692,
+        4062
+      ],
+      "FAIL": [
+        2369,
+        2631,
+        2774,
+        2844,
+        2984,
+        3387,
+        3510,
+        3890
+      ],
+      "PASS": [
+        909,
+        1046,
+        1305,
+        2267,
+        2299,
+        2339,
+        2341,
+        2369,
+        2515,
+        2631,
+        2774,
+        2844,
+        2946,
+        2984,
+        3387,
+        3429,
+        3485,
+        3510,
+        3890,
+        3893,
+        3990
+      ],
+      "SKIP": [
+        2960,
+        3661,
+        3662,
+        3663,
+        3664,
+        3665,
+        3668
+      ]
+    }
+  },
+  "A2_control": {
+    "overall": "PASS",
+    "scene": "PASS",
+    "stages": {
+      "drag_select": "PASS",
+      "minimap": "PASS",
+      "unit_select": "PASS"
+    }
+  },
+  "A2_matrix": [
+    {
+      "candidate_result": "FAIL_NO_EFFECT",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_BUDGET_EXHAUSTED",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_OBSERVATION_WINDOW_TRUNCATED",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_STATE_READ_COVERAGE",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "UNKNOWN_STATE_READ_FAILURE",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "FAIL",
+      "overall": "FAIL",
+      "stage": "unit_select",
+      "stage_status": "FAIL"
+    },
+    {
+      "candidate_result": "BLOCKED",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "SKIP",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "WAT_UNRECOGNIZED",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "<absent>",
+      "overall": "INCONCLUSIVE",
+      "stage": "unit_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "FAIL_NO_EFFECT",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_BUDGET_EXHAUSTED",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_OBSERVATION_WINDOW_TRUNCATED",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_STATE_READ_COVERAGE",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "UNKNOWN_STATE_READ_FAILURE",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "FAIL",
+      "overall": "FAIL",
+      "stage": "drag_select",
+      "stage_status": "FAIL"
+    },
+    {
+      "candidate_result": "BLOCKED",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "SKIP",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "WAT_UNRECOGNIZED",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "<absent>",
+      "overall": "INCONCLUSIVE",
+      "stage": "drag_select",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "FAIL_NO_EFFECT",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_BUDGET_EXHAUSTED",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_OBSERVATION_WINDOW_TRUNCATED",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "UNKNOWN_STATE_READ_COVERAGE",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "UNKNOWN_STATE_READ_FAILURE",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    {
+      "candidate_result": "FAIL",
+      "overall": "FAIL",
+      "stage": "minimap",
+      "stage_status": "FAIL"
+    },
+    {
+      "candidate_result": "BLOCKED",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "SKIP",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "WAT_UNRECOGNIZED",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "INCONCLUSIVE"
+    },
+    {
+      "candidate_result": "<absent>",
+      "overall": "INCONCLUSIVE",
+      "stage": "minimap",
+      "stage_status": "INCONCLUSIVE"
+    }
+  ],
+  "A3_new_pass_paths": {
+    "pass_with_any_non_PASS_source": [],
+    "total_pass_combinations": 3
+  },
+  "A4_fail_precedence": {
+    "overall": "FAIL",
+    "source_results": {
+      "baseline": "UNKNOWN_BUDGET_EXHAUSTED",
+      "candidate": "FAIL"
+    },
+    "stage_status": "FAIL"
+  },
+  "A5_broken_candidate": {
+    "source_FAIL": {
+      "overall": "FAIL",
+      "stage": "FAIL"
+    },
+    "source_FAIL_NO_EFFECT": {
+      "overall": "INCONCLUSIVE",
+      "stage": "UNKNOWN_DISPUTED_ORACLE"
+    },
+    "source_PASS": {
+      "overall": "FAIL",
+      "stage": "FAIL"
+    }
+  },
+  "A6_invariants": {
+    "production_not_compared": "NOT_COMPARED",
+    "scene_mismatch_overall": "UNKNOWN_SCENE_MISMATCH",
+    "scene_mismatch_stage": "UNKNOWN_SCENE_MISMATCH",
+    "slot_demotion_overall": "INCONCLUSIVE",
+    "slot_demotion_stage": "UNKNOWN_SLOT_CORRESPONDENCE"
+  },
+  "fingerprints": {
+    "tests/test_compare_g1_stage_b.py": "9e80626253921f6739a1f015a3deaadc0631092a5e0f9844b0d7d38c3358cfd5",
+    "tools/compare_g1_stage_b.py": "68994909d59be1c00fa7eef0b1b209b479d63404b9749cb8a766381b3522e525",
+    "tools/runtime_env.py": "e4f6a834f1ca591d2fe7acc1002beea4b343647d6ba47ff3b847f74e22455837"
+  },
+  "probe": "lap273_middle_f3_r2_review"
+}

@@ -1,0 +1,59 @@
+lap=237
+role=work (hands-on implementation; Codex Luna/high routing)
+reason=G1-R6-B-R8 was repaired without running the game. A read-error coverage threshold now
+prevents a mostly-unreadable observation window from being called hard FAIL_NO_EFFECT merely
+because the final poll succeeded. This standing escalation requests fresh middle confirmation;
+it is not a product or milestone approval.
+
+Full record: docs/history/laps/20260912_lap237_work_r6b_r8.md
+Handoff: docs/work/active/G1_CARD2_INPUT_PARITY_HANDOFF.md (lap237 절)
+Changed this lap: tools/runtime_env.py, tests/test_runtime_env.py, docs/STATUS.md,
+docs/work/active/G1_CARD2_INPUT_PARITY_HANDOFF.md, loop/ESCALATE_SOL,
+docs/history/laps/20260912_lap237_work_r6b_r8.md.
+Product/EXE/DLL/assets/baseline/golden changed: 0.
+Game runs: 0. PNG: 0. No commit (LOOP_ALLOW_COMMITS=0).
+
+RESULT — R6-B-R8 implementation regression PASS. `read_error_ratio > 0.25` now yields
+UNKNOWN_STATE_READ_COVERAGE with selection status UNAVAILABLE; all-read-error and unreadable-tail
+cases retain UNKNOWN_STATE_READ_FAILURE; exactly 0.25 and no-error no-effect retain FAIL_NO_EFFECT.
+Targeted 13 passed, make check 257 passed, safety PASS, original EXE pin unchanged.
+
+RESULT — R6-B-R7 SCOPE APPROVED. 13 review cases: 11 AGREES / 2 DEFECT. All seven preservation
+routes fail-close with exit 2 and byte-identical targets: existing file, zero-byte file,
+directory, symlink to an existing file, dangling symlink, the default lap228 report path, and an
+import (`__name__ != "__main__"`) run. The last two bypass the early `exists()` check, so the
+`open("x")` exclusive-creation branch is the only guard there — lap235's concurrency claim is
+therefore demonstrated, not merely asserted. A fresh report differs from the preserved lap230
+rerun only in `source_sha256` (now `103ec280...`, lap230 `f39d26fc...` because runtime_env.py
+changed in lap231/lap233); every reachability/preservation/wait/surgicality verdict is identical,
+so the R6-B-R3 review conclusion still reproduces on current code. Product G1, R6-B overall and
+Stage B remain unapproved.
+
+VALIDATION — `make check` 255 passed with Ruff/compileall/mypy 10 files and `CONTEXT_PASS`;
+`LOOP_DRY_RUN=0 bash checks/safety.sh check` `SAFETY_PASS`. lap235's reported hashes verified
+against the real files: probe `2d4f6b36...50e7eb`, test `9f1992e5...3b6f39b6`,
+`tools/runtime_env.py` `103ec280...5ce02b`. Original EXE pin `b56986e0...c08a8ac` unchanged in
+all four pinning files. Preserved reports `20260912_lap228_r6b_r3_review_report.json` and
+`20260912_lap230_lap228probe_rerun_report.json` both still sha256
+`739921763ca47cbc881dcb688cc909688ffddcb5c52f0e7620da4071921c6883` before and after the probes.
+Non-vacuity: unmutated regression 2 passed; dropping both guards (M3) and ignoring `--output`
+(M4) each make the lap235 test fail; dropping only one guard (M1/M2) is not detected.
+
+FOLLOW-UP (both non-blocking, neither is a preservation defect) —
+R6-B-R10: `--output` is validated for existence but not writability. A missing parent directory
+or a read-only directory ends in an unclassified traceback with exit 1 after the whole probe body
+has run, instead of the exit-2 refusal. Nothing is created, so evidence is preserved.
+R6-B-R11: `tests/test_review_probe_output.py` does not pin the exclusive-creation race guard;
+removing either guard alone still passes. The branch is covered only by the lap236 probe.
+
+NEXT — next new middle tier (Claude Code claude-opus-5/high or Codex Sol/high) independently reviews
+R6-B-R8, then a new work tier handles R6-B-R9 -> R6-B-R10 -> R6-B-R11 -> F2-R1 -> F3-R1 ->
+F3-R2 -> F6-R2, one item per lap. Still forbidden before upper-tier/user adjudication:
+Stage B original/candidate runs, R6-A/R6-C, S1/F2-R2 decisions, and R6-B-R2.
+
+FINAL BLOCKER — after this lap's STATUS/hand-off documentation update, the final `make check`
+failed 13 loop/model-routing tests because startup safety rejected `docs/STATUS.md` at 188 lines
+(limit 180). The source-only gate before documentation passed 257 tests; no blind retry was made.
+Next tier must first archive/compress STATUS with provenance to <=180 lines and rerun the full
+required gates, then independently review R6-B-R8. Preserve current code/docs and do not run the
+game or Stage B until both the gate and middle review succeed.

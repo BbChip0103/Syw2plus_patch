@@ -1,0 +1,47 @@
+# Syw2plus 자율 개발 루프 — systemd user unit
+# 설치: loop/loopctl.sh install   (~/.config/systemd/user/ 로 복사한다)
+#
+# 이 파일을 직접 고쳐도 되지만, 고친 뒤에는 반드시 loopctl.sh install 을 다시 돌려라.
+
+[Unit]
+Description=Syw2plus PATCH loop (isolated fresh headless sessions)
+Documentation=file://__PROJECT_DIR__/README.md
+After=network-online.target
+Wants=network-online.target
+
+# 재시작 폭주 방지: 10분 안에 5번 실패하면 포기하고 멈춘다.
+# (StartLimit* 는 [Unit] 에 있어야 한다. [Service] 에 두면 조용히 무시된다.)
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=__PROJECT_DIR__
+ExecStart=/bin/bash __PROJECT_DIR__/loop/loop.sh
+
+# PATH 를 반드시 명시한다.
+# 자동 실행은 평소 터미널 환경(.bashrc, nvm, 플러그인 경로)을 물려받지 않는다.
+# 여기서 빠뜨리면 claude / node / git 을 못 찾고 조용히 죽는다.
+Environment=PATH=__LOOP_PATH__
+Environment=HOME=__HOME__
+Environment=LANG=ko_KR.UTF-8
+Environment=TERM=dumb
+Environment=CI=1
+
+# 비정상 종료면 재시작. 정상 종료(exit 0 = STOP 파일 / max-laps)면 그대로 둔다.
+Restart=on-failure
+RestartSec=60
+# Another loop already owns the common Git writer lock. Do not restart-spin.
+RestartPreventExitStatus=73
+SuccessExitStatus=0
+
+# 정상 종료 신호: 현재 바퀴를 마칠 시간을 준다.
+KillSignal=SIGTERM
+TimeoutStopSec=1800
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=syw2plus-patch-loop
+
+[Install]
+WantedBy=default.target

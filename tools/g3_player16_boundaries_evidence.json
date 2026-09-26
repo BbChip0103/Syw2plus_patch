@@ -1,0 +1,112 @@
+{
+  "status": "PASS",
+  "coverage": "INCOMPLETE",
+  "activation": {
+    "status": "NO-GO",
+    "reason": "constant-only 16-player patch cannot preserve byte masks/save semantics; invasive extension remains unresolved, not declared impossible"
+  },
+  "source": {
+    "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/Syw2plus/syw2plus_original.exe",
+    "sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "pe32": true,
+    "image_base": "0x00400000",
+    "text_start": "0x00401000",
+    "text_bytes": 933888,
+    "decoded_instructions": 306840
+  },
+  "player_struct": {
+    "base": "0x00956770",
+    "stride": "0x00003abc",
+    "original_count": 8,
+    "original_end": "0x00973d50",
+    "target_count": 16,
+    "target_end": "0x00991330",
+    "target_geometry_check": true
+  },
+  "bulk_save": {
+    "start": "0x00892410",
+    "end": "0x00975d8c",
+    "target_excess_bytes": 112036,
+    "target_excess_hex": "0x0001b5a4",
+    "arithmetic_check": true
+  },
+  "candidate_policy": {
+    "boundary_operands": "decoded operands only; semantic use unresolved",
+    "immediate_loop_bound_8": "common-number noise; not proof of an 8-player loop or safe bound",
+    "base_index_memory": "effective address depends on runtime registers"
+  },
+  "mask_evidence": {
+    "function": "0x0043ebc0",
+    "instructions": [
+      {
+        "instruction": "0x0043ebc2",
+        "bytes": "b2 01",
+        "mnemonic": "mov",
+        "operands": "dl, 1",
+        "evidence": "decoded_capstone_instruction"
+      },
+      {
+        "instruction": "0x0043ebc9",
+        "bytes": "88 48 01",
+        "mnemonic": "mov",
+        "operands": "byte ptr [eax + 1], cl",
+        "evidence": "decoded_capstone_instruction"
+      },
+      {
+        "instruction": "0x0043ebcc",
+        "bytes": "88 48 05",
+        "mnemonic": "mov",
+        "operands": "byte ptr [eax + 5], cl",
+        "evidence": "decoded_capstone_instruction"
+      },
+      {
+        "instruction": "0x0043ebd2",
+        "bytes": "d2 e2",
+        "mnemonic": "shl",
+        "operands": "dl, cl",
+        "evidence": "decoded_capstone_instruction"
+      },
+      {
+        "instruction": "0x0043ebdb",
+        "bytes": "88 50 03",
+        "mnemonic": "mov",
+        "operands": "byte ptr [eax + 3], dl",
+        "evidence": "decoded_capstone_instruction"
+      }
+    ],
+    "owner_mask": {
+      "offset": 3,
+      "width": "byte",
+      "basis": "decoded mov [eax+3],dl",
+      "implication": "owner indices 8..15 shift outside an 8-bit self mask and become zero"
+    },
+    "player_index_storage": {
+      "offsets": [
+        1,
+        5
+      ],
+      "width": "byte",
+      "basis": "decoded mov byte ptr [eax+1],cl and [eax+5],cl"
+    },
+    "opponent_mask": {
+      "offset": 4,
+      "width": "byte",
+      "semantics": "OR of 1<<other.player_num for different-team players",
+      "basis": "existing static field evidence; no new runtime execution"
+    }
+  },
+  "unresolved": {
+    "table_relocation": "UNRESOLVED",
+    "mask_widening_all_consumers": "UNRESOLVED",
+    "lobby_start_positions_win_ai": "UNRESOLVED",
+    "save_version": "UNRESOLVED",
+    "lan_protocol": "UNRESOLVED"
+  },
+  "boundary_operand_candidate_counts": {
+    "player_struct_base": 191,
+    "player_struct_stride": 30,
+    "player_struct_original_end": 8,
+    "player_struct_target_end": 0
+  },
+  "immediate_loop_bound_8_candidate_count": 2795
+}

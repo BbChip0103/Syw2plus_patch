@@ -1,0 +1,26 @@
+{
+  "docs/STATUS.md": {
+    "sha256": "cf80d21fd7493e04b41a8b10f2ab8d8c5e6d12d9d446eeba83d2be1f55e6ce22",
+    "lines": 114
+  },
+  "loop/ESCALATE_SOL": {
+    "sha256": "5a2147e894eec37fd67b6b2f57972ec95a8793ec27807c4fb03952f9f73664fd",
+    "lines": 479
+  },
+  "docs/work/active/G1_CARD2_INPUT_PARITY_HANDOFF.md": {
+    "sha256": "c30497f38aad750ba443b6e986d0215ae606d53adf31062d995d333de7a81d3d",
+    "lines": 2928
+  },
+  "tests/test_review_probe_output.py": {
+    "sha256": "59538c0e1778b9c09ff6e83207123a89229f3001d351a873af2b194e72ec8957",
+    "lines": 228
+  },
+  "tools/runtime_env.py": {
+    "sha256": "e4f6a834f1ca591d2fe7acc1002beea4b343647d6ba47ff3b847f74e22455837",
+    "lines": 4342
+  },
+  "docs/history/laps/probes/20260912_lap228_r6b_r3_review_probe.py": {
+    "sha256": "16f74629aae8f823508762d719776547e1fd8365a07c7862bbf89a4d3ae06d12",
+    "lines": 426
+  }
+}

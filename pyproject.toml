@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "syw2plus-patch"
+version = "0.1.0"
+description = "Original PE32 supply and QHD binary patch experiments"
+requires-python = ">=3.11"
+dependencies = ["pefile>=2023.2", "capstone>=5.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.4", "mypy>=1.10"]
+
+[tool.setuptools.packages.find]
+include = ["patches*", "tools*"]
+exclude = ["tools.inmm_stub*"]
+
+[tool.pytest.ini_options]
+testpaths = ["patches", "tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true

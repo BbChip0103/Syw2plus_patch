@@ -1,0 +1,11 @@
+# 2026-09-11 | lap 99 | G1-A upstream provenance independent confirmation
+
+- 실제 provider/model/effort / 지정 역할: Codex / 실제 model ID는 현재 표면에 노출되지 않음 / high 지정 / middle-tier 진단·계획·독립 검수. 게임 구현 수정 없음.
+- 가설 / 사용자 관찰: lap98의 CX·ESI upstream 계약을 계약 함수 출력과 분리해 두 고정 원본에서 재추출하면 old bytes·branch·direct xref와 production no-edge 한계를 독립 판정할 수 있다.
+- 예상 PASS / FAIL 조건: 두 원본 SHA/cmp/PE, upstream raw bytes 7개, mapper/updater/active-helper caller 집합과 mapper→enqueue direct call 부재가 일치하면 CONFIRM; 주소·byte·xref drift는 REVISE/ESCALATE; production 의미가 없으면 UNKNOWN/BLOCKED를 유지한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 게임 code/tool/test/binary 변경 없음. `analysis/memory_maps/player_offsets.md`, `docs/STATUS.md`, `loop/ESCALATE_SOL`, 본 history, `docs/history/laps/20260911_lap99_files.sha256`만 문서 갱신. `LOOP_ALLOW_COMMITS=0`, uncommitted.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: `Syw2plus/syw2plus_original.exe`와 private copy 모두 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`, `cmp` PASS; PE32 i386 `.text` VA/raw `0x00401000/0x1000`, size `0xE3AE5`. candidate/player/map/army/fixture N/A/SKIP.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `sha256sum`, `cmp -s`, `file`, `objdump -h/-d/-D -Mintel`, 두 원본의 7개 `xxd` window, instruction caller count, `PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_binary_contract.py`, `make check`, safety, doctor. 신규 log/PNG/game run 없음.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): SHA/cmp/PE PASS; raw bytes 7개가 두 원본에서 일치; direct caller mapper/updater/active-helper/enqueue=`3/1/11/134`; mapper 내 direct call 0. targeted **12 passed**. lap98 **MIDDLE CONFIRM PASS**; production sender/action 의미·G1 **UNKNOWN/BLOCKED**.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 두 원본은 byte-identical이며 input updater와 mapper가 같은 상위 흐름에 있지만 active-record helper는 11 caller로 분산되고 mapper 내 enqueue call은 없다. 이는 direct-edge 부재를 확인하지만 production 의미 부재를 증명하지는 않는다. `make check` **139 passed**, Ruff/compileall/mypy/context PASS, safety `SAFETY_PASS`, doctor `ok=true`/original verified. runtime manifest/candidate/game/fixture는 SKIP, 사용자 승인 없음.
+- 다음 한 가지: 새 Luna/Sonnet5/high work-tier가 `0x0041E635→0x00437E90`부터 mapper call과 `0x0041EBF6` load까지의 상위 CFG/branch 조건, `0x009E1DCC`/`0x00892FFE` writer 범위를 고정 SHA·old bytes·direct data/call xref로 한 번만 연결해 production input 의미를 증명하거나 정확한 단절을 남긴다. 게임 구현·run·fixture·좌표 변경은 금지한다.

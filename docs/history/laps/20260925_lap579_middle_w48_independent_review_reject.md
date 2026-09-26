@@ -1,0 +1,11 @@
+# 2026-09-25 | lap 579 | G2 S4-0 W48 독립 검수
+
+- 실제 provider/model/effort / 지정 역할: Codex native(모델 ID·effort UI 비노출) / middle 진단·계획·확인.
+- 가설 / 사용자 관찰: lap578의 원본 C0 `BLOCKED(env)`가 카드의 127.0.0.1 유니캐스트·포트 기록 계약과 raw로 독립 재현되는지 검수한다.
+- 예상 PASS / FAIL 조건: 두 raw에서 PS3 0/2·tick 0/0, 정확한 원본·격리 복사본·캡처·종료가 확인되고, 127.0.0.1 입력 및 pre/post 포트 기록이 보존되면 ACCEPT. 고정 입력 또는 필수 provenance가 없으면 REJECT.
+- 변경 파일 / source fingerprint / 커밋: 제품·게임·하네스·기존 raw 변경 0. 이 기록, `docs/STATUS.md`, `docs/feedback/INBOX.md`, `loop/ESCALATE_SOL`만 uncommitted로 갱신. 시작 시 runtime 제공 fingerprint `3622fd23789eaaf075b9708ba3f9be0f48362281`; 최종 Fast fingerprint는 STATUS에 기록한다. 커밋 0.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 및 4개 private 실행 사본 모두 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 후보 C1 실행 0. 두 원본 인스턴스·fresh prefix/display `:6557`~`:6560`, bridge·seed·memory write 없음. 게임 진입 전이라 활성 플레이어/지도/군대 없음.
+- 실행 명령 / 로그 / 캡처: `jq`로 두 JSON의 stage/PS/tick을 summary 없이 재계산, `sha256sum`으로 raw·원본·4 private EXE·공유 캡처 검증, `rg`로 runner의 주소 입력·포트 기록 검색, `ps`/`ss`로 현재 잔류 확인, `objdump -p`/`strings`로 DirectPlay 정적 경로 재확인. raw SHA는 attempt1 `abe81730b570d025f4a19b22e69bbb8055ff99f13711c9652178b25b185ddc2d`, attempt2 `e0a1f7cba736af5fe7331130908dd0bb1b26ed8d72f7225b47ae8d0dacea800a`. 대표 캡처 SHA `631e1ed3…85ee`, `a43167ae…497`, `8318aecf…707a` 일치.
+- 측정값 / 판정: attempt1 양쪽 PS9→PS7→PS13, tick 0. attempt2 host PS9→7→13→7, client PS9→7→13 유지, settle 각 20표본, PS3 0/2·tick 0/0. T1/T2 실패 자체와 `NOT_FEASIBLE` 아님은 확인했다. 그러나 attempt2 runner에는 IP 입력/키 입력이 없고 client 동작은 `찾아보기→첫 행→참여하기`뿐이며, raw/log에 pre/post `ss` 출력도 없다. **`REJECT / BLOCKED(harness_contract)`** — 실제 경로가 127.0.0.1 유니캐스트였는지, LAN 검색을 쓰지 않았는지, 실행 당시 포트가 비어 있었는지 독립 검증할 수 없어 `BLOCKED(env)` 원인 귀속을 승인하지 않는다.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 캡처는 빈 세션 목록, host의 provider 화면 복귀, client의 빈 목록 잔류와 raw에 일치한다. attempt2 capture helper가 attempt1 OUT을 재사용한 provenance 결함은 실제 경로·SHA로 추적 가능하다. 현재 해당 PID/display/포트 잔류는 없지만 역사적 pre/post 포트 증거를 대신하지 않는다. G2 PASS·제품 불가능·후보 회귀·사용자 3단 승인 아님.
+- 다음 한 가지: 수정 재실행은 게임쌍 2회 예산을 넘기므로 middle이 열지 않는다. strategy가 (A) IP 필드/DirectPlay address path를 정적으로 특정하고 runner가 주소 입력·socket/packet provenance·pre/post `ss`를 raw에 저장하는 corrected C0 정확히 1회를 work tier에 허용하거나, (B) W48을 `UNKNOWN(harness_contract)`로 S5′에 올리고 W49만 진행할지 판정한다. 판정 전 W48/C1/W49 실행 금지.

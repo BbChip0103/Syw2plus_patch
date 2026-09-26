@@ -1,0 +1,11 @@
+# 2026-09-25 | lap 629 | 목표 G5
+
+- 실제 provider/model/effort / 지정 역할: Codex hands-on work 세션 / 구현 작업자.
+- 가설 / 사용자 관찰: 검증된 B-1 PE-header growth로 새 BSS 꼬리를 만들면 선택 20칸을 50칸으로 재배치할 수 있다.
+- 예상 PASS / FAIL 조건: 원본 SHA 고정, old bytes fail-closed, PE 범위·canary·exact restore, targeted/Fast/safety PASS; 이후 격리 55기 드래그에서 count 50과 50기 명령 전달.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `patches/selection/g5_selection_cap50_v1.py`, `patches/selection/test_g5_selection_cap50_v1.py`; 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 커밋 없음.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 SHA 위와 같음; 후보 `ebd46050cb061a4793bcf9dbc86e196bd71ab45050d881bb13c64258a8c83e8c`; Wine 9.0 + fresh WINEARCH=win32 prefix + fresh Xvfb 1600x1200x24; 실제 게임 fixture/활성 플레이어/지도/군대는 초기화 전이라 미검증.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `.venv/bin/python -m pytest -q patches/selection/test_g5_selection_cap50_v1.py` → 5 passed; 최종 `make check` → 867 passed/657.79s, Ruff/compileall/mypy/CONTEXT_PASS; `bash checks/safety.sh check` → `SAFETY_PASS`; 후보 build report `local/candidates/g5_selection_cap50_lap629/build-report.json`; 후보 run log `.../g5-lap629-run-gSxALW/wine.log`; original direct control log `.../g5-lap629-original-rR96XZ/wine.log`; runtime_env original manifest `local/runtime/g5-runtime-lap629-original-kCE1zD/20260925_192947_3153617_0/manifest.json` and `g1-baseline` output `FAIL_NO_EFFECT` at tick383.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): PE selection `0x0108c000..0x0108c0c8`, reserved group side table `0x0108c100..+2000`, `.rsrc` moved to `0x0108d000`; 38 direct +14 end +6 rotation fixups. Candidate and original both hit read `0x00000000` at EIP `0x00464F20`; **BLOCKED(harness_runtime_and_scope)**. G5 PASS/drag/command/save-load SKIP.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: explicit restore rejects unknown candidate and returns exact original; slot-index `0x008990c8` unchanged. Command packet and PlayerStruct 20-entry group fields remain unchanged; no independent middle review or user milestone approval.
+- 다음 한 가지: 승격 작업자가 common `0x00464F20` initialization fault/harness contract, then command encode/decode, group side-table wiring, UI/save/load and 55-unit fixture scope; preserve candidate and logs.

@@ -1,0 +1,19 @@
+# 2026-09-11 | lap 26 | 목표 G1-A 새 원본 selector gate 실행
+
+- 날짜/lap/목표: 2026-09-11 KST / lap26 / G1-A (G1의 원본 구성·입력 경계)
+- 실제 provider/model/effort / 지정 역할: Codex `gpt-5.6-luna`/high work 지정. 현재 세션 호출의 실제 model ID/effort는 노출되지 않아 미확인. 게임 코드·바이너리 구현 변경 없음.
+- 가설 / 사용자 관찰: lap25 Sol CONFIRMED 하네스가 새 격리 원본에서 고정 좌표와 selector WORD 흐름을 관측하면, PS9→PS5→PS3 및 필수 입력5종의 다음 최소 변경 지점을 결정할 수 있다.
+- 예상 PASS / FAIL 조건: 활성 G1-A 카드의 새 manifest, 원본 SHA, 전용 1600×1200 display/prefix, 800×600 content crop, selector `1→0→1`, PS5→PS3, scene/필수5입력, modules/surface, cleanup을 모두 같은 run에서 확인한다. 어느 필수 gate든 실패하면 재시도하지 않고 Sol에 승격한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 게임/EXE/DLL/asset 및 허용 소스 변경 없음. `tools/runtime_env.py` SHA256 `b091a8ae83e5332c1d5dc17cb979531fcafc19bdf3368f56b4c094d24560195c`; `tests/test_runtime_env.py` SHA256 `d15a3580b2fd9d0bc209ca62015bc659f3a0d8982d33ea559b7645f1306baa75`. 문서와 `loop/ESCALATE_SOL`만 이번 기록으로 추가/갱신. 커밋 없음, unborn HEAD, 자동 커밋/푸시 없음.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 `../Syw2plus_re/Syw2plus/syw2plus_original.exe` SHA256 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 새 복사본 동일 SHA. manifest `local/runtime/20260911_024939_418440_0/manifest.json` SHA256 `801bc9683cc82ccea2d061fa0089fdb31908a2defff7388666ecba294c16341c`. run은 새 private copy의 무수정 원본·기본 2인 임의게임, synthetic/memory write/control bridge/resource grant 없음. 실제 활성 플레이어·지도·군대는 selector gate 실패로 미측정.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `.venv/bin/python tools/runtime_env.py prepare --timeout 60` → PASS, `.venv/bin/python tools/runtime_env.py check --manifest local/runtime/20260911_024939_418440_0/manifest.json` → PASS, `.venv/bin/python tools/runtime_env.py g1-baseline --manifest local/runtime/20260911_024939_418440_0/manifest.json --screen 1600x1200x24 --timeout 90` → run verdict FAIL. `output/g1_baseline.json`, `output/g1-baseline.log`, `output/g1_a/{provenance,window,surface,modules,inputs,scene,boundary,verdict}` 보존. 메뉴 캡처: `20260911_025013_20260911_024939_418440_0_420371_title_before_menu_1789062613389622496.png` SHA256 `277a0b23b836e30508326efa0295aa0c35f09a6a9fc4f55fa2b121b09ce5b252`; menu 후: `20260911_025013_20260911_024939_418440_0_420371_lobby_after_menu_1789062613923845910.png` SHA256 `c0154462e1df4e5f4bc6936b670fc15cc2de0eb0a964425bd04a3e14fbb15489`; selector 전: `20260911_025014_20260911_024939_418440_0_420371_lobby_selector_before_1789062614242968595.png` SHA256 `7f50c8b3203a3c9ca9053828566e931ef59e634f283afc876e4ccb9bd9b915ea`.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): `verdict.json` overall **FAIL**. PASS: original hash, private 1600×1200 root, 800×600 content crop, PS9 surface (`0x00E5BF18`, values mode3/800/600/8/800/600), modules hashed, cleanup (`prefix_processes_after=[]`, `global_kill_used=false`). FAIL: `surface_ps9_ps3=false` (PS3 미도달), `required_inputs=false`, `same_run_scene=false`. 직접 원인: `visible multiplayer selector did not normalize WORD 1->0; last={'ps': 7, 'lobby_mode': 1}`. `scene.json`/`boundary.md`는 SKIP. 실행 경과 `90.395s`; process exit나 PNG 존재는 판정 근거로 사용하지 않았다.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 기계 회귀는 실행 전 fresh PASS — targeted `19 passed`, `make check` `89 passed`, Ruff/compileall/mypy PASS, `checks/safety.sh check` `SAFETY_PASS`, `make doctor` 원본 verified. 이번 run은 하네스/원본 입력 의미가 충돌하는 필수 gate FAIL이며, G1 제품·G2~G4·사용자 마일스톤 승인 없음. 원본은 변경하지 않았고 새 copy/prefix/display는 cleanup 완료. Sol/high 독립 진단 전 재실행·패치 금지.
+- 다음 한 가지: 새 Codex `gpt-5.6-sol`/high middle이 selector 클릭/WORD 관측 불일치의 원인(입력 효과, 메모리 reader, 원본 UI 의미)을 독립 대조하고, 재실행 여부가 아닌 최소 진단/수리 범위와 정확한 version/old bytes/rollback 조건을 판정한다.
+
+## 증거 경로
+
+- run manifest: `local/runtime/20260911_024939_418440_0/manifest.json`
+- verdict: `local/runtime/20260911_024939_418440_0/output/g1_a/verdict.json`
+- aggregate evidence: `local/runtime/20260911_024939_418440_0/output/g1_baseline.json`
+- logs: `local/runtime/20260911_024939_418440_0/output/g1-baseline.log`

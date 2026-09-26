@@ -1,0 +1,10 @@
+# 2026-09-25 | lap 631 | 목표 G5
+
+- 날짜/lap/목표: 2026-09-25 / 631 / G5 검증된 runtime 경로에서 원본 PS3 도달 및 후보 실행 계약 확인
+- 가설: lap629의 direct-Wine 공통 fault는 `tools.runtime_env prepare → private prefix/display → bridge` 경로로 분리할 수 있고, 같은 경로에서 G5 후보를 실행할 수 있다.
+- 변경파일: 제품 코드·패치·테스트 0. `docs/STATUS.md`, `loop/ESCALATE_SOL`, 본 기록만 갱신.
+- 원본·후보 SHA: 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 보존 후보 `ebd46050cb061a4793bcf9dbc86e196bd71ab45050d881bb13c64258a8c83e8c`.
+- 실행명령/결과: 현재 `df -B1` 여유 `227,295,465,472`B·`du -sh local/runtime` `73G`; 잘못된 저장소 내부 source는 `unsafe source directory`로 거부됨. 검증된 참고 source `/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/Syw2plus`(원본 SHA 일치)로 `.venv/bin/python tools/runtime_env.py prepare --runtime-root local/runtime/g5-lap631-original --bridge tools/inmm_stub/_inmm.dll --timeout 60` → exit0, `check --manifest .../20260925_205009_3887898_0/manifest.json` → exit0. 새 private Win32 prefix/display와 bridge SHA `a23dfbcff26f731c04c7a41ff4ff1c9efa62d2963053adae6a49ab8a750dcee2`가 기록됨.
+- 실제 실행 증거: `g1-baseline --manifest local/runtime/g5-lap631-original/20260925_205009_3887898_0/manifest.json --screen 1600x1200x24 --timeout 90` → exit2 `FAIL_NO_EFFECT`; 보존 `g1_baseline.json` SHA `6acd8ba6bce87ff33ed97b53f58eb632aadd405193fcee81a1d406726b877c3`, `verdict.json` SHA `28669c065e094289ebe6e2aaf50269904062dacbc244bc6f3c17e2319364d28a`, `provenance.json` SHA `b0d091e6f05dc0a310eadffeda745845901b4c6001fa33035e7c4c2fc8461f5e`. `surface_ps3=true`, `PS5→PS3; tick=2`, last tick `376`, cleanup `ok=true`; 실패 지점은 기존 고정 미니맵 입력이다.
+- 판정: 원본 `prepare/check/PS3 도달`은 PASS 근거가 생겼다. 그러나 baseline 전체는 `FAIL_NO_EFFECT`이고, `runtime_env.check_runtime`/`prepare`는 검증된 원본 `syw2plus_original.exe`만 허용하며 G5 후보용 manifest/실행 파일 선택/50기 drag probe가 없다. 후보 실행·55기 fixture·명령 전달·save/load는 SKIP.
+- 다음행동: 승격 작업자가 G5 후보를 검증된 runtime에 연결하는 fail-closed 계약(후보 파일명/해시, manifest의 원본·후보 provenance, candidate launch path, 55기 fixture·count/명령 raw reader)을 먼저 확정한다. 그 전에는 후보를 `game.exe`로 우회 실행하거나 G5 PASS를 주장하지 않는다.

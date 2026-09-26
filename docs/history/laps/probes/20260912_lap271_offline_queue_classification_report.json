@@ -1,0 +1,137 @@
+{
+  "a1_f2r1_stage_report_callers": {
+    "all_calls_supply_evidence": true,
+    "call_sites": [
+      {
+        "keywords": [],
+        "line": 357,
+        "positional_args": 5
+      }
+    ],
+    "evidence_params_have_none_defaults": [
+      "baseline_evidence",
+      "candidate_evidence"
+    ],
+    "external_reference_files": []
+  },
+  "a2_f3r1_after_last_producer": {
+    "after_last_write_sites": [
+      {
+        "line": 2551,
+        "text": "{\"wait\": \"not observed\", \"last\": exc.last, \"tick\": exc.last.get(\"tick\")"
+      }
+    ],
+    "enclosing_functions": [
+      "_g1_run_input_sequence",
+      "record_timeout"
+    ],
+    "site_count": 1
+  },
+  "a3_f3r2_reachability": {
+    "cases": {
+      "candidate_minimap_result_BLOCKED": {
+        "camera_moved_candidate": false,
+        "minimap_stage": "UNKNOWN_DISPUTED_ORACLE",
+        "overall": "INCONCLUSIVE"
+      },
+      "candidate_minimap_result_FAIL": {
+        "camera_moved_candidate": false,
+        "minimap_stage": "UNKNOWN_DISPUTED_ORACLE",
+        "overall": "INCONCLUSIVE"
+      },
+      "candidate_minimap_result_FAIL_NO_EFFECT": {
+        "camera_moved_candidate": false,
+        "minimap_stage": "UNKNOWN_DISPUTED_ORACLE",
+        "overall": "INCONCLUSIVE"
+      },
+      "candidate_minimap_result_SKIP": {
+        "camera_moved_candidate": false,
+        "minimap_stage": "UNKNOWN_DISPUTED_ORACLE",
+        "overall": "INCONCLUSIVE"
+      },
+      "candidate_minimap_result_UNKNOWN_BUDGET_EXHAUSTED": {
+        "camera_moved_candidate": false,
+        "minimap_stage": "UNKNOWN_DISPUTED_ORACLE",
+        "overall": "INCONCLUSIVE"
+      },
+      "candidate_minimap_result_UNKNOWN_OBSERVATION_WINDOW_TRUNCATED": {
+        "camera_moved_candidate": false,
+        "minimap_stage": "UNKNOWN_DISPUTED_ORACLE",
+        "overall": "INCONCLUSIVE"
+      },
+      "candidate_minimap_result_UNKNOWN_SELECTION_OBSERVATION_CORRUPTED": {
+        "camera_moved_candidate": false,
+        "minimap_stage": "UNKNOWN_DISPUTED_ORACLE",
+        "overall": "INCONCLUSIVE"
+      },
+      "candidate_minimap_result_UNKNOWN_STATE_READ_FAILURE": {
+        "camera_moved_candidate": false,
+        "minimap_stage": "UNKNOWN_DISPUTED_ORACLE",
+        "overall": "INCONCLUSIVE"
+      },
+      "candidate_unit_select_result_FAIL": {
+        "overall": "INCONCLUSIVE",
+        "unit_select_stage": "UNKNOWN_DISPUTED_ORACLE"
+      },
+      "control_both_pass": {
+        "minimap_stage": "PASS",
+        "overall": "PASS"
+      }
+    },
+    "new_pass_paths": []
+  },
+  "a4_r23_r24_gate_consumers": {
+    "absent_count_is_fail_closed": {
+      "overall": "INCONCLUSIVE",
+      "unit_select_stage": "INCONCLUSIVE"
+    },
+    "comparator_selection_count_context": [
+      "details[\"selection_count\"] = {",
+      "\"selection_count_delta\": deltas[\"baseline\"] == deltas[\"candidate\"],"
+    ],
+    "read_coverage": {
+      "tools/check_runtime_evidence.py": 0,
+      "tools/compare_g1_stage_b.py": 0
+    },
+    "read_failure": {
+      "tools/check_runtime_evidence.py": 0,
+      "tools/compare_g1_stage_b.py": 0
+    },
+    "selection_count": {
+      "tools/check_runtime_evidence.py": 0,
+      "tools/compare_g1_stage_b.py": 1
+    },
+    "stage_budget_state": {
+      "tools/check_runtime_evidence.py": 0,
+      "tools/compare_g1_stage_b.py": 0
+    }
+  },
+  "a5_r21_producer_write_ordering": {
+    "atomic_replace": true,
+    "exclusive_create_in_tools": 0,
+    "serialises_before_write": true,
+    "writer_body": "def _write_json(path: Path, value: object) -> None:\n    path.parent.mkdir(parents=True, exist_ok=True)\n    tmp = path.with_name(path.name + \".tmp\")\n    tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + \"\\n\")\n    tmp.replace(path)",
+    "writer_found": true
+  },
+  "a6_harness_locality": {
+    "R20_mirror_control": {
+      "docs/history/laps/probes": 24,
+      "tests": 0,
+      "tools": 0
+    },
+    "R21_exclusive_create": {
+      "docs/history/laps/probes": 27,
+      "tests": 0,
+      "tools": 0
+    },
+    "R22_review_probe_test": {
+      "docs/history/laps/probes": 30,
+      "tests": 0,
+      "tools": 0
+    }
+  },
+  "astra_item": 3,
+  "item": "offline_queue_stage_b_call_path_classification",
+  "lap": 271,
+  "role": "middle"
+}

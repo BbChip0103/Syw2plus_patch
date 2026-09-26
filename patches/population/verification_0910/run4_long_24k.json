@@ -1,0 +1,111 @@
+{
+  "ok": true,
+  "start_tick": 937,
+  "target_tick": 24937,
+  "end_tick": 24970,
+  "continued_ticks": 24033,
+  "state": {
+    "pid": 3500765,
+    "time": 1788983187.7319152,
+    "ps": 3,
+    "tick": 24970,
+    "players": [
+      {
+        "owner": 0,
+        "nation": 1,
+        "ai": 1,
+        "rice": 67472,
+        "wood": 67439,
+        "reserved": 0,
+        "count": 57,
+        "used": 1945,
+        "count_cap": 250,
+        "cap": 5000
+      },
+      {
+        "owner": 1,
+        "nation": 2,
+        "ai": 1,
+        "rice": 170256,
+        "wood": 170256,
+        "reserved": 12,
+        "count": 96,
+        "used": 1407,
+        "count_cap": 250,
+        "cap": 5000
+      },
+      {
+        "owner": 2,
+        "nation": 0,
+        "ai": 1,
+        "rice": 7500,
+        "wood": 7500,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 250,
+        "cap": 5000
+      },
+      {
+        "owner": 3,
+        "nation": 0,
+        "ai": 1,
+        "rice": 7500,
+        "wood": 7500,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 250,
+        "cap": 5000
+      },
+      {
+        "owner": 4,
+        "nation": 0,
+        "ai": 1,
+        "rice": 7500,
+        "wood": 7500,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 250,
+        "cap": 5000
+      },
+      {
+        "owner": 5,
+        "nation": 0,
+        "ai": 1,
+        "rice": 7500,
+        "wood": 7500,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 250,
+        "cap": 5000
+      },
+      {
+        "owner": 6,
+        "nation": 0,
+        "ai": 1,
+        "rice": 7500,
+        "wood": 7500,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 250,
+        "cap": 5000
+      },
+      {
+        "owner": 7,
+        "nation": 0,
+        "ai": 1,
+        "rice": 7500,
+        "wood": 7500,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 250,
+        "cap": 5000
+      }
+    ]
+  }
+}

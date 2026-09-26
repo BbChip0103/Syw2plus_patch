@@ -1,0 +1,676 @@
+{
+  "clean_path": {
+    "clicks": [
+      [
+        410,
+        270
+      ],
+      [
+        150,
+        520
+      ]
+    ],
+    "drags": [
+      [
+        350,
+        180,
+        550,
+        350
+      ]
+    ],
+    "error_type": "_G1WaitTimeout",
+    "ok": false,
+    "results": {
+      "drag_select": "PASS",
+      "minimap": "FAIL_NO_EFFECT",
+      "production": "BLOCKED",
+      "unit_select": "PASS"
+    },
+    "unknown_results": []
+  },
+  "direct_call_sites": {
+    "covered": [
+      "before_click",
+      "before_production",
+      "before_drag",
+      "after_drag",
+      "before_minimap",
+      "after_minimap"
+    ],
+    "found": [
+      "before_click",
+      "before_production",
+      "before_drag",
+      "after_drag",
+      "before_minimap",
+      "after_minimap"
+    ],
+    "ok": true
+  },
+  "game_runs": 0,
+  "lap": 240,
+  "mutations": [
+    {
+      "applied": true,
+      "detected": true,
+      "failed_checks": 15,
+      "mutation": "narrow_catch_to_oserror",
+      "total_checks": 19
+    },
+    {
+      "applied": true,
+      "detected": true,
+      "failed_checks": 19,
+      "mutation": "relax_classification_to_fail_no_effect",
+      "total_checks": 19
+    },
+    {
+      "applied": true,
+      "detected": true,
+      "failed_checks": 19,
+      "mutation": "drop_read_point_provenance",
+      "total_checks": 19
+    },
+    {
+      "applied": true,
+      "detected": true,
+      "failed_checks": 10,
+      "mutation": "swallow_direct_failure",
+      "total_checks": 19
+    },
+    {
+      "applied": true,
+      "detected": true,
+      "failed_checks": 7,
+      "mutation": "production_failure_aborts_later_inputs",
+      "total_checks": 19
+    }
+  ],
+  "product_assets_changed": 0,
+  "production_point": [
+    {
+      "exception": "oserror",
+      "findings": {
+        "blocked": true,
+        "failure_point": true,
+        "failure_recorded": true,
+        "failure_stage": true,
+        "later_inputs_sent": true,
+        "later_stages_pass": false,
+        "later_stages_ran": true,
+        "no_escape": false,
+        "not_waited": true
+      },
+      "ok": false
+    },
+    {
+      "exception": "valueerror",
+      "findings": {
+        "blocked": true,
+        "failure_point": true,
+        "failure_recorded": true,
+        "failure_stage": true,
+        "later_inputs_sent": true,
+        "later_stages_pass": false,
+        "later_stages_ran": true,
+        "no_escape": false,
+        "not_waited": true
+      },
+      "ok": false
+    },
+    {
+      "exception": "structerror",
+      "findings": {
+        "blocked": true,
+        "failure_point": true,
+        "failure_recorded": true,
+        "failure_stage": true,
+        "later_inputs_sent": true,
+        "later_stages_pass": false,
+        "later_stages_ran": true,
+        "no_escape": false,
+        "not_waited": true
+      },
+      "ok": false
+    }
+  ],
+  "raising_points": [
+    {
+      "clicks": [],
+      "drags": [],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "oserror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "before_click",
+      "stage": "unit_select"
+    },
+    {
+      "clicks": [],
+      "drags": [],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "valueerror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "before_click",
+      "stage": "unit_select"
+    },
+    {
+      "clicks": [],
+      "drags": [],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "structerror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "before_click",
+      "stage": "unit_select"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ]
+      ],
+      "drags": [],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "oserror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "before_drag",
+      "stage": "drag_select"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ]
+      ],
+      "drags": [],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "valueerror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "before_drag",
+      "stage": "drag_select"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ]
+      ],
+      "drags": [],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "structerror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "before_drag",
+      "stage": "drag_select"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ]
+      ],
+      "drags": [
+        [
+          350,
+          180,
+          550,
+          350
+        ]
+      ],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "oserror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "after_drag",
+      "stage": "drag_select"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ]
+      ],
+      "drags": [
+        [
+          350,
+          180,
+          550,
+          350
+        ]
+      ],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "valueerror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "after_drag",
+      "stage": "drag_select"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ]
+      ],
+      "drags": [
+        [
+          350,
+          180,
+          550,
+          350
+        ]
+      ],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "structerror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "after_drag",
+      "stage": "drag_select"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ]
+      ],
+      "drags": [
+        [
+          350,
+          180,
+          550,
+          350
+        ]
+      ],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "oserror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "before_minimap",
+      "stage": "minimap"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ]
+      ],
+      "drags": [
+        [
+          350,
+          180,
+          550,
+          350
+        ]
+      ],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "valueerror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "before_minimap",
+      "stage": "minimap"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ]
+      ],
+      "drags": [
+        [
+          350,
+          180,
+          550,
+          350
+        ]
+      ],
+      "error_classification": "UNKNOWN_STATE_READ_FAILURE",
+      "exception": "structerror",
+      "findings": {
+        "direct_reader": true,
+        "direct_reader_failure": true,
+        "error_counted": true,
+        "flushed_to_disk": true,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": true,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": true,
+        "raised_wait_timeout": true,
+        "read_point": true,
+        "record_result": true,
+        "record_timeout_cause": true,
+        "stage": true
+      },
+      "ok": true,
+      "read_point": "before_minimap",
+      "stage": "minimap"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ],
+        [
+          150,
+          520
+        ]
+      ],
+      "drags": [
+        [
+          350,
+          180,
+          550,
+          350
+        ]
+      ],
+      "error_classification": "FAIL_NO_EFFECT",
+      "exception": "oserror",
+      "findings": {
+        "direct_reader": false,
+        "direct_reader_failure": false,
+        "error_counted": false,
+        "flushed_to_disk": false,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": false,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": false,
+        "raised_wait_timeout": false,
+        "read_point": false,
+        "record_result": false,
+        "record_timeout_cause": false,
+        "stage": true
+      },
+      "ok": false,
+      "read_point": "after_minimap",
+      "stage": "minimap"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ],
+        [
+          150,
+          520
+        ]
+      ],
+      "drags": [
+        [
+          350,
+          180,
+          550,
+          350
+        ]
+      ],
+      "error_classification": "FAIL_NO_EFFECT",
+      "exception": "valueerror",
+      "findings": {
+        "direct_reader": false,
+        "direct_reader_failure": false,
+        "error_counted": false,
+        "flushed_to_disk": false,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": false,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": false,
+        "raised_wait_timeout": false,
+        "read_point": false,
+        "record_result": false,
+        "record_timeout_cause": false,
+        "stage": true
+      },
+      "ok": false,
+      "read_point": "after_minimap",
+      "stage": "minimap"
+    },
+    {
+      "clicks": [
+        [
+          410,
+          270
+        ],
+        [
+          150,
+          520
+        ]
+      ],
+      "drags": [
+        [
+          350,
+          180,
+          550,
+          350
+        ]
+      ],
+      "error_classification": "FAIL_NO_EFFECT",
+      "exception": "structerror",
+      "findings": {
+        "direct_reader": false,
+        "direct_reader_failure": false,
+        "error_counted": false,
+        "flushed_to_disk": false,
+        "no_pass_on_failed_stage": true,
+        "no_polls_counted": false,
+        "predicate_not_observed": true,
+        "provenance_first_equals_last": true,
+        "provenance_typed": false,
+        "raised_wait_timeout": false,
+        "read_point": false,
+        "record_result": false,
+        "record_timeout_cause": false,
+        "stage": true
+      },
+      "ok": false,
+      "read_point": "after_minimap",
+      "stage": "minimap"
+    }
+  ],
+  "role": "middle",
+  "scope": "G1 R6-B-R9 direct selection-reader failure diagnosis",
+  "source": {
+    "path": "tools/runtime_env.py",
+    "sha256": "bb10cd84ddcb521b704318aeccb60125cec0abd89436e16b0b25d1ed918d2dab"
+  },
+  "summary": {
+    "call_site_coverage_ok": true,
+    "clean_path_ok": false,
+    "mutations_detected": 5,
+    "mutations_total": 5,
+    "production_cases": 3,
+    "production_failures": 3,
+    "raising_cases": 15,
+    "raising_failures": 3,
+    "uncovered_exception_ok": true
+  },
+  "uncovered_exception": {
+    "error_type": "KeyError",
+    "findings": {
+      "no_pass_claimed": true,
+      "not_classified_as_read_failure": true,
+      "propagated": true
+    },
+    "ok": true
+  },
+  "verdict": "FAIL"
+}

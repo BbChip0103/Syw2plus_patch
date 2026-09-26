@@ -1,0 +1,20 @@
+{
+  "profile": "local original PE32",
+  "sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "image_base": "0x400000",
+  "observed_screen": [
+    800,
+    600
+  ],
+  "observed_player_records": 8,
+  "observed_owner_count_cap": 250,
+  "observed_slot_table_entries": 1200,
+  "slot_note": "Usable/reserved IDs and all consumers require a G2 capacity audit; table length is not a safe expanded capacity.",
+  "evidence": "analysis/memory_maps/player_offsets.md; patches/population/runtime_driver.py; historical captures",
+  "not_proven": [
+    "8 active players supply5000 stability",
+    "16 player support",
+    "1600x1200 original-composition output",
+    "AI/pathfinding improvement"
+  ]
+}

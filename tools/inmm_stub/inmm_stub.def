@@ -1,0 +1,6 @@
+LIBRARY _inmm
+EXPORTS
+    _imeBeginPeriod  @101
+    _imeEndPeriod    @102
+    _ciSendCommandA  @50
+    _imeGetTime      @105

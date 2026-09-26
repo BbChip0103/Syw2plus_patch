@@ -1,0 +1,22 @@
+# 2026-09-25 | lap 611 | 목표 G1 → G4
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-opus-5-5`(effort 세션 비노출), 지정 역할 strategy(계약 모델 Fable/Astra를 대신함). 게임 실행0, 제품/하네스 source·binary·raw 변경0, 커밋0.
+- 가설 / 사용자 관찰: §160. lap610 middle은 lap609 `BLOCKED(attribution)`을 ACCEPT했다. 그러나 카드 §7의 "BLOCKED ACCEPT → 계보 종료·G1 사용자 보고·G4 re-entry" 사전 결정과 §159 (B) "새 P로 예외 work"가 충돌했다. 또 target Fast가 exit127이었다. 이 둘을 판정한다.
+- 예상 PASS / FAIL 조건: (1) current-source Fast 진입점을 확정하고 target 테스트를 통과시킨다. (2) lap609 raw와 원본 bytes를 독립 재확인한다. 재확인이 lap610과 다르면 판정하지 않고 승격한다. (3) §158/§7 유지 또는 명시적 예외 중 하나를 근거와 함께 고른다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 이 기록(신규), `loop/ESCALATE_SOL` §161 추가, `docs/STATUS.md` 압축·갱신, `docs/history/20260925_status_lap611_precompaction.md`(STATUS 원문 전량, SHA256 `67e1f8e9780d19c2607b25e7564fc732d9e27eac214f6fc9be7d24afa06f3d36`, 128줄), `docs/feedback/INBOX.md` 통지 1항. uncommitted.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본과 lap609 private `game.exe` 모두 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`. lap609 run `local/runtime/20260925_135601_4078376_0`, default two-player random, synthetic 쓰기 없음. 새 실행 없음.
+- 실행 명령 / 로그 / 캡처 경로 및 해시:
+  - Fast 진입점: `.venv/bin`에는 `pytest` console script가 없다. Makefile은 `PYTHON ?= .venv/bin/python`, `test: $(PYTHON) -m pytest -ra`다. lap610의 exit127은 존재하지 않는 진입점을 부른 탓이고 제품·테스트 실패가 아니다. 올바른 target 명령 `.venv/bin/python -m pytest -q tests/test_g1_presentation_trace.py`의 결과는 **13 passed in 16.09s**, exit0이다.
+  - `sha256sum local/runtime/20260925_135601_4078376_0/game/game.exe` → `b56986e0…a8ac`. `objdump -d -Mintel --start-address=0x00469350 --stop-address=0x0046937c`로 보면, `0x00469350`은 인자 5개를 그대로 넘기는 BltFast thunk다(`[esp+0x18]`×5 push, `push ecx`, `0x00469376: ff 50 1c call [eax+0x1c]`, `0x00469379: c2 18 00 ret 0x18`).
+  - raw `trace_raw.jsonl` SHA `642d2f74c0ed26d61c93ce108fb1558339d678e94d9afa9e7e693baa906539ca`(lap609·lap610과 일치). `jq`로 BltFast return_address를 집계하면 `0x0049273F` 1190건, `0x00469379` 8건이다. `0x0049273F`는 program_state 5/7/9뿐이다(613/429/148). source_desc는 기록되지 않았다(0). `0x00469379` 8건은 모두 PS3, source 832×600, primary, HRESULT0, converted0이다.
+- Fast: 문서 반영 뒤 `make check` exit0, **846 passed in 489.85s**, Ruff/compileall/mypy/`CONTEXT_PASS`. `bash checks/safety.sh check`=`SAFETY_PASS`. Fast일 뿐 G1/G4 제품 증거가 아니다.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN):
+  - lap610 attribution 재확인 **일치**. 새 근거 **N224**: 카드 P `0x0049273F`는 메뉴/로비(PS5·7·9)의 present site다. PS3 월드 present는 별도 thunk `0x00469376`/return `0x00469379`다. lap608이 lap606 집계(caller 소실)에서 P를 골랐기 때문에 생긴 plan 오류다. **H3(2배 Blt 전환) 자체는 한 번도 시험되지 않았다**(converted 0).
+  - **판정: §158/카드 §7 유지. W50C와 native DirectDraw 2배 계보를 `BLOCKED(attribution)`으로 닫는다. §159 (B) 예외는 승인하지 않는다.** 근거:
+    1. **구조 한계(N223):** H3가 성공해도 결과는 whole-frame 2배다. DESIGN은 이를 "배치·입력 확인용 프리뷰일 뿐"이라고 한다. 그다음 W51N도 최상위 HUD·커서 층만 HD로 합성할 수 있다. DESIGN이 요구하는 스프라이트 2배 디테일 보존 경로(월드 포함)에는 이 계보로 닿지 않는다. 예외 예산을 써도 G1 합격 경로가 생기지 않는다.
+    2. **사전 약속:** lap608은 사용자에게 "안 되면 … G4로 넘어갑니다"라고 통지했다. 모델이 스스로 만든 P 오류를 이유로 사전 고정된 마지막 예산을 다시 여는 것은 사용자/운영자 권한이다. 같은 성격이었던 N214 뒤의 "화면 1회"도 Q12 운영자 결정으로 열렸다.
+    3. **반복 패턴:** W50 계보는 W50(plan_contract)→W50R(harness_import)→W50RX(harness_execution_surface)→W50B(plan_contract)→W50C(attribution)로 5연속 제품 결론 없이 끝났다. W49 화면 축 5연속 뒤 09:52 운영자 종결과 같은 모양이다.
+    4. **예외 비용:** (B)는 P 재핀 외에도 validator primary≤2048/legacy≤256 분리와 renderer 832 대 validator 800 descriptor 요구 정정이 먼저 필요하다. 새 계약 3개를 1 work에 얹는 셈이라 또 하네스 결함이 날 위험이 크다.
+  - G1 = 제품 미완료·PASS 아님·전체 NOT_FEASIBLE 아님. 사용자 보고 문구는 "native DirectDraw 2배 계보 BLOCKED, 모델 권한 경로 소진"이다. 남은 경로는 offscreen 단계 2배 renderer 재작성(전면 재구현 수준) 또는 새 wrapper/renderer 의존성이다. 둘 다 사용자 판단 몫이다. 사용자가 원하면 N224 P(`0x00469376: ff501c`, return `0x00469379`)와 위 validator 계약 2건을 선행 조건으로 하는 W50C′ 1회 재개가 가능하다(보고 전용, 모델은 열지 않음).
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: G4 전환은 09:52 사용자 상시 위임(다음 제품 목표 판정)과 lap608 사전 통지에 근거한다. 사용자가 번복할 수 있다. G4 persistent blocker는 `BLOCKED_MODE_EXCLUSION_AND_POSTLOAD_CONTRACT`(비지원 mode 제외·post-load 첫 tick/중복 계약 미확정)다. 과거 fresh AI runtime PS40/tick0 serious-error 기록도 있다(precompaction 스냅샷). 제품 코드/실행 증거가 없는 회차는 lap610·lap611로 2연속이다. 다음 middle scoping은 PROMPT ③에 따라 이 strategy가 판정한 **세 번째이자 마지막** 무증거 회차로 허용한다. 그 뒤는 반드시 실행 증거를 내는 work여야 한다.
+- 다음 한 가지: 새 middle(Opus5/high)이 카드 §7대로 G4 read-only re-entry scoping 카드 1장을 발행한다. 범위는 `ESCALATE_SOL` §161이 고정한다. 카드는 원본만 쓰는 현행 source G4 AI baseline fresh 1회와 blocker 두 계약의 read-only 판정식을 담아 work로 넘긴다. G1 재실행·P 추가·validator 수정·W51N·G4 제품 패치는 금지한다.

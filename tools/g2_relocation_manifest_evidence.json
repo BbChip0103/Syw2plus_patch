@@ -1,0 +1,159 @@
+{
+  "manifest_version": 1,
+  "source": {
+    "original_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/Syw2plus/syw2plus_original.exe"
+  },
+  "target_capacity": {
+    "lower_bound": 4001,
+    "final_capacity": null,
+    "headroom": "UNRESOLVED"
+  },
+  "regions": {
+    "unit_pool": {
+      "start": "0x0066b790",
+      "end": "0x00892410",
+      "element_size": 1880,
+      "element_count": 1200
+    },
+    "unit_existence": {
+      "start": "0x008990c8",
+      "end": "0x00899a28",
+      "element_size": 2,
+      "element_count": 1200
+    },
+    "unit_age": {
+      "start": "0x00899a28",
+      "end": "0x0089a388",
+      "element_size": 2,
+      "element_count": 1200
+    },
+    "active_slot_list": {
+      "start": "0x00974fa8",
+      "end": "0x00975908",
+      "element_size": 2,
+      "element_count": 1200
+    },
+    "category_slot_list_a": {
+      "start": "0x0089b008",
+      "end": "0x0089c2c8",
+      "element_size": 4,
+      "element_count": 1200
+    },
+    "category_slot_list_b": {
+      "start": "0x0089c2ca",
+      "end": "0x0089d58a",
+      "element_size": 4,
+      "element_count": 1200
+    }
+  },
+  "aliases": {
+    "unit_pool_end_bulk_start": {
+      "address": "0x00892410",
+      "names": [
+        "unit_pool_end",
+        "unit_pool_bulk_start",
+        "live_game_state_base"
+      ],
+      "meaning": "same address; pool half-open end, bulk-scan start, and live game-state base (full type unresolved)"
+    },
+    "unit_existence_end_unit_age_base": {
+      "address": "0x00899a28",
+      "names": [
+        "unit_existence_end",
+        "unit_age_base"
+      ],
+      "meaning": "same address; existence half-open end and age-array base"
+    },
+    "category_slot_list_a_end_count": {
+      "address": "0x0089c2c8",
+      "names": [
+        "category_slot_list_a_end",
+        "category_slot_list_a_count"
+      ],
+      "meaning": "same address; list-A exclusive end and live dword count field"
+    },
+    "category_slot_list_b_end_count": {
+      "address": "0x0089d58a",
+      "names": [
+        "category_slot_list_b_end",
+        "category_slot_list_b_count"
+      ],
+      "meaning": "same address; list-B exclusive end and live dword count field"
+    }
+  },
+  "semantic_seed": {
+    "ranges": {
+      "save_units": {
+        "start": "0x0040f4b0",
+        "end": "0x0040f4f0",
+        "role": "unit roster save lifecycle",
+        "classified_record_count": 6
+      },
+      "load_units": {
+        "start": "0x0040f4f0",
+        "end": "0x0040f540",
+        "role": "unit roster load lifecycle",
+        "classified_record_count": 6
+      },
+      "allocator": {
+        "start": "0x00442fa0",
+        "end": "0x00442fe0",
+        "role": "unit allocation lifecycle",
+        "classified_record_count": 3
+      },
+      "destruction": {
+        "start": "0x00442fe0",
+        "end": "0x00443170",
+        "role": "unit destruction lifecycle",
+        "classified_record_count": 33
+      },
+      "destroy_all": {
+        "start": "0x00443170",
+        "end": "0x00443190",
+        "role": "bulk unit destruction lifecycle",
+        "classified_record_count": 1
+      },
+      "active_add": {
+        "start": "0x0048bc00",
+        "end": "0x0048bd10",
+        "role": "active-slot insertion lifecycle",
+        "classified_record_count": 8
+      },
+      "outer_save": {
+        "start": "0x00440c20",
+        "end": "0x00440f60",
+        "role": "outer save serialization lifecycle",
+        "classified_record_count": 2
+      },
+      "outer_load": {
+        "start": "0x00440ff0",
+        "end": "0x00441560",
+        "role": "outer load deserialization lifecycle",
+        "classified_record_count": 2
+      }
+    },
+    "unclassified_record_count": 1491
+  },
+  "record_counts": {
+    "direct_calls": 62,
+    "endpoint_refs": 339,
+    "absolute_memory_operands": 0,
+    "immediate_operand_candidates": 107,
+    "base_index_displacement_candidates": 1044
+  },
+  "record_digest": "8bb364af441ff24fcf7a04e32ffd2a49bba764c869b26ccd178a628d0cd8a6c5",
+  "obligations": {
+    "function_meaning_reachability": "UNRESOLVED",
+    "candidate_site_semantics_translation": "UNRESOLVED",
+    "initialization_reset": "UNRESOLVED",
+    "active_list": "UNRESOLVED",
+    "bulk_unit_save_order_versioning": "UNRESOLVED",
+    "lan_id_protocol_incompatible_peer_rejection": "UNRESOLVED",
+    "fixtures_stress": "UNRESOLVED"
+  },
+  "activation": {
+    "status": "NO-GO",
+    "reason": "activation is prohibited while any relocation obligation is unresolved"
+  }
+}

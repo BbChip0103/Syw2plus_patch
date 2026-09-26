@@ -1,0 +1,21 @@
+{
+  "lap": 340,
+  "role": "work",
+  "collected_at": "2026-09-12T18:38:24+09:00",
+  "reviewing_document": "docs/work/active/G1_R1_MIDDLE_PROVENANCE_ENVELOPE_LAP339.md",
+  "scope": "R-a/R-b repair only",
+  "historical_identity": "UNKNOWN",
+  "covers_execution": false,
+  "files": [
+    {
+      "relative_path": "tools/runtime_env.py",
+      "sha256": "922a267c27f51fe47d7db69962dadbfdbbded9ff04c6350e8cb7a4c44f8a2575",
+      "bytes": 248099
+    },
+    {
+      "relative_path": "tests/test_lap326_r1_load_origin.py",
+      "sha256": "c04a6265229f7e37cb9d4434f0e150c76e1e56d26f0e1c990cb938a06d769823",
+      "bytes": 9367
+    }
+  ]
+}

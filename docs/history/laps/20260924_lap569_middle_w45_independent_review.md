@@ -1,0 +1,11 @@
+# 2026-09-24 | lap 569 | G2 W45 저장/로드 판별형 독립 검수
+
+- 실제 provider/model/effort / 지정 역할: Codex native(모델 ID 비노출) / middle 진단·계획·확인.
+- 가설 / 사용자 관찰: lap568 W45의 `CYCLE_UNSTABLE`은 Q11 B4의 pre-load pool 변화 미성립이며 제품 저장 손실 증거가 아니다.
+- 예상 PASS / FAIL 조건: `run_summary.json`을 판정 입력에서 제외하고 seed/T0/samples/save-load raw에서 B1~B6과 Q11 식 8항을 재계산한다. lap568 판정과 일치하면 ACCEPT, 다르면 REJECT/승격한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 이 history, `docs/work/active/G2_W45R_DETERMINISTIC_STATE_CHANGE_HANDOFF_LAP569.md`, `loop/ESCALATE_SOL` §123, `docs/STATUS.md`; 제품 source·게임 바이너리·공유 temp raw 0변경. 시작 validation fingerprint `f9bbf81e76dfc9a1ee1a25bbc0903c023900ed74`; 최종 gate 입력은 `logs/full-test-latest.result`에 보존. 커밋 0.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`, 후보 `a10024de5e1c1cbedcddde0c3b52f5b3a9cf0721ee066542669f4883a1bb2d68`를 격리 복사본에서 직접 재해시. lap568 환경 8 AI/map100×100/cap5000, type5×100/type7×25/type2×60/type46×20 gate-legal 시딩, 교전 명령0. 실행 잔류 PID 0, display `:6554` 해제.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: raw `/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_capacity/20260924_lap568_w45_mixed_save_load/`; `sha256sum`, `jq`, 독립 inline Python 재계산, `python3 -m py_compile w45_run.py w45_contract_test.py`, `python3 w45_contract_test.py`, `checks/safety.sh check`. 원시 SHA는 lap568 기록과 전부 일치; canonical 재계산 SHA `c1bf895749a804114694e9151b8c467764d647018ce1c79fbc2cfbea3f4b77cb`.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): B1/B2/B3/B5/B6 PASS. B4는 save/load/marker/wait305/tick-order/pool-restored/ledger-restored 7항 PASS, `pre_load.pool != pre_save.pool`만 FAIL. `ACCEPT / BLOCKED(discriminator_precondition)`, overall `CYCLE_UNSTABLE`; 제품 저장 결함은 UNKNOWN이다. raw는 632줄인데 work `sample_count=631`은 마지막 표본 뒤 카운터 증가가 없는 보고용 off-by-one이며 판정 영향0.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 계약 회귀·py_compile·`SAFETY_PASS`; W45 doc의 `(+생산 type49)` 8기는 T0부터 pre-save/pre-load/post-load까지 동일하게 존재했고 script가 별도 생산 명령을 내린 것은 아니다. 따라서 post-save 판별 변화 근거로 쓸 수 없다. 자연 변화가 305tick 내 일어나지 않았을 뿐 저장 손실은 입증되지 않았다. G2 PASS·사람 승인 없음; S1·혼합144k·Q9/S3·S4 미검증 유지.
+- 다음 한 가지: work가 handoff대로 저장 300tick 뒤 type7 1기를 결정적으로 주입한 W45R fresh 1회를 수행한다. 이번 middle은 게임/하네스를 수정·실행하지 않고 마일스톤 경계 `ESCALATE_SOL` §123에서 STOP한다.

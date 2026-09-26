@@ -1,0 +1,22 @@
+{
+  "probe_set": "lap211_f6_producer_conflict",
+  "real_candidate_input_tags": [
+    "menu",
+    null,
+    null
+  ],
+  "all_stage_statuses": {
+    "unit_select": "PASS",
+    "drag_select": "PASS",
+    "minimap": "PASS"
+  },
+  "scene_status": "PASS",
+  "candidate_input_errors": [
+    "inputs[1].tag is missing or is not a string",
+    "inputs[2].tag is missing or is not a string"
+  ],
+  "overall_status_with_observed_records": "INCONCLUSIVE",
+  "overall_status_without_observed_records": "PASS",
+  "finding": "every stage PASSes and the scene matches, yet overall is not PASS purely because the candidate producer writes untagged OBSERVED records",
+  "verdict": "CONFIRMED"
+}

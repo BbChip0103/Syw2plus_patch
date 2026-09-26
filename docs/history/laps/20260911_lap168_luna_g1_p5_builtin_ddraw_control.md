@@ -1,0 +1,39 @@
+# 2026-09-11 | lap 168 | G1 P5 builtin ddraw 귀속 대조
+
+- 날짜/lap/목표: 2026-09-11 KST / lap168 / G1 close 후 정지의 DxWrapper 귀속 대조(P5)
+- 역할·모델·effort: Codex work tier, Luna/high 경로. 지정 범위는 관측·기록이며 구현 0.
+- 가설: 현재 harness에서 `--dxwrapper-2x`를 제거한 Wine builtin `ddraw=b`가 정상 종료하면 close 정지는 DxWrapper native ddraw 경로에 귀속된다.
+- 변경파일: 코드·원본/후보 binary·설정 0. 문서 기록만 추가/갱신. 커밋 없음(`LOOP_ALLOW_COMMITS` 기본0).
+- 원본·후보 SHA:
+  - 보호 EXE: `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac` (prepare copy와 일치)
+  - fresh diagnostic bridge `_inmm.dll`: `ef469a3db2a262e3701f52ec1bd56a4fc39e97028b476fe9a9146de2fe7097b9`
+  - fresh close helper: `315d0b2754b5bb7e6073d7c42768be23aabf90947add7a2bd5ac31233a84bc63`
+  - fresh close target: `70ce36c6442a37df9ee9ed7ca5a8708fe4cc8123b449e8edac234c41d9693dfc`; helper build RC0/PE32.
+  - prepare copy support modules: `dxwrapper.dll=96c443193bad8794ebf04738566e092f8b34ae4541cb2433fd0708d49edbe8fe`, `ddraw.dll=3bc7230d1a6023a8fc0ea52b18d7edda94fcb4c0ae3d178f6e1577d68a62bd19`, `syw2x.dll=61ef47b28df8aa59059861d28070d5352bb31b3398315d91b80efc2631bf7228`.
+  - harness `tools/runtime_env.py`: `69b0f16253a850e02537d0d5dddbc97e43b7755cff447860a81e66914fdf0571`
+  - runtime game copy `dxwrapper.ini`: `918e704346c20a0393a32501844b64536d7a233163c26305a332f8e56aeea5a2` (플래그가 아닌 직접 해시 확인)
+- 실행명령/환경:
+  - `python3 -m tools.win32_close_fixture build --out-dir /tmp/syw2plus_lap168_p5.1DTtph/helper` — RC0, PE32
+  - `python3 patches/population/build_runtime_bridge.py --out-dir /tmp/syw2plus_lap168_p5.1DTtph/bridge` — RC0, PE32 DLL
+  - `.venv/bin/python tools/runtime_env.py prepare --bridge /tmp/syw2plus_lap168_p5.1DTtph/bridge/_inmm.dll --timeout 60`
+  - `.venv/bin/python tools/runtime_env.py check --manifest local/runtime/20260911_214253_1178505_0/manifest.json` — RC0
+  - `.venv/bin/python tools/runtime_env.py g1-presentation-trace --manifest local/runtime/20260911_214253_1178505_0/manifest.json --screen 1600x1200x24 --timeout 90 --win32-close-helper /tmp/syw2plus_lap168_p5.1DTtph/helper/win32_close_helper.exe --ps3-dwell-seconds 30`
+  - 새 private copy/prefix/display: run `local/runtime/20260911_214253_1178505_0`, display `:91`, `WINEARCH=win32`, fixture는 diagnostic bridge를 사용하는 실제 원본 게임의 default two-player random game; resource grant/control bridge/memory writes false.
+- 결과 수치:
+  - `verdict.overall=PASS`, `validator.status=PASS`, `validator.schema.event_count=651`, errors `[]`, dropped `0`.
+  - `dxwrapper_config.enabled=false`, `winedlloverrides=ddraw=b`, loaded ddraw=`/usr/lib/i386-linux-gnu/wine/i386-windows/ddraw.dll`; private DxWrapper는 로드되지 않음.
+  - PS9→PS7→PS5 ready→PS3 도달 PASS. client/logical content `800x600`, root/private display `1600x1200`, scale `1x1`; 이 대조군의 800x600은 정상이며 G1 표시 회귀로 세지 않음.
+  - PS3 dwell 30초 samples 30/30, 모두 `ps=3`, tick `45,79,112,145,179,212,245,279,312,345,379,412,445,479,512,545,579,612,645,679,712,745,779,812,845,879,912,945,978,1012`; 단조 증가, tick_error/reader error 없음.
+  - dwell 캡처 4장 SHA는 `2be7f78c61a894ff2b1274f828f3b17995d9e6b148241f9a88b38e4fc28f2974`, `0fd7afd58d4a1f76f30407b4c6d8210ddfba2265f232e78df20c59a28329d1b4`, `293153e17281d8d6afd4e90be655a7938a218e008c88ee081d1bb9bb54076330`, `98f76d4f14199336dd8da24a2b31c01df58f30c05ed22cde93fe92ac24ce5ebc` — unique 4/4. 파일은 모두 `/home/dev_00/sharedfolder/260320_Syw2plus/temp/`에 보존.
+  - owned close PASS: helper RC0, `requested_pid=276`, `matched_hwnd=0x00020056`, `matched_thread=280`, `post_result=true`.
+  - finalization: `process_exit=0`, `summary_count=1`, finalization status PASS/ready true; finalization program-state 표본 3건은 모두 `ps=3`, tick `1022` 고정. raw/validated trace는 651 lines, 마지막 `seq=651`, `call_seq=19786`; 마지막 summary의 `event_count=650`, `source_call_count=19785`, `aggregate_record_count=35`, `detach=complete`, `flush=complete`.
+  - finalization screenshot은 정상 process exit로 생성되지 않아 SHA 및 lap166 고정 SHA `49affa6459ae21ecab2ba80e61b54f94400db56d407cde0e6f431e6751a730ee`와의 동일/상이 비교는 N/A이다. 이를 성공/실패 근거로 사용하지 않음.
+  - trace 산출물 SHA: `evidence.json=309028386476de06ced251686444e04b7c8e7d9c282f7f52e7ed1dbcf7fc7e59`, `provenance.json=1b8df1e86bd8956da2bc3d9410afc0cebea83371646ae4a1a720cdac475e1c1b`, `verdict.json=319474f8fbe1f5e6d52443a71c75894b581e8ed83299bba60eeee30701138d55`, validator trace SHA=`aa3934044c5cfb1758d7330b3dab5b3f5a09c0468b5946a81f05d44ee62ceb1b`.
+  - `dxwrapper*.log`는 builtin 대조군에서 새 DxWrapper runtime 로그가 아니다. copy에 있던 파일별 보존 값은 `dxwrapper-game.log` 26줄/0, `dxwrapper-syw2plus_original.log` 65/0, `dxwrapper-syw2plus_patched8.log` 21/0, `dxwrapper-조선의반격 esl 2405 (멀티용).log` 19/0, `dxwrapper-조선의반격 esl 2501 (멀티용).log` 19/0, `dxwrapper-조선의반격 esl 2503 (장수7명+최대2600).log` 19/0, `dxwrapper-조선의반격 esl 2503 (장수전비해제).log` 19/0, `dxwrapper-조선의반격 final 1.0 (멀티용).log` 19/0; 각 수치는 total lines / `DDERR_SURFACELOST` lines. 직접 확인된 surface-lost 줄 합계는 0.
+  - cleanup PASS: owned launchers/Xvfb stopped, prefix processes after `[]`, `global_kill_used=false`.
+- Fast/QA:
+  - `make check`: `192 passed in 35.32s`, Ruff PASS, compileall PASS, mypy `Success: no issues found in 9 source files`, `CONTEXT_PASS`.
+  - `bash checks/safety.sh check`: `SAFETY_PASS`.
+- 판정: **N(CONFIRMED)**. 현재 harness의 builtin ddraw 대조군은 정상 종료/summary/detach/validator를 통과하고 `DDERR_SURFACELOST`가 0이다. lap166의 close 후 정지는 DxWrapper native ddraw 경로에 귀속된다. 단, 이것은 G1 제품 합격이나 마일스톤 승인이 아니다.
+- 한계: diagnostic bridge는 stock `_inmm.dll`이 아니며, 실제 1600x1200 2배 표시·원본/후보 나란히 입력 증거·G2~G4는 검증하지 않았다. `dxwrapper_config_restored`는 builtin run에서 의미가 없어 판정에 사용하지 않았다.
+- 다음행동: wrapper-side close/finalization 수리 범위를 middle-tier(Sol/Opus5)가 승인·지정해야 한다. 그 전에는 work tier가 수리나 G1 카드2를 시작하지 않는다. `loop/ESCALATE_SOL`에 승격 근거를 보존한다.

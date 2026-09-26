@@ -1,0 +1,134 @@
+{
+  "artifact": {
+    "errors": [],
+    "expected_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "observed_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "status": "pass"
+  },
+  "gates": {
+    "g2": {
+      "errors": [
+        "fewer than 8 simultaneous active_proxy candidates (max 0); configured slots are not proof of real player activity",
+        "behavioral evidence is missing; state telemetry does not prove real player activity",
+        "memory health remains unproven: RSS alone is not OOM proof"
+      ],
+      "status": "incomplete"
+    },
+    "g3": {
+      "errors": [
+        "only 8 player records observed; existing runtime telemetry is 8-slot and does not establish 16-player support",
+        "fewer than 16 simultaneous active_proxy candidates (max 0); configured slots are not proof of real player activity",
+        "behavioral evidence is missing; state telemetry does not prove real player activity"
+      ],
+      "status": "unsupported"
+    },
+    "smoke": {
+      "errors": [],
+      "status": "pass"
+    }
+  },
+  "goal": "smoke",
+  "memory": {
+    "note": "RSS is an observation and does not prove absence of OOM, allocation failure, or crash.",
+    "oom_proof": false,
+    "rss_max": 239230976.0,
+    "rss_min": 237797376.0,
+    "rss_samples": 2,
+    "status": "observed_not_oom_proof"
+  },
+  "players": {
+    "active_proxy_owners_seen": [],
+    "configured_owners_seen": [],
+    "definition": "configured candidate iff nation != 0; active_proxy additionally requires ps == 3 and count > 0; neither proves real player activity",
+    "empty_or_inactive_records": 8,
+    "max_configured_candidates": 0,
+    "max_records": 8,
+    "max_simultaneous_active_proxy": 0
+  },
+  "schema": "runtime-evidence/v1",
+  "source": "local/runtime/20260910_222434_2612938_0/output/trace.jsonl",
+  "status": "pass",
+  "supply": {
+    "g2_errors": [
+      "fewer than 8 simultaneous active_proxy candidates (max 0); configured slots are not proof of real player activity",
+      "behavioral evidence is missing; state telemetry does not prove real player activity",
+      "memory health remains unproven: RSS alone is not OOM proof"
+    ],
+    "per_owner": {
+      "0": {
+        "active_proxy_samples": 0,
+        "cap_values": [],
+        "configured_samples": 0,
+        "max_used": null,
+        "reached_target": false,
+        "samples": 2
+      },
+      "1": {
+        "active_proxy_samples": 0,
+        "cap_values": [],
+        "configured_samples": 0,
+        "max_used": null,
+        "reached_target": false,
+        "samples": 2
+      },
+      "2": {
+        "active_proxy_samples": 0,
+        "cap_values": [],
+        "configured_samples": 0,
+        "max_used": null,
+        "reached_target": false,
+        "samples": 2
+      },
+      "3": {
+        "active_proxy_samples": 0,
+        "cap_values": [],
+        "configured_samples": 0,
+        "max_used": null,
+        "reached_target": false,
+        "samples": 2
+      },
+      "4": {
+        "active_proxy_samples": 0,
+        "cap_values": [],
+        "configured_samples": 0,
+        "max_used": null,
+        "reached_target": false,
+        "samples": 2
+      },
+      "5": {
+        "active_proxy_samples": 0,
+        "cap_values": [],
+        "configured_samples": 0,
+        "max_used": null,
+        "reached_target": false,
+        "samples": 2
+      },
+      "6": {
+        "active_proxy_samples": 0,
+        "cap_values": [],
+        "configured_samples": 0,
+        "max_used": null,
+        "reached_target": false,
+        "samples": 2
+      },
+      "7": {
+        "active_proxy_samples": 0,
+        "cap_values": [],
+        "configured_samples": 0,
+        "max_used": null,
+        "reached_target": false,
+        "samples": 2
+      }
+    },
+    "target_cap": 5000
+  },
+  "trace": {
+    "continuity_status": "pass",
+    "rollback_events": [],
+    "samples": 2,
+    "schema_errors": [],
+    "tick_max": 0,
+    "tick_min": 0,
+    "valid_samples": 2
+  }
+}

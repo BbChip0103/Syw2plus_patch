@@ -1,0 +1,22 @@
+# 2026-09-12 | lap349 | G1 / Astra S1 방향
+
+- 실제 provider/model/effort / 지정 역할: Codex gpt-6-astra / high / major direction/master-plan. 하위 모델 호출 0.
+- 번호: runtime 메시지 lap348이나 읽은 loop/.lap_counter=349. PROMPT에 따라 349 사용, counter 변경 0.
+- 목표/가설: 후보 R1 연구 종결 뒤 S1/F2-R2 결정성의 선행인 슬롯 선택·실제 fixture 로드 근거를 확정한다.
+- 입력/성공식: lap348 불변 probe rc0 AND failures=[]로 기존 연구 입력 재확인; 상위 문서는 단일 방향·역할·측정·실행0회·중단 조건을 명시. 이는 middle ACCEPT나 제품 PASS가 아니다.
+- 변경 파일: docs/work/active/G1_S1_LOAD_DIRECTION_LAP349.md, docs/STATUS.md, 이 기록, docs/history/laps/20260912_status_lap349_entry.md, loop/ESCALATE_SOL(기존 원문 보존 후 append).
+- 진입 STATUS: 130줄 원문과 SHA를 entry 파일에 전부 보존. 종료 STATUS 130줄, Blockers heading 1개 유지.
+- 원본/private EXE SHA: b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac.
+- 후보 artifact SHA: dd8cd3502edb66e08a1d2514cd8b4b26622da73531ca503adf2f3a6e71b37634.
+- 환경/활성 인원/지도/군대/fixture: 기존 local/runtime/20260912_191422_3558862_0의 보존 연구 artifact 읽기만; 새 게임/플레이어/지도/군대/PNG 측정 없음. 제품 runtime fixture 아님.
+- 실행: `.venv/bin/python docs/history/laps/probes/20260912_lap348_middle_lap345_candidate_r1_artifact_probe.py > logs/lap349/lap348_review.json` 1회 rc0/failures=[].
+- 수치: 후보 artifact/lock 각1, 원본 artifact1, sample12, PS9/35/40/60/150/180, pending0→34, origin(240,145,8). 기존 검수 알고리즘 재현이며 독립 새 알고리즘/새 runtime 검증 아님.
+- probe SHA: fdca6f6cfb5f2bca845dadad5ad692b384e1bde73f9c95b855cd497d6a27c093.
+- probe stdout SHA: 46902e207a07e81ff806b5516899a31e6b162f43627b494238efa755fda3a52a.
+- 방향 문서 SHA: 172ef9b1af88086e29233fea24e671e1a865f217bed11dd533c9e35920e6f2fe.
+- Fast/안전: `make check` rc0, 378 passed(58.04s), Ruff/compileall/mypy/CONTEXT_PASS. `bash checks/safety.sh check` rc0/SAFETY_PASS. 로그 logs/lap349/make-check.log 및 safety.log. 실제 앱 검증 아님.
+- 판정: 방향 발행, middle 봉투 판정 PENDING; S1/Stage B/G1 UNKNOWN/미완료. 구현 진전0, 프로세스 exit0 승인0.
+- 회귀/위험: WM_CLOSE, S1(A)+(B), W3/A·C identity UNKNOWN/N14 및 원문 반려 유지. 원본/하네스/테스트/pin/golden 편집0. root APPROVALS.md 조회는 파일 없음(rc1)이었고 실제 docs/feedback/APPROVALS.md를 읽음; 빌드/테스트 실패가 아니다.
+- 역할 차이: 사용자 요청 Sol/high 승격과 MODEL_ROUTING Opus5-only 차이를 공개. 파일명 ESCALATE_SOL 유지, 후속 실제 provider/model 검증은 runner/middle 책임. 이번에는 모델 실행/자동 대체 없음.
+- 다음 행동: 현재 큐는 STATUS에만 기록. 봉투 §2 검증 항목을 loop/ESCALATE_SOL로 인계; 게임 실행은 발효되지 않았다.
+- 커밋: 없음, uncommitted. 기존 미추적 저장소 상태 보존; git add/commit/push 없음.

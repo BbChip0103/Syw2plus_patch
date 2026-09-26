@@ -1,0 +1,111 @@
+{
+  "anchors_present": {
+    "catch": true,
+    "marker": true,
+    "provenance": true
+  },
+  "c0_baseline": {
+    "failed_tests": [],
+    "returncode": 0,
+    "summary": "4 passed, 135 deselected in 0.05s"
+  },
+  "c1_matrix": {
+    "case_count": 9,
+    "cases": [
+      "none",
+      "unit_select/before_click",
+      "unit_select/poll",
+      "production/before_production",
+      "drag_select/before_drag",
+      "drag_select/poll",
+      "drag_select/after_drag",
+      "minimap/before_minimap",
+      "minimap/after_minimap"
+    ],
+    "mismatches": []
+  },
+  "c1b_consumers": {
+    "consumers_outside_runtime_env": [],
+    "count": 0
+  },
+  "c2_mirror_control": {
+    "failed_tests": [],
+    "returncode": 0,
+    "summary": "139 passed in 0.44s"
+  },
+  "c3_mutations": {
+    "M1_marker_removed": {
+      "failed_tests": [
+        "test_g1_production_selection_snapshots_mark_direct_read_failure_unavailable"
+      ],
+      "killed_other": [],
+      "killed_r14": [
+        "test_g1_production_selection_snapshots_mark_direct_read_failure_unavailable"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 138 passed in 0.35s"
+    },
+    "M2_marker_always_applied": {
+      "failed_tests": [
+        "test_g1_production_selection_snapshot_has_no_failure_marker_on_success"
+      ],
+      "killed_other": [],
+      "killed_r14": [
+        "test_g1_production_selection_snapshot_has_no_failure_marker_on_success"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 138 passed in 0.35s"
+    },
+    "M3_marker_count_zeroed": {
+      "failed_tests": [
+        "test_g1_production_selection_snapshots_mark_direct_read_failure_unavailable"
+      ],
+      "killed_other": [],
+      "killed_r14": [
+        "test_g1_production_selection_snapshots_mark_direct_read_failure_unavailable"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 138 passed in 0.34s"
+    },
+    "M4_stage_provenance_dropped": {
+      "failed_tests": [
+        "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues"
+      ],
+      "killed_other": [],
+      "killed_r14": [
+        "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 138 passed in 0.34s"
+    },
+    "M5_production_failure_reraised": {
+      "failed_tests": [
+        "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues",
+        "test_g1_production_selection_snapshots_mark_direct_read_failure_unavailable"
+      ],
+      "killed_other": [],
+      "killed_r14": [
+        "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues",
+        "test_g1_production_selection_snapshots_mark_direct_read_failure_unavailable"
+      ],
+      "returncode": 1,
+      "summary": "2 failed, 137 passed in 0.38s"
+    }
+  },
+  "game_executions": 0,
+  "lap": 252,
+  "role": "middle",
+  "source_sha256": {
+    "tests/test_runtime_env.py": "adac1297571a0b62ccd7d5c606a5855d386b15e25ad423e95208df018223f1f4",
+    "tools/runtime_env.py": "2819da727c11acf360c89dff8792abbb62a96f8d5a2a8b554aa9991c1e204bf3"
+  },
+  "subject": "G1-R6-B-R14 production direct selection read-failure marking",
+  "verdict": {
+    "c0_baseline": "PASS",
+    "c1_matrix": "PASS",
+    "c2_mirror_control": "PASS",
+    "c3_mutations": "PASS",
+    "overall": "PASS"
+  },
+  "wine_executions": 0
+}

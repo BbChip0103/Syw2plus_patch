@@ -1,0 +1,11 @@
+# 2026-09-25 | lap 633 | G5
+
+- 실제 provider/model/effort / 지정 역할: Codex native session / hands-on work / high (실제 대화 모델의 provider 전환은 주장하지 않음).
+- 가설 / 사용자 관찰: lap632의 selection count=1은 55기 fixture가 카메라 화면 밖으로 분산된 fixture/드래그 사각형 문제일 가능성이 높다. r6 raw에서 55개 live row와 x=1..177, y=50..53, camera=[40,40]를 독립 확인한다.
+- 예상 PASS / FAIL 조건: 동일 fixture 원본 count=20, 후보 count=50·unique=50, 51번째 미선택, 50기 명령 raw가 필요하다. 필수 `make check`는 완주·PASS해야 한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 제품 코드·패치·테스트 0. 읽기 전용 fingerprint: `tools/g5_candidate_drag_probe.py` SHA256 `321960538f5059eb3aa2f5a0a5ee145fd508a6767d0c050cab839775f193492d`; `patches/selection/g5_selection_cap50_v1.py` SHA256 `a9bacde5aed503f91e9ea3329e4d0d21308514b9f051ce018b6c9ed771c2a545`; 커밋 0/unborn.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 후보 `ebd46050cb061a4793bcf9dbc86e196bd71ab45050d881bb13c64258a8c83e8c`; lap632 private Wine/Xvfb run; owner0/type46 synthetic op5 fixture 55, r6 receipt `fixture_added=55`, used `1120/1500`, live `57`.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `make check` (fresh, foreground). pytest가 893개를 수집하고 15% 지점까지 진행한 뒤 약 136초 후 `make: *** [Makefile:5: test] Terminated`, exit 143. 전체 로그/후속 lint/typecheck는 생성되지 않음. r6 보존 결과 `/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20260925_lap632_g5_candidate_drag_r6/probe-result.json`; 캡처는 같은 디렉터리의 before/after PNG. `python3 checks/context_limits.py`=`CONTEXT_PASS`, `bash checks/safety.sh`=`SAFETY_PASS`.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): r6 fixture rows=55, x range 1..177, y range 50..53, camera `[40,40]`; selection before=0, after=1, selected slot1198, unique=1. `make check` 필수 게이트=`FAIL/INCOMPLETE (SIGTERM, exit143)`. G5=`BLOCKED`, 제품 PASS 아님.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 원본 동일 fixture 대조, 후보 count50/51 경계, 50기 명령, save/load를 수행하지 못함. `make check`가 collection 오류인지 테스트 실패인지 판정하기 전에 외부 SIGTERM으로 종료되어 전체 Fast 증거가 없다. 원본/후보/참고 저장소는 변경하지 않음. 사용자 21:25 위임은 유효하나 이 회차의 필수 게이트 실패로 실행을 중단한다.
+- 다음 한 가지: 승격 작업자가 SIGTERM 원인/실행 시간 제한을 확인하고, `make check`를 완주할 안전한 foreground 경로를 확정한 뒤에만 G5 probe를 재실행한다. 그 다음 새 격리 run에서 원본 동일 fixture 대조 → 후보 50/51 경계 순으로 수행한다.

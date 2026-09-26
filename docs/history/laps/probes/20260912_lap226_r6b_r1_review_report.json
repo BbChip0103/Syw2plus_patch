@@ -1,0 +1,282 @@
+{
+  "lap": 226,
+  "role": "middle",
+  "target": "G1-R6-B-R1 (lap225)",
+  "source_sha256": "b01802703898b8d3435d93bb752ffb2e710fa08b5a85fe82c6ba89caf7603d78",
+  "predicate_cases": [
+    {
+      "id": "C1_count_change",
+      "intent": "engine responded: band select grew the selection",
+      "expected_responded": true,
+      "observed_responded": true,
+      "verdict": "AGREES",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 3,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "diagnostics_status": null
+    },
+    {
+      "id": "C2_identity_change_lap204",
+      "intent": "lap204 form: count 1->1 but the selected unit really changed",
+      "expected_responded": true,
+      "observed_responded": true,
+      "verdict": "AGREES",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1198,
+        "selected_type": 21,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "diagnostics_status": null
+    },
+    {
+      "id": "C3_no_effect",
+      "intent": "no engine response at all; must stay FAIL/timeout",
+      "expected_responded": false,
+      "observed_responded": false,
+      "verdict": "AGREES",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "diagnostics_status": null
+    },
+    {
+      "id": "C4_after_read_failure",
+      "intent": "lap224 C4: observation lost after the drag (transient read failure)",
+      "expected_responded": false,
+      "observed_responded": false,
+      "verdict": "AGREES",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "OSError: [Errno 5] process_vm_readv: transient read failure"
+      },
+      "diagnostics_status": "CORRUPTED"
+    },
+    {
+      "id": "C5_pool_corruption",
+      "intent": "lap224 C5: selected slot went inactive (pool/state damage)",
+      "expected_responded": false,
+      "observed_responded": false,
+      "verdict": "AGREES",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: selected unit slot is not active: 1199"
+      },
+      "diagnostics_status": "CORRUPTED"
+    },
+    {
+      "id": "C6_selection_lost",
+      "intent": "lap224 C6 = deferred R6-B-R2; must still be credited, unchanged",
+      "expected_responded": true,
+      "observed_responded": true,
+      "verdict": "AGREES",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 0,
+        "selected_slot": null,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "no selected unit: selection count is zero"
+      },
+      "diagnostics_status": null
+    },
+    {
+      "id": "C7_degraded_baseline_recovers",
+      "intent": "lap224 C7: baseline itself was unreadable; reader healing is not a response",
+      "expected_responded": false,
+      "observed_responded": false,
+      "verdict": "AGREES",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "OSError: [Errno 5] process_vm_readv: transient read failure"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "diagnostics_status": "CORRUPTED"
+    },
+    {
+      "id": "D1_negative_count_after",
+      "intent": "corrupt/torn signed read yields count=-1; impossible state, not a response",
+      "expected_responded": false,
+      "observed_responded": true,
+      "verdict": "DEFECT",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": -1,
+        "selected_slot": null,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: unsupported selected-unit count: -1"
+      },
+      "diagnostics_status": null
+    },
+    {
+      "id": "D2_negative_count_before",
+      "intent": "baseline itself is an impossible count=-1; comparison has no sound base",
+      "expected_responded": false,
+      "observed_responded": true,
+      "verdict": "DEFECT",
+      "before_observation": {
+        "count": -1,
+        "selected_slot": null,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: unsupported selected-unit count: -1"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "diagnostics_status": null
+    },
+    {
+      "id": "D3_overflow_count_after",
+      "intent": "count above the slot range: reader folds to UNKNOWN type, must fail closed",
+      "expected_responded": false,
+      "observed_responded": false,
+      "verdict": "AGREES",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 2147483647,
+        "selected_slot": 1199,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: unsupported selected-unit count: 2147483647"
+      },
+      "diagnostics_status": "CORRUPTED"
+    },
+    {
+      "id": "D4_type_zero_after",
+      "intent": "unit type 0 (unsupported) after the drag is damage, not a response",
+      "expected_responded": false,
+      "observed_responded": false,
+      "verdict": "AGREES",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: selected unit has unsupported type: 0"
+      },
+      "diagnostics_status": "CORRUPTED"
+    }
+  ],
+  "wait_cases": [
+    {
+      "id": "W1_all_corrupt",
+      "expect_classification": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED",
+      "intent": "every poll corrupted: wait must keep polling and time out as CORRUPTED",
+      "result": {
+        "outcome": "TIMEOUT",
+        "classification": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED",
+        "returned_count": null,
+        "returned_type": null,
+        "poll_count": 4,
+        "last_poll_corrupted": "CORRUPTED"
+      },
+      "verdict": "AGREES"
+    },
+    {
+      "id": "W2_corrupt_then_response",
+      "expect_classification": null,
+      "intent": "corruption must not end the window; a later real response still wins",
+      "result": {
+        "outcome": "RESPONDED",
+        "classification": null,
+        "returned_count": 1,
+        "returned_type": 21,
+        "poll_count": 3,
+        "last_poll_corrupted": "CORRUPTED"
+      },
+      "verdict": "AGREES"
+    },
+    {
+      "id": "W3_corrupt_then_sound_no_effect",
+      "expect_classification": "FAIL_NO_EFFECT",
+      "intent": "one transient corrupt poll, then sound unchanged polls: the run really had no effect, so a hard FAIL must not be laundered into UNKNOWN",
+      "result": {
+        "outcome": "TIMEOUT",
+        "classification": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED",
+        "returned_count": null,
+        "returned_type": null,
+        "poll_count": 4,
+        "last_poll_corrupted": "CORRUPTED"
+      },
+      "verdict": "DEFECT"
+    }
+  ],
+  "summary": {
+    "predicate_agrees": 9,
+    "predicate_defects": [
+      "D1_negative_count_after",
+      "D2_negative_count_before"
+    ],
+    "wait_defects": [
+      "W3_corrupt_then_sound_no_effect"
+    ]
+  }
+}

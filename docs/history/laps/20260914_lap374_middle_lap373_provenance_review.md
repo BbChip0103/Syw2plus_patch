@@ -1,0 +1,11 @@
+# 2026-09-14 | lap 374 | 목표 G1
+
+- 실제 provider/model/effort / 지정 역할: Codex 현재 세션, 정확한 모델 ID 미노출·미주장 / 사용자 지정 high / middle 진단·계획·확인. 외부 provider 호출, 게임 코드·하네스·tests hands-on 수정 0.
+- 가설 / 사용자 관찰: lap373의 trigger/wait 경계 수리와 total150 양쪽 회귀가 lap372 REJECT를 닫았고, lap372→373 실제 diff를 독립 재구성할 수 있다.
+- 예상 PASS / FAIL 조건: 현행 세 SHA가 제출값과 일치하고, 편집 전 blob 또는 재현 가능한 reverse diff가 lap372의 두 SHA를 정확히 복원하며, 그 뒤 targeted→lap354 exact-once→doctor/Fast→safety가 fresh PASS하면 ACCEPT. diff 재구성이 불명확하거나 충돌하면 REJECT/STOP하고 후속 게이트는 SKIP한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 구현 수정 없음. 현행 `tools/runtime_env.py=2d4e478f073f1e4c981b42c39e0cff6a8ba0f058217a5d8e1aec0377b1ca790e`, `tools/s1_load_evidence.py=44e8c1a70372d0748b19497f3d7c91249807ff3600701ba238aa6e3fac2c4861`, `tests/test_s1_load_evidence.py=69e714045a464f6c047099c479929ba8bec4f64108b102a0036252d2558b755d`로 lap373 제출값 3/3 일치. 이 기록, `docs/STATUS.md`, `loop/ESCALATE_SOL`만 문서 갱신; 커밋 없음.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본·후보·save에 접근하거나 실행하지 않음. Linux `.venv`에서 파일 내용의 in-memory 역변환만 수행; 활성 플레이어·지도·군대 N/A; game/Wine/Xvfb/input/PNG/fixture 생성 0회.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: 지시 문서·lap372/373·scope 원문 열람; `sha256sum` 3개; 저장소 전체 파일 SHA 검색에서 lap372 pre SHA `2d957c43…f2ac5ce`, `d53e5cde…dc2958f`와 일치하는 blob 0개; 저장소 무수정 Python in-memory reverse 1회. 최초 임시 목록 명령은 금지된 `rm -f` 때문에 도구가 실행 전 거부되어 안전한 read-only 검색으로 대체했으며 파일 변화 없음. 로그·PNG 없음.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): 현행 SHA 3/3 PASS. 보존 snapshot은 lap371 **pre-edit**(`5e7c769c…d37d185`, `cf919a73…d71fa`)뿐이고 lap372 pre-image는 0개. lap373 설명대로 역변환한 결과도 runtime=`2d60c7a4…55d6364`, test=`63535238…de2749`로 lap372 기대 SHA와 2/2 불일치. 실제 diff·허용 파일 범위를 독립 증명할 수 없어 **REJECT/STOP**. targeted, lap354, `make doctor`, `make check`, safety는 선행 provenance 실패 뒤 **SKIP**; 과거 exit0은 보상 근거가 아니다.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 현행 trigger/wait 구현의 기술적 정당성은 UNKNOWN이며 lap373 work PASS를 ACCEPT하지 않는다. 실제 original S1 load, 두 run 결정성, S1 (A)+(B), Stage B, WM_CLOSE, G1~G4, 사용자 마일스톤 승인은 모두 UNKNOWN. 원본 실행·Stage B·마일스톤 이동 금지 유지.
+- 다음 한 가지: Luna/high work가 구현 의미를 바꾸지 않는 provenance repair만 수행한다. lap372 두 기대 SHA를 정확히 재현하는 pre-image blob과 실제 unified diff를 보존하고, 현행 세 SHA가 그대로임을 확인한 뒤 targeted→repo-root lap354 exact-once→`make doctor`→`make check`→safety를 fresh 제출한다. 정확한 pre-image를 복원하지 못하면 재시도/재pin/자가 baseline 갱신 없이 구체 blocker로 반환한다.

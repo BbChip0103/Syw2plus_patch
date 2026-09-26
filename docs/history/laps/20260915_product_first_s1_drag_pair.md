@@ -1,0 +1,5 @@
+# 2026-09-15 — G1 원본/1600×1200 동일 드래그 실제 입력
+
+- 원본 `20260915_132048_2281546_0`, artifact SHA `ce8afe57b0d75337cc06117aa70e6715b77562aa93001883fa6f285142c16ccc`; 후보 `20260915_132134_2285733_0`, artifact SHA `ec26976f741a59dffd551cad1485972618df326539c003532896a6c88e3694f4`. 동일 `tools/runtime_env.py` source SHA `85b6e6f320f61eeecb2a08c3698d9023fc2f2a744bf06a8bf8ec04edb2f69f64`. 매번 새로운 private game copy/prefix/display, EXE 원본 SHA 유지, 메모리 기록 없음, save000 load PS35→PS3 8/8 PASS, owned cleanup/residue0, 후보 private ini 원복.
+- 실제 입력: 두 실행 모두 빈 월드 `(400,220)` 1회로 기존 선택을 `count0`으로 지운 다음 드래그 `(520,200)→(780,455)` **1회**. 원본/후보 양쪽 `selection count0→3`, `first_slot0→108`, elapsed0.378/0.379초. 시각 출력은 후보 2배, 마우스 입력 주입은 양쪽 **원본 논리 좌표 그대로**다. 다른 랜덤맵 고정 드래그의 과거 실패는 이 saved PS3 장면 fresh 성공으로 지우거나 범용 성공으로 승격하지 않는다.
+- 새 옵트인 `--drag-probe`는 드래그 전 선택해제 미관측이면 **드래그 자체를 보내지 않고 UNKNOWN**; synthetic 회귀로 고정했다. targeted62, full `make check` **440 PASS**(Ruff/compileall/mypy10/CONTEXT PASS), 안전검사2 PASS; commit/push 없음. 생산·모든 메뉴·WM_CLOSE/장기 안정성 미검증으로 G1 제품 전체는 미완료.

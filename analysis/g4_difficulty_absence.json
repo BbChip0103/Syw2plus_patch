@@ -1,0 +1,61 @@
+{
+  "schema": "syw2plus.g4.free_battle_difficulty_absence.v1",
+  "classification": "NO_FREE_BATTLE_DIFFICULTY_SELECTOR",
+  "activation_allowed": false,
+  "exe": {
+    "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/Syw2plus/syw2plus_original.exe",
+    "sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "pinned": true
+  },
+  "game_speed_function": {
+    "va": "0x004165C0",
+    "pass": true
+  },
+  "lobby_commit": {
+    "va_range": [
+      "0x004B763C",
+      "0x004B76AE"
+    ],
+    "word_targets": [
+      "0x00632D54",
+      "0x00632D46",
+      "0x00632D44",
+      "0x00632D4A",
+      "0x00632D48",
+      "0x00632D4C",
+      "0x00632D42"
+    ],
+    "pass": true
+  },
+  "registries": [
+    {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/Syw2plus/Text_kor.dat",
+      "sha256": "5169241a23f55f11cdd0828397d00f2ee8fda55988c909a64adda6846121b6c1",
+      "missing_required": [],
+      "forbidden_present": [],
+      "pass": true
+    },
+    {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/Syw2plus/TexJ_kor.dat",
+      "sha256": "c135cfb948d06c735a65a4b70dabfc76e945cedecb02c2334cf2136d33bb8343",
+      "missing_required": [],
+      "forbidden_present": [],
+      "pass": true
+    },
+    {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/Syw2plus/TexR_kor.dat",
+      "sha256": "00f6ee1bb90a01f13f634a7c47bfcb47df17d8e6bcaf2e64b3b74aa514dc5a6c",
+      "missing_required": [],
+      "forbidden_present": [],
+      "pass": true
+    },
+    {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/Syw2plus/TeJM_kor.dat",
+      "sha256": "cb698bb5c6c1fe679aab066f3291dd394ea954f9d2580b240e333ae95e340151",
+      "missing_required": [],
+      "forbidden_present": [],
+      "pass": true
+    }
+  ],
+  "conclusion": "Original free battle has game-speed and seven lobby settings, but no AI difficulty field. Do not invent or search for an Easy/Normal/Hard runtime value."
+}

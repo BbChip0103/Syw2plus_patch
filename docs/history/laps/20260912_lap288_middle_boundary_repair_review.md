@@ -1,0 +1,24 @@
+# 2026-09-12 | lap 288 | G1 S1 저장 경계 수리 독립 검수
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-opus-5`/high, middle tier(진단·계획·확인). 게임 코드 hands-on 수정 없음.
+- 가설 / 사용자 관찰: lap287이 lap286 정정1을 반영했다면 (a) `0x440F5B`가 실제 save 함수의 exclusive 끝이고, (b) 새 단언이 정정1이 지목한 드리프트를 실제로 죽이며, (c) 정정1이 지목한 **work probe**의 `SAVE_END`가 좁혀졌어야 한다.
+- 예상 PASS / FAIL 조건: PASS=세 가지 모두 독립 확인. FAIL=경계가 재유도되지 않거나, 단언이 mutant를 죽이지 못하거나, 정정1의 대상 파일이 그대로다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 신규 `docs/history/laps/probes/20260912_lap288_middle_boundary_review_probe.py` SHA `faa8527a05f3d932b812bb133f82824eec8cd4e978a1878cd33804f857e7655f`; `docs/STATUS.md`; `loop/ESCALATE_SOL`; 이 기록. 게임 코드·원본·fixture·기존 probe 변경 0. 커밋 없음(`LOOP_ALLOW_COMMITS=0`).
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac` 검수 전후 동일. 후보 바이너리 없음. offline objdump + fixture 4개(save000 `1c703551…`, save006 `616b7997…`, save011 `23dd24d5…`, save012 `5a6863c1…`, 전부 기록값과 일치). 게임/Wine/Xvfb/PNG 0, 활성 플레이어·군대 해당 없음.
+- 실행 명령 / 로그 / 캡처 경로 및 해시:
+  - `.venv/bin/python docs/history/laps/probes/20260912_lap286_middle_save_layout_review_probe.py` → `logs/lap288/middle_boundary_rerun.json` SHA `f0568622b6f41907445f868bb2dacb7b90723f0fbc05e9f51e9bec1225008bc5`, lap287 로그와 **바이트 동일**.
+  - `.venv/bin/python docs/history/laps/probes/20260912_lap288_middle_boundary_review_probe.py` → `logs/lap288/middle_boundary_review.json` SHA `86157fadedca590963087536853a05661953d6f7a6b8a8e4dfe4c3e5cf2471c9`, exit 0 `failures=[]`, 재실행 바이트 동일.
+  - `make check` → `logs/lap288/make_check_final.log`; `LOOP_DRY_RUN=0 bash checks/safety.sh check`.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): **ACCEPT (수리 내용) / REJECT (카드 종결)**.
+  - 경계 재유도 CONFIRMED: 창 안의 `ret`은 `0x440C62`, `0x440F5A` 둘뿐이고 창 밖으로 나가는 분기 0건, padding run이 정확히 `0x440F5B`에서 시작하며 다음 함수 진입점은 `0x440F60`이다. exclusive `SAVE_END=0x440F5B`는 옳다.
+  - 단언의 반증력 CONFIRMED(mutation matrix): M0 control exit0/failures 0. **M1**(SAVE_END만 `0x440FF0`으로 되돌림) exit1, 경계 단언이 죽인다. **M2**(SAVE_END 되돌림 + ret/padding 조기종료 제거 = lap284 work probe의 평면 창 형태) exit1, failures 39, `0x4da4a9 was included as a save fwrite target: ['0x00440fa4']`가 실제로 발화한다.
+  - **정정1의 대상은 미수리 FAIL:** 정정1 표제는 "**work probe**의 디스어셈블 윈도우"였는데 lap287은 `20260912_lap286_middle_save_layout_review_probe.py`(middle 소유, 이미 `last_instruction=0x00440f5a`를 보고하던 파일)를 고쳤다. `20260912_lap284_work_save_layout_probe.py:26`은 여전히 `SAVE_ENTRY, SAVE_END = 0x440C20, 0x440FF0`이다. 같은 상수를 아직 들고 있는 probe는 **4개**: lap279_middle_s1_serializer, lap280_middle_s1_crossverify, lap284_middle_runtime_contract, lap284_work_save_layout. lap279/280은 `LOAD_ENTRY = 0x440FF0`까지 두어 `0x440F60`·`0x440F96`의 두 별개 루틴을 save 쪽으로 잘못 귀속한다.
+  - **수치 영향은 0(완화 사실):** 틈 `0x440F5B..0x440FF0`의 call 대상은 `0x440A80`/`0x4DA9F2`/`0x4DA4A9`/`0x4DA97C`뿐이고 **fwrite(`0x4DA39F`) 호출은 0건**이다. 따라서 넓은 창은 네 probe 어디에서도 save 쪽 fwrite 수를 부풀리지 않았다. 드리프트는 잠재적 오분류 위험이지 현재 수치 오류가 아니다.
+  - M1에서 fread 단언은 발화하지 않는다. 그 단언은 `body()`의 ret 규칙이 있는 파일에서는 구조적으로 도달 불가이고, 평면 창(M2)에서만 힘을 갖는다. 즉 **가드가 가장 필요 없는 파일에 붙었고 가장 필요한 파일에는 없다.**
+  - 정정2 문구 반영 확인: lap287 기록과 STATUS 모두 "정수배 검사 4건"으로 고쳤다. M2에서 네 fixture 전부 `remainder … is not a multiple of 1880`이 발화해 그 검사의 반증력도 실측 확인했다.
+  - Fast: `make check` **292 passed in 45.95s**, Ruff/compileall/mypy 10 files, `CONTEXT_PASS`, exit 0. `checks/safety.sh check` → `SAFETY_PASS`. 신규 probe Ruff/py_compile exit 0.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태:
+  - **provenance 손상:** lap287(work)이 middle 소유 probe를 편집해 "같은 파일 단일 작성자"를 넘었다. lap286 기록이 "신규 probe"로 가리키는 경로의 내용이 바뀌었고 편집 전 SHA는 어디에도 기록되지 않아 `logs/lap286/middle_save_layout_review.json`을 그 경로에서 재생성할 수 없다. 다만 두 로그의 유일한 차이는 `save_function`에 `exclusive_end`·`fread_calls_in_save` 두 필드가 는 것뿐이고 `last_instruction`을 포함한 모든 모델 수치는 동일하므로, **정정 이전 판정의 수치는 무효화되지 않는다.**
+  - 기존 blocker 전부 유지: S1/F2-R2 결정성, Stage B 0, runtime 예산 0, WM_CLOSE 결함, G3 저장 포맷 `0x1B5A4` 초과, tick 순환 의존, W2 매직 리터럴 드리프트, 정사각·짝수 fixture 한계, `+0x8E` owner 필드 미재유도.
+  - 이 판정은 **offline static probe의 경계 정확성과 가드 반증력**에 한정한다. runtime layer 값 의미, save/load 값 동일성, 제품 G1~G4는 전부 미검증이다. 사용자 마일스톤 승인 없음.
+- 다음 한 가지: work tier(Luna/Sonnet5)가 `20260912_lap284_work_save_layout_probe.py:26`의 `SAVE_END`를 `0x440F5B`로 좁히고 `0x4DA4A9` 단언을 **그 파일에** 넣은 뒤, 나머지 세 probe의 `0x440FF0`/`LOAD_ENTRY` 사용처를 재실행 대조해 출력 불변을 보인다. 게임 실행·하네스 로드 경로 구현·PASS 규칙 변경은 계속 금지.

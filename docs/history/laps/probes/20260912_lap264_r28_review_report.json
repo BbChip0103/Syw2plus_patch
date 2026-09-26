@@ -1,0 +1,240 @@
+{
+  "C1_contract": {
+    "body_first": 137,
+    "body_last": 426,
+    "body_line_count": 262,
+    "json_dump_in_body": true,
+    "json_dump_line": 412,
+    "preflight_count": 1,
+    "preflight_end": 130,
+    "preflight_start": 123
+  },
+  "C1_controls": {
+    "evidence_preserved": true,
+    "positive_body_lines_executed": 205,
+    "positive_rc": 0,
+    "refusal_body_lines_executed": 0,
+    "refusal_message": true,
+    "refusal_rc": 2
+  },
+  "C2_C3_mutations": {
+    "M0_control": {
+      "errors": 0,
+      "failed": 0,
+      "failing_names": [],
+      "mutant_contract": {
+        "body_lines": 262,
+        "json_dump_in_body": true,
+        "json_dump_line": 412,
+        "preflight_count": 1,
+        "preflight_end": 130,
+        "preflight_start": 123
+      },
+      "passed": 8,
+      "rc": 0,
+      "tail": "8 passed in 0.56s"
+    },
+    "M1_rename_only": {
+      "errors": 0,
+      "failed": 0,
+      "failing_names": [],
+      "mutant_contract": {
+        "body_lines": 262,
+        "json_dump_in_body": true,
+        "json_dump_line": 412,
+        "preflight_count": 1,
+        "preflight_end": 130,
+        "preflight_start": 123
+      },
+      "passed": 8,
+      "rc": 0,
+      "tail": "8 passed in 0.54s"
+    },
+    "M2_late_refusal": {
+      "errors": 0,
+      "failed": 1,
+      "failing_names": [
+        "test_r6b_r17_existing_evidence0",
+        "test_r6b_r17_existing_evidence_refusal_precedes_review_body",
+        "test_review_probe_output"
+      ],
+      "mutant_contract": {
+        "body_lines": 262,
+        "json_dump_in_body": true,
+        "json_dump_line": 412,
+        "preflight_count": 1,
+        "preflight_end": 130,
+        "preflight_start": 123
+      },
+      "passed": 7,
+      "rc": 1,
+      "tail": "1 failed, 7 passed in 0.62s"
+    },
+    "M3_late_refusal_plus_rename": {
+      "errors": 0,
+      "failed": 1,
+      "failing_names": [
+        "test_r6b_r17_existing_evidence0",
+        "test_r6b_r17_existing_evidence_refusal_precedes_review_body",
+        "test_review_probe_output"
+      ],
+      "mutant_contract": {
+        "body_lines": 262,
+        "json_dump_in_body": true,
+        "json_dump_line": 412,
+        "preflight_count": 1,
+        "preflight_end": 130,
+        "preflight_start": 123
+      },
+      "passed": 7,
+      "rc": 1,
+      "tail": "1 failed, 7 passed in 0.63s"
+    },
+    "M6_relocate_tail_plus_late_refusal": {
+      "errors": 0,
+      "failed": 1,
+      "failing_names": [
+        "test_r6b_r17_existing_evidence0",
+        "test_r6b_r17_existing_evidence_refusal_precedes_review_body",
+        "test_review_probe_output"
+      ],
+      "mutant_contract": {
+        "body_lines": 0,
+        "json_dump_in_body": false,
+        "json_dump_line": 413,
+        "preflight_count": 1,
+        "preflight_end": 431,
+        "preflight_start": 430
+      },
+      "passed": 7,
+      "rc": 1,
+      "tail": "1 failed, 7 passed in 0.62s"
+    },
+    "M7_relocate_above_report_write": {
+      "errors": 0,
+      "failed": 0,
+      "failing_names": [],
+      "mutant_contract": {
+        "body_lines": 17,
+        "json_dump_in_body": true,
+        "json_dump_line": 414,
+        "preflight_count": 1,
+        "preflight_end": 409,
+        "preflight_start": 402
+      },
+      "passed": 8,
+      "rc": 0,
+      "tail": "8 passed in 0.67s"
+    }
+  },
+  "C3_defect_trace": {
+    "M6_relocate_tail_plus_late_refusal": {
+      "baseline_body_line_total": 262,
+      "baseline_body_lines_executed_before_refusal": 196,
+      "evidence_preserved": true,
+      "rc": 2,
+      "refusal_message": true,
+      "shipped_helper_body_line_count": 0
+    },
+    "M7_relocate_above_report_write": {
+      "baseline_body_line_total": 262,
+      "baseline_body_lines_executed_before_refusal": 198,
+      "evidence_preserved": true,
+      "rc": 2,
+      "refusal_message": true,
+      "shipped_helper_body_line_count": 17
+    },
+    "_map": {
+      "anchor_baseline_line": 410,
+      "anchor_mutant_line": 402,
+      "insert_len": 10,
+      "shift": 8
+    }
+  },
+  "C3_survivors": [
+    "M1_rename_only",
+    "M7_relocate_above_report_write"
+  ],
+  "C4_load_bearing": {
+    "without_R17_test/M2_late_refusal": {
+      "errors": 0,
+      "failed": 0,
+      "failing_names": [],
+      "passed": 7,
+      "rc": 0,
+      "tail": "7 passed in 0.48s"
+    },
+    "without_R17_test/M3_late_refusal_plus_rename": {
+      "errors": 0,
+      "failed": 0,
+      "failing_names": [],
+      "passed": 7,
+      "rc": 0,
+      "tail": "7 passed in 0.48s"
+    },
+    "without_R17_test/M6_relocate_tail_plus_late_refusal": {
+      "errors": 0,
+      "failed": 0,
+      "failing_names": [],
+      "passed": 7,
+      "rc": 0,
+      "tail": "7 passed in 0.49s"
+    },
+    "without_R17_test/M7_relocate_above_report_write": {
+      "errors": 0,
+      "failed": 0,
+      "failing_names": [],
+      "passed": 7,
+      "rc": 0,
+      "tail": "7 passed in 0.54s"
+    },
+    "without_R28_guard/M2_late_refusal": {
+      "errors": 0,
+      "failed": 1,
+      "failing_names": [
+        "test_r6b_r17_existing_evidence0",
+        "test_r6b_r17_existing_evidence_refusal_precedes_review_body",
+        "test_review_probe_output"
+      ],
+      "passed": 7,
+      "rc": 1,
+      "tail": "1 failed, 7 passed in 0.62s"
+    },
+    "without_R28_guard/M3_late_refusal_plus_rename": {
+      "errors": 0,
+      "failed": 1,
+      "failing_names": [
+        "test_r6b_r17_existing_evidence0",
+        "test_r6b_r17_existing_evidence_refusal_precedes_review_body",
+        "test_review_probe_output"
+      ],
+      "passed": 7,
+      "rc": 1,
+      "tail": "1 failed, 7 passed in 0.62s"
+    },
+    "without_R28_guard/M6_relocate_tail_plus_late_refusal": {
+      "errors": 0,
+      "failed": 0,
+      "failing_names": [],
+      "passed": 8,
+      "rc": 0,
+      "tail": "8 passed in 0.62s"
+    },
+    "without_R28_guard/M7_relocate_above_report_write": {
+      "errors": 0,
+      "failed": 0,
+      "failing_names": [],
+      "passed": 8,
+      "rc": 0,
+      "tail": "8 passed in 0.67s"
+    }
+  },
+  "fingerprints": {
+    "docs/history/laps/probes/20260912_lap228_r6b_r3_review_probe.py": "16f74629aae8f823508762d719776547e1fd8365a07c7862bbf89a4d3ae06d12",
+    "tests/test_review_probe_output.py": "df93939f87fdd86f207bb2da16f6300aa639cb1d1b857b1c3e23067b7bc218c2",
+    "tools/runtime_env.py": "e4f6a834f1ca591d2fe7acc1002beea4b343647d6ba47ff3b847f74e22455837"
+  },
+  "item": "R28",
+  "lap": 264,
+  "role": "middle"
+}

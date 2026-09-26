@@ -1,0 +1,11 @@
+# 2026-09-11 | lap 105 | G1
+
+- 실제 provider/model/effort / 지정 역할: 세션 표면에서 provider/model 식별값은 노출되지 않음; 일반 hands-on 구현 작업자, high effort 지시 범위.
+- 가설 / 사용자 관찰: 기존 DirectDraw 경계 중 하나가 고정 원본의 800×600 source surface를 1600×1200 destination rectangle으로 정수 2배 표시하는 유일한 presentation boundary일 수 있다.
+- 예상 PASS / FAIL 조건: IAT/direct-xref, old bytes, surface/rectangle 값으로 단일 경계를 고정하면 work probe PASS. 복수 후보이거나 1600×1200 destination rectangle 연결이 없으면 concrete blocker와 Astra/high architecture handoff.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 코드·테스트·binary·dependency·fixture·baseline·capture 변경 없음. 문서만 `docs/STATUS.md`, 본 기록, `loop/ESCALATE_SOL`에 uncommitted로 기록.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 고정 source `/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/Syw2plus/syw2plus_original.exe`와 lap73 private copy `local/runtime/20260911_082430_2926029_0/game/syw2plus_original.exe` 모두 SHA256 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`, `cmp=0`, PE32 GUI Intel 80386. 실행/활성 플레이어/지도/군대/fixture 없음.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: 양 파일에 read-only Python byte/xref scan, `objdump -d -Mintel` context scan. `0x004d7938` IAT thunk bytes `ff 25 18 50 4e 00`, DirectDrawCreateEx caller `0x00464374` bytes `e8 bf 35 07 00`; mode3 setup `0x00464502` bytes `c7 46 04 20 03 00 00` (800), `0x00464509` bytes `c7 46 08 58 02 00 00` (600). 후보 bytes: Blt-consistent `0x0046ca30`=`ff 52 14`; Flip-consistent `0x0046cb34`/`0x0046d73b`/`0x0046d903` 각각 `ff 51 2c`. stdout만 사용했고 새 log/capture는 없음.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): 두 파일 byte-identical; DirectDrawCreateEx IAT direct-xref `1`; `slot +0x14` 후보 `49`; `slot +0x2c` 후보 `14`. Flip/Blt 후보는 여러 generic surface/array 경계이며, 후보 context에 1600×1200 destination rectangle을 유일하게 지정하는 값/직접 연결이 없음. 고정 static presentation-boundary probe **BLOCKED**; G1 **UNKNOWN/BLOCKED**, product PASS 승격 금지. runtime/game/actual pixels/input은 SKIP.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 파일·바이너리 회귀 없음; runtime 호출 없이 presentation 의미를 확정할 수 없음. 정확한 surface ownership, rectangle 생성 writer, 실제 Flip 선택은 Astra/high architecture 작업자가 독립 검증해야 함. 사용자 milestone approval 없음.
+- 다음 한 가지: `loop/ESCALATE_SOL`의 handoff대로 Astra/high가 DirectDraw surface ownership→rectangle writer→실제 present 선택을 호출 그래프와 isolated runtime trace로 확정하고, 단일 경계가 증명되기 전에는 patch/ G1 PASS를 금지한다.

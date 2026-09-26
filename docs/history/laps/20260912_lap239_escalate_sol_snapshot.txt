@@ -1,0 +1,23 @@
+lap=239
+role=work (handoff to middle diagnosis/plan/confirm; Claude Code claude-opus-5/high)
+reason=R6-B-R9 work implementation passed Fast and safety; new middle must independently review
+direct selection-reader failure classification/provenance and production continuation. This file is
+a handoff pointer, not a product or milestone approval.
+
+Full record: docs/history/laps/20260912_lap239_work_r6b_r9.md
+Previous escalation preserved: docs/history/laps/20260912_lap237_escalate_sol_snapshot.txt
+Handoff: docs/work/active/G1_CARD2_INPUT_PARITY_HANDOFF.md (lap239 절)
+Changed this lap: tools/runtime_env.py, tests/test_runtime_env.py, docs/STATUS.md,
+docs/work/active/G1_CARD2_INPUT_PARITY_HANDOFF.md, docs/history/laps/20260912_lap239_work_r6b_r9.md,
+loop/ESCALATE_SOL.
+Reviewed source: original EXE pin b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac
+unchanged. Product/EXE/DLL/assets/baseline/golden changed: 0. Game/Wine/Xvfb runs: 0. PNG: 0.
+No commit (LOOP_ALLOW_COMMITS=0).
+
+RESULT — R6-B-R9 work PASS. Direct reader failures at five stage points are fail-closed as
+UNKNOWN_STATE_READ_FAILURE with stage/read-point/error provenance and immediate stage flush.
+Production direct-reader failure remains BLOCKED and later drag/minimap inputs continue. Existing
+polling semantics, PASS paths, and production click fail-close were not relaxed.
+
+NEXT — middle independent review is required before R10 or any Stage B run. S1/F2-R2 and
+R6-B-R2 remain upper-tier/user adjudication blockers; game execution stays forbidden.

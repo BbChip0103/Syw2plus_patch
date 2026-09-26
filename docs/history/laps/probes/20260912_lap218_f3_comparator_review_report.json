@@ -1,0 +1,382 @@
+{
+  "cases": [
+    {
+      "case": "A1_both_disputed_selection_last",
+      "expected": {
+        "identity": [
+          812,
+          44
+        ],
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "identity": [
+          812,
+          44
+        ],
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "stage_reason": "source input stage result is disputed; observation is not a card FAIL"
+    },
+    {
+      "case": "A2_disputed_without_after_last",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "INCONCLUSIVE"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "INCONCLUSIVE"
+        ]
+      },
+      "stage_reason": "selection count is missing or UNKNOWN"
+    },
+    {
+      "case": "A3_disputed_minimap_last_camera",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "minimap",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "minimap",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "stage_reason": "source input stage result is disputed; observation is not a card FAIL"
+    },
+    {
+      "case": "A4_clean_pair_still_passes",
+      "expected": {
+        "overall": "PASS",
+        "stage": [
+          "drag_select",
+          "PASS"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "PASS",
+        "stage": [
+          "drag_select",
+          "PASS"
+        ]
+      },
+      "stage_reason": null
+    },
+    {
+      "case": "A5_one_sided_dispute",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "stage_reason": "source input stage result is disputed; observation is not a card FAIL"
+    },
+    {
+      "case": "A6_disputed_with_diverging_observation_is_not_fail",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "stage_reason": "source input stage result is disputed; observation is not a card FAIL"
+    },
+    {
+      "case": "A7_missing_result_key_is_not_pass",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "unit_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "unit_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "stage_reason": "source input stage result is disputed; observation is not a card FAIL"
+    },
+    {
+      "case": "A8_scene_gate_still_dominates_dispute",
+      "expected": {
+        "overall": "UNKNOWN_SCENE_MISMATCH",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_SCENE_MISMATCH"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "UNKNOWN_SCENE_MISMATCH",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_SCENE_MISMATCH"
+        ]
+      },
+      "stage_reason": "scene mismatch"
+    },
+    {
+      "case": "A9_f4_input_errors_preserved",
+      "expected": {
+        "candidate_input_errors": [
+          "duplicate input tag: unit_select"
+        ],
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "candidate_input_errors": [
+          "duplicate input tag: unit_select"
+        ],
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "stage_reason": "source input stage result is disputed; observation is not a card FAIL"
+    },
+    {
+      "case": "A10_f1_missing_camera_preserved",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "minimap",
+          "INCONCLUSIVE"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "minimap",
+          "INCONCLUSIVE"
+        ]
+      },
+      "stage_reason": "minimap camera observation is missing or UNKNOWN"
+    },
+    {
+      "case": "A11_disputed_geometry_difference_still_fails",
+      "expected": {
+        "overall": "FAIL",
+        "stage": [
+          "drag_select",
+          "FAIL"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "FAIL",
+        "stage": [
+          "drag_select",
+          "FAIL"
+        ]
+      },
+      "stage_reason": "logical input geometry differs"
+    },
+    {
+      "case": "A12_budget_exhausted_classification_is_disputed",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "group": "A",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "stage_reason": "source input stage result is disputed; observation is not a card FAIL"
+    },
+    {
+      "case": "B1_pass_result_with_timeout_shaped_after",
+      "expected": {
+        "overall": "PASS",
+        "stage": [
+          "drag_select",
+          "PASS"
+        ]
+      },
+      "group": "B",
+      "match": true,
+      "observed": {
+        "overall": "PASS",
+        "stage": [
+          "drag_select",
+          "PASS"
+        ]
+      },
+      "stage_reason": null
+    },
+    {
+      "case": "B2_corrupt_after_selection_shadowed_by_last",
+      "expected": {
+        "overall": "PASS",
+        "stage": [
+          "drag_select",
+          "PASS"
+        ]
+      },
+      "group": "B",
+      "match": true,
+      "observed": {
+        "overall": "PASS",
+        "stage": [
+          "drag_select",
+          "PASS"
+        ]
+      },
+      "stage_reason": null
+    },
+    {
+      "case": "B3_hard_fail_result_no_longer_reports_card_fail",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "minimap",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "group": "B",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "minimap",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "stage_reason": "source input stage result is disputed; observation is not a card FAIL"
+    },
+    {
+      "case": "B4_before_has_no_last_fallback",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "INCONCLUSIVE"
+        ]
+      },
+      "group": "B",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "INCONCLUSIVE"
+        ]
+      },
+      "stage_reason": "selection count is missing or UNKNOWN"
+    },
+    {
+      "case": "B5_corrupt_last_count_is_inconclusive",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "INCONCLUSIVE"
+        ]
+      },
+      "group": "B",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "drag_select",
+          "INCONCLUSIVE"
+        ]
+      },
+      "stage_reason": "selection count is missing or UNKNOWN"
+    },
+    {
+      "case": "B6_all_stages_disputed",
+      "expected": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "unit_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "group": "B",
+      "match": true,
+      "observed": {
+        "overall": "INCONCLUSIVE",
+        "stage": [
+          "unit_select",
+          "UNKNOWN_DISPUTED_ORACLE"
+        ]
+      },
+      "stage_reason": "source input stage result is disputed; observation is not a card FAIL"
+    }
+  ],
+  "comparator": "tools/compare_g1_stage_b.py",
+  "disputed_pass_violations": [],
+  "probe": "lap218_f3_comparator_review",
+  "unexpected": []
+}

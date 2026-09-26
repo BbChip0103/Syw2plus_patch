@@ -1,0 +1,52 @@
+{
+  "item": "R30B_feasibility",
+  "lap": 266,
+  "results": {
+    "M0_control": {
+      "errors": 0,
+      "failed": 0,
+      "passed": 8,
+      "tail": "8 passed in 0.38s"
+    },
+    "M1_rename_only": {
+      "errors": 0,
+      "failed": 0,
+      "passed": 8,
+      "tail": "8 passed in 0.38s"
+    },
+    "M2_late_refusal": {
+      "errors": 0,
+      "failed": 1,
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.48s"
+    },
+    "M3_late_refusal_plus_rename": {
+      "errors": 0,
+      "failed": 1,
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.47s"
+    },
+    "M6_relocate_tail_plus_late_refusal": {
+      "errors": 0,
+      "failed": 1,
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.46s"
+    },
+    "M7_relocate_above_report_write": {
+      "errors": 0,
+      "failed": 1,
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.50s"
+    },
+    "M8_decoy_anchor_above_report_write": {
+      "errors": 0,
+      "failed": 1,
+      "passed": 7,
+      "tail": "1 failed, 7 passed in 0.51s"
+    }
+  },
+  "role": "middle",
+  "survivors": [
+    "M1_rename_only"
+  ]
+}

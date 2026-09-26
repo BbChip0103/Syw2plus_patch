@@ -1,0 +1,222 @@
+{
+  "probe": "lap216_f6_r1_guard_review",
+  "game_runs": 0,
+  "source_sha256": {
+    "tools/runtime_env.py": "398c2b8ae4980a5c2ddd44bffba2e5330701341a575b5ad4cc519e8ad790322f",
+    "tests/test_runtime_env.py": "601ebfc821cf98804741c07bc07780019708d799632ab9a839947f75ea010528",
+    "tools/compare_g1_stage_b.py": "7730170e610b2e4a39bb02119dd3ec73ad606b6b034d8c43f255f8a07c729ca4"
+  },
+  "cases": [
+    {
+      "producer": "g1_baseline",
+      "recorder": "input_record",
+      "mutation": "real",
+      "class": "real",
+      "note": "unmutated repository source",
+      "guard_violations": [],
+      "guard_blocks": false,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_baseline",
+      "recorder": "input_record",
+      "mutation": "observed_stub",
+      "class": "negative",
+      "note": "lap211/212 pre-repair untagged OBSERVED stub",
+      "guard_violations": [
+        "helper_calls=0",
+        "observed_stub_constant_present"
+      ],
+      "guard_blocks": true,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_baseline",
+      "recorder": "input_record",
+      "mutation": "silent_bypass",
+      "class": "negative",
+      "note": "direct inputs.append bypass without the OBSERVED literal",
+      "guard_violations": [
+        "helper_calls=0"
+      ],
+      "guard_blocks": true,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_baseline",
+      "recorder": "input_record",
+      "mutation": "flow_wiring_dropped",
+      "class": "negative",
+      "note": "selector flow no longer receives the named recorder",
+      "guard_violations": [
+        "flow_recorder_argument_missing"
+      ],
+      "guard_blocks": true,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_baseline",
+      "recorder": "input_record",
+      "mutation": "conditional_bypass",
+      "class": "gap",
+      "note": "one untagged branch, helper still called exactly once",
+      "guard_violations": [],
+      "guard_blocks": false,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_baseline",
+      "recorder": "input_record",
+      "mutation": "flush_dropped",
+      "class": "gap",
+      "note": "helper called but per-record flush disabled",
+      "guard_violations": [],
+      "guard_blocks": false,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_baseline",
+      "recorder": "input_record",
+      "mutation": "tag_laundered",
+      "class": "gap",
+      "note": "helper called with tag=None",
+      "guard_violations": [],
+      "guard_blocks": false,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_presentation_trace",
+      "recorder": "record_input",
+      "mutation": "real",
+      "class": "real",
+      "note": "unmutated repository source",
+      "guard_violations": [],
+      "guard_blocks": false,
+      "runtime_effect": {
+        "records": 2,
+        "tags": [
+          "multiplayer_mode_normalize",
+          "solo_mode_setup"
+        ],
+        "untagged_records": 0,
+        "flush_calls": 2,
+        "comparator_input_errors": [],
+        "runtime_error": null
+      },
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_presentation_trace",
+      "recorder": "record_input",
+      "mutation": "observed_stub",
+      "class": "negative",
+      "note": "lap211/212 pre-repair untagged OBSERVED stub",
+      "guard_violations": [
+        "helper_calls=0",
+        "observed_stub_constant_present"
+      ],
+      "guard_blocks": true,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_presentation_trace",
+      "recorder": "record_input",
+      "mutation": "silent_bypass",
+      "class": "negative",
+      "note": "direct inputs.append bypass without the OBSERVED literal",
+      "guard_violations": [
+        "helper_calls=0"
+      ],
+      "guard_blocks": true,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_presentation_trace",
+      "recorder": "record_input",
+      "mutation": "flow_wiring_dropped",
+      "class": "negative",
+      "note": "selector flow no longer receives the named recorder",
+      "guard_violations": [
+        "flow_recorder_argument_missing"
+      ],
+      "guard_blocks": true,
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_presentation_trace",
+      "recorder": "record_input",
+      "mutation": "conditional_bypass",
+      "class": "gap",
+      "note": "one untagged branch, helper still called exactly once",
+      "guard_violations": [],
+      "guard_blocks": false,
+      "runtime_effect": {
+        "records": 2,
+        "tags": [
+          "multiplayer_mode_normalize",
+          null
+        ],
+        "untagged_records": 1,
+        "flush_calls": 1,
+        "comparator_input_errors": [
+          "inputs[1].tag is missing or is not a string"
+        ],
+        "runtime_error": null
+      },
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_presentation_trace",
+      "recorder": "record_input",
+      "mutation": "flush_dropped",
+      "class": "gap",
+      "note": "helper called but per-record flush disabled",
+      "guard_violations": [],
+      "guard_blocks": false,
+      "runtime_effect": {
+        "records": 2,
+        "tags": [
+          "multiplayer_mode_normalize",
+          "solo_mode_setup"
+        ],
+        "untagged_records": 0,
+        "flush_calls": 0,
+        "comparator_input_errors": [],
+        "runtime_error": null
+      },
+      "verdict": "OK"
+    },
+    {
+      "producer": "g1_presentation_trace",
+      "recorder": "record_input",
+      "mutation": "tag_laundered",
+      "class": "gap",
+      "note": "helper called with tag=None",
+      "guard_violations": [],
+      "guard_blocks": false,
+      "runtime_effect": {
+        "records": 2,
+        "tags": [
+          null,
+          null
+        ],
+        "untagged_records": 2,
+        "flush_calls": 2,
+        "comparator_input_errors": [
+          "inputs[0].tag is missing or is not a string",
+          "inputs[1].tag is missing or is not a string"
+        ],
+        "runtime_error": null
+      },
+      "verdict": "OK"
+    }
+  ],
+  "summary": {
+    "negative_controls_blocked": 6,
+    "negative_controls_total": 6,
+    "gap_controls_unblocked": 6,
+    "gap_controls_total": 6,
+    "real_sources_clean": true,
+    "unexpected": []
+  }
+}

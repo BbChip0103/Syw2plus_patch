@@ -1,0 +1,40 @@
+{
+  "failures": [],
+  "ga_hits": {
+    "0x401402": [
+      "imm",
+      17825799
+    ]
+  },
+  "ga_tail_destination_range": [
+    "0x108c000",
+    "0x12b88d8"
+  ],
+  "gb_added": {},
+  "gb_after_count": 3132,
+  "gb_before_count": 3172,
+  "gb_bulk_blob_range": [
+    "0x892410",
+    "0x975d8c"
+  ],
+  "gb_changed": {},
+  "gb_removed_count": 40,
+  "lap": 401,
+  "original_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "provider_model_effort": "Claude Code claude-sonnet-5 / high",
+  "r1_n1200_candidate_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "r1_n1200_identity": true,
+  "r2_n1210_b3_fixup_site_counts": {
+    "unit_age": 4,
+    "unit_existence": 34,
+    "unit_pool": 1014
+  },
+  "r2_n1210_candidate_sha256": "2571d6a2d07396215dadc323a42e1c763ff332132463e5b049fb2135b9d264de",
+  "r2_n1210_deltas": {
+    "unit_age": "0x00a1e53c",
+    "unit_existence": "0x00a1e528",
+    "unit_pool": "0x00a20870"
+  },
+  "role": "work",
+  "work_card": "docs/work/active/G2_UNIT_POOL_RELOCATION_SPIKE_LAP400.md"
+}

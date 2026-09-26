@@ -1,0 +1,11 @@
+# 2026-09-26 | lap 667 | 목표 G5
+
+- 실제 provider/model/effort / 지정 역할: Codex native hands-on work / high; 원본 공격 입력 귀속 및 최소 probe 검증.
+- 가설 / 사용자 관찰: lap666의 후보 `command=3,target=0`은 probe 좌표 문제일 수 있으므로 원본 동일 입력을 먼저 실행하고, 적 sprite 중심 또는 `A` 후 좌클릭으로 공격 raw를 귀속한다.
+- 예상 PASS / FAIL 조건: 원본 선택20과 후보 선택50의 공격 command/target이 각각 적 slot을 가리키고, cleanup·source 불변. 공격 opcode/target이 원본에서 귀속되지 않으면 FAIL-B/승격.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `tools/g5_candidate_drag_probe.py`, `tests/test_g5_candidate_drag_probe.py`; 제품 EXE·원본 0; 커밋 0; uncommitted. 최종 파일 SHA는 각각 `f927a79d6aff4c94cd7dfa9f3ded0eb3f3937120d3d24797e1fb8f552963920c`, `8c472dd67a09b684ca1b59f869870bb7e952fd4a8bd973309abd042e73859b14`.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 후보 실행 SKIP; private Wine/Xvfb 1600×1200, PS3 solo owner0, synthetic owner0 type2×55 + owner1 type2×1 적, 기존 worker anchor.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `PYTHONPATH=. python3 tools/g5_candidate_drag_probe.py --variant original --attack-probe`를 네 fresh runtime/artifact 경로로 수행. 결과 JSON SHA는 각각 `ff36fcdb09e5db76d3dc12cab85c3b620018fc3ec6e81d08eec33eac40a6a54`, `6bbab5b75b16b970009dae683b6d9140a104fdb242cacece6922fe06b98286f8`, `bfdb518aa836b8ffbbb5c49c73577e84fd515a9bcff29a33e7619c3271b47de4`, `bc88a45761d1dbb8dbaa536be8c9aec425be9e74c11ef2085f0e3243e604fbe7`; 캡처·probe.log는 각 artifact에 보존.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): 첫 실행은 old right-click `(548,476)`, 이후 screen crop 근거로 `(715,460)`, `(548,450)` right-click, 마지막 `A`+left-click `(548,450)`. 네 번 모두 selection `20/20`, `attack_command_count=0`, `target_match_count=0`, `pass=false`, cleanup true, source unchanged true. Probe 회귀 `4 passed`; compileall PASS; 직접 ruff는 PATH 부재; candidate50 paired, `make check`, 제품 patch SKIP. 판정 `FAIL-B / BLOCKED(attack attribution)`.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: probe 입력을 좌표/공격 모드로 수정했지만 원본에서 공격 opcode가 생기지 않아 implementation evidence가 불명확하다. command4/+0x64A 가정, owner1 type2 hit-test, A-key mode, `FUN_004AE550` 관련성은 미확정. G5 1단 제한 승인·전체 G5 PASS·멀티 동기화·사용자 승인은 없음.
+- 다음 한 가지: 승격 작업자가 원본 raw/capture와 실제 공격 입력 계약을 독립 귀속하고, 한 가지 최소 probe 또는 제품 수리 뒤에만 original20→candidate50 paired fresh 실행을 수행한다. 현재 변경과 artifact는 보존하며 동일 추측 재시도는 금지한다.

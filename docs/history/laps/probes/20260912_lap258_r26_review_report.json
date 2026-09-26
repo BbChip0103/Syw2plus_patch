@@ -1,0 +1,129 @@
+{
+  "lap": 258,
+  "role": "middle",
+  "item": "R26",
+  "sut_sha256": "f54932b50c6de5c575699ade11947fcea93219ab7a8b2a69e845137b301dfec4",
+  "tests_sha256": "96e4c0916dc4c1ac1565615cd6a5ba2ae709a2ca5d8ebbb1fdeef6890e552838",
+  "C0": {
+    "returncode": 0,
+    "counts": {
+      "passed": 14,
+      "deselected": 130
+    }
+  },
+  "C1": {
+    "cases": 160,
+    "mismatches": 0,
+    "state_distribution": {
+      "STAGE_START_UNKNOWN": 24,
+      "WITHIN_STAGE_BUDGET": 36,
+      "STAGE_BUDGET_EXHAUSTED": 36,
+      "STAGE_BUDGET_UNAVAILABLE": 64
+    },
+    "mismatch_details": []
+  },
+  "C2": {
+    "real_counts": {
+      "passed": 144
+    },
+    "mirror_counts": {
+      "passed": 144
+    },
+    "equal": true,
+    "returncode": 0
+  },
+  "C3": {
+    "mutations": [
+      {
+        "id": "M1",
+        "label": "state pinned WITHIN_STAGE_BUDGET",
+        "applied": true,
+        "counts": {},
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M2",
+        "label": "state pinned STAGE_BUDGET_EXHAUSTED",
+        "applied": true,
+        "counts": {},
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M3",
+        "label": "UNAVAILABLE collapsed into START_UNKNOWN",
+        "applied": true,
+        "counts": {},
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M4",
+        "label": "START_UNKNOWN collapsed into WITHIN_STAGE_BUDGET",
+        "applied": true,
+        "counts": {},
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M5",
+        "label": "priority reordered: unknown start checked before missing budget",
+        "applied": true,
+        "counts": {},
+        "killed": false,
+        "in_scope_kills": [],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M6",
+        "label": "state boundary >= weakened to >",
+        "applied": true,
+        "counts": {},
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M7",
+        "label": "legacy boolean pinned True",
+        "applied": true,
+        "counts": {},
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M8",
+        "label": "EXHAUSTED collapsed into WITHIN_STAGE_BUDGET",
+        "applied": true,
+        "counts": {},
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      }
+    ],
+    "survivors": [
+      "M5"
+    ],
+    "out_of_scope_total": []
+  }
+}

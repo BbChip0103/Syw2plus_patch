@@ -1,0 +1,11 @@
+# 2026-09-11 | lap 88 | G1-A exact record consumer correction
+
+- 날짜/lap/목표: 2026-09-11 / lap 88 / G1-A의 `0x00892410+0x6B9A/+0x6B9C/+0x6BA0/+0x6BA4` exact `.text` xref 완전성.
+- 역할/가설: 일반 hands-on work-tier. lap87이 찾은 `0x004A31F2`, `0x0041EFA5`를 포함해 네 field의 read/write/reset과 consumer branch를 전체 disassembly에서 재열거하면 누락을 제거할 수 있다. production 의미는 직접 edge 없이는 승격하지 않는다.
+- 변경 파일: `analysis/memory_maps/player_offsets.md`, `docs/STATUS.md`, `docs/history/laps/20260911_lap88_luna_g1a_exact_record_consumer_correction.md`, `loop/ESCALATE_SOL`. source/tests/binary/fixture/좌표/게임은 변경하지 않았다. 커밋 없음(`LOOP_ALLOW_COMMITS=0`).
+- 원본/후보SHA·환경: `Syw2plus/syw2plus_original.exe`와 `local/runtime/20260911_082430_2926029_0/game/syw2plus_original.exe`; SHA 양쪽 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`, `cmp` byte-identical. PE32 i386, `.text` VA/raw `0x00401000/0x1000`, file offset `VA-0x00400000`. 후보 없음.
+- 실행 명령/근거: `sha256sum`, `cmp`, `file`, `objdump -h`, `objdump -d -Mintel --section=.text`, 지정 범위 disassembly, `xxd` old-byte 확인. 대상 absolute addresses `0x00898FAA/AC/B0/B4`와 base-relative `+0x6B9A/C/A0/A4`를 모두 검색했다.
+- 정정 측정값: `0x004A3700` unique direct caller는 `0x0041EB7A` (`e8 81 4b 08 00`); `ecx=0x00892410`은 `0x0041EB75`에서 설정된다. `+0x6B9A` reset `0x00412ED9/0x0041F0CF/0x004A31F2`, writer count write `0x004A3750`, writer reads `0x004A3700/0x004A3716/0x004A372D/0x004A3742`; `+0x6B9C` read `0x0041ED34/0x0041EFCC/0x0041EFF9`, compare `0x004AEC2F`; `+0x6BA0` read `0x0041ED2D/0x0041EFC6/0x0041EFF4`; `+0x6BA4` compare `0x0041EC47`, read `0x0041EC8E/0x0041EE0B/0x0041EF7C/0x0041EFA5/0x0041EFD2/0x0041EFFF`. 누락 site 포함 exact enumeration은 **PASS**.
+- consumer branch coverage: code `0x04`는 `0x0040FB50→0x004AC3E0`, code `0x08`은 `0x00436B10→0x00427B80` 및 generic event, code `0x15`/common은 `0x004A4860/0x00438820/0x00416F40/0x0040FB80`, 공통 세 field pack은 `0x004AE550→0x004A3C10`, end-pointer compare는 `0x004AEC2F→0x004AE8BE`로 분류했다. production callback/worker/primary command sender 직접 edge는 **미확인**.
+- 검사/fixture: 후보·game run·fixture는 **SKIP**. 문서 반영 후 `make check`, `bash checks/safety.sh check`, `make doctor`를 수행한다. Fast 통과만 제품/G1 승인으로 승격하지 않는다.
+- 판정/다음 행동: static xref/branch coverage **PASS**, production 의미·실제 입력/runtime·G1은 **UNKNOWN / CONCRETE BLOCKER**. 새 Sol/Opus5/high middle이 두 원본 SHA, old bytes, 전체 표와 consumer 경계를 독립 재추출해 구현 금지와 다음 probe를 판정한다.

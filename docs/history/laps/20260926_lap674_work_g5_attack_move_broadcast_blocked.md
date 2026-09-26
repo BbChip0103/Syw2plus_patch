@@ -1,0 +1,22 @@
+# 2026-09-26 | lap 674 | 목표 G5
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-sonnet-5` / high (Codex 401로 임시 전환, `loop/env.local.sh`); 지정 역할 work, middle 없이 STATUS/INBOX 2026-09-26 10:31 지시(스프라이트 클릭 폐기, UI 드래그50 → A+지면좌클릭 또는 공격버튼+지면클릭으로 공격이동 브로드캐스트 → `+0x384/+0x388`/`+0x290` 전환 개수로 판정) 구현·실행.
+- 가설 / 사용자 관찰: 10:31 운영자 판정(strategy 대행)은 lap672(좌표계산 6회)·lap673(diff 3회) 누적 9회 스프라이트 클릭 실패를 근거로, 스프라이트를 맞힐 필요 없는 "공격 이동" 방식으로 판정 기준 자체를 재정의했다. 이번 lap의 가설: 드래그 선택된 유닛 전원에게 A+지면클릭(또는 공격버튼+지면클릭)을 보내면 스프라이트 히트 여부와 무관하게 `+0x290==4` 또는 `+0x384&0xffff==4` 계열로 전환된다.
+- 예상 PASS / FAIL 조건: 선택 전원(원본20/후보50)이 클릭 직후·수 tick 후 표본 중 하나에서 공격 계열 플래그를 보이면 `PASS_(ORIGINAL_)ATTACK_MOVE_BROADCAST`. 하나라도 안 되면 FAIL.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 신규 `tools/g5_attack_move_broadcast_probe.py`(`c448e6e5…c529c919a`), `tests/test_g5_attack_move_broadcast_probe.py`(`8719818c…10f531da2`, 9 assertions). 제품 EXE 미변경, read-only 진단. 커밋 0(LOOP_ALLOW_COMMITS=0, 전체 저장소 uncommitted).
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본 `b56986e0…c9c08a8ac`, 세 fresh 격리 실행(run1/run2/run3) 모두 `variant=original`, `source_unchanged=true`. 후보는 이번 lap 미실행(원본 게이트가 이미 막혀 있어 candidate50 착수는 lap671 순서 위반 + 무의미한 추가 실행이므로 보류). 격리 Wine/Xvfb 1600×1200, PS3 solo owner0. worker(slot1198, unit_type31) 앵커 기준 dense 7×8 grid에 owner0 type2 55기(`dense_fixture_requests`, 기존 candidate drag probe와 동일 anchor·grid 재사용), owner1 type2 1기를 목적지에 배치.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `PYTHONPATH=. python3 tools/g5_attack_move_broadcast_probe.py --variant original --runtime-root local/runtime/g5-lap674-attack-move-broadcast-original[-r2|-r3] --artifact-root .../20260926_lap674_attack_move_broadcast/original[_r2|_r3]`. `probe-result.json` SHA: run1 `acfbb73a…4b847285`, run2 `29a061ee…2ce6633df4`, run3 `edac6ebd…e93aedf868`(전체 artifact와 캡처 PNG는 공유 temp에 보존). 정적 회귀 `PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_g5_attack_move_broadcast_probe.py` → `9 passed`. `make check`(`.venv`, 세션 내 완주 대기, 로그 `logs/gates/lap674_make_check.log`) → **953 passed in 660.66s**, ruff/compileall/mypy/`CONTEXT_PASS` 모두 PASS. `bash checks/safety.sh check` → `SAFETY_PASS`.
+
+## 3회 반복 요약
+
+1. **run1(A+지면클릭, 목적지 오프셋 (11,-7))**: 선택 20/20 PASS였으나 공격이동 클릭 전/직후/지연 샘플에서 **선택된 20기 전원이 완전히 동일한 값**을 유지했다(`command`/`pending_command` 불변). 캡처를 보니 목적지 화면좌표(989,393)가 **실제 렌더링되는 게임 캔버스 밖(검은 여백)**이었다 — 이 원본 빌드는 1600×1200 데스크톱 안에서 실제로는 약 800×600 영역에만 렌더링하고 나머지는 검게 남긴다(G1 목표가 다루는 바로 그 축소 렌더링). 이전 확률탐색(sweep)들은 모두 x≤700~730 범위였어서 이 한계에 걸리지 않았을 뿐이다.
+2. **원인 수정(코드)**: `DESTINATION_OFFSET_FROM_WORKER`를 (11,-7)→(0,-10)으로 줄이고, 목적지 화면좌표 안전범위를 기존 `0≤x≤1580`에서 실측한 `200≤x≤780`으로 좁혔다(캔버스 경계 실측 반영).
+3. **run2(A+지면클릭, 목적지 오프셋 (0,-10)→화면(732,181))**: 클릭이 이제 캔버스 안에 도달해 **19/20 유닛이 command 1→3(이동)으로 실제로 반응**했다(`pending_command`도 `1`→`16777217`로 변함) — 클릭 자체는 유효했다. 그러나 **공격 계열(`command==4` 또는 `pending&0xffff==4`)로 전환된 유닛은 0**이었다. 즉 A 키를 누른 채 빈 땅을 클릭해도 엔진은 평범한 이동 명령만 발행했다.
+4. **run3(공격버튼(툴바 sword 아이콘, 화면(663,536))+지면클릭, 같은 목적지)**: run2와 동일하게 **19/19 fixture 유닛이 command 3(이동)만 받았다** — 키보드 A 대신 실제 공격 툴바 버튼을 눌러도 결과가 같았다. 유일한 예외는 worker(slot1198, 이전 lap670/671 calibration으로 이미 비정상 상태 `command=8`이었던 유닛)로, 클릭 직후 한 순간 `pending_command`의 하위 16비트가 `4`로 잠깐 나타났다가 지연 샘플에서 다시 `1`로 되돌아갔다 — worker 고유의 잔여 상태에서 나온 노이즈로 보이며, 새로 스폰된 정상 type2 유닛에서는 재현되지 않았다(19/19 FAIL).
+
+## 판정
+
+BLOCKED. 10:31 판정의 핵심 전제("지면 클릭만으로 공격 계열 명령이 발행된다")가 **두 가지 입력 경로(키보드 A핫키, 툴바 공격버튼) 모두에서 직접 반증**됐다 — 빈 땅 클릭은 대상 유무·입력 방식과 무관하게 항상 평범한 이동 명령(`command=3`)만 만든다. 이는 lap667~673의 스프라이트 클릭 9회 실패와 함께 보면, **이 하네스의 UI 클릭 입력으로는 공격 계열 명령(`command=4`)이 한 번도 발행된 적이 없다**는 훨씬 강한 수렴 증거다(반면 엔진 자체 issuer인 bridge op8은 매번 확실히 성공). 목적지 오프셋(0,-10)은 seed된 owner1 목표와 동일한 지점이었으므로("스프라이트를 맞힐 필요 없음" 조건은 충족) 이번 실패는 좌표 정밀도 문제가 아니라 **"클릭이 공격 유형 주문을 만들 수 있는가" 자체의 문제**로 좁혀진다. 10:31 지시의 "추가 strategy 회부 없이 work가 구현" 전제가 이 반증으로 무효화됐으므로, 서로 충돌하는 실제 증거로 인한 예외 조항에 따라 승격한다.
+
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 새 진단 도구 1개 추가, 제품 EXE/보호 원본 0 변경. `source_unchanged=true`(3회 모두). `cleanup.ok=true`(3회 모두, game 사본만 직후 삭제 — 디스크 35GB→48GB 복구, prefix/manifest/output/로그 보존). candidate50은 원본 게이트가 막혀 있어 미실행. G5 제품 PASS·2단 검수·사용자 승인 없음.
+- 다음 한 가지(승격 대상): strategy(Opus5/Astra)가 다음 중 하나를 판정한다: (a) UI 클릭 기반 공격 판정 자체를 G5 기준에서 제외하고 엔진 자체 issuer(op8, 이미 type2→type2·type2→type46 모두 라이브 PASS 확인됨)로 "제품이 공격을 지원한다"는 판정으로 재정의, (b) Xtest 합성 클릭이 이 엔진의 공격 입력 코드 경로에서 왜 한 번도 성공하지 못하는지(호버/타겟 캐시 갱신 메시지 누락 등) 근본 원인을 정적/동적으로 추적, (c) 다른 입력 주입 방식(예: 실제 SendInput류 API, 또는 게임 창에 직접 WM_LBUTTONDOWN 포스트) 시도. candidate50 실행과 G5 2단/사용자 승인 승격은 이 판정 전까지 금지한다.

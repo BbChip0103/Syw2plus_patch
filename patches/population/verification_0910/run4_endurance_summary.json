@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "clock_origin": "original load011 op21 tick_after",
+  "start_tick": 937,
+  "first_sample_tick": 969,
+  "end_tick": 25773,
+  "continuous_tick_delta": 24836,
+  "samples": 743,
+  "all_samples_ps3": true,
+  "all_eight_caps_5000": true,
+  "wall_seconds_between_samples": 744.1284077167511,
+  "max_sample_tick_gap": 35,
+  "owner0_current_supply_range": [
+    1070,
+    5000
+  ],
+  "note": "AI remained active; real combat losses and subsequent production change current supply/count. This is NOT 24k ticks held at 5000 current supply.",
+  "trace_sha256": "bbf167a71dbbd84a3ad91821f758b020e2ce7701a2303e5009a142a240447fe9"
+}

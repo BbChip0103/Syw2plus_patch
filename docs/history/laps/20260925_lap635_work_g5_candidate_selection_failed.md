@@ -1,0 +1,12 @@
+# 2026-09-25 | lap 635 | 목표 G5
+
+- 실제 provider/model/effort / 지정 역할: Codex native session / hands-on work / high.
+- 가설 / 사용자 관찰: lap634의 화면 밖 type46 fixture를 제거하고, PS3에서 raw로 읽은 slot1198 일꾼 주변에 type2 보병 55기를 조밀하게 두면 원본 cap20 대 후보 cap50 대조가 성립한다.
+- 예상 PASS / FAIL 조건: 원본 count20·unique20·명령20, 후보 count50·unique50·51번째 미선택·명령50. 필수 runtime 검증 실패 시 즉시 승격.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `tools/g5_candidate_drag_probe.py` uncommitted, SHA256 `655e8a12b8321db5791060632da31c4257491b5b841f61837d552575562dac67`; 원본/제품 패치/커밋 0.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: protected original `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac` (source/private before-after 불변); candidate `ebd46050cb061a4793bcf9dbc86e196bd71ab45050d881bb13c64258a8c83e8c`; fresh private Wine/Xvfb 1600×1200, PS3; owner0, type2×55, six dense rows generated from raw slot1198.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `.venv/bin/python tools/g5_candidate_drag_probe.py --variant original --runtime-root local/runtime/g5-lap635-original --artifact-root /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20260925_lap635_g5_original_dense`; same with `candidate`/`g5-lap635-candidate`/`g5_candidate_dense`. Results: original `probe-result.json` SHA `d0cc7461a05b3a6dc6985add7655bb063aceb1f57cb27334f4377deed1624fc5`; candidate `02f586fe08c2977f9c5fca775084b94f5a7f498129a287091b28bc8f6dd5b0e4`. Captures and logs remain under those shared temp directories.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): 원본 raw slot1198 type31 `(163,92)`, camera `[161,90]`, fixture used `735/1500`, live57, selection `20/20`, movement nonzero20 — PASS_ORIGINAL_CAP20. Candidate raw slot1198 type7 `(142,142)`, camera `[140,140]`, fixture used `735/1500`, live57, relocated reader base `0x0108c000` capacity50 but selection `20/20`, movement nonzero20, process exit2 — **FAIL_SELECTION_CAP / BLOCKED**. Candidate 50·51 boundary, save/load, full Fast are SKIP.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: targeted `tests/test_g5_selection_inventory.py patches/population/test_runtime_bridge_contract.py` 4 passed; probe py_compile PASS. `make check`는 필수 runtime 검증 실패 후 실행하지 않음. G5 제품 PASS·2단 독립 검수·사용자 마일스톤 승인 없음.
+- 다음 한 가지: 승격 작업자는 candidate selection writer/reader의 relocation wiring을 raw와 후보 bytes로 독립 대조해 왜 relocated base에서 count20이 유지되는지 판정하고, 수정 전에는 후보 50기·명령·save/load·G5 PASS를 주장하지 않는다. 상세 승격 `loop/ESCALATE_SOL` §183.
+

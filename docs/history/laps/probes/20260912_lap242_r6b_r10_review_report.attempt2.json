@@ -1,0 +1,291 @@
+{
+  "baseline_suite": {
+    "ok": true,
+    "returncode": 0,
+    "summary_line": "5 passed in 0.22s"
+  },
+  "classification": [
+    {
+      "expected_message": "output parent is not a directory",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C01_missing_parent",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.038,
+      "stdout_tail": [
+        "refusing to write evidence: output parent is not a directory: /tmp/lap242_r10_ds929dd1/classification/C01_missing_parent/absent"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "expected_message": "output parent is not a directory",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C02_deep_missing_parent",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.038,
+      "stdout_tail": [
+        "refusing to write evidence: output parent is not a directory: /tmp/lap242_r10_ds929dd1/classification/C02_deep_missing_parent/a/b/c"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "expected_message": "output parent is not a directory",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C03_file_parent",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.037,
+      "stdout_tail": [
+        "refusing to write evidence: output parent is not a directory: /tmp/lap242_r10_ds929dd1/classification/C03_file_parent/parent-file"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "expected_message": "output parent is not a directory",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C04_symlinked_file_parent",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.035,
+      "stdout_tail": [
+        "refusing to write evidence: output parent is not a directory: /tmp/lap242_r10_ds929dd1/classification/C04_symlinked_file_parent/link-to-file"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "expected_message": "output parent is not a directory",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C05_dangling_symlink_parent",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.04,
+      "stdout_tail": [
+        "refusing to write evidence: output parent is not a directory: /tmp/lap242_r10_ds929dd1/classification/C05_dangling_symlink_parent/dangling-parent"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "expected_message": "output parent is not writable",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C06_read_only_parent",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.035,
+      "stdout_tail": [
+        "refusing to write evidence: output parent is not writable: /tmp/lap242_r10_ds929dd1/classification/C06_read_only_parent/read-only"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "expected_message": "output parent is not writable",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C07_non_executable_parent",
+      "message_ok": false,
+      "no_traceback": false,
+      "returncode": 1,
+      "seconds": 0.038,
+      "stdout_tail": [
+        ""
+      ],
+      "verdict": "DEFECT"
+    },
+    {
+      "expected_message": "refusing to overwrite existing evidence",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C08_existing_file",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.037,
+      "stdout_tail": [
+        "refusing to overwrite existing evidence: /tmp/lap242_r10_ds929dd1/classification/C08_existing_file/existing.json"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "expected_message": "refusing to overwrite existing evidence",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C09_existing_directory",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.036,
+      "stdout_tail": [
+        "refusing to overwrite existing evidence: /tmp/lap242_r10_ds929dd1/classification/C09_existing_directory/existing-dir"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "expected_message": "refusing to overwrite existing evidence",
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C10_symlink_to_existing",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.038,
+      "stdout_tail": [
+        "refusing to overwrite existing evidence: /tmp/lap242_r10_ds929dd1/classification/C10_symlink_to_existing/link-to-evidence.json"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "expected_message": null,
+      "expected_returncode": 2,
+      "fixtures_preserved": true,
+      "id": "C11_dangling_output_symlink",
+      "message_ok": true,
+      "no_traceback": true,
+      "returncode": 2,
+      "seconds": 0.05,
+      "stdout_tail": [
+        "refusing to overwrite existing evidence: /tmp/lap242_r10_ds929dd1/classification/C11_dangling_output_symlink/dangling-report.json"
+      ],
+      "verdict": "PASS"
+    }
+  ],
+  "earliness_dynamic": {
+    "healthy_seconds": 0.049,
+    "note": "startup-dominated; not a discriminator",
+    "ratio": 0.748,
+    "refusal_seconds": 0.037,
+    "verdict_input": false
+  },
+  "earliness_structural": {
+    "body_statements_found": 3,
+    "first_body_statement_line": 134,
+    "guard_statement_line": 120,
+    "ok": true
+  },
+  "earliness_traced": {
+    "body_functions_executed": [],
+    "exit_code": 2,
+    "guard_executed": true,
+    "ok": true
+  },
+  "healthy": [
+    {
+      "id": "H01_new_path",
+      "lap": 228,
+      "report_written": true,
+      "returncode": 0,
+      "seconds": 0.049,
+      "surgicality_verdict": "AGREES",
+      "verdict": "PASS"
+    },
+    {
+      "id": "H02_symlinked_dir_parent",
+      "report_written": true,
+      "returncode": 0,
+      "verdict": "PASS"
+    },
+    {
+      "id": "H03_relative_path",
+      "report_written": true,
+      "returncode": 0,
+      "verdict": "PASS"
+    }
+  ],
+  "lap": 242,
+  "mutations": [
+    {
+      "detected": true,
+      "id": "M1_drop_is_dir_check",
+      "mutation_applied": true,
+      "suite_returncode": 1,
+      "summary_line": [
+        "5 failed in 0.16s"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "detected": true,
+      "id": "M2_drop_access_check",
+      "mutation_applied": true,
+      "suite_returncode": 1,
+      "summary_line": [
+        "5 failed in 0.16s"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "detected": true,
+      "id": "M3_drop_exists_check",
+      "mutation_applied": true,
+      "suite_returncode": 1,
+      "summary_line": [
+        "5 failed in 0.17s"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "detected": true,
+      "id": "M4_guard_exit_zero",
+      "mutation_applied": true,
+      "suite_returncode": 1,
+      "summary_line": [
+        "5 failed in 0.16s"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "detected": true,
+      "id": "M5_guard_raises_raw",
+      "mutation_applied": true,
+      "suite_returncode": 1,
+      "summary_line": [
+        "5 failed in 0.16s"
+      ],
+      "verdict": "PASS"
+    }
+  ],
+  "report_semantics": {
+    "byte_identical": false,
+    "differing_top_level_keys": [
+      "source_sha256"
+    ],
+    "fresh_sha256": "46202fc3e4108b033ec2c11a3e29cbc40c24b71e17cd12d9386d9982963b7859",
+    "measured_differences": [],
+    "ok": true,
+    "provenance_only_keys": [
+      "source_sha256"
+    ],
+    "stored_report": "docs/history/laps/probes/20260912_lap228_r6b_r3_review_report.json",
+    "stored_sha256": "739921763ca47cbc881dcb688cc909688ffddcb5c52f0e7620da4071921c6883"
+  },
+  "reviewed_files": {
+    "docs/history/laps/probes/20260912_lap228_r6b_r3_review_probe.py": "4b3a41f4e9f8c2a28153d02c6eab0d7da7c6088b9b9e1e170be5006f1fb23021",
+    "tests/test_review_probe_output.py": "4351cc576ef3857296eb60eab518d60f7d5247575e33a4539aa7d3d9e7f953ee"
+  },
+  "stored_report_sha256_after": "739921763ca47cbc881dcb688cc909688ffddcb5c52f0e7620da4071921c6883",
+  "stored_report_sha256_before": "739921763ca47cbc881dcb688cc909688ffddcb5c52f0e7620da4071921c6883",
+  "subject": "G1 R6-B-R10 review-probe output-path classification",
+  "summary": {
+    "classification_cases": 11,
+    "defects": [
+      "C07_non_executable_parent"
+    ],
+    "healthy_cases": 3,
+    "mutations_detected": 5,
+    "mutations_total": 5,
+    "undetected_mutations": []
+  },
+  "tier": "middle",
+  "verdict": "FAIL"
+}

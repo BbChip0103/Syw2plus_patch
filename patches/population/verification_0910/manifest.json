@@ -1,0 +1,27 @@
+{
+  "original_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "supply_sha256": "0a1da2263ff099b9fc35d8c63bb82bbefec6dffbae0dcc7458e32887f3f34ad3",
+  "combined_sha256": "d22904639adf03ddf2b6b3122a64a59131770e5ad85107290229e6932b319abc",
+  "save_files": {
+    "save009.dat": {
+      "sha256": "1be2ad47d627785af99ef49969a6127232f05af4477365365997fe33ee73d559",
+      "bytes": 1718862
+    },
+    "save010.dat": {
+      "sha256": "98b345f0d083c29fe5b4403447de7e5cc673da5832c83f5efa4520d4cef3f847",
+      "bytes": 1722622
+    },
+    "save011.dat": {
+      "sha256": "23dd24d58555588e0ca09491559aed66ad3f2544ff3195c5af2ab9e2be14dfa4",
+      "bytes": 1982062
+    },
+    "save012.dat": {
+      "sha256": "5a6863c1eafaa8bd9a087238a41d45c45635dd66a208cf79a186e158819c28f1",
+      "bytes": 1985822
+    }
+  },
+  "screenshots": [
+    "/home/dev_00/sharedfolder/260320_Syw2plus/temp/20260910_043000_supply5000_real_army5000shot.png",
+    "/home/dev_00/sharedfolder/260320_Syw2plus/temp/20260910_043326_supply5000_combined_5000_qhd.png"
+  ]
+}

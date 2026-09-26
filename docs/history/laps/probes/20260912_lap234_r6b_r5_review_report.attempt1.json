@@ -1,0 +1,355 @@
+{
+  "fail_close": [
+    {
+      "case": "c4_after",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "c4_before",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "c5_after",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "c5_before",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "c7_before_after",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "c7_before_before",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "d1_after",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "d1_before",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "type_zero_after",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "type_zero_before",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "slot_range_after",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "slot_range_before",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "struct_error_after",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "struct_error_before",
+      "corrupted_poll_count": 1,
+      "first_corruption_preserved": true,
+      "responded": false,
+      "status": "CORRUPTED",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "pass_path_identity_change",
+      "corrupted_poll_count": 0,
+      "first_corruption_preserved": false,
+      "responded": true,
+      "status": "SOUND",
+      "verdict": "AGREES"
+    }
+  ],
+  "lap": 234,
+  "mutation": [
+    {
+      "expectation": "no case fails",
+      "failing_cases": [],
+      "mutant": "M0_unmutated",
+      "verdict": "AGREES"
+    },
+    {
+      "expectation": "at least one case fails",
+      "failing_cases": [
+        "c4_read_failure",
+        "c5_inactive_slot",
+        "c7_recovery"
+      ],
+      "mutant": "M1_ignore_unknown_type",
+      "verdict": "AGREES"
+    },
+    {
+      "expectation": "at least one case fails",
+      "failing_cases": [
+        "d1_negative_count"
+      ],
+      "mutant": "M2_allow_negative_count",
+      "verdict": "AGREES"
+    },
+    {
+      "expectation": "at least one case fails",
+      "failing_cases": [
+        "c4_read_failure",
+        "c5_inactive_slot",
+        "c7_recovery",
+        "d1_negative_count"
+      ],
+      "mutant": "M3_always_sound",
+      "verdict": "AGREES"
+    }
+  ],
+  "reachability": [
+    {
+      "case": "A1_healthy",
+      "count": 1,
+      "expected_status": "SOUND",
+      "fixture": {},
+      "observed_status": "SOUND",
+      "provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET",
+      "selected_slot": 7,
+      "selected_type": 58,
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A2_c4_identity_read_failure",
+      "count": 1,
+      "expected_status": "CORRUPTED",
+      "fixture": {
+        "fail_at": "exists"
+      },
+      "observed_status": "CORRUPTED",
+      "provenance": "OSError: injected read failure at exists",
+      "selected_slot": 7,
+      "selected_type": "UNKNOWN",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A3_c5_inactive_slot",
+      "count": 1,
+      "expected_status": "CORRUPTED",
+      "fixture": {
+        "active": 0
+      },
+      "observed_status": "CORRUPTED",
+      "provenance": "_CommandCellSnapshotError: selected unit slot is not active: 7",
+      "selected_slot": 7,
+      "selected_type": "UNKNOWN",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A4_d1_negative_count",
+      "count": -1,
+      "expected_status": "CORRUPTED",
+      "fixture": {
+        "count": -1
+      },
+      "observed_status": "CORRUPTED",
+      "provenance": "_CommandCellSnapshotError: unsupported selected-unit count: -1",
+      "selected_slot": null,
+      "selected_type": "UNKNOWN",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A5_count_above_pool",
+      "count": 1201,
+      "expected_status": "CORRUPTED",
+      "fixture": {
+        "count": 1201
+      },
+      "observed_status": "CORRUPTED",
+      "provenance": "_CommandCellSnapshotError: unsupported selected-unit count: 1201",
+      "selected_slot": 7,
+      "selected_type": "UNKNOWN",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A6_slot_out_of_range",
+      "count": 1,
+      "expected_status": "CORRUPTED",
+      "fixture": {
+        "slot": 1200
+      },
+      "observed_status": "CORRUPTED",
+      "provenance": "_CommandCellSnapshotError: unsupported selected-unit slot: 1200",
+      "selected_slot": 1200,
+      "selected_type": "UNKNOWN",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A7_unit_type_zero",
+      "count": 1,
+      "expected_status": "CORRUPTED",
+      "fixture": {
+        "unit_type": 0
+      },
+      "observed_status": "CORRUPTED",
+      "provenance": "_CommandCellSnapshotError: selected unit has unsupported type: 0",
+      "selected_slot": 7,
+      "selected_type": "UNKNOWN",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A8_struct_error_short_type",
+      "count": 1,
+      "expected_status": "CORRUPTED",
+      "fixture": {
+        "short_type_read": true
+      },
+      "observed_status": "CORRUPTED",
+      "provenance": "error: unpack requires a buffer of 1 bytes",
+      "selected_slot": 7,
+      "selected_type": "UNKNOWN",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A9_type_addr_read_failure",
+      "count": 1,
+      "expected_status": "CORRUPTED",
+      "fixture": {
+        "fail_at": "type"
+      },
+      "observed_status": "CORRUPTED",
+      "provenance": "OSError: injected read failure at type",
+      "selected_slot": 7,
+      "selected_type": "UNKNOWN",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A10_slot_addr_read_failure",
+      "count": null,
+      "expected_status": "CORRUPTED",
+      "fixture": {
+        "fail_at": "slot"
+      },
+      "observed_status": "ESCAPES",
+      "provenance": "OSError: injected read failure at slot",
+      "selected_slot": null,
+      "selected_type": null,
+      "verdict": "DEFECT"
+    },
+    {
+      "case": "A11_count_zero",
+      "count": 0,
+      "expected_status": "SOUND",
+      "fixture": {
+        "count": 0,
+        "slot": -1
+      },
+      "observed_status": "SOUND",
+      "provenance": "no selected unit: selection count is zero",
+      "selected_slot": null,
+      "selected_type": "UNKNOWN",
+      "verdict": "AGREES"
+    },
+    {
+      "case": "A12_count_addr_read_failure",
+      "count": null,
+      "expected_status": "ESCAPES",
+      "fixture": {
+        "fail_at": "count"
+      },
+      "observed_status": "ESCAPES",
+      "provenance": "OSError: injected read failure at count",
+      "selected_slot": null,
+      "selected_type": null,
+      "verdict": "AGREES"
+    }
+  ],
+  "role": "middle (claude-opus-5/high)",
+  "runtime_env_module_file": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/tools/runtime_env.py",
+  "runtime_env_sha256": "103ec280b50ac658504b5263a200896c1b39d66244269bc373dcfd23225ce02b",
+  "subject": "G1-R6-B-R5 reader-based corruption regression (lap233)",
+  "summary": {
+    "fail_close": {
+      "agrees": 15,
+      "defects": [],
+      "total": 15
+    },
+    "mutation": {
+      "agrees": 4,
+      "defects": [],
+      "total": 4
+    },
+    "reachability": {
+      "agrees": 11,
+      "defects": [
+        {
+          "case": "A10_slot_addr_read_failure",
+          "count": null,
+          "expected_status": "CORRUPTED",
+          "fixture": {
+            "fail_at": "slot"
+          },
+          "observed_status": "ESCAPES",
+          "provenance": "OSError: injected read failure at slot",
+          "selected_slot": null,
+          "selected_type": null,
+          "verdict": "DEFECT"
+        }
+      ],
+      "total": 12
+    }
+  },
+  "tests_sha256": "c8830c1277c8ab57ecfbddeecda3be22b63b21b6898fd8b4c4d889ce1691ce64"
+}

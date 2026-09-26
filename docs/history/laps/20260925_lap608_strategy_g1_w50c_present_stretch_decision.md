@@ -1,0 +1,12 @@
+# 2026-09-25 | lap 608 | 목표 G1
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-opus-5-5`(effort 세션 비노출), 지정 역할 strategy(계약 모델 Fable/Astra를 대신함). 게임 실행0, 제품/하네스 source·binary·raw 변경0, 커밋0.
+- 가설 / 사용자 관찰: §157. W50B H1은 primary 1600 분리에 성공했지만 실제 PS3 present가 카드의 Blt가 아니라 BltFast라서 2배가 되지 않았다. 실제 present를 2배 Blt로 바꾸는 가설 하나가 남았는지, 아니면 W50B를 닫을지 판정한다.
+- 예상 PASS / FAIL 조건: lap607 raw 판정을 독립 재현하면 (A)/(B) 중 하나를 고르고 사전 판정식이 있는 work 카드 또는 종료 기록을 남긴다. 재현이 불일치하면 판정하지 않고 승격한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 카드 `docs/work/active/G1_STRATEGY_W50C_PRESENT_STRETCH_LAP608.md`(신규), 이 기록, `loop/ESCALATE_SOL` §158, `docs/STATUS.md`, `docs/feedback/INBOX.md`(통지 1줄). uncommitted.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본·lap606 private EXE `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`, bridge `983c82a9…a579`. lap606 fresh `:91`, default two-player random, synthetic 쓰기 없음.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `.venv/bin/python docs/history/laps/probes/20260925_lap607_middle_w50b_evidence_review.py` 3번째 실행 exit0, canonical SHA `6a6e0998cb35da2f83aa8083d1c7e4ad6e608784ee56b96d464bdac1e61bf739`(lap607 2회와 동일). lap606 `trace_raw.jsonl` summary의 method_counts를 직접 읽었다: flip total 0, blt_fast total 1,345(개별 256 + 집계 1,089, dropped 0).
+- Fast: 문서 반영 뒤 `make check` 843 passed/498.24s + Ruff/compileall/mypy/`CONTEXT_PASS`, `bash checks/safety.sh check`=`SAFETY_PASS`. Fast일 뿐 G1 제품 증거가 아니다.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): lap607 판정을 재현했다. 원본·private SHA 일치, mode 7건 적용·5건 skip, primary 1600×1200, offscreen 832×600, 비검정 quadrant `[375756,0,0,0]`, nearest 2× `0.8879896`, exact `0x0041C3E4` 0건, Blt 10건은 전부 `0x004D1066` clear, provenance `observational_only=true`. 원본 bytes `0x0049272C..3F`를 해석하면 `BltFast(x0,y0,src=[0x00E5D438],srcRect NULL,WAIT)`이고 return은 `0x0049273F`다. **판정 §157 (B):** W50C 카드를 발행한다. 내용은 provenance false, 전용 validator, primary 대상 present 개별 기록, H3 BltFast→2배 Blt 전환이고 fresh 정확히 1회다. H3는 W50B 계보의 두 번째이자 마지막 가설이다. 결과별 다음 행동(FEASIBLE→W51N, NOT_FEASIBLE/BLOCKED→G1 사용자 보고와 G4 재개)을 미리 고정했다.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 새 근거 N221(present는 Flip 없이 primary에 직접 BltFast), N222(1600 primary의 클릭 좌표 대응 미측정), N223(최종 단계 합성은 HUD·커서 층에만 맞고, 월드 HD 디테일에는 닿지 않음). 모두 보고 전용이다. whole-frame 2배는 DESIGN상 G1 완료가 아니다. G1 PASS·사용자 승인 아님. G4는 W50C 판정까지 보류한다.
+- 다음 한 가지: work(Luna 또는 Sonnet5, high)가 W50C §2~§5를 계획 회차 없이 수행한다. 게임 실행 전 회귀를 통과시키고, fresh 동기 1회를 돌린다. 그다음 새 middle이 per-call raw로 독립 재계산한다.

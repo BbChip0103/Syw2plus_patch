@@ -1,0 +1,59 @@
+--- docs/history/laps/snapshots/20260915_lap379_lap372_preimage_recovery/tools/runtime_env.py	2026-09-15 12:36:12.334700383 +0900
++++ tools/runtime_env.py	2026-09-14 01:46:53.760565196 +0900
+@@ -3803,10 +3803,11 @@
+                 raise RuntimeSafetyError("S1 direct pre stage exceeded its 2 second cap")
+ 
+             trigger_started: float | None = None
++            trigger_finished: float | None = None
+             trigger_evidence = evidence["input"]["load_trigger"]
+ 
+             def trigger() -> int:
+-                nonlocal trigger_started
++                nonlocal trigger_started, trigger_finished
+                 trigger_started = time.monotonic()
+                 trigger_root = [content_crop[0] + 400, content_crop[1] + 131]
+                 focus_result = subprocess.run(
+@@ -3818,6 +3819,7 @@
+                     trigger_argv, env=env, stdout=log, stderr=log,
+                     timeout=_s1_stage_timeout(command_started, trigger_started, G1_S1_STAGE_BUDGETS["load_trigger"]), check=True,
+                 )
++                trigger_finished = time.monotonic()
+                 trigger_evidence.update({
+                     "count": 1, "root": trigger_root, "content_crop": list(content_crop),
+                     "target_window": outer_id, "focus_exit": focus_result.returncode,
+@@ -3825,10 +3827,10 @@
+                     "helper_sha256": _sha256(REPO_ROOT / "tools" / "x11_mouse_click.py"),
+                     "invocation_count": 1,
+                     "stage_start_elapsed": round(trigger_started - command_started, 3),
+-                    "stage_end_elapsed": round(time.monotonic() - command_started, 3),
+-                    "stage_elapsed_seconds": round(time.monotonic() - trigger_started, 3),
++                    "stage_end_elapsed": round(trigger_finished - command_started, 3),
++                    "stage_elapsed_seconds": round(trigger_finished - trigger_started, 3),
+                 })
+-                trigger_elapsed = time.monotonic() - trigger_started
++                trigger_elapsed = trigger_finished - trigger_started
+                 if trigger_elapsed > G1_S1_STAGE_BUDGETS["load_trigger"]:
+                     raise RuntimeSafetyError(
+                         f"S1 load trigger stage exceeded its {G1_S1_STAGE_BUDGETS['load_trigger']} second cap"
+@@ -3852,9 +3854,8 @@
+             evidence["post"] = _s1_public_snapshot(collected["post"])
+             post_started = float(collected["event_boundary"].get("post_started", time.monotonic()))
+             ps3_end = time.monotonic()
+-            trigger_elapsed_start = trigger_started if trigger_started is not None else ps3_end
+-            boundary_wait_start = trigger_started if trigger_started is not None else post_started
+-            wait_elapsed = ps3_end - trigger_elapsed_start
++            boundary_wait_start = trigger_finished if trigger_finished is not None else post_started
++            wait_elapsed = ps3_end - boundary_wait_start
+             boundary_wait_elapsed = post_started - boundary_wait_start
+             if boundary_wait_elapsed > G1_S1_STAGE_BUDGETS["ps3_wait"]:
+                 raise RuntimeSafetyError(
+@@ -3862,7 +3863,7 @@
+                 )
+             evidence["stages"]["ps3_wait"] = {
+                 "status": "PASS", "wait": collected["event_boundary"].get("wait_ps", []),
+-                "start_elapsed": round(trigger_started - command_started, 3) if trigger_started is not None else None,
++                "start_elapsed": round(boundary_wait_start - command_started, 3),
+                 "end_elapsed": round(post_started - command_started, 3),
+                 "elapsed_seconds": round(boundary_wait_elapsed, 3),
+                 "post_snapshot_elapsed_seconds": round(wait_elapsed - boundary_wait_elapsed, 3),
+

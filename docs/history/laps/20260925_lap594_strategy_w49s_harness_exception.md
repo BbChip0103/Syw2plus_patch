@@ -1,0 +1,21 @@
+# 2026-09-25 | lap 594 | 목표 G2
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-opus-5-5`(effort 세션 비노출; 계약 모델 Fable/Astra 대체) / strategy 상위계획. 게임 코드·바이너리·runner·공유 temp raw는 수정하지 않았다.
+- 가설 / 사용자 관찰: §143 충돌을 판정한다. N216("이번 1회 실패 시 닫음, 재실행 없음")과 "lap592는 카드 고정 입력을 적용하지 않은 무효 하네스 run"이 부딪힌다. (A) 재실행 없이 화면 미검증으로 닫기와 (B) 교정 work 정확히 1회 예외 허가 중 하나를 고른다.
+- 예상 PASS / FAIL 조건: lap592가 카드 §3.3 S0과 §3.5 순서를 실제로 수행했다면 (A)로 닫는다. 수행하지 않아 H-path가 측정되지 않았다면 (B)를 택하되, 최종 예외라는 조건을 붙인다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted):
+  - 신규: `docs/work/active/G2_STRATEGY_W49SC_CORRECTED_LOBBY_ONCE_LAP594.md`, 이 기록, `docs/history/20260925_status_lap594_precompaction.md`(STATUS 원문 SHA256 `004a7d04705fd55308de672b08449118ae807daedaae44cf246e0bae3ee9bdfa`, 130줄).
+  - 수정: `docs/STATUS.md`(압축 후 갱신), `docs/feedback/INBOX.md`, `loop/ESCALATE_SOL` §144.
+  - W49S 카드(`27ff03a5…5f88`)와 S5′ 제출문(`d12fb623…aedf`)은 수정하지 않았다. 제품 source·runner 변경0, 커밋0. 최종 fingerprint와 Fast 결과는 STATUS에 적는다.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 실행0. 원본 `b56986e0…a8ac`, 결합 후보 `dfdc91ad…3883`, lap592 summary의 source before/after 동일.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: 읽기 전용 대조만 했다. lap592 runner `w49s_run.py` SHA `8386a87b…6bef`와 summary `0463d5e0…01ca`가 lap592·lap593 기록과 일치한다. 로비 PNG `62b0d8be…e3f0`를 원본 크기로 직접 봤다.
+  - `grep` 결과: `MAP_SIZE_CLICK`은 80행 선언과 345행 summary 기록뿐이고 `click` 호출은 없다. 슬롯 클릭은 347~349행 고정 루프이고 S0 탐색 코드는 없다. gate raise(404~406행)가 첫 `capture`(415행)보다 앞에 있다. summary `captures=[]`다.
+  - 72~80행 주석 "한 번 누르면 AI로 바뀐다"와 358행 주석 "기본 큰 지도=100×100"은 PNG(3~8 `없음`)와 PS3 `[180,180]`로 반증된다.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN):
+  - §143 사실관계에 **동의**한다. 추가로 확인한 사실이 있다. S0 탐색이 없었고, 측정 순서가 카드 §3.5와 반대였다. 그래서 H-path는 0회 측정됐다.
+  - 판정은 **(B)**다. lap592는 W49S 예산에 산입하지 않는다. W49SC 교정 work 정확히 1회를 허가한다. D1 S0 로비 탐색 receipt, D2 로비 gate, D3 map 100×100 우선(불가 시 보고 전용), D4 `start` 캡처 후 gate, D5 active만 role 계산, D6 선언=실행 AST 잠금, D7 cleanup 뒤 summary, D8 단일 display를 조건으로 붙였다.
+  - **N217(보고 전용):** 게임 UI는 1600×1200 화면의 좌상단 800×600만 차지한다. 기본 로비는 `전장지도`이고 8인 180×180 지도가 선택돼 있다.
+  - **N218:** 이것이 최종 예외다. 다음 실패는 원인과 무관하게 화면 미검증 확정으로 닫는다.
+  - (A)를 택하지 않은 이유: 원인이 우리 하네스라 사용자에게 줄 정보가 없고, Q12-4 "화면 1회"가 뜻하는 유효 시도가 아직 이루어지지 않았다.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: UI로 7~8 AI를 채울 수 있는지, 100×100 선택지가 있는지는 여전히 미확인이며 D1 몫이다. D3 완화(map 보고 전용)는 화면 증거 한정 편차이고 공개한다. G2 PASS·사용자 승인·마일스톤 전환은 없다. Q12 A·나·iv는 유지한다. 사용자는 (A)로 번복할 수 있다.
+- 다음 한 가지: lap595 work가 계획 회차 없이 W49SC D9→D1→D2→게임 정확히 1회(W49S §4)를 수행한다. 그 뒤 middle이 raw를 재계산한다.

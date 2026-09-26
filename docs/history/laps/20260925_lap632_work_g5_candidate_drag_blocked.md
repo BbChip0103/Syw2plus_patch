@@ -1,0 +1,11 @@
+# 2026-09-25 | lap 632 | G5
+
+- 실제 provider/model/effort / 지정 역할: Codex hands-on work session; 실무 구현·실행 역할.
+- 가설 / 사용자 관찰: 검증된 `runtime_env.prepare` 선례로 후보 `ebd46050…e8c`를 private copy에 주입하면 stock-layout bridge로 자기 소유 55기를 만들고 한 번의 드래그로 50기를 선택할 수 있다.
+- 예상 PASS / FAIL 조건: PS3 진입, fixture_added=55, 후보 selection count=50/unique=50, 우클릭 뒤 50기 command raw, source SHA 불변, private cleanup PASS.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `tools/g5_candidate_drag_probe.py` 추가·수정, uncommitted; candidate patch/test는 lap629 기존 파일. 커밋 없음.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: protected source `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; G5 candidate `ebd46050cb061a4793bcf9dbc86e196bd71ab45050d881bb13c64258a8c83e8c`; fresh Wine 9.0 win32 prefix + private Xvfb 1600×1200; owner0, default PS3 random map, stock bridge, synthetic engine-seeded type46×55 fixture (`used=1120/1500`).
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `.venv/bin/python tools/g5_candidate_drag_probe.py --runtime-root local/runtime/g5-lap632-candidate-r6 --artifact-root /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20260925_lap632_g5_candidate_drag_r6`; raw/provenance/result/log/captures는 해당 temp 디렉터리에 보존. r1 type5는 42/55에서 cap 실패, r2~r5는 type7/type46 좌표 probe, r6는 미니맵 중앙 클릭 포함.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): r6 `prepare/check`·PS3·fixture_added=55·camera `[40,40]`·우클릭 command raw 1건·cleanup PASS, 그러나 selection `count=1`, raw `0x204ae`→slot1198, `unique=1`; **FAIL_SELECTION_CAP / G5 제품 PASS 아님**. source after SHA 동일. `make check`는 collection에서 `ImportError`로 exit2(889 collected 중 1 error: `test_g2_esl2606_pool4092_owner500.py` import), 이후 targeted G5+missing-module tests는 9 passed. `.venv/bin/ruff` 부재로 lint 직접 실행은 exit127; new probe pycompile/mypy(`--follow-imports=skip`)/safety/context는 PASS.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 기존 source/protected original은 쓰지 않았고 모든 private prefix residual 0; candidate runtime provenance가 추가됐다. fixture가 화면에 들어오는 계약/드래그 선택 50·51번째·save/load·control-group/명령 50건은 미검증. G5 사용자 승인·2단 독립 검수 없음.
+- 다음 한 가지: 승격 작업자가 먼저 같은 작업 트리에서 fresh `make check` 수집 실패와 ruff 부재를 해소/독립 재현한 뒤, 화면에 보이는 55기 living-unit fixture와 candidate selection reader를 확정하고 G5 probe를 재실행한다. 그 전에는 G5 PASS를 주장하지 않는다.

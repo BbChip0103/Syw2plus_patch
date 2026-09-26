@@ -1,0 +1,50 @@
+{
+  "source_root": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re_loop",
+  "source_head": "3db3bafcad26d2312610f7342c84935ff2bf5358",
+  "captured_at": "2026-09-10T04:17:05.109244+00:00",
+  "snapshot": "working tree read-only; no env.local/state/log/credential copy",
+  "files": [
+    {
+      "source": "loop/loop.sh",
+      "destination": "loop/loop.sh",
+      "source_sha256": "f65a2d2310318486aec35f88de0cabf7138e211ed6695b9d88676df8bb0f2eee",
+      "imported_sha256": "1151eec6795da8cdd7c565942e44d550d874a32f89ff6401f35fbda65b72922b",
+      "changed_during_migration": true
+    },
+    {
+      "source": "loop/env.sh",
+      "destination": "loop/env.sh",
+      "source_sha256": "0d92a99cfb14aef69cbce3ceaaed4285984409d98ae40f0be7b9d9098eb27223",
+      "imported_sha256": "a78e1fdbd400874efdb0588fc57681639f6b1e91e75552f30a47e9e9f17738bf",
+      "changed_during_migration": true
+    },
+    {
+      "source": "loop/loopctl.sh",
+      "destination": "loop/loopctl.sh",
+      "source_sha256": "2bebc38a9c0d9d5c30948ecfa6a5385998fc582d7c97fde3f921cf75eb50ecff",
+      "imported_sha256": "83a787a6afcb70f251f4e1c2af1b6754ce2e185b982e088ad471153f39402882",
+      "changed_during_migration": true
+    },
+    {
+      "source": "tools/loop_context.py",
+      "destination": "tools/loop_context.py",
+      "source_sha256": "a2cc91c212e11893804c7a0cf0738fb2f5b673d9b576f6765632b0f3b52f9e73",
+      "imported_sha256": "a2cc91c212e11893804c7a0cf0738fb2f5b673d9b576f6765632b0f3b52f9e73",
+      "changed_during_migration": false
+    },
+    {
+      "source": "tests/test_loop_context.py",
+      "destination": "tests/test_loop_context.py",
+      "source_sha256": "ff76f673d5ba565db08847a9e42ac208031d150622ffa9a671ec6a59e0deb1a1",
+      "imported_sha256": "ff76f673d5ba565db08847a9e42ac208031d150622ffa9a671ec6a59e0deb1a1",
+      "changed_during_migration": false
+    },
+    {
+      "source": "loop/syw2plus-loop.service",
+      "destination": "loop/syw2plus-patch-loop.service",
+      "source_sha256": "2b99cc4d24f8b3b87aab06238609bc199d89faf50dc0439e746ad2934785518f",
+      "imported_sha256": "4a3717281d9f9082442aba9c350141113e578cadc8a52406d98fc88c5aa83495",
+      "changed_during_migration": true
+    }
+  ]
+}

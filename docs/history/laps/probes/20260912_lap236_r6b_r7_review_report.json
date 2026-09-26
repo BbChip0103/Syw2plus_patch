@@ -1,0 +1,150 @@
+{
+  "creation_cases": [
+    {
+      "detail": {
+        "stderr_tail": ""
+      },
+      "expected": "exit 0, lap 228, surgicality AGREES",
+      "id": "B1_fresh_path_written",
+      "observed": "exit 0, lap 228, surgicality AGREES",
+      "question": "an explicit new path receives a full report",
+      "verdict": "AGREES"
+    },
+    {
+      "detail": {},
+      "expected": "exit 0 and byte-identical reports",
+      "id": "B2_deterministic_rerun",
+      "observed": "exit 0, identical=True",
+      "question": "two fresh runs produce identical evidence",
+      "verdict": "AGREES"
+    },
+    {
+      "detail": {
+        "fresh_source_sha256": "103ec280b50ac658504b5263a200896c1b39d66244269bc373dcfd23225ce02b",
+        "lap230_source_sha256": "f39d26fc578c7a33379eb2556f588d4b56a5a24a9ae618ac590947cbfbc4c76e",
+        "source_sha256_differs": true
+      },
+      "expected": "all fields except source_sha256 identical to 20260912_lap230_lap228probe_rerun_report.json",
+      "id": "B3_matches_preserved_lap230_rerun",
+      "observed": "identical=True",
+      "question": "the guarded probe still reproduces the preserved lap230 rerun verdicts",
+      "verdict": "AGREES"
+    },
+    {
+      "detail": {
+        "wait_defects": []
+      },
+      "expected": "reachability/preservation defect lists empty",
+      "id": "B4_review_semantics_unchanged",
+      "observed": "reachability=[], preservation=[], wait=[]",
+      "question": "the output guard did not weaken the R6-B-R3 review verdicts",
+      "verdict": "AGREES"
+    }
+  ],
+  "diagnosability_cases": [
+    {
+      "detail": {
+        "stderr_tail": "miniconda3/lib/python3.13/pathlib/_local.py\", line 537, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmpnmivvoux/missing_dir/report.json'",
+        "stdout_tail": ""
+      },
+      "expected": "exit 2 with the refusal message, or a clear early error",
+      "id": "C1_missing_parent_directory",
+      "observed": "exit 1, stderr_has_traceback=True, created=False",
+      "question": "an unwritable output path fails without a classified message",
+      "verdict": "DEFECT"
+    },
+    {
+      "detail": {
+        "stderr_tail": "home/dev_00/miniconda3/lib/python3.13/pathlib/_local.py\", line 537, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nPermissionError: [Errno 13] Permission denied: '/tmp/tmpnmivvoux/readonly/report.json'"
+      },
+      "expected": "exit 2 with the refusal message",
+      "id": "C2_readonly_parent_directory",
+      "observed": "exit 1, stderr_has_traceback=True, created=False",
+      "question": "a permission failure is reported as a guard refusal, not a raw traceback",
+      "verdict": "DEFECT"
+    }
+  ],
+  "lap": 236,
+  "preservation_cases": [
+    {
+      "detail": {
+        "stdout": "refusing to overwrite existing evidence: /tmp/tmpnmivvoux/a1.json"
+      },
+      "expected": "exit 2, bytes unchanged",
+      "id": "A1_existing_file",
+      "observed": "exit 2, bytes unchanged",
+      "question": "existing report refused and preserved byte-for-byte",
+      "verdict": "AGREES"
+    },
+    {
+      "detail": {},
+      "expected": "exit 2, size 0 preserved",
+      "id": "A2_existing_empty_file",
+      "observed": "exit 2, size 0",
+      "question": "zero-byte existing file is still protected",
+      "verdict": "AGREES"
+    },
+    {
+      "detail": {},
+      "expected": "exit 2, directory intact",
+      "id": "A3_existing_directory",
+      "observed": "exit 2, dir intact",
+      "question": "a directory output path is refused, not clobbered",
+      "verdict": "AGREES"
+    },
+    {
+      "detail": {},
+      "expected": "exit 2, target bytes unchanged",
+      "id": "A4_symlink_to_existing",
+      "observed": "exit 2, target unchanged",
+      "question": "symlink to existing evidence is refused",
+      "verdict": "AGREES"
+    },
+    {
+      "detail": {
+        "stderr_tail": "",
+        "stdout": "refusing to overwrite existing evidence: /tmp/tmpnmivvoux/a5_link.json"
+      },
+      "expected": "exit 2, no file created at the symlink target",
+      "id": "A5_dangling_symlink",
+      "observed": "exit 2, target exists=False",
+      "question": "dangling symlink cannot be used to write through the guard",
+      "verdict": "AGREES"
+    },
+    {
+      "detail": {
+        "sha256_after": "739921763ca47cbc881dcb688cc909688ffddcb5c52f0e7620da4071921c6883",
+        "sha256_before": "739921763ca47cbc881dcb688cc909688ffddcb5c52f0e7620da4071921c6883"
+      },
+      "expected": "exit 2, report sha256 unchanged",
+      "id": "A6_default_path_protected",
+      "observed": "exit 2, sha unchanged",
+      "question": "no-arg rerun refuses the preserved lap228 report",
+      "verdict": "AGREES"
+    },
+    {
+      "detail": {
+        "stderr_tail": "",
+        "stdout": "refusing to overwrite existing evidence: /home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/docs/history/laps/probes/20260912_lap228_r6b_r3_review_report.json"
+      },
+      "expected": "nonzero exit, report sha256 unchanged",
+      "id": "A7_import_hits_exclusive_creation",
+      "observed": "exit 2, sha unchanged",
+      "question": "import (non-__main__) run still fail-closes on the existing default report",
+      "verdict": "AGREES"
+    }
+  ],
+  "preserved_lap228_report_sha256": "739921763ca47cbc881dcb688cc909688ffddcb5c52f0e7620da4071921c6883",
+  "preserved_lap230_rerun_sha256": "739921763ca47cbc881dcb688cc909688ffddcb5c52f0e7620da4071921c6883",
+  "role": "middle (Claude Code claude-opus-5/high)",
+  "subject": "G1-R6-B-R7 probe evidence output guard (lap235 work tier)",
+  "summary": {
+    "agrees": 11,
+    "defects": [
+      "C1_missing_parent_directory",
+      "C2_readonly_parent_directory"
+    ],
+    "total": 13
+  },
+  "target_probe_sha256": "2d4f6b3688fe5d8bafb4036ab5fd18f21c399808d1e3ce983bd86a004350e7eb"
+}

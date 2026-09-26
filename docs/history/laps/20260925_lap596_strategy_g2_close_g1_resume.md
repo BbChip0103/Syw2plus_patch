@@ -1,0 +1,32 @@
+# 2026-09-25 | lap 596 | 목표 G2 경계 → G1 재개 (strategy)
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-opus-5-5`, effort 세션 비노출. 지정 역할은 strategy이고 계약 모델 `claude-fable-5`/Astra를 대신한다. subagent 1회 사용: Explore(같은 세션 모델), G1/G4 계보 읽기 전용 요약.
+- 가설 / 사용자 관찰:
+  - 입력은 INBOX 2026-09-25 09:52 운영자 결정(사용자 상시 위임)이다. 내용은 세 가지다: 화면 축을 "미검증 확정(harness 한계)"으로 닫는다, lap595 `TypeError`는 기록만 한다, strategy가 S5′를 확정하고 다음 제품 목표 한 가지를 판정한다.
+  - 판단: G2는 모델 권한 안에서 남은 축이 없다. 교전은 `(다)`, 멀티는 `(iv)`, 화면은 09:52 결정으로 닫혔다. 따라서 Q12-1 `(A)` 부분 합격 기록을 2026-09-21 00:20 지시의 "G2 성립"으로 보고 **G1을 재개**한다(DESIGN §3 순서 M2→M1→M4, 번복 가능).
+- 예상 PASS / FAIL 조건: strategy 산출물 네 가지가 모두 나오면 PASS다. (1) S5′ 부록 B, (2) 다음 한 가지 카드, (3) FEASIBLE 근거, (4) 검증 기준 고정. 게임 실행·제품 source 변경이 생기면 FAIL.
+- 이전 바퀴 검수 (lap595, 읽기 전용):
+  - `temp/.../20260925_lap595_w49sc_corrected_lobby_once/run_summary.json`의 판정은 `RUN_ERROR`다. traceback은 373행 `click(DISPLAY, *point, wine_log, button)`에서 `TypeError`로 끝나고, 이는 §145와 일치한다. source before/after는 `b56986e0…a8ac`로 같고, `lobby_before` PNG는 `2e694f10…b517f`다.
+  - 현재 runner SHA는 `ccc9fa0aebbadbb44200112eb75f9a30c2397f5a52e35f88d6ff79847b540a98`다. `ui_click`/`--button`으로 고친 **미실행본**이다. 09:52 결정에 따라 실행 허용 여부를 판정하지 않는다(화면 축 종결).
+- 핵심 신규 근거 **N219**(정적 판독, 미증명):
+  - `tools/inmm_stub/final_d3d9_trace.c` 464~465행에서 hook은 `_Init_thread_header` guard가 0일 때만 설치된다.
+  - MSVC는 초기화 완료 뒤 guard에 `_Init_global_epoch` 값을 쓴다. 이 값은 `INT_MIN`에서 시작해 증가한다. 그래서 2026-09-17 관측값 `0x8000001A`는 "이미 초기화 완료"로 읽힌다.
+  - hook은 `DirectDrawCreateEx` 뒤에 지연 설치되므로 설치 시점이 늦었다는 뜻이다. 2026-09-16의 "세 번째 acquisition 가설 없음"을 다시 여는 근거가 된다. 그래서 판정은 `FEASIBLE`(조사 착수 가치)로 둔다.
+- 변경 파일 / 커밋: 모두 uncommitted다. SHA256은 `ESCALATE_SOL` §146에 기록한다.
+  - 신규: `docs/work/active/G1_STRATEGY_W50_HD_FINAL_OUTPUT_ACQUISITION_LAP596.md`, 이 기록, `docs/history/20260925_inbox_w49_screen_lineage_lap596_archive.md`.
+  - 수정: `docs/reports/20260925_G2_S5P_MILESTONE_RESUBMISSION_LAP589.md`(부록 B 추가. 추가 전 SHA `d12fb623…aaedf`, 88줄), `docs/feedback/INBOX.md`, `docs/feedback/APPROVALS.md`, `docs/STATUS.md`, `loop/ESCALATE_SOL`.
+  - INBOX 압축: 압축 전 전체 SHA `8c487b6afb055486d0f645508800fc07fe13618601f83b0b52a404fe9ef48b38`, 341줄. W49 화면 계보 12줄을 원문 그대로 옮겼다(발췌 SHA `70e0b5b4420bc339e15b218a8512a2bba252e34c7a329bdaaf145f5eebc487e3`). 삭제·재해석은 없다.
+- 원본 SHA / 후보 SHA / 환경 / fixture: 게임 실행0이므로 해당 없음. 참조한 W50 대상은 DxWrapper `96c44319…e8fe`, ini 원문 `918e7043…a5a2`, 원본 `b56986e0…a8ac`다.
+- 실행 명령 / 검증: 문서 반영 뒤 `make check`와 `checks/safety.sh check`를 실행한다. 결과는 STATUS 검증 상태와 §146에 적는다. Fast일 뿐 G1 증거가 아니다.
+- 측정값 / 판정: 네 가지다.
+  - 화면 축은 `미검증 확정(harness 한계)`이다(09:52 결정을 반영).
+  - S5′ 제출은 확정이다. G2는 부분 합격 기록이며 PASS가 아니다.
+  - 다음 목표는 G1 W50이다.
+  - G4는 W50 판정까지 보류한다.
+- 회귀 / 남은 위험:
+  - N219가 틀릴 수 있다. 예를 들어 guard가 다른 static의 것일 수 있고, 이 경우 W50 A0 `REFUTED`이면 가설 1회 실패로 센다.
+  - WM_CLOSE 정상 종료 FAIL이 이어진다.
+  - G1 "G2 성립" 해석은 사용자 번복 가능이다.
+  - 사용자 3단 G2 확정은 없다.
+- 다음 한 가지: work가 W50 A0→A1→A2→A3을 실행한다(fresh ≤3, 실패 가설 ≤2, ≤60분). 그다음 middle 독립 검수, `FEASIBLE`이면 사전 허가된 W51(HUD SPR `0x24` 40×48 ON/OFF)로 간다.
+- 검증 결과: `make check` exit0, 835 passed/494.72s, Ruff/compileall/mypy/`CONTEXT_PASS`, `checks/safety.sh check` `SAFETY_PASS`.

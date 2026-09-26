@@ -1,0 +1,20 @@
+{
+  "game_executions": 0,
+  "lap": 245,
+  "mutation": {
+    "caught": true,
+    "description": "replace exclusive open mode x with truncating mode w",
+    "mutated_source_sha256": "203b9ad33044d46d9e6a5fef501a093beae788fe1a0d9edbf6af2b5499f9680e",
+    "pytest_returncode": 1,
+    "stderr_tail": [],
+    "stdout_tail": [
+      "FAILED ../../../../../tmp/lap245_r11_zu76d60x/test_review_probe_output.py::test_r6b_r10_rejects_read_only_parent",
+      "FAILED ../../../../../tmp/lap245_r11_zu76d60x/test_review_probe_output.py::test_r6b_r10_classifies_non_searchable_parent_without_traceback",
+      "FAILED ../../../../../tmp/lap245_r11_zu76d60x/test_review_probe_output.py::test_r6b_r17_existing_evidence_refusal_precedes_review_body",
+      "8 failed in 0.26s"
+    ]
+  },
+  "source_sha256": "16f74629aae8f823508762d719776547e1fd8365a07c7862bbf89a4d3ae06d12",
+  "target": "G1 Stage B R6-B-R11",
+  "verdict": "PASS"
+}

@@ -1,0 +1,606 @@
+{
+  "captured_at": "2026-09-10T03:56:50.156011+00:00",
+  "source_root": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re",
+  "source_head": "edd86cafdb83e29d6929bd9d3aba272e795f3f81",
+  "source_origin": "https://github.com/BbChip0103/Syw2plus_re.git",
+  "snapshot_kind": "working tree, including uncommitted 20260910 experiment; NOT contents of HEAD",
+  "files": [
+    {
+      "source": "patches/population/.ai.md",
+      "destination": "patches/population/.ai.md",
+      "source_sha256": "d9d4793f406c8394a908ecb5c0b5172f5274c32e50500b980e66c9b007fcef04",
+      "source_git_tracked": true,
+      "imported_sha256": "de796b700b242213342f3046c686d38025a2bb16e97f02605cb0a4428645b0bc",
+      "changed_during_migration": true
+    },
+    {
+      "source": "patches/population/README.md",
+      "destination": "patches/population/README.md",
+      "source_sha256": "af11dab5102d9d93e0fe9c74a4a01191d1e1c8e91097c36c747dbe0de36b19e9",
+      "source_git_tracked": false,
+      "imported_sha256": "e7796ef21eaefa38caaaa5c7d272cf3304b15eaa2033d040dc958e97ab20037b",
+      "changed_during_migration": true
+    },
+    {
+      "source": "patches/population/build_runtime_bridge.py",
+      "destination": "patches/population/build_runtime_bridge.py",
+      "source_sha256": "d27914d18c9b8816c2a4630d4b9108fcd337ec1d95e32ee13c9cf2e589634b33",
+      "source_git_tracked": false,
+      "imported_sha256": "7b88ab9dccaa376a58c0b8d9aa43c4716295858fcdc1ee85203e79751fe255e0",
+      "changed_during_migration": true
+    },
+    {
+      "source": "patches/population/fixed_supply_5000.py",
+      "destination": "patches/population/fixed_supply_5000.py",
+      "source_sha256": "637223431639ad9becb57eb7ebe35a3e3dfc471c5cccf714032abdc14779a91c",
+      "source_git_tracked": false,
+      "imported_sha256": "637223431639ad9becb57eb7ebe35a3e3dfc471c5cccf714032abdc14779a91c",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/runtime_bridge.c",
+      "destination": "patches/population/runtime_bridge.c",
+      "source_sha256": "0eedffedd9fcaa38be3b63c068ff1cb9199d4476ca0856368a558d4099917cea",
+      "source_git_tracked": false,
+      "imported_sha256": "0eedffedd9fcaa38be3b63c068ff1cb9199d4476ca0856368a558d4099917cea",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/runtime_driver.py",
+      "destination": "patches/population/runtime_driver.py",
+      "source_sha256": "0155a3588fcbe1ed6dd56e2313de32b7d317f47e2de26b02649c315743a9e70e",
+      "source_git_tracked": false,
+      "imported_sha256": "8c2465b8daa0a836168a92c8865c0f20e192ffd4a9ccbc7297511a3b0be82e94",
+      "changed_during_migration": true
+    },
+    {
+      "source": "patches/population/test_fixed_supply_5000.py",
+      "destination": "patches/population/test_fixed_supply_5000.py",
+      "source_sha256": "527fe586e1ac7fc2ea79e4c86f2ace528e1d289f497ddc0788e05f31dc0af647",
+      "source_git_tracked": false,
+      "imported_sha256": "527fe586e1ac7fc2ea79e4c86f2ace528e1d289f497ddc0788e05f31dc0af647",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/.ai.md",
+      "destination": "patches/population/verification_0910/.ai.md",
+      "source_sha256": "ed9d4cc663b8606dc69f0edc206449cf5a8bce7492c598d43edd7cd4f2005338",
+      "source_git_tracked": false,
+      "imported_sha256": "ed9d4cc663b8606dc69f0edc206449cf5a8bce7492c598d43edd7cd4f2005338",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/combined_patch_manifest.json",
+      "destination": "patches/population/verification_0910/combined_patch_manifest.json",
+      "source_sha256": "8afcbb351cc65c548e05e1d1ed5965ea4799fe9061476d214eeae23e6d2f6fcd",
+      "source_git_tracked": false,
+      "imported_sha256": "8afcbb351cc65c548e05e1d1ed5965ea4799fe9061476d214eeae23e6d2f6fcd",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/manifest.json",
+      "destination": "patches/population/verification_0910/manifest.json",
+      "source_sha256": "b7c6640fddb6d8b5ba2cf07038125b1252a1eaabe3ac8761c0e756a29f1336fa",
+      "source_git_tracked": false,
+      "imported_sha256": "b7c6640fddb6d8b5ba2cf07038125b1252a1eaabe3ac8761c0e756a29f1336fa",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run1_session.json",
+      "destination": "patches/population/verification_0910/run1_session.json",
+      "source_sha256": "64415c3591d7ceceace8112e21a31ac2e24661c47c5b2f95bdf22226c8286029",
+      "source_git_tracked": false,
+      "imported_sha256": "64415c3591d7ceceace8112e21a31ac2e24661c47c5b2f95bdf22226c8286029",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run1_summary.json",
+      "destination": "patches/population/verification_0910/run1_summary.json",
+      "source_sha256": "a6e27b24f20a9acf755f26e934c2aecfa94bd552b1e3cf97f683ab32ffee3065",
+      "source_git_tracked": false,
+      "imported_sha256": "a6e27b24f20a9acf755f26e934c2aecfa94bd552b1e3cf97f683ab32ffee3065",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run2_after_pending_load.json",
+      "destination": "patches/population/verification_0910/run2_after_pending_load.json",
+      "source_sha256": "f22e2e627df7604c2e4b9f402feed733bb4ba36cd4fbe5b97bab34ab052f99b6",
+      "source_git_tracked": false,
+      "imported_sha256": "f22e2e627df7604c2e4b9f402feed733bb4ba36cd4fbe5b97bab34ab052f99b6",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run2_at_boundary.json",
+      "destination": "patches/population/verification_0910/run2_at_boundary.json",
+      "source_sha256": "3a1cacf69f78e97da12871832e1d7c35a592954779ef02a3dcac5f90acd3c30b",
+      "source_git_tracked": false,
+      "imported_sha256": "3a1cacf69f78e97da12871832e1d7c35a592954779ef02a3dcac5f90acd3c30b",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run2_before_boundary.json",
+      "destination": "patches/population/verification_0910/run2_before_boundary.json",
+      "source_sha256": "7b7ccbda9279b3fdc52a35d2123c67294d6ca626f20ae064097190b06d4facae",
+      "source_git_tracked": false,
+      "imported_sha256": "7b7ccbda9279b3fdc52a35d2123c67294d6ca626f20ae064097190b06d4facae",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run2_bridge_log.jsonl",
+      "destination": "patches/population/verification_0910/run2_bridge_log.jsonl",
+      "source_sha256": "0c583de19af6bad7cc76d3fed681ba3f6d2ed2c1ee098e976dbf1d9cacabdd87",
+      "source_git_tracked": false,
+      "imported_sha256": "0c583de19af6bad7cc76d3fed681ba3f6d2ed2c1ee098e976dbf1d9cacabdd87",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run2_excess_refused_later.json",
+      "destination": "patches/population/verification_0910/run2_excess_refused_later.json",
+      "source_sha256": "f9cc4efbe187ccfc1fb663f197cef9f47a18e3a7e6e089c5aff826e0e2c5dc93",
+      "source_git_tracked": false,
+      "imported_sha256": "f9cc4efbe187ccfc1fb663f197cef9f47a18e3a7e6e089c5aff826e0e2c5dc93",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run2_loaded_boundary.json",
+      "destination": "patches/population/verification_0910/run2_loaded_boundary.json",
+      "source_sha256": "ec7eb71ed44c42087a94c8966ca01b501d6732b4026c057a554152bab849ad1c",
+      "source_git_tracked": false,
+      "imported_sha256": "ec7eb71ed44c42087a94c8966ca01b501d6732b4026c057a554152bab849ad1c",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run2_new_admission.json",
+      "destination": "patches/population/verification_0910/run2_new_admission.json",
+      "source_sha256": "97ea62ee838c70157d4585ba8e28f0b34dcaaf2129e315a13feb780a67ccea56",
+      "source_git_tracked": false,
+      "imported_sha256": "97ea62ee838c70157d4585ba8e28f0b34dcaaf2129e315a13feb780a67ccea56",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run2_pending_save.json",
+      "destination": "patches/population/verification_0910/run2_pending_save.json",
+      "source_sha256": "585ffc779cd8fad2a8792028300312daf76ba3fe7fac2476feef7d5e7b3fc682",
+      "source_git_tracked": false,
+      "imported_sha256": "585ffc779cd8fad2a8792028300312daf76ba3fe7fac2476feef7d5e7b3fc682",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run3_bridge_log.jsonl",
+      "destination": "patches/population/verification_0910/run3_bridge_log.jsonl",
+      "source_sha256": "c3e7573c242cf2a8270218dd659485aadef0a698fcdfa56f428e998f82d60601",
+      "source_git_tracked": false,
+      "imported_sha256": "c3e7573c242cf2a8270218dd659485aadef0a698fcdfa56f428e998f82d60601",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run3_real_army_5000.json",
+      "destination": "patches/population/verification_0910/run3_real_army_5000.json",
+      "source_sha256": "7755563abd454478caac56cd825b0f1eda05e20106b1aa096915af92d65faace",
+      "source_git_tracked": false,
+      "imported_sha256": "7755563abd454478caac56cd825b0f1eda05e20106b1aa096915af92d65faace",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run3_real_army_fixture.json",
+      "destination": "patches/population/verification_0910/run3_real_army_fixture.json",
+      "source_sha256": "47f76d6b7d6faaa543db52226be1f1372a551283f97eb0ccd0ce41a03548d0dc",
+      "source_git_tracked": false,
+      "imported_sha256": "47f76d6b7d6faaa543db52226be1f1372a551283f97eb0ccd0ce41a03548d0dc",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run3_real_army_pending.json",
+      "destination": "patches/population/verification_0910/run3_real_army_pending.json",
+      "source_sha256": "38cd0ea28bc4ab22988d201d7ba55ff02c0f063395f934928b88041e4a3fac8d",
+      "source_git_tracked": false,
+      "imported_sha256": "38cd0ea28bc4ab22988d201d7ba55ff02c0f063395f934928b88041e4a3fac8d",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run3_session.json",
+      "destination": "patches/population/verification_0910/run3_session.json",
+      "source_sha256": "c09919695224b3f90e70b9fb79caea13cdf8baf4269227adcc024965ae7fe441",
+      "source_git_tracked": false,
+      "imported_sha256": "c09919695224b3f90e70b9fb79caea13cdf8baf4269227adcc024965ae7fe441",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_bridge_log.jsonl",
+      "destination": "patches/population/verification_0910/run4_bridge_log.jsonl",
+      "source_sha256": "12349b4f155bbde914218c898e560dfb48b0ea99bf9582eded1fe204b9eb404f",
+      "source_git_tracked": false,
+      "imported_sha256": "12349b4f155bbde914218c898e560dfb48b0ea99bf9582eded1fe204b9eb404f",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_combined_loaded_army.json",
+      "destination": "patches/population/verification_0910/run4_combined_loaded_army.json",
+      "source_sha256": "790d3f9b339f8a87e29b47594618c1587778aaa12d9409a24a215ad9d8eb7af3",
+      "source_git_tracked": false,
+      "imported_sha256": "790d3f9b339f8a87e29b47594618c1587778aaa12d9409a24a215ad9d8eb7af3",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_combined_pending_load.json",
+      "destination": "patches/population/verification_0910/run4_combined_pending_load.json",
+      "source_sha256": "caa38956ad38b7fc3653b883c2a615f3c3f5a579a85138d992b0d044d60c5949",
+      "source_git_tracked": false,
+      "imported_sha256": "caa38956ad38b7fc3653b883c2a615f3c3f5a579a85138d992b0d044d60c5949",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_combined_production_complete.json",
+      "destination": "patches/population/verification_0910/run4_combined_production_complete.json",
+      "source_sha256": "8f991da9e406e27a5b05ea6e1afd630ab9a7788561c770c86b03f7bb57bb592e",
+      "source_git_tracked": false,
+      "imported_sha256": "8f991da9e406e27a5b05ea6e1afd630ab9a7788561c770c86b03f7bb57bb592e",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_combined_renderer.json",
+      "destination": "patches/population/verification_0910/run4_combined_renderer.json",
+      "source_sha256": "46792af927bb95b57ed7994de7c69da38216670f036b413bdbbb0f11874e0208",
+      "source_git_tracked": false,
+      "imported_sha256": "46792af927bb95b57ed7994de7c69da38216670f036b413bdbbb0f11874e0208",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_combined_selected.json",
+      "destination": "patches/population/verification_0910/run4_combined_selected.json",
+      "source_sha256": "582a2f17d12242c17c245290e24a361dd0f748cee133bd00920b4bd753cf0def",
+      "source_git_tracked": false,
+      "imported_sha256": "582a2f17d12242c17c245290e24a361dd0f748cee133bd00920b4bd753cf0def",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_endurance_summary.json",
+      "destination": "patches/population/verification_0910/run4_endurance_summary.json",
+      "source_sha256": "cf054fc94dd6ac73db705a21146aed46612cbe39767535d69eea85d72dcdebd1",
+      "source_git_tracked": false,
+      "imported_sha256": "cf054fc94dd6ac73db705a21146aed46612cbe39767535d69eea85d72dcdebd1",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_final_24k_snapshot.json",
+      "destination": "patches/population/verification_0910/run4_final_24k_snapshot.json",
+      "source_sha256": "b4cd82a50bf70e88a3b860b481219b5af830582555368a90324fc1ccd94e2e47",
+      "source_git_tracked": false,
+      "imported_sha256": "b4cd82a50bf70e88a3b860b481219b5af830582555368a90324fc1ccd94e2e47",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_long_24k.json",
+      "destination": "patches/population/verification_0910/run4_long_24k.json",
+      "source_sha256": "5faef9fbcaaa531a1572882208771ab6ca3aad28e96cc8886b7b8920adff2a59",
+      "source_git_tracked": false,
+      "imported_sha256": "5faef9fbcaaa531a1572882208771ab6ca3aad28e96cc8886b7b8920adff2a59",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_session.json",
+      "destination": "patches/population/verification_0910/run4_session.json",
+      "source_sha256": "1a8e44a5dfc54e4da90b35be8f38b168b31f4fb5c892193e2f030aebf1d94e93",
+      "source_git_tracked": false,
+      "imported_sha256": "1a8e44a5dfc54e4da90b35be8f38b168b31f4fb5c892193e2f030aebf1d94e93",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/run4_trace.jsonl",
+      "destination": "patches/population/verification_0910/run4_trace.jsonl",
+      "source_sha256": "bbf167a71dbbd84a3ad91821f758b020e2ce7701a2303e5009a142a240447fe9",
+      "source_git_tracked": false,
+      "imported_sha256": "bbf167a71dbbd84a3ad91821f758b020e2ce7701a2303e5009a142a240447fe9",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/population/verification_0910/type_costs.json",
+      "destination": "patches/population/verification_0910/type_costs.json",
+      "source_sha256": "520e581ad405c18f0527b45c21ddca343200afc4d5b21793ef314ca322e3ae24",
+      "source_git_tracked": false,
+      "imported_sha256": "520e581ad405c18f0527b45c21ddca343200afc4d5b21793ef314ca322e3ae24",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/resolution/.ai.md",
+      "destination": "patches/resolution/.ai.md",
+      "source_sha256": "ab3daacb7e4f4e9f0f28c15f0f9bafdec37d8435c58a080fc51b3236f8600400",
+      "source_git_tracked": true,
+      "imported_sha256": "fe8da4bbd837f65507b38f120f3fec257f8e767ef412d4aac5111c8048bb2df6",
+      "changed_during_migration": true
+    },
+    {
+      "source": "patches/resolution/README.md",
+      "destination": "patches/resolution/README.md",
+      "source_sha256": "ac14a9a6a208e7575f82f7cd9bc0371b88df0c3cb6256c440f0db340d6351385",
+      "source_git_tracked": false,
+      "imported_sha256": "1bd03e69d291167dbf7cd622a21b7fee1b1693f089f472ce73f1e21ab53c271c",
+      "changed_during_migration": true
+    },
+    {
+      "source": "patches/resolution/qhd_probe.py",
+      "destination": "patches/resolution/qhd_probe.py",
+      "source_sha256": "41d1496438e627d5ec75142944375bac1897258c6ab1c4002a83f2f3fda28c8b",
+      "source_git_tracked": false,
+      "imported_sha256": "41d1496438e627d5ec75142944375bac1897258c6ab1c4002a83f2f3fda28c8b",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/resolution/run_qhd_probe.py",
+      "destination": "patches/resolution/run_qhd_probe.py",
+      "source_sha256": "77842d9eb9ef37892dd646b06d91d644a574fdf0b423371a87a59a3e67b012fa",
+      "source_git_tracked": false,
+      "imported_sha256": "51a7c8c8a5a4736bc646d3803078e3dcfcef2a8ef2953b108e4c693f3d3cafab",
+      "changed_during_migration": true
+    },
+    {
+      "source": "patches/resolution/test_qhd_probe.py",
+      "destination": "patches/resolution/test_qhd_probe.py",
+      "source_sha256": "0fe7d1ad79e5c89407bffbeab8f7401a943751e9b6f39d4b35d17efbfe0d6301",
+      "source_git_tracked": false,
+      "imported_sha256": "0fe7d1ad79e5c89407bffbeab8f7401a943751e9b6f39d4b35d17efbfe0d6301",
+      "changed_during_migration": false
+    },
+    {
+      "source": "analysis/memory_maps/population_5000_runtime_0910.md",
+      "destination": "analysis/memory_maps/population_5000_runtime_0910.md",
+      "source_sha256": "ec426595aadfd52b088be3e45a259562c6c8da62d6c68864be992b42bb721c45",
+      "source_git_tracked": false,
+      "imported_sha256": "ec426595aadfd52b088be3e45a259562c6c8da62d6c68864be992b42bb721c45",
+      "changed_during_migration": false
+    },
+    {
+      "source": "analysis/memory_maps/population_runtime_bridge_0910.md",
+      "destination": "analysis/memory_maps/population_runtime_bridge_0910.md",
+      "source_sha256": "96eb29ab93515293fd0d097ecd0b85bddbdd0c4e8e7ddfbf68cfaf1da1d1fb68",
+      "source_git_tracked": false,
+      "imported_sha256": "96eb29ab93515293fd0d097ecd0b85bddbdd0c4e8e7ddfbf68cfaf1da1d1fb68",
+      "changed_during_migration": false
+    },
+    {
+      "source": "analysis/memory_maps/original_qhd_probe_0910.md",
+      "destination": "analysis/memory_maps/original_qhd_probe_0910.md",
+      "source_sha256": "d3e3d15699d816dbb266e9f7da6c50b0e57edac6cc0f96114d069f282ba81007",
+      "source_git_tracked": false,
+      "imported_sha256": "02e11fb098910cf0af425a36b43f868b633cc96e11f1079acc5b10fd6dd68e4a",
+      "changed_during_migration": true
+    },
+    {
+      "source": "analysis/memory_maps/player_offsets.md",
+      "destination": "analysis/memory_maps/player_offsets.md",
+      "source_sha256": "5b17cc449da201d04c6645610856c33f4e84e787fdca66277e37aecda5029181",
+      "source_git_tracked": true,
+      "imported_sha256": "5b17cc449da201d04c6645610856c33f4e84e787fdca66277e37aecda5029181",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/Makefile",
+      "destination": "tools/inmm_stub/Makefile",
+      "source_sha256": "cb76989525c73098c250bdd1bf20848bf66126b4e5c8546e686b8c3b13f58999",
+      "source_git_tracked": true,
+      "imported_sha256": "ca343a223d2017b6d2ec8a8cc3d63aa7e45ca0ffcc2bd73301d7347c4342b980",
+      "changed_during_migration": true
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/asset_hook.c",
+      "destination": "tools/inmm_stub/asset_hook.c",
+      "source_sha256": "133dec65a7fa5842214ca38d73b4c9d0ad00a6870d03ce230f93036f0d89572f",
+      "source_git_tracked": true,
+      "imported_sha256": "133dec65a7fa5842214ca38d73b4c9d0ad00a6870d03ce230f93036f0d89572f",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/asset_hook.h",
+      "destination": "tools/inmm_stub/asset_hook.h",
+      "source_sha256": "dd9b614d270523c826562dbf1f23e636744c265dddf84125fdd4400f48aa03fa",
+      "source_git_tracked": true,
+      "imported_sha256": "dd9b614d270523c826562dbf1f23e636744c265dddf84125fdd4400f48aa03fa",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_executor.c",
+      "destination": "tools/inmm_stub/control_executor.c",
+      "source_sha256": "64f2694b388b63f7082c948788cbb59d4476853cac84c03a8875ecb26cfa1d98",
+      "source_git_tracked": true,
+      "imported_sha256": "64f2694b388b63f7082c948788cbb59d4476853cac84c03a8875ecb26cfa1d98",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_executor.h",
+      "destination": "tools/inmm_stub/control_executor.h",
+      "source_sha256": "2f1f3f06a7f17a471eea0f97000101ed99bfb44f7c07ab24a26b2e465ad058bd",
+      "source_git_tracked": true,
+      "imported_sha256": "2f1f3f06a7f17a471eea0f97000101ed99bfb44f7c07ab24a26b2e465ad058bd",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_handler_bridge.c",
+      "destination": "tools/inmm_stub/control_handler_bridge.c",
+      "source_sha256": "53b856b1ff68fff0d02a6f10b5bbda215e4e040d81035ee15dd20b5a6a8b9076",
+      "source_git_tracked": true,
+      "imported_sha256": "53b856b1ff68fff0d02a6f10b5bbda215e4e040d81035ee15dd20b5a6a8b9076",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_handler_bridge.h",
+      "destination": "tools/inmm_stub/control_handler_bridge.h",
+      "source_sha256": "9c267f957a2f4536130a66755d7b2285df5fb1f64747e07647c95584a53c2e29",
+      "source_git_tracked": true,
+      "imported_sha256": "9c267f957a2f4536130a66755d7b2285df5fb1f64747e07647c95584a53c2e29",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_input_bridge.c",
+      "destination": "tools/inmm_stub/control_input_bridge.c",
+      "source_sha256": "4b6bf478fef7f29675f8386349c1aa87ffb5f1ca8126b3ddeac4f926d0daabfe",
+      "source_git_tracked": true,
+      "imported_sha256": "4b6bf478fef7f29675f8386349c1aa87ffb5f1ca8126b3ddeac4f926d0daabfe",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_input_bridge.h",
+      "destination": "tools/inmm_stub/control_input_bridge.h",
+      "source_sha256": "cb1fbb409b54f58ab8d7dc848d3eb464593766089d7d68291b7ccdb0bb1b0dd8",
+      "source_git_tracked": true,
+      "imported_sha256": "cb1fbb409b54f58ab8d7dc848d3eb464593766089d7d68291b7ccdb0bb1b0dd8",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_logging.c",
+      "destination": "tools/inmm_stub/control_logging.c",
+      "source_sha256": "b43e19e478b2d2195611b5a7d392a4100ad85aa46b5423c9b344244001dd4349",
+      "source_git_tracked": true,
+      "imported_sha256": "b43e19e478b2d2195611b5a7d392a4100ad85aa46b5423c9b344244001dd4349",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_logging.h",
+      "destination": "tools/inmm_stub/control_logging.h",
+      "source_sha256": "dd17ca68dc073c4299459d875cbbc3aa0f547037a1d1e0b8ac7d7f0d1c01855b",
+      "source_git_tracked": true,
+      "imported_sha256": "dd17ca68dc073c4299459d875cbbc3aa0f547037a1d1e0b8ac7d7f0d1c01855b",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_protocol.c",
+      "destination": "tools/inmm_stub/control_protocol.c",
+      "source_sha256": "d8e463af05c9b3f3f255a9cefe41fd91f5527025ed23444ce00b28d01413e870",
+      "source_git_tracked": true,
+      "imported_sha256": "d8e463af05c9b3f3f255a9cefe41fd91f5527025ed23444ce00b28d01413e870",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_protocol.h",
+      "destination": "tools/inmm_stub/control_protocol.h",
+      "source_sha256": "74a3354bcb5ffdea9d184da7fbf25a6c62e7d7848ad661319d0b6f7ccfc86cab",
+      "source_git_tracked": true,
+      "imported_sha256": "74a3354bcb5ffdea9d184da7fbf25a6c62e7d7848ad661319d0b6f7ccfc86cab",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_registry.c",
+      "destination": "tools/inmm_stub/control_registry.c",
+      "source_sha256": "fd566e7a722cd0c63e36dbe312077d0e0e941e9572867fa6e32cb31dc1fb136a",
+      "source_git_tracked": true,
+      "imported_sha256": "fd566e7a722cd0c63e36dbe312077d0e0e941e9572867fa6e32cb31dc1fb136a",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_registry.h",
+      "destination": "tools/inmm_stub/control_registry.h",
+      "source_sha256": "1586ee1fbfce4be953c7c0102b7c07523ddc10b26659b0d22dd5f4831f6efb82",
+      "source_git_tracked": true,
+      "imported_sha256": "1586ee1fbfce4be953c7c0102b7c07523ddc10b26659b0d22dd5f4831f6efb82",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_state_bridge.c",
+      "destination": "tools/inmm_stub/control_state_bridge.c",
+      "source_sha256": "71c969d295294bbed8007891a5dae3c4ff46cd80b61b65b07061182c0209497f",
+      "source_git_tracked": true,
+      "imported_sha256": "71c969d295294bbed8007891a5dae3c4ff46cd80b61b65b07061182c0209497f",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/control_state_bridge.h",
+      "destination": "tools/inmm_stub/control_state_bridge.h",
+      "source_sha256": "12986da636effeef1273c5d947cb11e1fb517ef145584aaf434a8b5b3d12ea1e",
+      "source_git_tracked": true,
+      "imported_sha256": "12986da636effeef1273c5d947cb11e1fb517ef145584aaf434a8b5b3d12ea1e",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/inmm_orig.def",
+      "destination": "tools/inmm_stub/inmm_orig.def",
+      "source_sha256": "a39bfbae1fcd20784a5cab2b012833d0ffd09cb6146ec0aa3622711431a880de",
+      "source_git_tracked": true,
+      "imported_sha256": "a39bfbae1fcd20784a5cab2b012833d0ffd09cb6146ec0aa3622711431a880de",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/inmm_stub.c",
+      "destination": "tools/inmm_stub/inmm_stub.c",
+      "source_sha256": "37331f4e3a5cf0106ecc8a7afdefc7ba4446f1ed2cf539e40a8cc068af19ec4a",
+      "source_git_tracked": true,
+      "imported_sha256": "37331f4e3a5cf0106ecc8a7afdefc7ba4446f1ed2cf539e40a8cc068af19ec4a",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/inmm_stub.def",
+      "destination": "tools/inmm_stub/inmm_stub.def",
+      "source_sha256": "be6578a83833eeebef9b28936ddb24d0a364d7f98d46ad0957dc67e53ae32e16",
+      "source_git_tracked": true,
+      "imported_sha256": "be6578a83833eeebef9b28936ddb24d0a364d7f98d46ad0957dc67e53ae32e16",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/sfx_hook.c",
+      "destination": "tools/inmm_stub/sfx_hook.c",
+      "source_sha256": "4cce83b549252c9048ea336f1771adcf16f1bb9b3162b9ef35c25b305a26c925",
+      "source_git_tracked": true,
+      "imported_sha256": "4cce83b549252c9048ea336f1771adcf16f1bb9b3162b9ef35c25b305a26c925",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/inmm_stub/sfx_hook.h",
+      "destination": "tools/inmm_stub/sfx_hook.h",
+      "source_sha256": "3e5912b355e19e2351cfe33ed2d1231cf909bbc22347126d02d6ec95d988a429",
+      "source_git_tracked": true,
+      "imported_sha256": "3e5912b355e19e2351cfe33ed2d1231cf909bbc22347126d02d6ec95d988a429",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/x11_mouse_click.py",
+      "destination": "tools/x11_mouse_click.py",
+      "source_sha256": "55e72d7dfba2de2f4ac196e8ef7488bdc9d11f5dbb362f617452b5ebd32c142b",
+      "source_git_tracked": true,
+      "imported_sha256": "55e72d7dfba2de2f4ac196e8ef7488bdc9d11f5dbb362f617452b5ebd32c142b",
+      "changed_during_migration": false
+    },
+    {
+      "source": "plan_c/tools/x11_send_keys.py",
+      "destination": "tools/x11_send_keys.py",
+      "source_sha256": "d6188bf547b3a167cf37f6a448cc86eae9f3023994af0bd6b86ede3405f463d7",
+      "source_git_tracked": true,
+      "imported_sha256": "d6188bf547b3a167cf37f6a448cc86eae9f3023994af0bd6b86ede3405f463d7",
+      "changed_during_migration": false
+    },
+    {
+      "source": "patches/CHANGELOG.md",
+      "destination": "docs/history/UPSTREAM_PATCHES_CHANGELOG.md",
+      "source_sha256": "180297a0324555d2808c5cfb46a3d0945e056a78cb3db31570382dd586ea0c03",
+      "source_git_tracked": true,
+      "imported_sha256": "180297a0324555d2808c5cfb46a3d0945e056a78cb3db31570382dd586ea0c03",
+      "changed_during_migration": false
+    },
+    {
+      "source": "analysis/memory_maps/player_struct_2010_is_unit_cap_not_supply_0726.md",
+      "destination": "analysis/memory_maps/player_struct_2010_is_unit_cap_not_supply_0726.md",
+      "source_sha256": "43f788a64f55e120942e788b2271bd08b19011846c3cd339b20348b7353958e8",
+      "source_git_tracked": true,
+      "imported_sha256": "43f788a64f55e120942e788b2271bd08b19011846c3cd339b20348b7353958e8",
+      "changed_during_migration": false
+    },
+    {
+      "source": "analysis/memory_maps/supply_200c_accumulation_rule_0726.md",
+      "destination": "analysis/memory_maps/supply_200c_accumulation_rule_0726.md",
+      "source_sha256": "b15b888dc850b8d2032a48a1696edc1d766618d75e540b7595eef258ffd364c7",
+      "source_git_tracked": true,
+      "imported_sha256": "b15b888dc850b8d2032a48a1696edc1d766618d75e540b7595eef258ffd364c7",
+      "changed_during_migration": false
+    },
+    {
+      "source": "analysis/memory_maps/supply_limit_hero_formula_runtime_confirmed_0906.md",
+      "destination": "analysis/memory_maps/supply_limit_hero_formula_runtime_confirmed_0906.md",
+      "source_sha256": "3c1eae5f3d67e4481102e75def9894c150753ce6749de1151e2eb9e130aa0585",
+      "source_git_tracked": true,
+      "imported_sha256": "3c1eae5f3d67e4481102e75def9894c150753ce6749de1151e2eb9e130aa0585",
+      "changed_during_migration": false
+    }
+  ],
+  "notes": [
+    "QHD remains a historical viewport experiment; current user target is 1600x1200 original composition.",
+    "Migration changes include local diagnostic paths, original-root protection, build-only Makefile and goal-correction banners.",
+    "Historical QHD launcher direct execution is disabled to prevent old-prefix side effects."
+  ]
+}

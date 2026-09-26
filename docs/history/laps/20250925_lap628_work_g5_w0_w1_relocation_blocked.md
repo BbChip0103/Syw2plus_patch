@@ -1,0 +1,11 @@
+# 2026-09-25 | lap 628 | 목표 G5
+
+- 실제 provider/model/effort / 지정 역할: Codex work / hands-on 구현·테스트 역할 / 현재 세션 모델 effort 기록 없음
+- 가설 / 사용자 관찰: 20칸 선택 저장소와 소비자 상한을 최소 근거로 50칸 후보로 확장할 수 있다. 최신 18:42 지시는 정적 전수보다 구현·실행 우선이다.
+- 예상 PASS / FAIL 조건: W0 typecheck 및 전체 Fast PASS; W1은 원본 SHA에 고정된 direct/indirect/stack/group/command/UI/storage inventory 산출. safe relocation 근거가 없으면 binary patch를 중단한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `tools/runtime_env.py` (`5c587b02edfc2c23df0a453dce95376f9076f8e48fb49c97ab3218ca642324bd`), `analysis/g5_selection_cap_inventory.json` (`4359a4fe3e300d94820d7fa3cc413670dd2c57a0378aeb11118fa5487967cbbf`), `tests/test_g5_selection_inventory.py` (`1fcd15762bddd3285e5884b0399a2f117dba101157f5924aa6478b09e7d5f8ae`), STATUS/history; all uncommitted, no commit.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 후보 binary 없음; private copy/game/fixture 실행 0.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `make doctor` (original verified, runtime manifest absent, side_effects false); `make typecheck`; `.venv/bin/python -m pytest -q tests/test_runtime_env.py tests/test_g4_ai_shadow.py tests/test_s1_load_evidence.py`; `.venv/bin/python -m pytest -q tests/test_g5_selection_inventory.py`; `bash checks/safety.sh check`; `make check` = 858 passed in 506.89s; `objdump -d -M intel Syw2plus/syw2plus_original.exe` read-only. New capture none.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): W0 `PASS`; W1 inventory `PASS`; static product feasibility `FEASIBLE_STATIC_CONDITIONAL`; W3 runtime `SKIP` (no candidate); safe relocation `BLOCKED(unknown storage/section/runtime allocation)`.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: inventory regression pins source SHA and all recorded old bytes; no middle independent review yet; no user milestone approval. `0x899028..0x899077` is 20×4B, `0x899078..0x8990c7` is zero-backed virtual tail, and `0x8990c8` has 34 absolute refs. Group is 10×0x50 at object `+0x16` with count `+0x336`; command builder/decode contains 20-entry stack loops. Save inclusion, receiver-side cap, UI grid, and safe relocation remain unresolved.
+- 다음 한 가지: 승격 작업자가 new storage/PE section or runtime allocation with initialization/canary and all-consumer relocation proof를 독립 확정한 뒤 private-copy W2a patch를 시작한다. 원본 주소 추측 패치·게임 실행은 그 전 금지.

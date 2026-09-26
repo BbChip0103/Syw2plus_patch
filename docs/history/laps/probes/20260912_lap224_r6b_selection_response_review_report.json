@@ -1,0 +1,154 @@
+{
+  "lap": 224,
+  "role": "middle (claude-opus-5/high) independent review of lap223 R6-B",
+  "source_file": "tools/runtime_env.py",
+  "source_sha256_recorded_by_work": "9e607407b10b593710406b4beb250386640c118e4655a5de46a7a1954d8c5e80",
+  "static_checks": {
+    "absolute_count_ge_2_in_executed_path": false,
+    "drag_wait_uses_responded": true,
+    "drag_final_gate_uses_responded": true,
+    "unit_select_gate_unchanged": true
+  },
+  "cases": [
+    {
+      "id": "C1_count_change",
+      "intent": "engine responded: band select grew the selection",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 3,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "responded": true,
+      "expected_pass": true,
+      "verdict": "AGREES"
+    },
+    {
+      "id": "C2_identity_change_lap204",
+      "intent": "lap204 form: count 1->1 but the selected unit really changed",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1198,
+        "selected_type": 21,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "responded": true,
+      "expected_pass": true,
+      "verdict": "AGREES"
+    },
+    {
+      "id": "C3_no_effect",
+      "intent": "no engine response at all; must stay FAIL/timeout",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "responded": false,
+      "expected_pass": false,
+      "verdict": "AGREES"
+    },
+    {
+      "id": "C4_after_read_failure",
+      "intent": "observation lost after the drag (transient read failure)",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "OSError: [Errno 5] process_vm_readv: transient read failure"
+      },
+      "responded": true,
+      "expected_pass": false,
+      "verdict": "DEFECT"
+    },
+    {
+      "id": "C5_pool_corruption",
+      "intent": "selected slot went inactive: pool/state damage, not a selection response",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: selected unit slot is not active: 1199"
+      },
+      "responded": true,
+      "expected_pass": false,
+      "verdict": "DEFECT"
+    },
+    {
+      "id": "C6_selection_lost",
+      "intent": "selection regressed 1->0; strictly less evidence than before",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "after_observation": {
+        "count": 0,
+        "selected_slot": null,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "no selected unit: selection count is zero"
+      },
+      "responded": true,
+      "expected_pass": false,
+      "verdict": "DEFECT"
+    },
+    {
+      "id": "C7_degraded_baseline_recovers",
+      "intent": "before was already unreadable; the 'change' is the reader healing",
+      "before_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "OSError: [Errno 5] process_vm_readv: transient read failure"
+      },
+      "after_observation": {
+        "count": 1,
+        "selected_slot": 1199,
+        "selected_type": 70,
+        "selected_type_provenance": "approved selected-unit identity: G1_UNIT_BASE_ADDRESS + slot*G1_UNIT_STRIDE + G1_UNIT_TYPE_OFFSET"
+      },
+      "responded": true,
+      "expected_pass": false,
+      "verdict": "DEFECT"
+    }
+  ],
+  "defects": [
+    "C4_after_read_failure",
+    "C5_pool_corruption",
+    "C6_selection_lost",
+    "C7_degraded_baseline_recovers"
+  ],
+  "game_runs": 0
+}

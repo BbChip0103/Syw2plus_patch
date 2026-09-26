@@ -1,0 +1,13 @@
+# 날짜 | lap 647 | 목표 G5
+
+- 실제 provider/model/effort / 지정 역할: Codex native session / hands-on 구현 작업자 / high.
+- 가설 / 사용자 관찰: lap645의 invalid EIP가 DLL fault가 아니라 선택 경로의 남은 고정 크기 스택/list writer·consumer 오버플로인지 예외 순간 maps와 ESP로 귀속한다.
+- 예상 PASS / FAIL 조건: fault PC가 유효 모듈 또는 정확한 EXE caller/old bytes로 귀속되면 최소 수리로 handoff; invalid EIP와 깨진 backtrace만 남으면 BLOCKED.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `tools/g5_selection_ui_exception_trace.gdb`에 예외 시 `info proc mappings`와 `x/128wx $esp`를 추가하고 새 lap647 gate 경로를 지정했다. 파일 SHA `cc823c21912e52a4ab17923d2cf0e27093e863c3ed647e86094b15312bb29d9e`; 커밋 0.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 후보 `7c6e372a576b27843c79cb906d024a4aab044166c4ce4625f39f05475a2b1d4d`; Wine/Xvfb 1600×1200, solo owner0, synthetic type2×55 dense 7×8 (7+7+7+7+7+7+7+6), PS3.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `PYTHONPATH=$PWD G5_SELECTION_TRACE_CONTROL=<lap647 gate> python3 tools/g5_candidate_drag_probe.py --variant candidate --runtime-root local/runtime/g5-lap647-candidate --artifact-root <lap647 artifact>`와 `gdb -p <pid> -batch -nx -x tools/g5_selection_ui_exception_trace.gdb`; probe result SHA `cbeb822e3aa3702da252626b4dea9a1d087210ffc7a4ce537999df2dc6f96cb0`, GDB raw SHA `285f72b6c1bc7b78ac468b9712912b0b3da9657f4cec1c581b570843c9a6f18d`; before/after PNG SHA `d8d5631c71ba569cfea8408ede7e9d31e4e3b7dbd07840720dbcf15ff04dd913` / `7bb65633ca8e0012130b4db05e421bdb6455de44b5b0dce44a4f72d88614d5f3`.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): protected source before/after unchanged; private candidate SHA matched. Runtime `selection/movement=36/36`, `movement_command_nonzero=36`, probe `FAIL_SELECTION_CAP`, exit2; cleanup residual0/ok=true. Exception `SIGSEGV`, EIP `0x04810486`, ESP `0x31fa50`; maps contain EXE `0x00400000–0x004ec000` and no loaded range covering the EIP. ESP dump begins `0x047a0480` and contains repeated `0x02480248`; backtrace is unusable. `context_limits=CONTEXT_PASS`, `safety=SAFETY_PASS`, targeted G5/inventory tests `10 passed`. `make check`, 50/51, command50, canary/save/load SKIP.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: exact candidate builder/restore regression remains 10 passed; no product bytes or original/reference assets changed. The runtime failure is mandatory and the remaining writer/consumer PC is not safely identified. No middle review, milestone approval, or G5 PASS.
+- 다음 한 가지: 승격 작업자가 lap647 candidate/raw를 독립 검수하고 `0x04810486`/`0x047a0480`를 실제 EXE call site와 exact old bytes에 귀속한 뒤, non-overlap/restore regression을 제시해야 한다. 그 전에는 새 후보·50/51·command50을 재개하지 않는다.
+
+판정: **`BLOCKED(candidate_runtime_fault_unattributed)`**.

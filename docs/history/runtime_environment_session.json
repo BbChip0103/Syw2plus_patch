@@ -1,0 +1,9 @@
+{
+  "game_pid": 2887065,
+  "exe": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/game/syw2plus_original.exe",
+  "exe_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "expected_original_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "display": ":91",
+  "prefix": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/prefix",
+  "root": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/game"
+}

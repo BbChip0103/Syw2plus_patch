@@ -1,0 +1,109 @@
+{
+  "c1_n1200_identity": true,
+  "c2_b3_fixup_site_counts": {
+    "unit_age": 4,
+    "unit_existence": 34,
+    "unit_pool": 1014
+  },
+  "c3_changed_site_count": 1056,
+  "c3_expected_changed_site_count": 1056,
+  "c3_instruction_boundary_drift": [],
+  "c3_missing_fixup_sites": [],
+  "c3_unexpected_changed_sites": [],
+  "c3_wrong_value_sites": [],
+  "c4_hits": {
+    "0x401402": [
+      [
+        "imm",
+        17825799
+      ]
+    ]
+  },
+  "c4_tail_destination_range": [
+    "0x108c000",
+    "0x12b88d8"
+  ],
+  "candidate_n": 1210,
+  "candidate_sha256": "2571d6a2d07396215dadc323a42e1c763ff332132463e5b049fb2135b9d264de",
+  "d1_block_size": 2279640,
+  "d1_bytes_inside_a_declared_section": 17360,
+  "d1_bytes_outside_every_section": 2262280,
+  "d1_candidate_sections": [
+    {
+      "name": ".text",
+      "va": "0x401000",
+      "virtual_end": "0x4e4ae5",
+      "virtual_size": "0xe3ae5"
+    },
+    {
+      "name": ".rdata",
+      "va": "0x4e5000",
+      "virtual_end": "0x4ebeec",
+      "virtual_size": "0x6eec"
+    },
+    {
+      "name": ".data",
+      "va": "0x4ec000",
+      "virtual_end": "0x10903d0",
+      "virtual_size": "0xba43d0"
+    },
+    {
+      "name": ".rsrc",
+      "va": "0x12b9000",
+      "virtual_end": "0x12bb0f0",
+      "virtual_size": "0x20f0"
+    }
+  ],
+  "d1_first_pool_slot_outside_data_vsize": 9,
+  "d1_per_region": [
+    {
+      "bytes_inside_a_declared_section": 17360,
+      "fully_covered": false,
+      "new_end": "0x12b75f0",
+      "new_start": "0x108c000",
+      "region": "unit_pool",
+      "span": 2274800
+    },
+    {
+      "bytes_inside_a_declared_section": 0,
+      "fully_covered": false,
+      "new_end": "0x12b7f64",
+      "new_start": "0x12b75f0",
+      "region": "unit_existence",
+      "span": 2420
+    },
+    {
+      "bytes_inside_a_declared_section": 0,
+      "fully_covered": false,
+      "new_end": "0x12b88d8",
+      "new_start": "0x12b7f64",
+      "region": "unit_age",
+      "span": 2420
+    }
+  ],
+  "d1_relocated_block": [
+    "0x108c000",
+    "0x12b88d8"
+  ],
+  "d2_candidate_data_virtual_size": "0xba43d0",
+  "d2_candidate_data_vsize_growth": 18840,
+  "d2_original_data_virtual_size": "0xb9fa38",
+  "d2_repair_fits_under_existing_rsrc_guard": true,
+  "d2_required_data_virtual_size": "0xdcc8d8",
+  "d2_required_growth": 2281120,
+  "d2_slack_bytes_to_new_rsrc_rva": 1832,
+  "failures": [
+    "D1: 2262280 of 2279640 bytes of the relocated pool/existence/age block lie outside every declared section extent in the candidate's own section table"
+  ],
+  "lap": 402,
+  "original_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "provider_model_effort": "Claude Code claude-opus-5 / high",
+  "relocation_deltas": {
+    "unit_age": "0xa1e53c",
+    "unit_existence": "0xa1e528",
+    "unit_pool": "0xa20870"
+  },
+  "reviewed": "docs/history/laps/20260920_lap401_work_g2_unit_pool_tail_relocation.md",
+  "role": "middle (review of lap401 work)",
+  "work_card": "docs/work/active/G2_UNIT_POOL_RELOCATION_SPIKE_LAP400.md"
+}

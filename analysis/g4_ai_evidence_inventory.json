@@ -1,0 +1,57 @@
+{
+  "schema": "syw2plus.g4.ai_evidence_inventory.v1",
+  "observational_only": true,
+  "source_repository_read_only": true,
+  "classification": "BASELINE_METRIC_AVAILABLE_PATCH_BLOCKED",
+  "activation_allowed": false,
+  "hashes": {
+    "combat": {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/plan_c/verification/captures/original/free_battle_combat_evidence_inmm_0730/combat_evidence.json",
+      "sha256": "454cadd415fa08bbb06bd50889bb11de73407f4460017c6c89408ed88d0e3258",
+      "expected": "454cadd415fa08bbb06bd50889bb11de73407f4460017c6c89408ed88d0e3258",
+      "pinned": true
+    },
+    "series": {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/plan_c/verification/captures/original/free_battle_unit_series_inmm_0727/original_unit_series_long240.json",
+      "sha256": "84ae1910dd1336837ef9448bf9b1b73737db0b1033718926e01b66411729e570",
+      "expected": "84ae1910dd1336837ef9448bf9b1b73737db0b1033718926e01b66411729e570",
+      "pinned": true
+    },
+    "controller": {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/plan_c/verification/captures/original/free_battle_controller_opcode_inmm_0730/controller_opcode.json",
+      "sha256": "71fb32a2b955331b05b51cc3d63cb03db9fe9efb6c6ba08228066e0f25b9b2b2",
+      "expected": "71fb32a2b955331b05b51cc3d63cb03db9fe9efb6c6ba08228066e0f25b9b2b2",
+      "pinned": true
+    },
+    "capture_tool": {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/plan_c/tools/capture_ingame_combat_evidence_0730.py",
+      "sha256": "c1948faffccfc3721a1d88c8862535bf9dfb2ca122e7e1c67061fad617a17a21",
+      "expected": "c1948faffccfc3721a1d88c8862535bf9dfb2ca122e7e1c67061fad617a17a21",
+      "pinned": true
+    }
+  },
+  "original_behavior_metrics": {
+    "combat_sample_count": 63,
+    "slot_disappearances": 223,
+    "hp_decrease_events": 136,
+    "hp_decrease_same_unit": 125,
+    "low_hp_disappearances": 42,
+    "min_faction_gap": 0,
+    "production_series_samples": 17,
+    "production_series_last_t": 240,
+    "production_series_last_count": 41,
+    "controller_sample_count": 206,
+    "controller_transition_count": 103
+  },
+  "what_this_proves": [
+    "The original free-battle AI has measurable production, movement/contact and combat outcomes.",
+    "A behavioral metric/oracle can be defined; G4 AI is not blocked by total absence of original evidence."
+  ],
+  "remaining_patch_gates": [
+    "fresh reproducible original run under this patch repository harness",
+    "difficulty-setting identity and at least two fixed scenario fixtures",
+    "candidate intervention point with rollback and deterministic/LAN risk analysis",
+    "original-vs-candidate repeated comparison and regression thresholds"
+  ],
+  "conclusion": "Use the preserved evidence to design the first AI benchmark; do not treat it as permission to patch strategy constants or controller code."
+}

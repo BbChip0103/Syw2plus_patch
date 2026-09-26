@@ -1,0 +1,111 @@
+commit e87204a3a865afc93f0ac445308ff2b5e086fcc9
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-08-27T04:34:50+09:00
+Subject: feat(plan_c): checkpoint non-scenario parity work
+
+M	analysis/memory_maps/player_offsets.md
+commit aae4e7c8ca07b025faec1456adb80bf510874fe7
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-07-28T12:32:36+09:00
+Subject: feat(plan_c): free-battle 체감 라운드 체크포인트 (iter ~111-199) + 인게임 BGM 트랙2
+
+M	analysis/memory_maps/player_offsets.md
+M	plan_c/tools/inmm_stub/inmm_stub.c
+commit cb4d520fccb6f98753363cb2e77e7b15557f3bd6
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-07-02T17:55:40+09:00
+Subject: feat(plan_c): #334 6/20 검증 구성 복원 + mode1 structural-c4 lane 재통합 + 결과판정 lock 일반화
+
+M	plan_c/tools/inmm_stub/.ai.md
+M	plan_c/tools/inmm_stub/control_executor.c
+M	plan_c/tools/inmm_stub/inmm_stub.c
+commit cf9f53255b479bb2e2aa54e917504abb267b2325
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-05-27T05:49:10+09:00
+Subject: feat: EPIC-RUNTIME — save/audio/bugcompat runtime proof backbone + BUG-05 8-step cadence 런타임 확정 (#365)
+
+M	plan_c/tools/inmm_stub/.ai.md
+M	plan_c/tools/inmm_stub/inmm_stub.c
+commit acd4ce8e098a171d04940547769abae93a82f577
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-05-25T23:22:52+09:00
+Subject: feat: 원본 SFX dispatch 캡처(inmm 인라인 훅) + runtime IO blocker matrix — save/audio/asset closure (#358)
+
+M	plan_c/tools/inmm_stub/.ai.md
+M	plan_c/tools/inmm_stub/Makefile
+M	plan_c/tools/inmm_stub/inmm_stub.c
+A	plan_c/tools/inmm_stub/sfx_hook.c
+A	plan_c/tools/inmm_stub/sfx_hook.h
+commit 06acf14016b5f1bc575faa94f3d0a64a614b849a
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-05-25T03:14:06+09:00
+Subject: chore(plan_c): accumulated work — NOW-0204 sample952-956 probe chain, tests, verification, tools, manifests
+
+M	plan_c/tools/inmm_stub/control_executor.c
+M	plan_c/tools/x11_mouse_click.py
+commit 29374dbcd886739733d1ba825d71cf152513de17
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-05-14T01:59:53+09:00
+Subject: chore(changelogs): docs/patches/tests/tools scope CHANGELOG 초기 파일 추가
+
+A	patches/CHANGELOG.md
+commit 379dd9d11aae3d67958bd77f43f420bf13c2372d
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-04-27T11:53:41+09:00
+Subject: feat(plan-c/c7): HUD SPR 시각재현 + ImgFileRegistry 런타임 + 인프라 정리 (#247)
+
+M	analysis/memory_maps/player_offsets.md
+A	plan_c/tools/inmm_stub/.ai.md
+A	plan_c/tools/inmm_stub/Makefile
+A	plan_c/tools/inmm_stub/asset_hook.c
+A	plan_c/tools/inmm_stub/asset_hook.h
+A	plan_c/tools/inmm_stub/control_executor.c
+A	plan_c/tools/inmm_stub/control_executor.h
+A	plan_c/tools/inmm_stub/control_handler_bridge.c
+A	plan_c/tools/inmm_stub/control_handler_bridge.h
+A	plan_c/tools/inmm_stub/control_input_bridge.c
+A	plan_c/tools/inmm_stub/control_input_bridge.h
+A	plan_c/tools/inmm_stub/control_logging.c
+A	plan_c/tools/inmm_stub/control_logging.h
+A	plan_c/tools/inmm_stub/control_protocol.c
+A	plan_c/tools/inmm_stub/control_protocol.h
+A	plan_c/tools/inmm_stub/control_registry.c
+A	plan_c/tools/inmm_stub/control_registry.h
+A	plan_c/tools/inmm_stub/control_state_bridge.c
+A	plan_c/tools/inmm_stub/control_state_bridge.h
+A	plan_c/tools/inmm_stub/inmm_orig.def
+A	plan_c/tools/inmm_stub/inmm_stub.c
+A	plan_c/tools/inmm_stub/inmm_stub.def
+A	plan_c/tools/inmm_stub/lib_inmm.a
+commit e5fe51dd12a231fc5610a6aca4ee6fa81249666f
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-04-13T15:34:47+09:00
+Subject: feat(plan-c): Phase C7 — Economy/Fog/Hero/Magic/Save 서브시스템 + 리그 인프라 완성
+
+A	plan_c/tools/x11_mouse_click.py
+A	plan_c/tools/x11_send_keys.py
+commit 25e7595428e07cf08c8fea79e6f66aad6961c601
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-03-29T16:30:13+09:00
+Subject: chore: decomp player/misc 헤더 [바이너리 미확인] 태그 12개 정적분석 확인으로 교체 (#79)
+
+M	analysis/memory_maps/player_offsets.md
+commit e5f5d2ad073e08ad0567ab59b22d6183a4b3cb5f
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-03-21T17:56:53+09:00
+Subject: refactor: analysis/ 재분석 보완 — UnitStruct 필드카드·전투 호출체인·EVID 매트릭스 완성 (#31)
+
+M	analysis/memory_maps/player_offsets.md
+commit bc697e67ec76f9affa2be506a20255e7c7ca13e2
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-03-21T16:13:18+09:00
+Subject: refactor: Plan B 보조 시스템 복원 — 플레이어/상인/UI/스크립트/사운드/날씨 (#24)
+
+A	analysis/memory_maps/player_offsets.md
+commit c0f5df3384ef68db6806cc2f5aa3cfa66e11ca59
+Author: BbChip0103 <bbchip13@gmail.com>
+Date: 2026-03-20T02:08:11+09:00
+Subject: Move project files into Syw2plus_re/ subdirectory
+
+A	patches/population/.ai.md
+A	patches/resolution/.ai.md

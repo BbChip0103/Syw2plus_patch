@@ -1,0 +1,61 @@
+{
+  "fixture": "free_battle_chain_seed1; no ledger writes in run1",
+  "ingame_samples": 147,
+  "tick_start": 7,
+  "tick_end": 4886,
+  "owner0_caps": [
+    5000
+  ],
+  "first_players": [
+    {
+      "owner": 0,
+      "nation": 1,
+      "ai": 1,
+      "rice": 7500,
+      "wood": 7500,
+      "reserved": 0,
+      "count": 2,
+      "used": 20,
+      "count_cap": 250,
+      "cap": 5000
+    },
+    {
+      "owner": 1,
+      "nation": 2,
+      "ai": 1,
+      "rice": 7500,
+      "wood": 7500,
+      "reserved": 0,
+      "count": 2,
+      "used": 20,
+      "count_cap": 250,
+      "cap": 5000
+    }
+  ],
+  "last_players": [
+    {
+      "owner": 0,
+      "nation": 1,
+      "ai": 1,
+      "rice": 4670,
+      "wood": 3530,
+      "reserved": 23,
+      "count": 19,
+      "used": 214,
+      "count_cap": 250,
+      "cap": 5000
+    },
+    {
+      "owner": 1,
+      "nation": 2,
+      "ai": 1,
+      "rice": 11392,
+      "wood": 11392,
+      "reserved": 0,
+      "count": 12,
+      "used": 131,
+      "count_cap": 250,
+      "cap": 5000
+    }
+  ]
+}

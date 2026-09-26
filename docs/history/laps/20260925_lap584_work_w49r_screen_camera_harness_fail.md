@@ -1,0 +1,11 @@
+# 2026-09-25 | lap 584 | 목표 G2
+
+- 실제 provider/model/effort / 지정 역할: Codex native / hands-on work.
+- 가설 / 사용자 관찰: W49R 파생 runner가 local owner 카메라를 원본 방향키 또는 미니맵 입력으로 맞추면 월드 캡처 V1과 실제 입력 receipt를 확보할 수 있다.
+- 예상 PASS / FAIL 조건: G0 H1/H2 중 하나가 V1≥0.30을 만들고, 그 뒤 fresh foreground 1회가 V1·V2·V3·R을 충족한다. G0 실패나 실행 gate 실패는 `BLOCKED(capture_contract)`로 남기며 재실행하지 않는다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 제품 source·바이너리·원본·기존 raw 변경 0, 커밋 0. 파생 runner `temp/Syw2plus_patch/g2_capacity/20260925_lap584_w49r_screen_camera/w49r_run.py`, SHA256 `aa92285c30f420192f165adaffd2dfe6bc913412bae198cda95379dfc9baecfa`.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 결합 후보 `dfdc91adb88a732d96dff96f78648f03406003bffce1b22a7e5836317f963883`; 격리 Xvfb `:6559`, Wine private prefix, 8 AI/map100×100/cap5000, 기존 혼합 fixture 준비 전.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: 사전 probe exit0 canonical `82024e73c20eb01433793660df9cdf1ccd889be9ec5143329a5bf1fb20665a03`; `py_compile`, 허용 op 정적 검사, `checks/safety.sh check`=`SAFETY_PASS`, source pin/display-free 모두 PASS. `python3 .../w49r_run.py` foreground는 2026-09-25 06:24:34에 시작해 06:24:39 종료. manifest `temp/.../20260925_lap584_w49r_screen_camera/capture_manifest.json` SHA `d1fabff5a124b274c8162a8224c87dba6837f9bf57b4252d0eb683f9177edfb4`; 캡처는 `captures/20260925_062438_lap584_w49r_g0_before.png` SHA `e7da726087ba449a852b21188e1b19a721bb4cab99d6deb886ab6d2c7256f6d4`, `...g0_h1.png` SHA `b187b67a1b4c3cddacbb505d9db7591f9752968e13709aa965b40e053e2305d9`.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): PS3 도달·local index0·초기 camera `[94,6]`·local target `[95.0,7.0]`; `g0_before`/`g0_h1` world fraction 모두 `0.009159` (V1 FAIL), H1은 target 근접으로 키 0회라 camera unchanged. H2와 시딩은 실행 전에 runner의 `g0_h1["capture"] = capture(..., g0_h1)`가 자기참조를 만들어 `ValueError: Circular reference detected`로 중단됐다. `run_summary.json`은 생성되지 않았고 samples는 0행. 실행 판정은 **FAIL / BLOCKED(harness_contract)**이며 제품 렌더 실패나 G2 판정으로 승격하지 않는다.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 원본 SHA는 전후 기준과 일치하며 `:6559`·해당 Wine/game 프로세스 잔류 0. 기존 W49 캡처는 보존했다. 이번 runner receipt 구현 오류는 독립 middle 검수와 수리 전까지 재실행·PASS·사용자 승인으로 쓰지 않는다.
+- 다음 한 가지: `loop/ESCALATE_SOL` §134대로 승격 작업자가 순환 참조를 제거한 뒤 runner의 receipt 직렬화·G0 H1/H2·cleanup을 독립 검수하고, 재실행 허용 여부와 새 실행 예산을 판정한다.

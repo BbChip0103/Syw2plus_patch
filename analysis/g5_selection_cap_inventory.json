@@ -1,0 +1,203 @@
+{
+  "schema": "syw2plus.g5-selection-cap-inventory.v1",
+  "lap": 628,
+  "status": "FEASIBLE_STATIC_CONDITIONAL",
+  "scope": "G5 W1 read-only PE32 inventory; no patch or game run",
+  "source": {
+    "path": "Syw2plus/syw2plus_original.exe",
+    "sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "size": 1032192,
+    "format": "PE32 i386",
+    "image_base": "0x00400000",
+    "scan": "objdump -d -M intel"
+  },
+  "selection_storage": {
+    "count_address": "0x00899024",
+    "slot_base": "0x00899028",
+    "slot_aux_base": "0x0089902a",
+    "slot_end_exclusive": "0x00899078",
+    "slot_stride_bytes": 4,
+    "entry_shape": "uint16 slot + uint16 auxiliary value",
+    "original_capacity": 20,
+    "companion_gap": {
+      "start": "0x00899078",
+      "end_exclusive": "0x008990c8",
+      "bytes": 80,
+      "static_references": "none by absolute address in .text scan; meaning remains unknown"
+    },
+    "adjacent_slot_index_array": {
+      "base": "0x008990c8",
+      "element_bytes": 2,
+      "reference_count": 34,
+      "role": "selection validity/mark lookup used by selection, UI, group and command consumers; not proven to be the only paired state"
+    }
+  },
+  "direct_references": {
+    "count_address": [
+      {"va":"0x00412e68","old_bytes":"a1 24 90 89 00"},
+      {"va":"0x00412e6e","old_bytes":"a3 24 90 89 00"},
+      {"va":"0x00412ecc","old_bytes":"a1 24 90 89 00"},
+      {"va":"0x00412ed2","old_bytes":"a3 24 90 89 00"},
+      {"va":"0x0041d360","old_bytes":"a1 24 90 89 00"},
+      {"va":"0x0041f599","old_bytes":"83 3d 24 90 89 00 01"},
+      {"va":"0x00498fba","old_bytes":"a1 24 90 89 00"},
+      {"va":"0x00499872","old_bytes":"39 1d 24 90 89 00"},
+      {"va":"0x0049acd1","old_bytes":"a1 24 90 89 00"}
+    ],
+    "slot_base_or_element": [
+      {"va":"0x00412dbf","old_bytes":"b8 28 90 89 00"},
+      {"va":"0x00412e3c","old_bytes":"b8 28 90 89 00"},
+      {"va":"0x00412e61","old_bytes":"89 14 8d 28 90 89 00"},
+      {"va":"0x00412e9f","old_bytes":"b8 28 90 89 00"},
+      {"va":"0x00412ebc","old_bytes":"66 89 3c 8d 28 90 89 00"},
+      {"va":"0x0041708a","old_bytes":"be 28 90 89 00"},
+      {"va":"0x0041dd48","old_bytes":"b8 28 90 89 00"},
+      {"va":"0x0041df50","old_bytes":"be 28 90 89 00"},
+      {"va":"0x0041e7fe","old_bytes":"a1 28 90 89 00"},
+      {"va":"0x0041e810","old_bytes":"8b 0d 28 90 89 00"},
+      {"va":"0x0041ec71","old_bytes":"66 8b 34 95 28 90 89"},
+      {"va":"0x0041ed5e","old_bytes":"66 8b 34 95 28 90 89"},
+      {"va":"0x0041eeaf","old_bytes":"66 8b 34 95 28 90 89"},
+      {"va":"0x0041f03a","old_bytes":"be 28 90 89 00"},
+      {"va":"0x00445d52","old_bytes":"bb 28 90 89 00"},
+      {"va":"0x00498fdd","old_bytes":"bf 28 90 89 00"},
+      {"va":"0x00499040","old_bytes":"b8 28 90 89 00"},
+      {"va":"0x0049906e","old_bytes":"89 15 28 90 89 00"},
+      {"va":"0x0049933e","old_bytes":"bd 28 90 89 00"},
+      {"va":"0x004998b5","old_bytes":"b8 28 90 89 00"},
+      {"va":"0x004998d2","old_bytes":"8b 0c 8d 28 90 89 00"},
+      {"va":"0x0049a7df","old_bytes":"66 a1 28 90 89 00"},
+      {"va":"0x0049a995","old_bytes":"66 a1 28 90 89 00"},
+      {"va":"0x0049a9f0","old_bytes":"66 a1 28 90 89 00"},
+      {"va":"0x0049acde","old_bytes":"b8 28 90 89 00"},
+      {"va":"0x004a4242","old_bytes":"b8 28 90 89 00"},
+      {"va":"0x004a4261","old_bytes":"66 8b 04 8d 28 90 89 00"},
+      {"va":"0x004ae58c","old_bytes":"be 28 90 89 00"}
+    ],
+    "slot_aux_base": [
+      {"va":"0x00412ec4","old_bytes":"66 89 3c 8d 2a 90 89 00"}
+    ],
+    "slot_end_exclusive": [
+      {"va":"0x00412dd5","old_bytes":"3d 78 90 89 00"},
+      {"va":"0x00412e52","old_bytes":"3d 78 90 89 00"},
+      {"va":"0x00412eb3","old_bytes":"3d 78 90 89 00"},
+      {"va":"0x004170bd","old_bytes":"81 fe 78 90 89 00"},
+      {"va":"0x0041dd69","old_bytes":"3d 78 90 89 00"},
+      {"va":"0x0041dfaf","old_bytes":"81 fe 78 90 89 00"},
+      {"va":"0x0041f068","old_bytes":"81 fe 78 90 89 00"},
+      {"va":"0x00445e0b","old_bytes":"81 fb 78 90 89 00"},
+      {"va":"0x00499012","old_bytes":"81 ff 78 90 89 00"},
+      {"va":"0x0049904f","old_bytes":"3d 78 90 89 00"},
+      {"va":"0x00499577","old_bytes":"81 fd 78 90 89 00"},
+      {"va":"0x004998c9","old_bytes":"3d 78 90 89 00"},
+      {"va":"0x0049aced","old_bytes":"3d 78 90 89 00"},
+      {"va":"0x004a4258","old_bytes":"3d 78 90 89 00"}
+    ]
+  },
+  "slot_index_references": [
+    {"va":"0x00403484","old_bytes":"66 83 3c 45 c8 90 89"},
+    {"va":"0x0040f4bc","old_bytes":"be c8 90 89 00"},
+    {"va":"0x0040f4fd","old_bytes":"bb c8 90 89 00"},
+    {"va":"0x00416f44","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x00416f78","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x00416fd4","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x00417018","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x00417895","old_bytes":"66 83 3c 55 c8 90 89"},
+    {"va":"0x004178a8","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x0041cc27","old_bytes":"66 83 3c 7d c8 90 89"},
+    {"va":"0x0041cd5e","old_bytes":"66 83 3c 45 c8 90 89"},
+    {"va":"0x0041cd97","old_bytes":"66 39 2c 4d c8 90 89"},
+    {"va":"0x00432250","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x00432400","old_bytes":"66 83 3c 45 c8 90 89"},
+    {"va":"0x0043392e","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x00433b45","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x00433ed9","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x0043c621","old_bytes":"66 83 3c 75 c8 90 89"},
+    {"va":"0x0044059e","old_bytes":"66 39 34 4d c8 90 89"},
+    {"va":"0x004406ee","old_bytes":"66 39 34 4d c8 90 89"},
+    {"va":"0x0044074d","old_bytes":"66 83 3c 55 c8 90 89"},
+    {"va":"0x004407a2","old_bytes":"66 83 3c 55 c8 90 89"},
+    {"va":"0x00440806","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x00442fe9","old_bytes":"66 39 1c 7d c8 90 89"},
+    {"va":"0x0044315b","old_bytes":"66 89 1c 7d c8 90 89"},
+    {"va":"0x00445a9e","old_bytes":"66 83 3c 55 c8 90 89"},
+    {"va":"0x00445d05","old_bytes":"66 83 3c 4d c8 90 89"},
+    {"va":"0x00445d5e","old_bytes":"66 83 3c 45 c8 90 89"},
+    {"va":"0x0048bc56","old_bytes":"66 89 14 45 c8 90 89"},
+    {"va":"0x0048cbc9","old_bytes":"66 39 3c 4d c8 90 89"},
+    {"va":"0x0048cc19","old_bytes":"66 39 3c 4d c8 90 89"},
+    {"va":"0x00498fe5","old_bytes":"66 39 1c 45 c8 90 89"},
+    {"va":"0x00499359","old_bytes":"66 83 3c 75 c8 90 89"},
+    {"va":"0x004b1bdd","old_bytes":"66 83 3c 75 c8 90 89"}
+  ],
+  "fixed_limit_sites": {
+    "selection_path_rotation_and_scan": [
+      {"va":"0x0041ec6a","old_bytes":"b9 14 00 00 00","meaning":"divisor 20 before selection slot lookup"},
+      {"va":"0x0041ed15","old_bytes":"83 ff 14","meaning":"20-iteration bound"},
+      {"va":"0x0041ed57","old_bytes":"b9 14 00 00 00","meaning":"divisor 20 before selection slot lookup"},
+      {"va":"0x0041edf7","old_bytes":"83 ff 14","meaning":"20-iteration bound"},
+      {"va":"0x0041eea8","old_bytes":"b9 14 00 00 00","meaning":"divisor 20 before selection slot lookup"},
+      {"va":"0x0041ef39","old_bytes":"83 ff 14","meaning":"20-iteration bound"}
+    ],
+    "control_group_storage": [
+      {"va":"0x00445a3a","old_bytes":"66 89 b4 41 36 03 00","meaning":"group count array at object +0x336"},
+      {"va":"0x00445ab0","old_bytes":"8d 69 16","meaning":"group entry base object +0x16"},
+      {"va":"0x00445abc","old_bytes":"8d b1 36 03 00 00","meaning":"group count base object +0x336"},
+      {"va":"0x00445b17","old_bytes":"83 fb 13","meaning":"shift loop for 20-entry group row"},
+      {"va":"0x00445b1c","old_bytes":"b9 13 00 00 00","meaning":"shift loop for 20-entry group row"},
+      {"va":"0x00445b54","old_bytes":"83 fb 14","meaning":"group row scan bound 20"},
+      {"va":"0x00445b65","old_bytes":"83 c5 50","meaning":"next control-group row stride 0x50"},
+      {"va":"0x00445bc8","old_bytes":"83 fa 14","meaning":"group row lookup bound 20"},
+      {"va":"0x00445be0","old_bytes":"83 f8 14","meaning":"group row empty-slot scan bound 20"},
+      {"va":"0x00445d6d","old_bytes":"8d bd 36 03 00 00","meaning":"group count base object +0x336"},
+      {"va":"0x00445d73","old_bytes":"8d 75 16","meaning":"group entry base object +0x16"},
+      {"va":"0x00445d7e","old_bytes":"bd 14 00 00 00","meaning":"selected-entry traversal bound 20"},
+      {"va":"0x00445de7","old_bytes":"66 ff 84 41 36 03 00","meaning":"group count update at object +0x336"}
+    ],
+    "command_encode_decode_stack_buffers": [
+      {"va":"0x004ae55a","old_bytes":"b9 14 00 00 00","meaning":"zero 20 local dword entries"},
+      {"va":"0x004ae587","old_bytes":"b9 14 00 00 00","meaning":"copy 20 selected entries from global slots"},
+      {"va":"0x004ae5f4","old_bytes":"bd 14 00 00 00","meaning":"compress at most 20 entries into 16-bit command words"},
+      {"va":"0x004ae9c1","old_bytes":"b9 14 00 00 00","meaning":"decode 20 command words"},
+      {"va":"0x004aea25","old_bytes":"c7 44 24 10 14 00 00","meaning":"second 20-word decode/validation pass"}
+    ],
+    "drag_hit_test_append": [
+      {"va":"0x0043877a","old_bytes":"66 3d 14 00","meaning":"runtime-confirmed FUN_004386E0 append bound reached from FUN_004384B0; compare against 20"}
+    ]
+  },
+  "command_path": {
+    "builder": "0x004ae550",
+    "builder_frame_bytes": 148,
+    "selected_copy": "20 DWORDs from 0x00899028 into [esp+0x54]",
+    "compressed_output": "20 WORDs at the command-local buffer, slot low 12 bits plus auxiliary high bits",
+    "downstream_copy": "15 DWORDs to the packet passed to 0x004a3c10",
+    "callers": [
+      "0x0041ca32","0x0041f0a4","0x0042108a","0x004210b1",
+      "0x0048ec91","0x0048ecb2","0x0048ecd3","0x0048ecf3","0x0048ed14","0x0048ed35","0x0048ed55","0x0048ed7d","0x0048eda4","0x0048edcb","0x0048edf3","0x0048ee1a","0x0048ee41","0x0048ee69","0x0048ee8d",
+      "0x00493eda","0x00493f19","0x0049b618"
+    ],
+    "caller_count": 22,
+    "network_scope": "static scan does not prove whether all callers share single-player and multiplayer transport; middle review required"
+  },
+  "ui_and_storage": {
+    "ui_consumers": ["0x00498fba..0x0049906e","0x0049933e..0x00499577","0x004998b5..0x004998d2","0x0049a7df","0x0049a995","0x0049a9f0","0x0049acde..0x0049aced","0x004a4242..0x004a4278"],
+    "ui_bound": "selection UI loops use the slot end sentinel; no independent portrait-grid capacity was proven by this static pass",
+    "control_group": "10 rows, row stride 0x50, 20 entries per row at object +0x16, counts at object +0x336",
+    "save_load": "no direct selection-array or control-group bulk serializer was proven by the absolute-reference scan; storage inclusion remains UNKNOWN and must be resolved before W2b",
+    "bss_layout": "selection addresses are in the zero-backed virtual tail of .data; 0x00899078..0x008990c7 cannot be treated as free without runtime/initialization proof"
+  },
+  "out_of_scope_candidates": [
+    {"range":"0x00417610..0x004177xx","sites":["0x0041766d","0x0041768c","0x0041769f"],"reason":"contains 0x14 geometry/math limits but no reference to the selection storage or slot-index array in the function slice; do not patch as G5 without new evidence"},
+    {"range":"0x004b3260..0x004b33cd","reason":"contains UI/layout constants including 0x14 and 0x32 but no selection storage reference in the slice; not promoted to G5 limit"},
+    {"range":"0x004ca680..0x004ca6de","reason":"contains a minimum 0x14 layout value but no selection storage reference; not promoted to G5 limit"}
+  ],
+  "unknowns_before_patch": [
+    "meaning and write coverage of 0x00899078..0x008990c7",
+    "whether 0x008990c8 is paired state that must move with selection slots",
+    "control-group structure identity and save/load serialization coverage",
+    "single-player versus multiplayer command packet common path and receiver-side cap",
+    "portrait/info UI grid capacity and behavior above 20",
+    "safe new storage location/section or runtime allocation with canary proof"
+  ],
+  "next": "middle independently reviews this inventory and fixes D2/D3/D4 choices before any W2a binary patch"
+}

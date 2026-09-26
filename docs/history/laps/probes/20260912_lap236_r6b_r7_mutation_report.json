@@ -1,0 +1,68 @@
+{
+  "cases": [
+    {
+      "description": "no mutation; the regression test must pass",
+      "id": "M0_unmutated",
+      "mutations_applied": [],
+      "pytest_returncode": 0,
+      "pytest_tail": "2 passed in 0.13s",
+      "test_catches_mutation": false
+    },
+    {
+      "description": "early existence check removed; only O_EXCL remains",
+      "id": "M1_drop_exists_check",
+      "mutations_applied": [
+        "if args.output.exists():"
+      ],
+      "pytest_returncode": 0,
+      "pytest_tail": "2 passed in 0.13s",
+      "test_catches_mutation": false
+    },
+    {
+      "description": "O_EXCL removed; only the early check remains",
+      "id": "M2_drop_exclusive_creation",
+      "mutations_applied": [
+        "with args.output.open(\"x\", encoding=\"utf-8\") as stream:"
+      ],
+      "pytest_returncode": 0,
+      "pytest_tail": "2 passed in 0.13s",
+      "test_catches_mutation": false
+    },
+    {
+      "description": "both guards removed; existing evidence is clobbered",
+      "id": "M3_drop_both_guards",
+      "mutations_applied": [
+        "if args.output.exists():",
+        "with args.output.open(\"x\", encoding=\"utf-8\") as stream:"
+      ],
+      "pytest_returncode": 1,
+      "pytest_tail": "1 failed, 1 passed in 0.15s",
+      "test_catches_mutation": true
+    },
+    {
+      "description": "--output parsed but the report always goes to the default",
+      "id": "M4_ignore_output_argument",
+      "mutations_applied": [
+        "if args.output.exists():",
+        "with args.output.open(\"x\", encoding=\"utf-8\") as stream:"
+      ],
+      "pytest_returncode": 1,
+      "pytest_tail": "1 failed, 1 passed in 0.15s",
+      "test_catches_mutation": true
+    }
+  ],
+  "lap": 236,
+  "role": "middle (Claude Code claude-opus-5/high)",
+  "subject": "non-vacuity of tests/test_review_probe_output.py (lap235 R6-B-R7)",
+  "summary": {
+    "caught": [
+      "M3_drop_both_guards",
+      "M4_ignore_output_argument"
+    ],
+    "missed": [
+      "M1_drop_exists_check",
+      "M2_drop_exclusive_creation"
+    ],
+    "unmutated_passes": true
+  }
+}

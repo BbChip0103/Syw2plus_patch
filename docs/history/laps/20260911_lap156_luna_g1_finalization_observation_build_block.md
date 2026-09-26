@@ -1,0 +1,11 @@
+# 2026-09-11 | lap 156 | 목표 G1
+
+- 실제 provider/model/effort / 지정 역할: Codex hands-on work session; exact model/effort는 이 surface에서 확인하지 않음.
+- 가설 / 사용자 관찰: close 직후 소유 runtime process tree의 CPU/state 표본 2회와 wrapper log를 보존하면 native dxwrapper 종료 실패가 spin인지 lock 교착인지 구분할 수 있다.
+- 예상 PASS / FAIL 조건: close 결과가 wait 전에 evidence에 남고, timeout 실패 시 liveness 2회 및 wrapper log SHA가 보존되며, 새 fresh runtime이 handoff의 기존 finalization 계약을 그대로 통과하거나 원인을 분기한다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `tools/runtime_env.py`, `tests/test_runtime_env.py`; uncommitted, commit 없음. runtime `25fc64e65ee44896b5ae701bebde884aed623c44f1a5840d3182c0f82f3608a3`, tests `7654052e53b885d3cb4ab517d3b6432dabfbfd7d327b4c346f6ae4e3d5933074`.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본 EXE SHA `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; config candidate unchanged `f0ce9e649a48a79d427cb218f7952de50095091b8bba4e68ea7dfe8922566785`; no game fixture started. Bridge was fresh-built at `/tmp/syw2plus_lap156.ziMsEn/bridge` (SHA `d072fc6df8b9dbf602f76fbcad4402a5e5c6b027dc9c078fe46d8b435465d40b`).
+- 실행 명령 / 로그 / 캡처 경로 및 해시: targeted pytest `6 passed`; `make check` `186 passed` plus Ruff/compileall/mypy/context PASS; `bash checks/safety.sh check` `SAFETY_PASS`; bridge build PASS; helper build command `python3 tools/win32_close_fixture.py build --out-dir /tmp/syw2plus_lap156.ziMsEn/helper` FAIL with `ModuleNotFoundError: tools.win32_close_transport`. The module file exists, so direct-script import-path cause remains for independent confirmation. No prepare/check/runtime/capture was run after the failed required build.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): observation code/tests/Fast PASS; helper build FAIL/BLOCKED; fresh private runtime, process liveness, summary/detach, wrapper-log runtime collection, and G1 product PASS SKIP.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: no original/reference/product binary or baseline/golden changes; no runtime evidence exists for this lap. Middle tier must independently diagnose the missing helper import/build gate; user milestone approval absent.
+- 다음 한 가지: 새 세션에서 helper import/build gate를 원인 확인·수리하고 새 helper SHA/PE32 RC0를 검증한 뒤에만 handoff의 fresh runtime 1회를 재개한다.

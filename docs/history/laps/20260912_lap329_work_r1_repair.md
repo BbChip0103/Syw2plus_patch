@@ -1,0 +1,11 @@
+# 2026-09-12 | lap 329 | 목표 G1-R1
+
+- 실제 provider/model/effort / 지정 역할: Codex work tier / gpt-5.6-luna / high / hands-on 구현 작업자.
+- 가설 / 사용자 관찰: lap328 middle이 지적한 D1·D1b·D2·D3를 R1 레인 내부의 최소 변경으로 수리하면, post/pre 수집 실패와 stage 내 미도달/전체 timeout을 분리할 수 있다.
+- 예상 PASS / FAIL 조건: PASS=origin OSError가 구조화된 `COLLECTION_ERROR`, stage budget 내 미도달이 `FAIL_NO_EFFECT`→`UNREACHED`, run deadline 소진이 `UNKNOWN_BUDGET_EXHAUSTED`→`TIMEOUT`, 합성 테스트가 실제 분류기를 호출한다. FAIL=제품 경로/공용 `_wait_state`/`G1_INPUT_STAGE_BUDGETS` 변경 또는 필수 Fast/safety 검사 실패.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `tools/runtime_env.py` SHA256 `997ff15b13115ccebd9d8832b3b066add589b755d9cc6e8a77d987696cc46eed` (lap328 현물 `0d5a0606…1f1698d3`에서 변경), `tests/test_lap326_r1_load_origin.py` SHA256 `81acc11eab97cc04b797724360a81561a227c8454571290782f611aa936cac72` (lap328 현물 `ef2ab396…3db9575c9a`에서 변경), `docs/STATUS.md` 갱신. 모두 uncommitted, 커밋 0.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 EXE SHA `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac` 불변. 후보 게임 실행 SHA 없음. Linux Python 3.13.5/.venv. 활성 플레이어·지도·군대 미측정. fixture는 fake monotonic/read를 쓰는 합성 R1 테스트이며 게임 메모리 write·resource grant 없음.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `.venv/bin/python -m pytest -q tests/test_lap326_r1_load_origin.py` → 7 passed; `make check` → 368 passed, Ruff/compileall/mypy/CONTEXT_PASS, rc0; `bash checks/safety.sh check` → SAFETY_PASS; AST 계약 probe에서 PS9 budget 40/PS35 budget 20 및 pre/post checked reader 확인. 게임/Wine/Xvfb/click/PNG/Stage B 실행 0.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): (R-a) PASS — `_G1R1CollectionError`가 errno·requested_size·actual_size·site(address/function/phase)·exception/message를 보존하고 pre/post에 사용. (R-b) PASS — PS9 `stage_budget=40.0, stage_started=started`, PS35 `stage_budget=20.0, stage_started=ps35_stage_started`; 공용 `_wait_state`와 `G1_INPUT_STAGE_BUDGETS` 미변경. (R-c) PASS — stage-budget 미도달 `FAIL_NO_EFFECT`→`UNREACHED`, run deadline `UNKNOWN_BUDGET_EXHAUSTED`→`TIMEOUT`, pre/post OSError→`COLLECTION_ERROR`를 실제 함수 호출로 확인. 제품 증거 0.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: `make check`·safety 회귀 없음. 새 middle이 별도 probe로 D1·D2·D3와 F1~F8/P1을 독립 검수해야 하며, 그 전에는 제한 1 run을 발효하지 않는다. 클릭 결과, WM_CLOSE, 제품 G1~G4 증거와 사용자 마일스톤 승인은 여전히 없음.
+- 다음 한 가지: 새 middle tier가 lap329 후보의 D1·D2·D3 해소와 불변 계약을 독립 검수한다. runtime/게임/Wine/Xvfb/클릭 예산은 0으로 유지한다.

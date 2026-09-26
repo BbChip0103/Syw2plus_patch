@@ -1,0 +1,244 @@
+{
+  "probe": "20260912_lap232_r6b_r6_review_probe.py",
+  "lap": 232,
+  "target": "G1-R6-B-R6",
+  "source_sha256": "103ec280b50ac658504b5263a200896c1b39d66244269bc373dcfd23225ce02b",
+  "totals": {
+    "cases": 18,
+    "agrees": 18,
+    "defects": 0
+  },
+  "cases": [
+    {
+      "case": "C5a_all_reads_fail",
+      "expected": "UNKNOWN_STATE_READ_FAILURE|polls=0|errors>0|no_selection_observation",
+      "observed": "UNKNOWN_STATE_READ_FAILURE|polls=0|errors>0|no_selection_observation",
+      "verdict": "AGREES",
+      "detail": {
+        "poll_attempt_count": 4,
+        "read_error_count": 4,
+        "first_read_error_provenance": "OSError: read failed",
+        "last_read_error_provenance": "OSError: read failed"
+      }
+    },
+    {
+      "case": "C5b_sound_then_unreadable_tail",
+      "expected": "UNKNOWN_STATE_READ_FAILURE|status=UNAVAILABLE|polls<attempts|caller_status=UNAVAILABLE",
+      "observed": "UNKNOWN_STATE_READ_FAILURE|status=UNAVAILABLE|polls<attempts|caller_status=UNAVAILABLE",
+      "verdict": "AGREES",
+      "detail": {
+        "poll_count": 2,
+        "poll_attempt_count": 4,
+        "read_error_count": 2,
+        "stale_last": {
+          "count": 1,
+          "selected_slot": 1199,
+          "selected_type": 70
+        }
+      }
+    },
+    {
+      "case": "exception_type_value_error",
+      "expected": "UNKNOWN_STATE_READ_FAILURE|errors>0",
+      "observed": "UNKNOWN_STATE_READ_FAILURE|errors>0",
+      "verdict": "AGREES",
+      "detail": {
+        "first_read_error_provenance": "ValueError: bad struct payload"
+      }
+    },
+    {
+      "case": "exception_type_struct_error",
+      "expected": "UNKNOWN_STATE_READ_FAILURE|errors>0",
+      "observed": "UNKNOWN_STATE_READ_FAILURE|errors>0",
+      "verdict": "AGREES",
+      "detail": {
+        "first_read_error_provenance": "error: unpack requires a buffer"
+      }
+    },
+    {
+      "case": "readable_tail_keeps_hard_fail",
+      "expected": "FAIL_NO_EFFECT|status=SOUND|errors=1",
+      "observed": "FAIL_NO_EFFECT|status=SOUND|errors=1",
+      "verdict": "AGREES",
+      "detail": {
+        "note": "pre-existing hard-FAIL semantics must survive when the final read succeeds",
+        "poll_count": 3,
+        "poll_attempt_count": 4
+      }
+    },
+    {
+      "case": "corrupted_tail_after_read_error",
+      "expected": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED|status=CORRUPTED",
+      "observed": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED|status=CORRUPTED",
+      "verdict": "AGREES",
+      "detail": {
+        "corrupted_poll_count": 3,
+        "read_error_count": 1
+      }
+    },
+    {
+      "case": "corruption_history_preserved_under_unavailable",
+      "expected": "UNKNOWN_STATE_READ_FAILURE|status=UNAVAILABLE|corrupted>=1|provenance_kept",
+      "observed": "UNKNOWN_STATE_READ_FAILURE|status=UNAVAILABLE|corrupted>=1|provenance_kept",
+      "verdict": "AGREES",
+      "detail": {
+        "corrupted_poll_count": 1,
+        "before_sound": true,
+        "after_sound": false
+      }
+    },
+    {
+      "case": "precedence_budget_exhausted",
+      "expected": "UNKNOWN_BUDGET_EXHAUSTED|errors>0",
+      "observed": "UNKNOWN_BUDGET_EXHAUSTED|errors>0",
+      "verdict": "AGREES",
+      "detail": {
+        "note": "read evidence must still be preserved in the observation",
+        "read_error_count": 4
+      }
+    },
+    {
+      "case": "precedence_window_truncated",
+      "expected": "UNKNOWN_OBSERVATION_WINDOW_TRUNCATED|errors>0",
+      "observed": "UNKNOWN_OBSERVATION_WINDOW_TRUNCATED|errors>0",
+      "verdict": "AGREES",
+      "detail": {
+        "read_error_count": 8,
+        "window_truncated": true
+      }
+    },
+    {
+      "case": "zero_attempts_not_hard_fail",
+      "expected": "not_FAIL_NO_EFFECT|attempts=0",
+      "observed": "not_FAIL_NO_EFFECT|attempts=0",
+      "verdict": "AGREES",
+      "detail": {
+        "classification": "UNKNOWN_OBSERVATION_WINDOW_TRUNCATED",
+        "poll_count": 0
+      }
+    },
+    {
+      "case": "pass_path_unchanged",
+      "expected": "returned|status=SOUND|errors=1",
+      "observed": "returned|status=SOUND|errors=1",
+      "verdict": "AGREES",
+      "detail": {
+        "value": {
+          "count": 2,
+          "selected_slot": 1198,
+          "selected_type": 21
+        },
+        "poll_count": 1
+      }
+    },
+    {
+      "case": "non_g1_caller_raises_safety_error",
+      "expected": "safety_error",
+      "observed": "safety_error",
+      "verdict": "AGREES",
+      "detail": {
+        "message": "probe wait"
+      }
+    },
+    {
+      "case": "semantics_count_1_to_0_unchanged_r6b_r2_dispute",
+      "expected": "responded=True|status=SOUND",
+      "observed": "responded=True|status=SOUND",
+      "verdict": "AGREES",
+      "detail": {
+        "before": {
+          "count": 1,
+          "selected_slot": 1199,
+          "selected_type": 70
+        },
+        "after": {
+          "count": 0,
+          "selected_slot": null,
+          "selected_type": "UNKNOWN"
+        }
+      }
+    },
+    {
+      "case": "semantics_negative_count_still_corrupted",
+      "expected": "responded=False|status=CORRUPTED",
+      "observed": "responded=False|status=CORRUPTED",
+      "verdict": "AGREES",
+      "detail": {
+        "before": {
+          "count": 1,
+          "selected_slot": 1199,
+          "selected_type": 70
+        },
+        "after": {
+          "count": -1,
+          "selected_slot": 1199,
+          "selected_type": 70
+        }
+      }
+    },
+    {
+      "case": "semantics_non_int_count_still_corrupted",
+      "expected": "responded=False|status=CORRUPTED",
+      "observed": "responded=False|status=CORRUPTED",
+      "verdict": "AGREES",
+      "detail": {
+        "before": {
+          "count": 1,
+          "selected_slot": 1199,
+          "selected_type": 70
+        },
+        "after": {
+          "count": "1",
+          "selected_slot": 1199,
+          "selected_type": 70
+        }
+      }
+    },
+    {
+      "case": "semantics_identity_change_still_responds",
+      "expected": "responded=True|status=SOUND",
+      "observed": "responded=True|status=SOUND",
+      "verdict": "AGREES",
+      "detail": {
+        "before": {
+          "count": 1,
+          "selected_slot": 1199,
+          "selected_type": 70
+        },
+        "after": {
+          "count": 1,
+          "selected_slot": 1198,
+          "selected_type": 21
+        }
+      }
+    },
+    {
+      "case": "comparator_read_failure_not_pass_stale_identical",
+      "expected": "not_PASS",
+      "observed": "not_PASS",
+      "verdict": "AGREES",
+      "detail": {
+        "status": "UNKNOWN_DISPUTED_ORACLE",
+        "reason": "source input stage result is disputed; observation is not a card FAIL",
+        "source_results": {
+          "baseline": "PASS",
+          "candidate": "UNKNOWN_STATE_READ_FAILURE"
+        }
+      }
+    },
+    {
+      "case": "comparator_read_failure_not_pass_stale_looks_like_a_change",
+      "expected": "not_PASS",
+      "observed": "not_PASS",
+      "verdict": "AGREES",
+      "detail": {
+        "status": "UNKNOWN_DISPUTED_ORACLE",
+        "reason": "source input stage result is disputed; observation is not a card FAIL",
+        "source_results": {
+          "baseline": "PASS",
+          "candidate": "UNKNOWN_STATE_READ_FAILURE"
+        }
+      }
+    }
+  ]
+}

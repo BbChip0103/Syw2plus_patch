@@ -1,0 +1,102 @@
+{
+  "cases": {
+    "C0_baseline_real_probe": {
+      "failed_tests": [],
+      "returncode": 0,
+      "stderr_tail": [],
+      "stdout_tail": [
+        "........                                                                 [100%]",
+        "8 passed in 0.33s"
+      ]
+    },
+    "C1_unmutated_shallow_copy": {
+      "failed_tests": [
+        "test_r6b_r10_classifies_non_searchable_parent_without_traceback",
+        "test_r6b_r10_rejects_missing_parent_before_running_probe",
+        "test_r6b_r10_rejects_non_directory_parent",
+        "test_r6b_r10_rejects_read_only_parent",
+        "test_r6b_r11_exclusive_create_rejects_dangling_output_symlink",
+        "test_r6b_r17_existing_evidence_refusal_precedes_review_body",
+        "test_r6b_r7_refuses_to_overwrite_existing_report",
+        "test_r6b_r7_writes_to_explicit_new_report_path"
+      ],
+      "returncode": 1,
+      "stderr_tail": [],
+      "stdout_tail": [
+        "FAILED ../../../../../tmp/lap246_r11_ablimoi7/shallow/test_review_probe_output.py::test_r6b_r10_rejects_read_only_parent",
+        "FAILED ../../../../../tmp/lap246_r11_ablimoi7/shallow/test_review_probe_output.py::test_r6b_r10_classifies_non_searchable_parent_without_traceback",
+        "FAILED ../../../../../tmp/lap246_r11_ablimoi7/shallow/test_review_probe_output.py::test_r6b_r17_existing_evidence_refusal_precedes_review_body",
+        "8 failed in 0.26s"
+      ]
+    },
+    "C2_unmutated_faithful_mirror": {
+      "failed_tests": [],
+      "returncode": 0,
+      "stderr_tail": [],
+      "stdout_tail": [
+        "........                                                                 [100%]",
+        "8 passed in 0.37s"
+      ]
+    },
+    "C3_mutated_faithful_mirror": {
+      "failed_tests": [
+        "test_r6b_r11_exclusive_create_rejects_dangling_output_symlink"
+      ],
+      "returncode": 1,
+      "stderr_tail": [],
+      "stdout_tail": [
+        "/tmp/lap246_r11_ablimoi7/mutated/test_review_probe_output.py:81: AssertionError",
+        "=========================== short test summary info ============================",
+        "FAILED ../../../../../tmp/lap246_r11_ablimoi7/mutated/test_review_probe_output.py::test_r6b_r11_exclusive_create_rejects_dangling_output_symlink",
+        "1 failed, 7 passed in 0.37s"
+      ]
+    }
+  },
+  "direct_r11_behaviour": {
+    "control_x_mode": {
+      "link_still_symlink": true,
+      "returncode": 2,
+      "stderr_tail": [],
+      "stdout_tail": [
+        "refusing to overwrite existing evidence: /tmp/lap246_r11_ablimoi7/direct_control/scratch/report.json"
+      ],
+      "target_created": false,
+      "test_file": "/tmp/lap246_r11_ablimoi7/direct_control/test_review_probe_output.py"
+    },
+    "mutated_w_mode": {
+      "link_still_symlink": true,
+      "returncode": 0,
+      "stderr_tail": [],
+      "stdout_tail": [
+        "grid cases=13689 changes=2052",
+        "report -> /tmp/lap246_r11_ablimoi7/direct_mutated/scratch/report.json"
+      ],
+      "target_created": true,
+      "test_file": "/tmp/lap246_r11_ablimoi7/direct_mutated/test_review_probe_output.py"
+    }
+  },
+  "findings": {
+    "baseline_green": true,
+    "control_refuses_dangling_symlink": true,
+    "faithful_mirror_green": true,
+    "lap245_mutation_signal_vacuous": true,
+    "lap245_unmutated_shallow_failures": 8,
+    "mutation_writes_through_dangling_symlink": true,
+    "preflight_tests_survive_mutation": true,
+    "targeted_mutation_failures": [
+      "test_r6b_r11_exclusive_create_rejects_dangling_output_symlink"
+    ],
+    "targeted_mutation_kills_r11_only": true
+  },
+  "game_executions": 0,
+  "lap": 246,
+  "probe_sha256": "16f74629aae8f823508762d719776547e1fd8365a07c7862bbf89a4d3ae06d12",
+  "role": "middle",
+  "runtime_env_sha256": "bb10cd84ddcb521b704318aeccb60125cec0abd89436e16b0b25d1ed918d2dab",
+  "target": "G1-R6-B-R11 (lap245 work)",
+  "test_sha256": "6ebf9e3248a8a494829d3dbfafd7e62d4308534158995069ba98c4d930755bb2",
+  "verdict": {
+    "lap245_evidence_valid": false,
+    "r11_regression_non_vacuous": true
+  }
+}

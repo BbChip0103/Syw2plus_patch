@@ -1,0 +1,391 @@
+{
+  "lap": 260,
+  "role": "middle",
+  "item": "R27",
+  "sut_sha256_before": "e4f6a834f1ca591d2fe7acc1002beea4b343647d6ba47ff3b847f74e22455837",
+  "tests_sha256_before": "eaa50b919e42dd051044d4551cb2df923dd455035214200e741745e9bc15eae3",
+  "C0": {
+    "returncode": 0,
+    "counts": {
+      "passed": 14,
+      "deselected": 130
+    }
+  },
+  "C1": {
+    "cases": 160,
+    "mismatches": 0,
+    "state_distribution": {
+      "STAGE_START_UNKNOWN": 24,
+      "WITHIN_STAGE_BUDGET": 36,
+      "STAGE_BUDGET_EXHAUSTED": 36,
+      "STAGE_BUDGET_UNAVAILABLE": 64
+    },
+    "mismatch_details": [],
+    "production_default_shape": {
+      "stage_budget": null,
+      "stage_started_elapsed": null,
+      "stage_budget_state": "STAGE_BUDGET_UNAVAILABLE",
+      "classification": "UNKNOWN_STATE_READ_FAILURE"
+    },
+    "production_call_site_passes_stage_started": false,
+    "production_has_configured_budget": false,
+    "production_call_site_source": "_g1_read_selection_stage(\n            read_selection, stage=\"production\", read_point=\"before_production\",\n            started=started, timeout=timeout,\n        )"
+  },
+  "C2": {
+    "real_counts": {
+      "passed": 144
+    },
+    "mirror_counts": {
+      "passed": 144
+    },
+    "equal": true,
+    "returncode": 0
+  },
+  "C3": {
+    "mutations": [
+      {
+        "id": "M1",
+        "label": "state pinned WITHIN_STAGE_BUDGET",
+        "applied": true,
+        "counts": {
+          "failed": 4,
+          "passed": 140
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic",
+          "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M2",
+        "label": "state pinned STAGE_BUDGET_EXHAUSTED",
+        "applied": true,
+        "counts": {
+          "failed": 4,
+          "passed": 140
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic",
+          "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M3",
+        "label": "state pinned STAGE_BUDGET_UNAVAILABLE",
+        "applied": true,
+        "counts": {
+          "failed": 3,
+          "passed": 141
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M4",
+        "label": "UNAVAILABLE collapsed into START_UNKNOWN",
+        "applied": true,
+        "counts": {
+          "failed": 2,
+          "passed": 142
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic",
+          "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M5",
+        "label": "priority reordered: unknown start checked before missing budget",
+        "applied": true,
+        "counts": {
+          "failed": 1,
+          "passed": 143
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M6",
+        "label": "START_UNKNOWN collapsed into WITHIN_STAGE_BUDGET",
+        "applied": true,
+        "counts": {
+          "failed": 1,
+          "passed": 143
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M7",
+        "label": "state boundary >= weakened to >",
+        "applied": true,
+        "counts": {
+          "failed": 1,
+          "passed": 143
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M8",
+        "label": "EXHAUSTED collapsed into WITHIN_STAGE_BUDGET",
+        "applied": true,
+        "counts": {
+          "failed": 1,
+          "passed": 143
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M9",
+        "label": "legacy boolean pinned True",
+        "applied": true,
+        "counts": {
+          "failed": 3,
+          "passed": 141
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M10",
+        "label": "stage_started_elapsed reported as 0.0 instead of None",
+        "applied": true,
+        "counts": {
+          "failed": 1,
+          "passed": 143
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M11",
+        "label": "production call site starts the stage clock (shape change)",
+        "applied": true,
+        "counts": {
+          "failed": 1,
+          "passed": 143
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_production_direct_selection_reader_failure_stays_blocked_and_continues"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M12",
+        "label": "production stage gains a configured budget",
+        "applied": true,
+        "counts": {
+          "error": 1
+        },
+        "killed": false,
+        "in_scope_kills": [],
+        "out_of_scope_kills": []
+      }
+    ],
+    "survivors": [
+      "M12"
+    ],
+    "not_applied": [],
+    "out_of_scope_total": []
+  },
+  "C4": {
+    "r27_removed": true,
+    "baseline_without_r27": {
+      "passed": 143
+    },
+    "mutations": [
+      {
+        "id": "M1",
+        "label": "state pinned WITHIN_STAGE_BUDGET",
+        "applied": true,
+        "counts": {
+          "failed": 3,
+          "passed": 140
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M2",
+        "label": "state pinned STAGE_BUDGET_EXHAUSTED",
+        "applied": true,
+        "counts": {
+          "failed": 3,
+          "passed": 140
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M3",
+        "label": "state pinned STAGE_BUDGET_UNAVAILABLE",
+        "applied": true,
+        "counts": {
+          "failed": 3,
+          "passed": 140
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M4",
+        "label": "UNAVAILABLE collapsed into START_UNKNOWN",
+        "applied": true,
+        "counts": {
+          "failed": 1,
+          "passed": 142
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M5",
+        "label": "priority reordered: unknown start checked before missing budget",
+        "applied": true,
+        "counts": {
+          "passed": 143
+        },
+        "killed": false,
+        "in_scope_kills": [],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M6",
+        "label": "START_UNKNOWN collapsed into WITHIN_STAGE_BUDGET",
+        "applied": true,
+        "counts": {
+          "passed": 143
+        },
+        "killed": false,
+        "in_scope_kills": [],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M7",
+        "label": "state boundary >= weakened to >",
+        "applied": true,
+        "counts": {
+          "failed": 1,
+          "passed": 142
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M8",
+        "label": "EXHAUSTED collapsed into WITHIN_STAGE_BUDGET",
+        "applied": true,
+        "counts": {
+          "failed": 1,
+          "passed": 142
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M9",
+        "label": "legacy boolean pinned True",
+        "applied": true,
+        "counts": {
+          "failed": 3,
+          "passed": 140
+        },
+        "killed": true,
+        "in_scope_kills": [
+          "test_g1_direct_selection_reader_stage_budget_exhaustion_is_semantic"
+        ],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M10",
+        "label": "stage_started_elapsed reported as 0.0 instead of None",
+        "applied": true,
+        "counts": {
+          "passed": 143
+        },
+        "killed": false,
+        "in_scope_kills": [],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M11",
+        "label": "production call site starts the stage clock (shape change)",
+        "applied": true,
+        "counts": {
+          "passed": 143
+        },
+        "killed": false,
+        "in_scope_kills": [],
+        "out_of_scope_kills": []
+      },
+      {
+        "id": "M12",
+        "label": "production stage gains a configured budget",
+        "applied": true,
+        "counts": {
+          "error": 1
+        },
+        "killed": false,
+        "in_scope_kills": [],
+        "out_of_scope_kills": []
+      }
+    ],
+    "survivors_without_r27": [
+      "M5",
+      "M6",
+      "M10",
+      "M11",
+      "M12"
+    ]
+  },
+  "sut_sha256_after": "e4f6a834f1ca591d2fe7acc1002beea4b343647d6ba47ff3b847f74e22455837",
+  "tests_sha256_after": "eaa50b919e42dd051044d4551cb2df923dd455035214200e741745e9bc15eae3"
+}

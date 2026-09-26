@@ -1,0 +1,178 @@
+{
+  "status": "PASS",
+  "coverage": "INCOMPLETE",
+  "activation": {
+    "status": "NO-GO",
+    "reason": "static xrefs do not prove safe slot-1200 activation or save/network compatibility"
+  },
+  "source": {
+    "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/Syw2plus/syw2plus_original.exe",
+    "sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "pe32": true,
+    "image_base": "0x00400000",
+    "text_start": "0x00401000",
+    "text_bytes": 933888,
+    "decoded_instructions": 306840
+  },
+  "pool_geometry": {
+    "base": "0x0066b790",
+    "stride": 1880,
+    "slots": 1200,
+    "end_bulk_start": "0x00892410",
+    "existence_base": "0x008990c8",
+    "existence_end": "0x00899a28",
+    "allocator_sidecar_start": "0x00899a2a",
+    "allocator_sidecar_end": "0x0089a388",
+    "unit_age_base": "0x00899a28",
+    "unit_age_end": "0x0089a388",
+    "active_slot_list_base": "0x00974fa8",
+    "active_slot_list_end": "0x00975908",
+    "category_slot_list_a_base": "0x0089b008",
+    "category_slot_list_a_end": "0x0089c2c8",
+    "category_slot_list_b_base": "0x0089c2ca",
+    "category_slot_list_b_end": "0x0089d58a",
+    "geometry_check": true
+  },
+  "xref_counts": {
+    "direct_call_targets": {
+      "destruction": 13,
+      "spawn": 29,
+      "allocator": 18,
+      "save_roster": 1,
+      "load_roster": 1
+    },
+    "decoded_endpoint_operands": {
+      "unit_pool_bulk_start": 179,
+      "unit_existence_base": 34,
+      "unit_pool_base": 115,
+      "unit_existence_end": 4,
+      "allocator_sidecar_end": 6,
+      "allocator_sidecar_start": 1
+    },
+    "absolute_memory_operands": {
+      "unit_pool": 0,
+      "unit_existence": 0,
+      "unit_age": 0,
+      "active_slot_list": 0,
+      "category_slot_list_a": 0,
+      "category_slot_list_b": 0
+    },
+    "immediate_operand_candidates": {
+      "unit_pool": 30,
+      "unit_existence": 2,
+      "unit_age": 3,
+      "active_slot_list": 72,
+      "category_slot_list_a": 0,
+      "category_slot_list_b": 0
+    },
+    "base_index_displacement_candidates": {
+      "unit_pool": 986,
+      "unit_existence": 32,
+      "unit_age": 2,
+      "active_slot_list": 17,
+      "category_slot_list_a": 6,
+      "category_slot_list_b": 1
+    }
+  },
+  "functions": {
+    "allocator": {
+      "address": "0x00442fa0",
+      "direct_call_xref_count": 18
+    },
+    "destruction": {
+      "address": "0x00442fe0",
+      "direct_call_xref_count": 13
+    },
+    "spawn": {
+      "address": "0x00443190",
+      "direct_call_xref_count": 29
+    },
+    "save_roster": {
+      "address": "0x0040f4b0",
+      "direct_call_xref_count": 1
+    },
+    "load_roster": {
+      "address": "0x0040f4f0",
+      "direct_call_xref_count": 1
+    }
+  },
+  "endpoints": {
+    "unit_pool_base": {
+      "address": "0x0066b790",
+      "decoded_xref_count": 115
+    },
+    "unit_pool_bulk_start": {
+      "address": "0x00892410",
+      "decoded_xref_count": 179
+    },
+    "unit_existence_base": {
+      "address": "0x008990c8",
+      "decoded_xref_count": 34
+    },
+    "unit_existence_end": {
+      "address": "0x00899a28",
+      "decoded_xref_count": 4
+    },
+    "allocator_sidecar_start": {
+      "address": "0x00899a2a",
+      "decoded_xref_count": 1
+    },
+    "allocator_sidecar_end": {
+      "address": "0x0089a388",
+      "decoded_xref_count": 6
+    }
+  },
+  "regions": {
+    "unit_pool": {
+      "start": "0x0066b790",
+      "end": "0x00892410",
+      "decoded_xref_count": 0,
+      "immediate_operand_candidate_count": 30,
+      "base_index_displacement_candidate_count": 986
+    },
+    "unit_existence": {
+      "start": "0x008990c8",
+      "end": "0x00899a28",
+      "decoded_xref_count": 0,
+      "immediate_operand_candidate_count": 2,
+      "base_index_displacement_candidate_count": 32
+    },
+    "unit_age": {
+      "start": "0x00899a28",
+      "end": "0x0089a388",
+      "decoded_xref_count": 0,
+      "immediate_operand_candidate_count": 3,
+      "base_index_displacement_candidate_count": 2
+    },
+    "active_slot_list": {
+      "start": "0x00974fa8",
+      "end": "0x00975908",
+      "decoded_xref_count": 0,
+      "immediate_operand_candidate_count": 72,
+      "base_index_displacement_candidate_count": 17
+    },
+    "category_slot_list_a": {
+      "start": "0x0089b008",
+      "end": "0x0089c2c8",
+      "decoded_xref_count": 0,
+      "immediate_operand_candidate_count": 0,
+      "base_index_displacement_candidate_count": 6
+    },
+    "category_slot_list_b": {
+      "start": "0x0089c2ca",
+      "end": "0x0089d58a",
+      "decoded_xref_count": 0,
+      "immediate_operand_candidate_count": 0,
+      "base_index_displacement_candidate_count": 1
+    }
+  },
+  "evidence_policy": {
+    "raw_pattern_scan": false,
+    "accepted_xref_evidence": "decoded instruction operand only",
+    "unbounded_byte_patterns": "not counted as xrefs",
+    "region_reference_scope": "decoded absolute memory operands are direct region references; immediates and base/index-dependent memory operands are candidates only",
+    "immediate_operand_scope": "in-range relocation candidates; semantic role unresolved",
+    "base_index_displacement_scope": "in-range relocation candidates; runtime effective address unresolved",
+    "overlapping_endpoint_semantics": "unit_age starts at unit_existence_end (0x00899a28); allocator_sidecar_start (0x00899a2a) remains a historical endpoint"
+  }
+}

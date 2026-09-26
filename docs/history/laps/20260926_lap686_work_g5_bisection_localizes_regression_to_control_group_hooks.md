@@ -1,0 +1,30 @@
+# 2026-09-26 | lap 686 | 목표 G5
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-sonnet-5`(세션 보고 모델ID), 실무(work), high. 이번 lap은 lap685 18:19 운영자 판정(이분 탐색)을 실행했다. 신규 read-only 진단 도구 3개(`patches/selection/g5_selection_cap50_bisect.py`, `tools/g5_bisect_attack_probe.py`, `tools/g5_worker_relative_move_attack_probe_v1.py`) + 회귀 테스트 3개 추가. 제품 후보/원본 EXE는 0 변경.
+- 가설 / 사용자 관찰: 운영자 지시(이분 탐색) 그대로 — v1/v2를 이루는 5개 편집 묶음(G1 hit-test cap, G2 선택배열 재배치, G3 소비자 프레임 확장, G4 H1/H2/H3 그룹 훅, G5 rotation cap) 중 어느 것이 lap684/685가 확정한 공격 브로드캐스트 회귀(원본 `ever_command4_count`≈100%, v2/v3 후보 ≤1/49)의 원인인지 이분 탐색으로 좁힌다.
+- 예상 PASS/FAIL 조건: 운영자 지시대로 각 묶음을 **원본에 단독 적용**해 20기 이하 드래그로 `ever_command4_count`를 측정, 원본(≈19/19) 대비 급락하는 묶음을 원인으로 지목한다. 급락이 없으면 다음 단계(>20 규모 비교)로 넘긴다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 전부 uncommitted(`LOOP_ALLOW_COMMITS=0`, 최초 커밋 자체가 없음 — `git status`가 전체를 `??`로 보고).
+  - `patches/selection/g5_selection_cap50_bisect.py`(신규): G1/G2/G3/G5를 원본에 **단독 적용**하는 빌더 4개 + `build_v1_full`/`build_v2_full`(각각 `v1.build_candidate`/`v2.build_candidate` 재노출). G4(H1/H2/H3 훅)는 **단독 적용이 불가능함을 빌드 시 실증**했다 — H1 훅 사이트(`0x00445D4E`)가 `DIRECT_SITES`의 한 오퍼랜드(`0x00445D52`)와 겹쳐, v2의 고정 "old bytes"가 v1 재배치 이후에만 일치한다(원본에 바로 적용 시 `BuildAbortedError: old bytes mismatch`로 즉시 실패 — 실측 확인). 따라서 G4는 `build_v1_full` vs `build_v2_full`의 차분으로 검증한다.
+  - `tools/g5_bisect_attack_probe.py`(신규): lap682의 self-calibration 기법을 재사용하되 MOVE 단계를 생략하고 19기 sparse fixture(worker+19=20, 원본 stock capacity와 동일)로 트리밍한 ATTACK-sustain 전용 probe. `--bundle`로 5개 단독 빌더 + v1_full/v2_full 중 선택.
+  - `tools/g5_worker_relative_move_attack_probe_v1.py`(신규): lap685의 v2-타겟 래퍼(`g5_worker_relative_move_attack_probe_v2.py`) 패턴을 그대로 재사용해 **v1 alone**을 lap682 dense-fixture(49/50 규모) 하네스로 실행.
+  - `patches/selection/test_g5_selection_cap50_bisect.py`, `tests/test_g5_bisect_attack_probe.py`, `tests/test_g5_worker_relative_move_attack_probe_v1.py`(신규 회귀 테스트 3개, 총 14개 assert 케이스).
+  - 제품 EXE/원본/바이너리 0 변경. 격리 실행마다 만든 `local/runtime/g5-lap686-*/*/game` 사본(각 ~2.7GB, 4회 실행)은 완료 직후 삭제(manifest/output/prefix/로그는 보존).
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`(세션 종료 시 재확인, 불변). 후보 SHA(신규 빌드, 이번 lap에서 처음 계산):
+  - G1 `590a068a5e3a...`, G2 `66d42a91aabd...`, G3 `98f1fd62de81...`, G5 `8263f56c59ae...`
+  - V1_FULL `6c8f73ba5626a978abaa09bb56adc46ee5da39bdd16d05c71285ce10d8f20b25`(=v1.build_candidate 그대로, 테스트로 동치 고정)
+  - V2_FULL `ae495fa5a1498597c265ad9bcae6444f564ade92adb311a3c413c4fb9996b5b7`(=lap665/685가 이미 쓴 v2 SHA와 정확히 일치 — 교차검증됨)
+  - 격리 Wine/Xvfb 1600×1200, PS3 solo owner0. sparse 테스트: worker(slot1198) 앵커 5×4-1=19기 SEED_TYPE=2, 드래그20(worker+19). scale 테스트(V1_FULL만): lap682/685와 동일 dense 7×8-1=55기, 드래그50.
+- 실행 명령 / 로그 / 캡처 경로 및 해시(공유 `temp/Syw2plus_patch/g5_lap686_bisect/`):
+  1. `PYTHONPATH=. .venv/bin/python -m tools.g5_bisect_attack_probe --variant original --artifact-root .../original1` → sparse 20-fixture 원본 베이스라인.
+  2. 동일 `--variant candidate --bundle V1_FULL --artifact-root .../v1full`.
+  3. 동일 `--variant candidate --bundle V2_FULL --artifact-root .../v2full`.
+  4. `PYTHONPATH=. .venv/bin/python -m tools.g5_worker_relative_move_attack_probe_v1 --variant candidate --artifact-root .../v1full_scale` → V1_FULL을 lap682 dense/50-규모 하네스로.
+  5. `PYTHONPATH=. .venv/bin/python -m pytest -q patches/selection/test_g5_selection_cap50_bisect.py tests/test_g5_bisect_attack_probe.py tests/test_g5_worker_relative_move_attack_probe_v1.py tests/test_g5_worker_relative_move_attack_probe_v2.py tests/test_g5_worker_relative_move_attack_probe.py patches/selection/test_g5_selection_cap50_v{1,2,3}.py` → **34 passed**.
+  6. `make check`(foreground, 20분 타임아웃으로 대기, SIGTERM 없음) → **994 passed(711.56s)**, ruff/compileall/mypy/`CONTEXT_PASS` 모두 PASS. 로그 `logs/gates/20260926_lap686_make_check_run1.log`.
+  7. `bash checks/safety.sh check` → `SAFETY_PASS`.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN):
+  - **① sparse(≤20) 이분 탐색: 운영자의 "≤20에서도 깨진다" 전제가 반증됐다(FALSIFIED).** 원본 sparse 20-fixture 베이스라인 `ever_command4_count=17/19`(89%, 3s 누적). **V1_FULL sparse: 13/19**(68%). **V2_FULL sparse: 12/19**(63%, `max_pending_exact_count=19/19` — 순간적으로는 전원 도달). 세 값 모두 같은 구간(63~89%)에 있고, lap684/685가 50 규모에서 본 `≤1/49`(≈2%)의 극단적 붕괴와 질적으로 다르다. 즉 **어떤 개별 묶음도 ≤20 규모에서는 원본과 구별될 만큼 깨지지 않는다** — 운영자가 지정한 방법(20 이하 드래그로 판별) 자체는 회귀를 잡아내지 못한다. 회귀는 **선택 수가 실제로 stock 20을 넘어야만 나타나는 규모-의존적 결함**이다.
+  - **② scale(49/50) 델타 테스트: 회귀를 G4(H1/H2/H3 훅)로 대부분 귀속(신규, 강한 증거).** ①이 방법 자체를 반증했으므로, 유일하게 아직 규모별로 안 해본 분기(v1 단독을 50-규모로)를 채웠다: **V1_FULL을 lap682/685와 동일한 dense-50 하네스로 실행 → `ever_command4_count=18/49`(37%), `max_pending_exact_count=19/49`.** 같은 규모에서 lap685가 이미 측정한 V2_FULL(=v2) 결과는 `0/49`, v3는 `≤1/49`. **v1 단독(37%)은 v2/v3(≈0~2%)보다 극적으로 낫다** — H1/H2/H3 훅을 추가하는 것이 대부분의 붕괴를 일으킨다는 뜻이다. 다만 v1 단독도 원본의 100%(19/19 dense 기준)에는 못 미치는 37%이므로, **v1 자체에도 규모-의존적인 2차 결함이 남아있다**(H4 훅과는 별개, 아직 원인 미확정).
+  - **종합 판정: FEASIBLE(다음 단계로 좁혀짐).** 회귀는 두 겹이다: (a) H1/H2/H3(G4) 훅이 지배적 원인(37%→2~0%로 추가 붕괴), (b) v1 단독에도 원본 100%→37%의 잔여 결함이 있다(원인 미확정, G1/G2/G3/G5 중 하나 또는 그 조합). 다음 work는 (a)를 먼저 좁힌다: H1/H2/H3 코드(특히 H2/H3가 만지는 unit `+0x344`/그룹 상태)가 왜 `+0x384`/`command==4` attack 유지에 간섭하는지 직접 트레이스한다(lap677의 `FUN_0040C640` 관찰이 유력한 접점).
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 회귀 34 passed(신규 14 포함, 신규 3파일), `make check` 994 passed(711.56s), ruff/compileall/mypy/`CONTEXT_PASS`/`SAFETY_PASS` 모두 PASS. 제품 후보/원본 EXE 0 변경(이번 lap은 순수 진단, 아직 어느 후보도 수정하지 않음 — 원인이 두 겹으로 나뉘어 단일 지점으로 좁혀지지 않았기 때문에 구현 우선 원칙에 따라 추측 수정을 하지 않았다). G5 2단 독립 검수·3단 사용자 milestone 승인은 여전히 없음(원래부터 없었음). 디스크: lap 시작 107~110GB → 4회 실행(각 ~2.7GB game 사본 즉시 정리) 후 107GB, 안전선(20GB) 위.
+- 다음 한 가지: middle 없이(구현 우선 유지) H1/H2/H3(v2) 훅이 attack 유지를 깨는 정확한 지점을 gdb로 좁힌다 — 후보는 (i) H2/H3가 쓰는 unit `+0x344` 필드나 그 근처가 attack의 `+0x384`/`+0x290` 상태와 메모리를 공유/겹치는지, (ii) H3의 `FUN_0040F790`/`FUN_0040F7D0` 호출 경로가 lap677이 찾은 `FUN_0040C640`(pending 컨슈머)의 분기 조건에 영향을 주는지. 찾으면 H 훅을 최소 수정한 뒤 V2_FULL을 dense-50 규모로 재실행해 `ever_command4_count`가 V1_FULL의 18/49 수준 이상으로 회복되는지 확인한다. 그 다음에야 v1 단독의 잔여 결함(100%→37%)을 별도로 조사한다(우선순위 낮음, 규모는 크지 않음).

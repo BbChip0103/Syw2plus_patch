@@ -1,0 +1,167 @@
+{
+  "probe": "lap400_middle_g2_pool_overrun",
+  "reviews": "docs/history/laps/20260920_lap399_work_g2_unit_pool_expansion_candidate_and_boot_probe.md",
+  "read_only": true,
+  "game_executed": false,
+  "original": {
+    "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus/syw2plus_original.exe",
+    "sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac"
+  },
+  "C1_lap399_n1300_rejection": {
+    "verdict": "REPRODUCED",
+    "per_n": {
+      "1210": {
+        "pool_new_end": "0x00896d80",
+        "crosses_fo3_gap": false,
+        "crosses_cat_a": false,
+        "crosses_cat_b": false
+      },
+      "1217": {
+        "pool_new_end": "0x0089a0e8",
+        "crosses_fo3_gap": false,
+        "crosses_cat_a": false,
+        "crosses_cat_b": false
+      },
+      "1218": {
+        "pool_new_end": "0x0089a840",
+        "crosses_fo3_gap": true,
+        "crosses_cat_a": false,
+        "crosses_cat_b": false
+      },
+      "1300": {
+        "pool_new_end": "0x008c0270",
+        "crosses_fo3_gap": true,
+        "crosses_cat_a": true,
+        "crosses_cat_b": true
+      }
+    }
+  },
+  "C2_collected_sites": {
+    "unit_pool": {
+      "disp": 986,
+      "imm": 28,
+      "total": 1014
+    },
+    "unit_existence": {
+      "disp": 32,
+      "imm": 2,
+      "total": 34
+    },
+    "unit_age": {
+      "disp": 2,
+      "imm": 2,
+      "total": 4
+    }
+  },
+  "C3_candidate": {
+    "sha256": "303c78f81f816ed82e495fa4545cc23af3fa7200344eb029b4e9f31cabe96522",
+    "matches_lap399": true,
+    "n1200_identity": true,
+    "original_unchanged": true
+  },
+  "D2_applied_fixups": {
+    "counts": {
+      "unit_pool": 0,
+      "unit_existence": 34,
+      "unit_age": 4
+    },
+    "deltas": {
+      "unit_pool": "0x00000000",
+      "unit_existence": "0x00004970",
+      "unit_age": "0x00004984"
+    }
+  },
+  "D2_finding": "unit_pool delta is 0 -- the pool is NOT relocated.  All 1014 collected pool sites are applied 0 times.  The pool grows IN PLACE, which work card W3 section B-1 (lap397 A6) declared NOT_FEASIBLE and required to be replaced by relocation into new image-tail space.",
+  "D1_overrun": {
+    "range": "[0x00892410, 0x00896d80)",
+    "bytes": 18800,
+    "text_literal_sites": 1311,
+    "disp": 1072,
+    "imm": 239,
+    "exact_bulk_base_literals": 179,
+    "sample": [
+      {
+        "va": "0x00401cc9",
+        "kind": "disp",
+        "value": "0x008924c4",
+        "insn": "mov eax, dword ptr [0x8924c4]"
+      },
+      {
+        "va": "0x00401ced",
+        "kind": "disp",
+        "value": "0x008924c4",
+        "insn": "mov dword ptr [0x8924c4], edx"
+      },
+      {
+        "va": "0x00401d94",
+        "kind": "disp",
+        "value": "0x008924c4",
+        "insn": "mov eax, dword ptr [0x8924c4]"
+      },
+      {
+        "va": "0x00401db3",
+        "kind": "disp",
+        "value": "0x008924c4",
+        "insn": "mov dword ptr [0x8924c4], eax"
+      },
+      {
+        "va": "0x00401e96",
+        "kind": "disp",
+        "value": "0x008924c4",
+        "insn": "mov eax, dword ptr [0x8924c4]"
+      },
+      {
+        "va": "0x00401ec4",
+        "kind": "disp",
+        "value": "0x008924c4",
+        "insn": "mov dword ptr [0x8924c4], ecx"
+      },
+      {
+        "va": "0x00401ef4",
+        "kind": "disp",
+        "value": "0x008924c4",
+        "insn": "mov dword ptr [0x8924c4], edx"
+      },
+      {
+        "va": "0x0040272e",
+        "kind": "imm",
+        "value": "0x00892410",
+        "insn": "mov ecx, 0x892410"
+      }
+    ],
+    "fixed_up_by_candidate": 0
+  },
+  "D1_finding": "At N=1210 the grown pool occupies the first 18,800 bytes of the live state / bulk save blob that starts exactly at pool_old_end 0x892410.  Those bytes are referenced by the listed .text sites, none of which the candidate rewrites -> slots 1200..1209 alias live globals.  S-6 (adjacent state undamaged) is violated by construction, and any S-2 observation of existence[slot>=1200] on this candidate could be bulk-load residue rather than a real allocation.",
+  "D3_existence_age_destination": {
+    "range": "[0x0089da38, 0x0089ed20)",
+    "direct_text_literals": 0,
+    "bulk_blob": "[0x00892410, 0x00975d8c)",
+    "inside_bulk_blob": true,
+    "finding": "No direct literal references, but the destination lies inside the fixed-length bulk blob that load `fread`s wholesale at 0x4412DC and save writes from 0x440F02.  Loading save000 overwrites the relocated existence/age arrays with old-layout bytes."
+  },
+  "D4_tail_destination": {
+    "data_bss_end": "0x0108ba38",
+    "size_of_image": "0x00c8f000",
+    "bytes_needed_pool_existence_age": 2279640,
+    "range": "[0x0108ba38, 0x012b8310)",
+    "text_literal_sites": 1,
+    "sites": [
+      {
+        "va": "0x00401402",
+        "kind": "imm",
+        "value": "0x01100007",
+        "insn": "push 0x1100007"
+      }
+    ],
+    "finding": "The tail destination carries orders of magnitude fewer literal collisions than the in-place overrun; any residual hit must be classified by the implementing session before it is used."
+  },
+  "verdict": {
+    "C1_n1300_unsafe": "ACCEPT (reproduced)",
+    "C2_site_counts": "ACCEPT (reproduced)",
+    "C3_candidate_reproducible": "ACCEPT (reproduced, original unchanged)",
+    "C4_ps40_not_caused_by_patch": "NOT CHECKED HERE (runtime claim; see lap400 record)",
+    "candidate_n1210": "REJECT -- in-place growth aliases live state (D1/D2/D3)",
+    "next": "relocate pool+existence+age into virgin image-tail space (D4)"
+  },
+  "failures": []
+}

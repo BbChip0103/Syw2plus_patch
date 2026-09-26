@@ -1,0 +1,125 @@
+{
+  "anchors_present": {
+    "M1_priority_inverted": true,
+    "M2_timing_fields_dropped": true,
+    "M3_run_budget_flag_pinned_false": true,
+    "M4_stage_budget_flag_pinned_true": true,
+    "M5_exception_timing_zeroed": true
+  },
+  "c0_baseline": {
+    "failed_tests": [],
+    "returncode": 0,
+    "summary": "12 passed, 128 deselected in 0.06s"
+  },
+  "c1_matrix": {
+    "cases": 74,
+    "classifications": {
+      "UNKNOWN_STATE_READ_FAILURE": 72
+    },
+    "mismatch_count": 0,
+    "mismatches": []
+  },
+  "c1b_asymmetry": {
+    "asymmetry_is_real": true,
+    "direct_read_classification_at_exhausted_budget": "UNKNOWN_STATE_READ_FAILURE",
+    "poll_loop_classification_at_exhausted_budget": "UNKNOWN_BUDGET_EXHAUSTED",
+    "poll_loop_read_error_count": 4
+  },
+  "c1c_consumers": {
+    "code_consumers_outside_runtime_env": [
+      "docs/history/laps/probes/20260912_lap254_r15_review_probe.py"
+    ],
+    "hits": {
+      "run_budget_exhausted": [
+        "docs/history/laps/20260912_lap253_work_r15.md",
+        "docs/history/laps/probes/20260912_lap254_r15_review_probe.py",
+        "tests/test_runtime_env.py"
+      ],
+      "stage_budget_exhausted": [
+        "docs/history/laps/20260912_lap253_work_r15.md",
+        "docs/history/laps/probes/20260912_lap254_r15_review_probe.py",
+        "tests/test_runtime_env.py"
+      ]
+    }
+  },
+  "c2_mirror_control": {
+    "failed_tests": [],
+    "returncode": 0,
+    "summary": "140 passed in 0.43s"
+  },
+  "c3_mutations": {
+    "M1_priority_inverted": {
+      "failed_tests": [
+        "test_g1_direct_selection_reader_failure_precedes_exhausted_run_budget"
+      ],
+      "killed_direct_reader_adjacent": [],
+      "killed_other": [],
+      "killed_r15": [
+        "test_g1_direct_selection_reader_failure_precedes_exhausted_run_budget"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 139 passed in 0.34s"
+    },
+    "M2_timing_fields_dropped": {
+      "failed_tests": [
+        "test_g1_direct_selection_reader_failure_precedes_exhausted_run_budget"
+      ],
+      "killed_direct_reader_adjacent": [],
+      "killed_other": [],
+      "killed_r15": [
+        "test_g1_direct_selection_reader_failure_precedes_exhausted_run_budget"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 139 passed in 0.35s"
+    },
+    "M3_run_budget_flag_pinned_false": {
+      "failed_tests": [
+        "test_g1_direct_selection_reader_failure_precedes_exhausted_run_budget"
+      ],
+      "killed_direct_reader_adjacent": [],
+      "killed_other": [],
+      "killed_r15": [
+        "test_g1_direct_selection_reader_failure_precedes_exhausted_run_budget"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 139 passed in 0.35s"
+    },
+    "M4_stage_budget_flag_pinned_true": {
+      "failed_tests": [],
+      "killed_direct_reader_adjacent": [],
+      "killed_other": [],
+      "killed_r15": [],
+      "returncode": 0,
+      "summary": "140 passed in 0.31s"
+    },
+    "M5_exception_timing_zeroed": {
+      "failed_tests": [
+        "test_g1_direct_selection_reader_failure_precedes_exhausted_run_budget"
+      ],
+      "killed_direct_reader_adjacent": [],
+      "killed_other": [],
+      "killed_r15": [
+        "test_g1_direct_selection_reader_failure_precedes_exhausted_run_budget"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 139 passed in 0.36s"
+    }
+  },
+  "game_executions": 0,
+  "lap": 254,
+  "role": "middle",
+  "source_sha256": {
+    "tests/test_runtime_env.py": "d7778430c156f0c4493891e0cd8adc2d21166602c594f5537dee2a84359606e3",
+    "tools/runtime_env.py": "0e3bf38220e8b762b2ba3b38d2151cfb51a6e8d4a6b85fd03fba6c41b89cb83c"
+  },
+  "subject": "G1-R6-B-R15 direct selection reader failure priority and timing provenance",
+  "verdict": {
+    "c0_baseline": "PASS",
+    "c1_matrix": "PASS",
+    "c1b_asymmetry": "PASS",
+    "c2_mirror_control": "PASS",
+    "c3_mutations": "FAIL",
+    "overall": "FAIL"
+  },
+  "wine_executions": 0
+}

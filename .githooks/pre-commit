@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Reject proprietary binaries and local/private state even when force-added."""
+import pathlib
+import subprocess
+import sys
+
+names = subprocess.check_output(["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"])
+banned = {".exe", ".dll", ".bin", ".dat", ".spr", ".yav", ".cof", ".pal", ".a", ".o", ".mp3", ".wav", ".original", ".original-backup"}
+blocked = []
+for raw in names.split(b"\0"):
+    if not raw:
+        continue
+    name = raw.decode("utf-8", "surrogateescape")
+    p = pathlib.PurePosixPath(name)
+    if p.suffix.lower() in banned or p.parts[0] in {"Syw2plus", "local", ".omx", ".omc", ".venv", "logs"} or name in {"loop/STOP", "loop/FULL_TEST", "loop/.lap_counter", "loop/ESCALATE_SOL", "loop/env.local.sh"} or (p.name == ".env" or (p.name.startswith(".env.") and p.name != ".env.example")):
+        blocked.append(name)
+if blocked:
+    print("Refusing binary/private files:\n" + "\n".join(blocked), file=sys.stderr)
+    sys.exit(1)

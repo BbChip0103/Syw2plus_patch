@@ -1,0 +1,133 @@
+{
+  "cases": {
+    "A_identical_pair": {
+      "actual": "PASS",
+      "expected": "PASS",
+      "note": "",
+      "stages": {
+        "drag_select": "PASS",
+        "minimap": "PASS",
+        "unit_select": "PASS"
+      }
+    },
+    "B_translated_scene": {
+      "actual": "PASS",
+      "expected": "PASS",
+      "note": "normalized identity must be anchor-relative",
+      "stages": {
+        "drag_select": "PASS",
+        "minimap": "PASS",
+        "unit_select": "PASS"
+      }
+    },
+    "C_slot_position_swap_same_type": {
+      "actual": "FAIL",
+      "expected": "FAIL",
+      "note": "equal slot+type, divergent normalized identity",
+      "stages": {
+        "drag_select": "FAIL",
+        "minimap": "PASS",
+        "unit_select": "FAIL"
+      }
+    },
+    "D_slot_only_renumbering": {
+      "actual": "INCONCLUSIVE",
+      "expected": "INCONCLUSIVE",
+      "normalized_identity_equal": true,
+      "note": "must not be FAIL; slot ids are not a parity predicate",
+      "stage_is_unknown_slot": true,
+      "stages": {
+        "drag_select": "UNKNOWN_SLOT_CORRESPONDENCE",
+        "minimap": "PASS",
+        "unit_select": "UNKNOWN_SLOT_CORRESPONDENCE"
+      }
+    },
+    "E_selected_slot_absent_from_scene": {
+      "actual": "INCONCLUSIVE",
+      "expected": "INCONCLUSIVE",
+      "note": "",
+      "stages": {
+        "drag_select": "INCONCLUSIVE",
+        "minimap": "PASS",
+        "unit_select": "INCONCLUSIVE"
+      }
+    },
+    "F_ambiguous_slot_in_scene": {
+      "actual": "INCONCLUSIVE",
+      "expected": "INCONCLUSIVE",
+      "note": "",
+      "stages": {
+        "drag_select": "INCONCLUSIVE",
+        "minimap": "PASS",
+        "unit_select": "INCONCLUSIVE"
+      }
+    },
+    "G_selected_type_disagrees_with_scene": {
+      "actual": "INCONCLUSIVE",
+      "expected": "INCONCLUSIVE",
+      "note": "",
+      "stages": {
+        "drag_select": "INCONCLUSIVE",
+        "minimap": "PASS",
+        "unit_select": "INCONCLUSIVE"
+      }
+    },
+    "H_count_delta_divergence": {
+      "actual": "FAIL",
+      "expected": "FAIL",
+      "note": "",
+      "stages": {
+        "drag_select": "FAIL",
+        "minimap": "PASS",
+        "unit_select": "PASS"
+      }
+    },
+    "I_scene_offsets_differ": {
+      "actual": "UNKNOWN_SCENE_MISMATCH",
+      "expected": "UNKNOWN_SCENE_MISMATCH",
+      "note": "",
+      "stages": {
+        "drag_select": "UNKNOWN_SCENE_MISMATCH",
+        "minimap": "UNKNOWN_SCENE_MISMATCH",
+        "unit_select": "UNKNOWN_SCENE_MISMATCH"
+      }
+    },
+    "J_selected_slot_missing": {
+      "actual": "INCONCLUSIVE",
+      "expected": "INCONCLUSIVE",
+      "note": "",
+      "stages": {
+        "drag_select": "INCONCLUSIVE",
+        "minimap": "PASS",
+        "unit_select": "INCONCLUSIVE"
+      }
+    },
+    "K_stage_report_without_evidence": {
+      "actual": "PASS",
+      "expected": "PASS",
+      "identity_source": {
+        "baseline": [
+          501,
+          70
+        ],
+        "candidate": [
+          501,
+          70
+        ]
+      },
+      "note": "documents the dead fallback branch: absolute slot/type used as identity"
+    },
+    "L_random_sweep_pass_invariant": {
+      "actual": "no_violation",
+      "expected": "no_violation",
+      "note": "every overall PASS must carry equal slots, equal normalized identity, equal count deltas, PASS source results, PASS scene and zero input errors",
+      "overall_pass_observed": 74,
+      "samples": 400,
+      "violations": []
+    }
+  },
+  "failures": {},
+  "probe": "lap221_f2_identity_review",
+  "source": "tools/compare_g1_stage_b.py",
+  "status": "PASS"
+}

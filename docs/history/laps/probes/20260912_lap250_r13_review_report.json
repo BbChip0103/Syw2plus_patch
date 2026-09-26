@@ -1,0 +1,89 @@
+{
+  "anchors_present": {
+    "stage_projection": true,
+    "success_path": true,
+    "verdict_fallback": true
+  },
+  "c0_baseline": {
+    "failed_tests": [],
+    "returncode": 0,
+    "summary": "6 passed, 131 deselected in 0.02s"
+  },
+  "c1_success_matrix": {
+    "answered_despite_insufficient_coverage": 8,
+    "cases": 15,
+    "mismatches": []
+  },
+  "c1b_timeout_matrix": {
+    "cases": 16,
+    "mismatches": []
+  },
+  "c2_mirror_control": {
+    "failed_tests": [],
+    "returncode": 0,
+    "summary": "137 passed in 0.42s"
+  },
+  "c3_mutations": {
+    "M1_success_coverage_not_finalised": {
+      "failed_tests": [
+        "test_g1_wait_state_pass_exposes_read_coverage_without_gating_response"
+      ],
+      "killed_other": [],
+      "killed_r13": [
+        "test_g1_wait_state_pass_exposes_read_coverage_without_gating_response"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 136 passed in 0.34s"
+    },
+    "M2_success_gated_on_coverage": {
+      "failed_tests": [
+        "test_g1_wait_state_pass_exposes_read_coverage_without_gating_response"
+      ],
+      "killed_other": [],
+      "killed_r13": [
+        "test_g1_wait_state_pass_exposes_read_coverage_without_gating_response"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 136 passed in 0.38s"
+    },
+    "M3_stage_projection_removed": {
+      "failed_tests": [
+        "test_g1_shared_input_sequence_blocks_production_but_reaches_later_stages"
+      ],
+      "killed_other": [],
+      "killed_r13": [
+        "test_g1_shared_input_sequence_blocks_production_but_reaches_later_stages"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 136 passed in 0.34s"
+    },
+    "M4_verdict_fallback_removed": {
+      "failed_tests": [
+        "test_g1_wait_state_pass_exposes_read_coverage_without_gating_response"
+      ],
+      "killed_other": [],
+      "killed_r13": [
+        "test_g1_wait_state_pass_exposes_read_coverage_without_gating_response"
+      ],
+      "returncode": 1,
+      "summary": "1 failed, 136 passed in 0.34s"
+    }
+  },
+  "game_executions": 0,
+  "lap": 250,
+  "role": "middle",
+  "source_sha256": {
+    "tests/test_runtime_env.py": "9a120a1ce1783bb605e21dc856cf64cdb4d289d5174bc9cbe328ba61735c8f8d",
+    "tools/runtime_env.py": "302c246e3637959c03a32b349befa0640cff72b1f1b5f1a349ad274b88421817"
+  },
+  "subject": "G1-R6-B-R13 PASS-path read coverage exposure",
+  "verdict": {
+    "c0_baseline": "PASS",
+    "c1_success_matrix": "PASS",
+    "c1b_timeout_matrix": "PASS",
+    "c2_mirror_control": "PASS",
+    "c3_mutations": "PASS",
+    "overall": "PASS"
+  },
+  "wine_executions": 0
+}

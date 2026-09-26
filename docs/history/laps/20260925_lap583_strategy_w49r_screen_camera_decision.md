@@ -1,0 +1,11 @@
+# 2026-09-25 | lap 583 | 목표 G2
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-opus-5-5`(effort 세션 비노출) / strategy. 라우팅 계약 `claude-fable-5`/Astra의 대체(lap567·572·577·580과 같음). 게임 실행 0, 제품 source·하네스·후보·raw 변경 0, 커밋 0.
+- 가설 / 사용자 관찰: §132의 W49 검정 월드는 DirectDraw 캡처 한계가 아니라 W49 runner의 카메라 입력 누락/goal 시작 경로 문제다. 같은 환경의 기존 캡처가 월드를 찍었다면 capture-path 수리 work 1회가 새 정보를 준다.
+- 예상 PASS / FAIL 조건: 판정식 V1(월드 영역 비검정 비율 ≥0.30)이 양성 대조(2026-09-20 월드 렌더 캡처)는 모두 PASS, 음성 대조(lap581 W49 5장)는 모두 FAIL로 갈려야 카드에 고정한다. 갈리지 않으면 (A)로 간다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): 신규 `docs/work/active/G2_STRATEGY_W49R_SCREEN_CAMERA_LAP583.md`, `docs/history/laps/probes/20260925_lap583_strategy_w49r_capture_criterion.py`(SHA `dd24b445c1ada9c2095839dce02fa6bf7bd3ecd5e11fe49b5721222287d0585a`), 이 기록. 갱신 `loop/ESCALATE_SOL` §133, `docs/STATUS.md`, `docs/feedback/INBOX.md`, S5 제출문 부록 C. 제품 implementation 변경 0, 커밋 0.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 `b56986e0…a8ac`, 결합 후보 `dfdc91ad…3883`(lap581 기록 대상, 이번 회차 실행 0). Wine `dpwsockx.dll` SHA `3b4f6a9d…86c9` 재확인.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: (1) `python3 docs/history/laps/probes/20260925_lap582_middle_w49_independent_review.py` exit0, canonical `5073c7dd219b2c4a645394e3d203ac7efb333e3da0d7367c848525cd463dd6fc`(lap582 두 번과 같음). (2) `python3 docs/history/laps/probes/20260925_lap583_strategy_w49r_capture_criterion.py` 2회 exit0, canonical `82024e73c20eb01433793660df9cdf1ccd889be9ec5143329a5bf1fb20665a03`. 대상 PNG는 `temp/Syw2plus_patch/captures/`의 2026-09-20 3장과 lap581 W49 5장(읽기 전용).
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): 월드 비검정 비율은 양성 0.8102/0.7953/0.7946, 음성 0.0092~0.0096. A1(양성 전부 V1 PASS)·A2(음성 전부 FAIL) true → V1 판정력 PASS. 미니맵 내부 비율은 8장 모두 0.0(A3, 추가 `*minimap*` 6장도 0.0) → **N213** 환경 공통. **N212**: 캡처 경로는 월드를 찍는다. W49는 bridge goal로 시작하고 카메라 입력이 없다. 가설 H-cam/H-fog는 미증명. §132 세 판정에 동의한다. **결정 (B)**: W49R 카메라 맞춤+V1~V3·R gate, fresh 정확히 1회, 화면 축 마지막 실행.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: Fast 결과는 STATUS 검증 상태에 기록한다. 카메라 주소 `0x00B42D7C/80`은 원본 기준이다. 결합 후보에서는 G0에서 키 입력 전후로 확인한다(실패 시 raw `UNKNOWN`, V1 gate 유지). local index `0x00B63FC4`는 player_offsets 383행 근거다. 미니맵 내용은 합격 조건에서 뺐다. G2 PASS·사용자 3단 승인 아님.
+- 다음 한 가지: 다음 work가 카드 §4대로 W49R을 실행한다(계획 회차 없음, 게임 전 확인 §4.6, 남은 시간 45분 미만이면 시작하지 않음). 그 뒤 middle 검수 → strategy S5′ 제출.

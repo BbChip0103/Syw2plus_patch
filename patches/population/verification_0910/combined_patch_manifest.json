@@ -1,0 +1,546 @@
+{
+  "source_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+  "patched_sha256": "d22904639adf03ddf2b6b3122a64a59131770e5ad85107290229e6932b319abc",
+  "width": 2560,
+  "height": 1440,
+  "terrain_va": "0x108f000",
+  "dirty_va": "0x141b000",
+  "row_table_va": "0x1423000",
+  "clear_trampoline_va": "0x4e4b00",
+  "changes": [
+    {
+      "va": "0x464505",
+      "offset": 410885,
+      "old": "20030000",
+      "new": "000a0000",
+      "reason": "mode width"
+    },
+    {
+      "va": "0x46450c",
+      "offset": 410892,
+      "old": "58020000",
+      "new": "a0050000",
+      "reason": "mode height"
+    },
+    {
+      "va": "0x432912",
+      "offset": 207122,
+      "old": "00020000",
+      "new": "a0050000",
+      "reason": "terrain height"
+    },
+    {
+      "va": "0x432917",
+      "offset": 207127,
+      "old": "40030000",
+      "new": "000a0000",
+      "reason": "terrain stride"
+    },
+    {
+      "va": "0x43291c",
+      "offset": 207132,
+      "old": "303dba00",
+      "new": "00f00801",
+      "reason": "terrain storage"
+    },
+    {
+      "va": "0x432955",
+      "offset": 207189,
+      "old": "ff010000",
+      "new": "9f050000",
+      "reason": "terrain clip bottom"
+    },
+    {
+      "va": "0x43295a",
+      "offset": 207194,
+      "old": "3f030000",
+      "new": "ff090000",
+      "reason": "terrain clip right"
+    },
+    {
+      "va": "0x41bf40",
+      "offset": 114496,
+      "old": "303dba00",
+      "new": "00f00801",
+      "reason": "composite storage"
+    },
+    {
+      "va": "0x41bf45",
+      "offset": 114501,
+      "old": "00020000",
+      "new": "a0050000",
+      "reason": "composite height"
+    },
+    {
+      "va": "0x41bf4a",
+      "offset": 114506,
+      "old": "40030000",
+      "new": "000a0000",
+      "reason": "composite width"
+    },
+    {
+      "va": "0x464990",
+      "offset": 412048,
+      "old": "f0040000",
+      "new": "e8705c00",
+      "reason": "relocate height-indexed row table; avoid DDraw metadata overflow"
+    },
+    {
+      "va": "0x41b511",
+      "offset": 111889,
+      "old": "ff010000",
+      "new": "9f050000",
+      "reason": "viewport"
+    },
+    {
+      "va": "0x41b516",
+      "offset": 111894,
+      "old": "3f030000",
+      "new": "ff090000",
+      "reason": "viewport"
+    },
+    {
+      "va": "0x41b533",
+      "offset": 111923,
+      "old": "3f030000",
+      "new": "ff090000",
+      "reason": "viewport"
+    },
+    {
+      "va": "0x41b547",
+      "offset": 111943,
+      "old": "ff010000",
+      "new": "9f050000",
+      "reason": "viewport"
+    },
+    {
+      "va": "0x4e4b00",
+      "offset": 936704,
+      "old": "000000000000000000000000000000000000000000000000",
+      "new": "9c60fc31c0bf00f00801b900100e00f3ab619de901e5f4ff",
+      "reason": "clear private framebuffer on redraw; preserve registers and flags"
+    },
+    {
+      "va": "0x43296c",
+      "offset": 207212,
+      "old": "80be7d5900",
+      "new": "e98f210b00",
+      "reason": "always redraw via clear trampoline; bypass fixed scrolling"
+    },
+    {
+      "va": "0x432525",
+      "offset": 206117,
+      "old": "f0",
+      "new": "c0",
+      "reason": "camera scan lower bound"
+    },
+    {
+      "va": "0x432528",
+      "offset": 206120,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x43253f",
+      "offset": 206143,
+      "old": "f0",
+      "new": "c0",
+      "reason": "camera scan lower bound"
+    },
+    {
+      "va": "0x432542",
+      "offset": 206146,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4325d0",
+      "offset": 206288,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4325e4",
+      "offset": 206308,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4325fd",
+      "offset": 206333,
+      "old": "f0",
+      "new": "c0",
+      "reason": "camera scan lower bound"
+    },
+    {
+      "va": "0x432600",
+      "offset": 206336,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x432611",
+      "offset": 206353,
+      "old": "f0",
+      "new": "c0",
+      "reason": "camera scan lower bound"
+    },
+    {
+      "va": "0x432614",
+      "offset": 206356,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x432829",
+      "offset": 206889,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x43283b",
+      "offset": 206907,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x432863",
+      "offset": 206947,
+      "old": "f0",
+      "new": "c0",
+      "reason": "camera scan lower bound"
+    },
+    {
+      "va": "0x432866",
+      "offset": 206950,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x43287b",
+      "offset": 206971,
+      "old": "f0",
+      "new": "c0",
+      "reason": "camera scan lower bound"
+    },
+    {
+      "va": "0x43287e",
+      "offset": 206974,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4328ea",
+      "offset": 207082,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x432904",
+      "offset": 207108,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x43303c",
+      "offset": 208956,
+      "old": "f0",
+      "new": "c0",
+      "reason": "camera scan lower bound"
+    },
+    {
+      "va": "0x43303f",
+      "offset": 208959,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433050",
+      "offset": 208976,
+      "old": "f0",
+      "new": "c0",
+      "reason": "camera scan lower bound"
+    },
+    {
+      "va": "0x433053",
+      "offset": 208979,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433290",
+      "offset": 209552,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4332ac",
+      "offset": 209580,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433316",
+      "offset": 209686,
+      "old": "1000",
+      "new": "4000",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x43331a",
+      "offset": 209690,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x43333a",
+      "offset": 209722,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4334a1",
+      "offset": 210081,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4334bd",
+      "offset": 210109,
+      "old": "1000",
+      "new": "4000",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4334c1",
+      "offset": 210113,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4334e1",
+      "offset": 210145,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4334e4",
+      "offset": 210148,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433790",
+      "offset": 210832,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4337a9",
+      "offset": 210857,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4337c5",
+      "offset": 210885,
+      "old": "1000",
+      "new": "4000",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4337c9",
+      "offset": 210889,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4337e9",
+      "offset": 210921,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4337ec",
+      "offset": 210924,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4338f2",
+      "offset": 211186,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433908",
+      "offset": 211208,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x43398f",
+      "offset": 211343,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433992",
+      "offset": 211346,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4339ae",
+      "offset": 211374,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x4339b1",
+      "offset": 211377,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433a41",
+      "offset": 211521,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433a56",
+      "offset": 211542,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433a6e",
+      "offset": 211566,
+      "old": "1000",
+      "new": "4000",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433a72",
+      "offset": 211570,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433a92",
+      "offset": 211602,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433a95",
+      "offset": 211605,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433e46",
+      "offset": 212550,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x433e63",
+      "offset": 212579,
+      "old": "10",
+      "new": "40",
+      "reason": "camera scan radius"
+    },
+    {
+      "va": "0x43535e",
+      "offset": 217950,
+      "old": "6c790501",
+      "new": "00b04101",
+      "reason": "private all-dirty mask (padded)"
+    },
+    {
+      "va": "0x4357f7",
+      "offset": 219127,
+      "old": "6c790501",
+      "new": "00b04101",
+      "reason": "private all-dirty mask (padded)"
+    },
+    {
+      "va": "0x435db6",
+      "offset": 220598,
+      "old": "6c790501",
+      "new": "00b04101",
+      "reason": "private all-dirty mask (padded)"
+    },
+    {
+      "va": "0x436066",
+      "offset": 221286,
+      "old": "6c790501",
+      "new": "00b04101",
+      "reason": "private all-dirty mask (padded)"
+    },
+    {
+      "va": "0x43630e",
+      "offset": 221966,
+      "old": "6c790501",
+      "new": "00b04101",
+      "reason": "private all-dirty mask (padded)"
+    },
+    {
+      "va": "0x41b576",
+      "offset": 111990,
+      "old": "66c700dc05",
+      "new": "66c7008813",
+      "reason": "fixed supply5000 integration"
+    },
+    {
+      "va": "0x43ffd4",
+      "offset": 262100,
+      "old": "05dc050000",
+      "new": "b888130000",
+      "reason": "fixed supply5000 integration"
+    }
+  ],
+  "qhd_parent_sha256": "c4b912d96e623de91b7cc25de35c57395d8de1e01801e948f45b5b456b80f993",
+  "fixed_supply_cap": 5000
+}

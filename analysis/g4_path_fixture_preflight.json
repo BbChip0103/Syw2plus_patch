@@ -1,0 +1,104 @@
+{
+  "schema": "syw2plus.g4.path_fixture_preflight.v1",
+  "observational_only": true,
+  "activation_allowed": false,
+  "verdict": "BLOCKED",
+  "checks": [
+    {
+      "name": "pinned_original_executable",
+      "status": "PASS",
+      "evidence": {
+        "path": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_re/Syw2plus/syw2plus_original.exe",
+        "sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+        "expected": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac"
+      }
+    },
+    {
+      "name": "pinned_decompiler_inputs",
+      "status": "PASS",
+      "evidence": {
+        "wrapper_sha256": "681a88396967577c814257bb3211afda628f121e4a537534d68f5637ee22da87",
+        "astar_sha256": "8e5237e98934ef7ed230fba1e8509fb60a451cca52ddd5a4ccd304188e3270a9"
+      }
+    },
+    {
+      "name": "astar_table_entry",
+      "status": "PASS",
+      "evidence": {
+        "entry_va": "0x004E5FF4",
+        "target_va": "0x0046B840",
+        "expected_target_va": "0x0046B840"
+      }
+    },
+    {
+      "name": "unit_coordinate_reader",
+      "status": "PASS",
+      "evidence": {
+        "unit_x_offset": "0x2A2",
+        "unit_y_offset": "0x2A4",
+        "source": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/tools/runtime_env.py"
+      }
+    },
+    {
+      "name": "right_click_injector",
+      "status": "PASS",
+      "evidence": {
+        "source": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/tools/x11_mouse_click.py",
+        "required_button": 3
+      }
+    },
+    {
+      "name": "deterministic_scene_fixture",
+      "status": "BLOCKED",
+      "evidence": {
+        "current_runtime_statement": "default two-player random game; map name/seed not exposed by approved read-only offsets"
+      },
+      "blocker": "No pinned save/map plus observed replay seed currently guarantees the same pathfinding scene across runs."
+    },
+    {
+      "name": "obstacle_occupancy_oracle",
+      "status": "BLOCKED",
+      "evidence": {},
+      "blocker": "No approved reader currently snapshots the exact passability/collision grid consumed by A*."
+    },
+    {
+      "name": "movement_command_trace",
+      "status": "BLOCKED",
+      "evidence": {
+        "available": "selection and generic XTest button injection",
+        "missing": "integrated selected-slot right-click command plus per-tick x/y/result trace"
+      },
+      "blocker": "A right-click helper exists, but no harness proves a deterministic move command and samples its route."
+    },
+    {
+      "name": "repeatability_gate",
+      "status": "BLOCKED",
+      "evidence": {
+        "required": [
+          "same fixture hash",
+          "same selected slot/type",
+          "same start/destination",
+          "two original runs with identical route outcome"
+        ]
+      },
+      "blocker": "No pair of original-game route traces exists."
+    }
+  ],
+  "blockers": [
+    "deterministic_scene_fixture",
+    "obstacle_occupancy_oracle",
+    "movement_command_trace",
+    "repeatability_gate"
+  ],
+  "conclusion": "The original A* entry and low-level coordinate/input primitives are grounded, but a repeatable original-game comparison fixture is not yet available. Do not patch pathfinding constants or code from this evidence.",
+  "next_safe_fixture": {
+    "kind": "diagnostic private-runtime fixture",
+    "requirements": [
+      "pin one save/map and verify its hash",
+      "prove one movable selected unit and fixed start/destination",
+      "snapshot the collision/passability inputs used by A*",
+      "sample tick, slot, x, y and command state until arrival/failure",
+      "require two byte-identical original trace outcomes before candidate comparison"
+    ]
+  }
+}

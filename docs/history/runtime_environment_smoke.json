@@ -1,0 +1,319 @@
+{
+  "manifest": {
+    "ok": true,
+    "manifest": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/manifest.json",
+    "game_root": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/game",
+    "prefix": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/prefix",
+    "output": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/output",
+    "exe_sha256": "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac",
+    "diagnostic_bridge_overridden": false
+  },
+  "timeout_seconds": 60.0,
+  "screenshots": [
+    {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/temp/20260910_223901_20260910_222434_2612938_0_2887065_startup_1789047541316950929.png",
+      "sha256": "83b598a99edf3b1ba086a25650afaeb17f914b7a6aafe8c0721e0bb3dc5efdbd",
+      "dimensions": [
+        1024,
+        768
+      ]
+    },
+    {
+      "path": "/home/dev_00/sharedfolder/260320_Syw2plus/temp/20260910_223903_20260910_222434_2612938_0_2887065_after_enter_1789047543549689546.png",
+      "sha256": "5cc9fa90742ba4db96f43863937bd0fdb8952badc580678899b8af95e5ba837c",
+      "dimensions": [
+        1024,
+        768
+      ]
+    }
+  ],
+  "input": {
+    "action": "title_random_game",
+    "x": 184,
+    "y": 560,
+    "display_private": true,
+    "target_window": "0xe00001",
+    "focus_exit": 0,
+    "inject_exit": 0,
+    "expected_ps": 7
+  },
+  "display": ":91",
+  "game_pid": 2887065,
+  "processes": [
+    {
+      "pid": 2886897,
+      "alive": true,
+      "State": "Z (zombie)",
+      "Threads": "1",
+      "cmdline": ""
+    },
+    {
+      "pid": 2887065,
+      "alive": true,
+      "State": "R (running)",
+      "VmSize": "2772 kB",
+      "VmRSS": "400 kB",
+      "Threads": "1",
+      "cmdline": "/bin/sh -e /usr/bin/wine /home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/game/syw2plus_original.exe"
+    }
+  ],
+  "window_tree_baseline": "\nxwininfo: Window id: 0x21f (the root window) (has no name)\n\n  Root window id: 0x21f (the root window) (has no name)\n  Parent window id: 0x0 (none)\n     9 children:\n     0x400007 (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x400006 (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x400005 (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x400004 (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x400002 (has no name): (\"explorer.exe\" \"explorer.exe\")  160x20+3+29  +3+29\n     0x400003 \"Default IME\": (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x200035 (has no name): ()  1x1+-1+-1  +-1+-1\n     0x600001 (has no name): ()  1x1+0+0  +0+0\n     0x400001 (has no name): ()  1x1+0+0  +0+0\n\n",
+  "window_tree": "\nxwininfo: Window id: 0x21f (the root window) (has no name)\n\n  Root window id: 0x21f (the root window) (has no name)\n  Parent window id: 0x0 (none)\n     19 children:\n     0x800047 (has no name): ()  1x1+0+0  +0+0\n     0xe00003 (has no name): (\"syw2plus_original.exe\" \"syw2plus_original.exe\")  1x1+0+0  +0+0\n     0xe00001 \"조선의반격\": (\"syw2plus_original.exe\" \"syw2plus_original.exe\")  800x600+0+0  +0+0\n        1 child:\n        0x800142 (has no name): ()  800x600+0+0  +0+0\n     0xe00002 \"Default IME\": (\"syw2plus_original.exe\" \"syw2plus_original.exe\")  1x1+0+0  +0+0\n     0x80001f (has no name): ()  1x1+-1+-1  +-1+-1\n     0x400002 (has no name): (\"explorer.exe\" \"explorer.exe\")  160x20+3+29  +3+29\n     0x40000a (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x400009 (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0xc00001 (has no name): (\"_inmmserv.exe\" \"_inmmserv.exe\")  1x1+0+0  +0+0\n     0xc00002 \"Default IME\": (\"_inmmserv.exe\" \"_inmmserv.exe\")  1x1+0+0  +0+0\n     0xa00009 (has no name): ()  1x1+-1+-1  +-1+-1\n     0x400007 (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x400006 (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x400005 (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x400004 (has no name): (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x400003 \"Default IME\": (\"explorer.exe\" \"explorer.exe\")  1x1+0+0  +0+0\n     0x200035 (has no name): ()  1x1+-1+-1  +-1+-1\n     0x600001 (has no name): ()  1x1+0+0  +0+0\n     0x400001 (has no name): ()  1x1+0+0  +0+0\n\n",
+  "window_ids": [
+    "0xe00001",
+    "0x800142"
+  ],
+  "target_window": {
+    "id": "0xe00001",
+    "width": 800,
+    "height": 600
+  },
+  "readiness": "xwininfo game window + read-only original state observed",
+  "state_errors_before_ready": [
+    "no new game window beyond Wine desktop",
+    "original title/menu state PS=9 not reached",
+    "original title/menu state PS=9 not reached"
+  ],
+  "state": {
+    "pid": 2887065,
+    "time": 1789047541.3147428,
+    "ps": 9,
+    "tick": 0,
+    "players": [
+      {
+        "owner": 0,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 1,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 2,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 3,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 4,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 5,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 6,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 7,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      }
+    ],
+    "rss_bytes": 237797376
+  },
+  "state_after_input": {
+    "pid": 2887065,
+    "time": 1789047543.7144032,
+    "ps": 7,
+    "tick": 0,
+    "players": [
+      {
+        "owner": 0,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 1,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 2,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 3,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 4,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 5,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 6,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      },
+      {
+        "owner": 7,
+        "nation": 0,
+        "ai": 0,
+        "rice": 0,
+        "wood": 0,
+        "reserved": 0,
+        "count": 0,
+        "used": 0,
+        "count_cap": 0,
+        "cap": 0
+      }
+    ],
+    "rss_bytes": 239230976
+  },
+  "runtime_progress_observed_after_input": false,
+  "input_effect_observed": true,
+  "screenshot_changed": true,
+  "processes_after_input": [
+    {
+      "pid": 2886897,
+      "alive": true,
+      "State": "Z (zombie)",
+      "Threads": "1",
+      "cmdline": ""
+    },
+    {
+      "pid": 2887065,
+      "alive": true,
+      "State": "R (running)",
+      "VmSize": "3462536 kB",
+      "VmRSS": "233628 kB",
+      "Threads": "34",
+      "cmdline": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/game/syw2plus_original.exe"
+    }
+  ],
+  "existing_state": {},
+  "elapsed_seconds": 5.163,
+  "cleanup": {
+    "owned_launchers_stopped": true,
+    "xvfb_stopped": true,
+    "prefix_target": "/home/dev_00/sharedfolder/260320_Syw2plus/Syw2plus_patch/local/runtime/20260910_222434_2612938_0/prefix",
+    "global_kill_used": false,
+    "prefix_processes_after": [],
+    "error": null,
+    "ok": true
+  }
+}

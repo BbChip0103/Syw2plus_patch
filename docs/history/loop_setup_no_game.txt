@@ -1,0 +1,27 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.0.2, pluggy-1.5.0
+rootdir: /tmp/syw2_patch_loop_no_game_idtelnrz/project
+configfile: pyproject.toml
+testpaths: patches, tests
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 42 items
+
+patches/population/test_fixed_supply_5000.py s.ssss..s.                  [ 23%]
+patches/resolution/test_qhd_probe.py .sss                                [ 33%]
+tests/test_loop_context.py ........                                      [ 52%]
+tests/test_patch_loop.py .......ss                                       [ 73%]
+tests/test_project_setup.py ...........                                  [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] patches/population/test_fixed_supply_5000.py:20: Local original game required
+SKIPPED [1] patches/population/test_fixed_supply_5000.py:34: Local original game required
+SKIPPED [1] patches/population/test_fixed_supply_5000.py:45: Local original game required
+SKIPPED [1] patches/population/test_fixed_supply_5000.py:53: Local original game required
+SKIPPED [1] patches/population/test_fixed_supply_5000.py:64: Local original game required
+SKIPPED [1] patches/population/test_fixed_supply_5000.py:119: Local original game required
+SKIPPED [1] patches/resolution/test_qhd_probe.py:29: Private original game asset unavailable
+SKIPPED [1] patches/resolution/test_qhd_probe.py:59: Private original game asset unavailable
+SKIPPED [1] patches/resolution/test_qhd_probe.py:69: Private original game asset unavailable
+SKIPPED [2] tests/test_patch_loop.py:129: Real-loop original guard requires local EXE; agents remain mocked
+======================== 31 passed, 11 skipped in 2.12s ========================

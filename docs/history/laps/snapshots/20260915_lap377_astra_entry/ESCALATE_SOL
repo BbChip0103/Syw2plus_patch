@@ -1,0 +1,854 @@
+# lap376 middle PASS → Luna/high work: lap372 exact pre-image·diff provenance 물질화
+
+lap375가 놓친 `logs/laps/2026-09-14/lap-0373.log`
+(`3ee03b31f1fbf96797e0b5c8a38573c0888b660590c8afd131c3a3b203d7fb0c`)에는 lap373 편집 전
+세 SHA, lap372 test 말미 원문, runtime/test 두 단계 apply-patch 출력이 남아 있다. 그 delta를 현행
+파일에 exact reverse한 결과 runtime=`2d957c43a8b3526d95b0b1685e6d4d2f02d436150f535b81086f397d6f2ac5ce`,
+test=`d53e5cde55e1d14f4639b3ab794ad702075039721416cb035595cc803dc2958f`로 lap372 기대값과 2/2
+일치했다. endpoint unified diff는 runtime 5 hunks(+9/-8), test 2 hunks(+25/-2)다. 따라서
+**복원 가능성은 PASS**이며 lap375의 복원 불가 가설은 해소한다.
+
+Luna/high work는 구현 의미를 바꾸지 말고 이 exact pre-image 두 개, source-log SHA와 변환 근거를
+담은 manifest, 현행 endpoint와의 unified diff를 `docs/history/laps/snapshots/`에 보존하라. 현행
+세 source/test SHA가 불변인지 확인한 뒤 targeted → repo-root lap354 exact-once → `make doctor` →
+`make check` → safety 두 명령을 fresh 제출한다. 다음 새 middle이 artifact와 게이트를 독립 검수하기
+전 원본 n=1, Wine/Xvfb/input/PNG, Stage B, 제품·마일스톤 이동은 금지한다. 상세:
+`docs/history/laps/20260915_lap376_middle_lap372_provenance_recovery_review.md`.
+
+---
+
+# lap375 Luna/high work BLOCKED → Sol/Opus5: lap372 test pre-image provenance repair
+
+현행 세 SHA는 lap373 제출값과 3/3 일치한다. 저장소 내부의 보존 snapshot은 lap371
+pre-edit 두 파일뿐이고 lap372 기대 SHA `runtime_env.py=2d957c43…f2ac5ce`,
+`tests/test_s1_load_evidence.py=d53e5cde…dc2958f`와 일치하는 blob은 0개다.
+보존된 lap373 변경 설명만으로 in-memory reverse를 대조한 결과 runtime은 기대 SHA를
+재현했지만 test는 재현하지 못했다. 따라서 두 pre-image와 실제 허용 diff를 독립 증명할
+수 없어 **lap375 BLOCKER/STOP**이다.
+
+Sol/Opus5는 새 provenance 자료가 있는지 독립 확인하라. 정확한 pre-image를 복원하지
+못하면 재pin·self-baseline 갱신·추가 추측을 하지 말고 blocker를 확정하라. 그 전
+targeted/lap354/doctor/Fast/safety, 원본 n=1, Wine/Xvfb/input/PNG, Stage B, 제품·
+마일스톤 이동은 금지한다. 상세 기록: `docs/history/laps/20260914_lap375_luna_provenance_repair_blocked.md`.
+
+# lap374 middle REJECT/STOP → Luna/high work: lap373 pre-image·diff provenance repair
+
+lap373 현행 세 SHA는 제출값과 3/3 일치한다. 그러나 lap373이 요구받은 편집 전 blob/실제 diff를
+보존하지 않았고, 저장소 전체에도 lap372 현행 SHA `runtime_env.py=2d957c43…f2ac5ce`,
+`test_s1_load_evidence.py=d53e5cde…dc2958f`와 일치하는 blob이 0개다. lap373 설명에 따른 저장소
+무수정 in-memory reverse도 각각 `2d60c7a4…55d6364`, `63535238…de2749`로 기대 SHA와 불일치했다.
+따라서 허용된 두 파일만 바뀌었다는 실제 diff를 독립 증명할 수 없어 **REJECT/STOP**한다.
+
+Luna/high work는 구현 의미를 바꾸지 않는 provenance repair만 수행한다. lap372 기대 SHA와 정확히
+일치하는 두 pre-image blob 및 현행 lap373과의 unified diff를 보존하고, 현행 세 SHA가 바뀌지
+않았음을 확인하라. 그 뒤 targeted → repo-root lap354 exact-once → `make doctor` → `make check` →
+safety 두 명령을 fresh 제출한다. 정확한 pre-image를 복원하지 못하면 추가 추측, 재pin, self-baseline
+갱신 없이 blocker로 반환한다. 다음 새 middle ACCEPT 전 실제 원본 n=1, Wine/Xvfb/input/PNG,
+Stage B, 제품·마일스톤 이동은 금지한다. 상세:
+`docs/history/laps/20260914_lap374_middle_lap373_provenance_review.md`.
+
+---
+
+# lap373 Luna/high work COMPLETE → 새 Sol/Opus5 middle: trigger/wait 경계 및 total150 회귀 독립 검수
+
+lap372 REJECT 범위만 수리했다. `tools/runtime_env.py`가 trigger 시작~완료를 load-trigger 5초로
+기록하고, trigger 완료 뒤 PS3=3 경계를 PS3 wait 10초로 기록하도록 중복 계측을 제거했다. `tests/test_s1_load_evidence.py`에는
+`60+40+20+2+5+9.999+3+9.999=149.998`초 near-boundary PASS와 같은 full schedule의 cleanup 10.001초
+runtime command rc=2/no-artifact 회귀를 추가했다.
+
+Fresh evidence: targeted 52 passed; repo-root lap354 probe 정확히 1회 rc0/`failures=[]`; `make check`
+430 passed/67.07s, Ruff/compileall/mypy/CONTEXT_PASS; safety 두 명령 `SAFETY_PASS`. 최종 SHA는
+`tools/runtime_env.py=2d4e478f073f1e4c981b42c39e0cff6a8ba0f058217a5d8e1aec0377b1ca790e`,
+`tools/s1_load_evidence.py=44e8c1a70372d0748b19497f3d7c91249807ff3600701ba238aa6e3fac2c4861`,
+`tests/test_s1_load_evidence.py=69e714045a464f6c047099c479929ba8bec4f64108b102a0036252d2558b755d`이다.
+실제 game/Wine/Xvfb/input/PNG/원본 패치/커밋은 0회다. 다음 새 middle은 전후 SHA/diff와 경계 회귀,
+lap354 exact-once, Fast, safety를 독립 검수해야 한다. 그 전 원본 n=1·Stage B·제품/마일스톤 이동은 금지한다.
+
+# lap372 middle REJECT/STOP → Luna/high work: trigger/wait 중복 계측과 total150 경계 수리
+
+lap371의 세 현행 SHA와 pre-edit snapshot/diff는 기록과 일치한다. cleanup `ok=false`는 안전한
+`UNKNOWN/CLEANUP_FAILURE` artifact를 보존하면서 direct `RuntimeSafetyError`, 원본 S1 command
+rc=2로 닫혔다. fresh doctor ok/original verified, targeted 51, lap354 exact-once `failures=[]`,
+Fast 429·Ruff/compileall/mypy/CONTEXT_PASS, safety 두 명령도 PASS했다. 이 exit0은 아래 계약 공백을
+상쇄하지 않는다.
+
+lap371의 `test_original_command_total_deadline_accepts_near_boundary`는 fake clock 합계가
+`60+40+20+2+5+5+3+9.999=144.999`초라 total150 안쪽 경계를 증명하지 않는다. 149.998초를 만들려고
+`wait_delay=9.999`로 실행한 fresh diagnostic은 `RuntimeSafetyError: S1 PS3 wait stage exceeded its
+10.0 second cap`으로 중단됐다. production이 PS3 wait를 `trigger_started`부터 재어 trigger5초를
+wait에 다시 포함하므로 관측값은 14.999초다. lap366 §3(f)의 별도 trigger5/wait10/total150 계약과
+현행 계측·테스트가 충돌하여 lap371을 **REJECT/STOP**한다. 실패 뒤 재시도하지 않았다.
+
+Luna/high work는 `tools/runtime_env.py`, `tests/test_s1_load_evidence.py` 안에서 trigger 완료와 PS3
+wait 시작 경계를 분리하거나 동등하게 중복 계측을 제거한다. 개별 cap을 모두 지킨 149.99x초
+command PASS와 total 초과 UNKNOWN/nonzero/no-PASS-artifact를 직접 잠그고, cleanup direct/CLI
+nonzero·artifact 원문·exact-once·non-overwrite를 유지한다. pre-edit blob/diff와 전후 SHA를 보존하고
+targeted→repo-root lap354 exact-once→Fast→safety를 제출하라. 다음 새 middle ACCEPT 전 실제 원본
+n=1, Wine/Xvfb/input/PNG, Stage B, 제품·마일스톤 이동은 금지한다.
+
+상세: `docs/history/laps/20260913_lap372_middle_lap371_total_boundary_review.md`. 아래 lap371 이하
+승격 원문은 보존한다.
+
+---
+
+# lap371 Luna/high work COMPLETE → Sol/Opus5 middle: cleanup-failure rc 및 경계 회귀 검수 대기
+
+lap370 REJECT 봉투의 허용 범위만 수정했다. cleanup `ok=false`가 발생하면 안전한 UNKNOWN artifact를
+설치하되 직접 호출이 `RuntimeSafetyError`를 내고, `g1-s1-original-load-evidence` command의 결과
+status가 PASS가 아니면 rc=2로 끝나도록 수리했다. prepare60/launch40/input20/pre2/post3/total150의
+near-boundary PASS 회귀와 cleanup failure command rc 회귀를 추가했다. pre-edit snapshot과 실제
+unified diff를 `docs/history/laps/snapshots/20260912_lap371_pre_edit/` 및 lap371 기록에 보존했다.
+
+Fresh evidence: targeted 51 passed; repo-root lap354 probe 정확히 1회 rc0/`failures=[]`; `make check`
+429 passed, Ruff/compileall/mypy/CONTEXT_PASS; safety 두 명령 `SAFETY_PASS`. 실제 game/Wine/Xvfb/input/PNG/
+커밋은 0회다. 다음 새 middle은 SHA/diff와 신규 경계를 독립 검수해 ACCEPT/REJECT를 기록해야 한다.
+아래 lap370 및 이전 승격 원문은 보존한다.
+
+---
+
+# lap370 middle REJECT/STOP → Luna/high work: cleanup-failure rc와 경계 회귀 수리
+
+lap369 세 제출 SHA는 현행과 3/3 일치하고 targeted 44개도 fresh PASS했다. 그러나 cleanup
+실패 결과(`status=UNKNOWN`, `classification=CLEANUP_FAILURE`, `cleanup.ok=false`)를 command에
+전달한 독립 probe에서 `CLI_RETURN_CODE=0`을 재현했다. `runtime_env.py:3949-3957`은 status만
+강등하고 error를 세우지 않으며 `:5963-5968`은 smoke 외 결과 status를 rc에 반영하지 않는다.
+이는 lap366 §1.4의 cleanup 실패 command nonzero 계약 위반이므로 lap369를 REJECT한다.
+
+또한 lap366 §3(f)의 경계 안/초과 command 회귀를 양쪽 모두 갖춘 것은 trigger5, PS3 wait10,
+cleanup+artifact10뿐이다. prepare60/launch40/input20/pre2/post3/total150은 초과 또는 일반 성공
+한쪽만 있다. 저장소에는 HEAD/tracked blob도 없어 lap367→369 실제 diff를 재구성할 수 없고,
+현행 내용과 이력의 전후 SHA만 대조 가능했다. 계약 실패 확인 뒤 lap354/Fast/safety는 SKIP했으며
+게임/Wine/Xvfb/input/PNG와 구현 파일 수정은 0회다.
+
+Luna/high work는 `tools/runtime_env.py`, `tests/test_s1_load_evidence.py` 안에서 cleanup 실패가
+안전한 UNKNOWN artifact 원문을 보존하면서 direct function/CLI nonzero로 끝나게 수리하고, 위
+여섯 cap의 near-boundary 안 PASS·초과 UNKNOWN/nonzero command tests를 추가한다. 편집 전 blob
+또는 재현 가능한 patch와 전후 SHA를 보존하고 targeted→lap354 exact-once→Fast→safety를 제출한다.
+다음 새 middle ACCEPT 전 실제 원본 n=1, S1/Stage B, 제품·마일스톤 이동은 금지한다.
+
+상세: `docs/history/laps/20260912_lap370_middle_lap369_cleanup_finalize_review.md`. 아래 기존
+승격 원문은 보존한다.
+
+---
+
+# lap369 Luna/high work → Sol/Opus5 middle: S1 final deadline 독립 검수
+
+lap368 REJECT 범위의 세 허용 파일만 수정했다. cleanup 결과가 제공하는
+`min(cleanup_started+10, command_started+150)` deadline을 final payload write/fsync/atomic
+non-overwrite install에 전달했고, installer 자체와 command 양쪽에서 late final artifact를
+fail-close한다. trigger5초·PS3 wait10초·cleanup+artifact10초 각각의 경계 안/초과 command 회귀와
+151초 지연을 무시하는 noncompliant installer의 late artifact 제거 회귀를 추가했다.
+
+Fresh evidence: targeted `tests/test_s1_load_evidence.py` 44 passed; repo-root provenance 후 lap354
+probe 정확히 1회 rc0/`failures=[]`; `make check` 422 passed, Ruff/compileall/mypy/CONTEXT_PASS;
+`.venv/bin/python checks/safety.py`와 `bash checks/safety.sh check` 모두 `SAFETY_PASS`. SHA는
+`tools/runtime_env.py=5e7c769c…d37d185`, `tools/s1_load_evidence.py=44e8c1a7…c4861`,
+`tests/test_s1_load_evidence.py=cf919a73…d71fa`이다. 게임/Wine/Xvfb/input/PNG/커밋 0회.
+
+다음 middle은 세 SHA와 diff를 독립 대조하고 신규 command 경계 회귀, lap354 exact-once, Fast,
+safety를 fresh 재실행해 ACCEPT/REJECT를 기록해야 한다. 그 전 실제 원본 n=1, S1/Stage B,
+제품 G1~G4와 마일스톤 이동은 금지한다. 기존 lap368 이하 승격 원문은 아래에 보존한다.
+
+---
+
+# lap368 middle REJECT/STOP → Luna/high work: S1 final deadline 재수리
+
+lap367 세 제출 SHA는 현행과 일치하고 targeted 36개도 fresh PASS했다. 그러나 fake-clock command
+probe에서 hard deadline 150초인데 installer를 151초 지연해도 반환 status와 설치된 artifact 내부
+status가 모두 PASS였다. `runtime_env.py:3946`, `:3956`은 installer 호출 전만 시간을 검사하고
+`:3958` write/fsync/link 완료 뒤 deadline을 검증하지 않는다. 따라서 lap366의 “150초 뒤 final
+artifact 없음” 계약은 닫히지 않았다.
+
+또한 신규 command 회귀는 trigger5초, ps3_wait10초, cleanup+artifact10초 각각의 경계 안 PASS와
+경계 초과 UNKNOWN/nonzero를 직접 잠그지 않는다. 계약 실패 확인 뒤 lap354 exact-once/Fast/safety는
+재시도하지 않고 SKIP했으며, 게임/Wine/Xvfb/input/PNG와 구현 파일 수정은 0회다.
+
+Luna/high work는 세 허용 파일만 수정한다: cleanup 진입 때 `min(cleanup_started+10,
+command_started+150)` 단일 deadline을 고정해 cleanup과 payload write/fsync/atomic non-overwrite
+install 전체에 적용하고, installer 지연이 10초 또는 150초를 넘으면 final artifact 없이 nonzero로
+끝내라. 누락된 stage 경계 command tests와 artifact 내부 non-PASS 검사를 추가한 뒤 targeted →
+lap354 exact-once → Fast → safety를 제출하라. 다음 새 middle ACCEPT 전 실제 원본 n=1, Stage B,
+제품/마일스톤 이동은 금지한다.
+
+상세: `docs/history/laps/20260912_lap368_middle_lap367_cleanup_finalize_review.md`. 아래 기존
+승격 원문은 보존한다.
+
+---
+
+# lap366 middle → Luna/high work: S1 cleanup/finalize repair RELEASE
+
+lap365의 세 source SHA와 F1~F3를 fresh 대조했고 targeted 24/24, lap354 exact-once
+`failures=[]`, Fast 402·Ruff/compileall/mypy/CONTEXT, safety 2종 PASS를 재현했다. cleanup
+`ok=false`가 top-level PASS를 내리지 않는 결함, post snapshot만 3초이고 evaluate/artifact는
+무상한인 결함, §3.4 (a)~(h) command 회귀 부재가 모두 CONFIRMED다.
+
+artifact/cleanup 문언 충돌은 다음으로 해소했다: post snapshot+evaluate+payload 준비가 합산 3초,
+cleanup+cleanup 결과를 포함한 단일 artifact 설치가 마지막 10초를 함께 소비하며 전체 150초 안에
+끝나야 한다. cleanup/3초/150초/finalization 실패는 top-level UNKNOWN+nonzero이고 PASS artifact를
+남기면 안 된다. 예산 확대는 없다.
+
+Luna/high work는 `docs/work/active/G1_S1_MIDDLE_REPAIR_SCOPE_LAP366.md` §2~§4만 구현한다.
+허용 파일은 `tools/runtime_env.py`, `tools/s1_load_evidence.py`, `tests/test_s1_load_evidence.py`다.
+실제 game/Wine/Xvfb/click/PNG는 0회, targeted→lap354 exact-once→Fast→safety를 반환하고 다음
+새 middle이 독립 검수한다. 그 전 원본 n=1, Stage B, 제품/마일스톤 이동은 금지한다.
+
+상세: `docs/history/laps/20260912_lap366_middle_s1_cleanup_finalize_scope.md`. 아래 lap365 이하
+원문과 미결 W3/N14는 보존한다.
+
+---
+
+# lap365 middle STOP → 다음 middle/Sol: S1 원본-load command 계약 충돌
+
+lap363 work의 세 제출 SHA는 현행과 일치하고 fresh doctor/targeted 24/lap354 exact-once/
+Fast 402/safety 2종은 PASS했다. 그러나 이 exit0들은 구현 계약을 닫지 않는다.
+
+1. cleanup이 `ok=false`여도 `tools/runtime_env.py:3846-3853`은 앞선 PASS를 UNKNOWN으로
+   내리지 않아 residue/cleanup 실패 run이 PASS로 반환될 수 있다.
+2. 3초 `post_finalize`는 collector post snapshot에만 적용되고 evaluate는 무제한이며 artifact는
+   cleanup 뒤 total deadline 검사 없이 기록된다. 동시에 lap362 §3.2는 artifact finalize를 cleanup
+   전 3초 단계에 넣고 §3.3은 cleanup 결과를 artifact에 넣으라 해 순서 계약 자체도 충돌한다.
+3. targeted 새 command 회귀는 dispatch 1건뿐이다. §3.4 (a)~(h)의 command-level timer, pre slot,
+   무배율 좌표, exact-once helper, stage cap, cleanup/raw 보존, overwrite 거부가 잠기지 않았다.
+
+다음 승격 middle/Sol은 먼저 artifact timing을 모순 없이 판정한다(권고: post snapshot+evaluate를
+3초로 제한하고, cleanup 결과를 포함하는 단일 새 artifact write는 150초 전체 deadline 안에서만 허용).
+그 뒤 Luna/high work에 cleanup 실패 fail-closed와 (a)~(h) 합성 회귀를 포함한 좁은 수리 봉투를
+발행하고, 수리 후 새 middle이 SHA→targeted→lap354 exact-once→Fast→safety를 다시 검수한다.
+그 전 실제 원본 n=1/Wine/Xvfb/클릭/PNG, Stage B, 제품·마일스톤 이동은 금지한다.
+
+상세: `docs/history/laps/20260912_lap365_middle_s1_original_load_review.md`. 아래 기존 원문은 보존한다.
+
+---
+
+# lap363 middle → Luna/high work: lap362 §3 S1 원본 단일-load command 발효
+
+시스템 `python3`의 전역 editable install이 형제 `Syw2plus_re/tools/__init__.py`를 선택한 것이
+lap362 ImportError의 원인이다. repo root를 명시한 프로젝트 `.venv` wrapper에서 import origin이
+현재 `tools/runtime_env.py`임을 출력한 뒤 원본 lap354 probe를 정확히 1회 실행했고 rc0/
+`failures=[]`였다. probe·fixture·원본·세 현행 source SHA도 lap362 pin과 일치했다.
+
+따라서 `docs/work/active/G1_S1_MIDDLE_EXECUTION_ENVELOPE_LAP362.md` §3의 구현 봉투를
+**RELEASE**한다. Luna/high work는 `tools/runtime_env.py`, `tools/s1_load_evidence.py`,
+`tests/test_s1_load_evidence.py`만 수정하고 실제 게임/Wine/Xvfb/클릭/PNG는 0회로 유지한다.
+targeted→동일 repo-root provenance의 원본 lap354 probe→Fast→safety와 편집 전후 SHA를 제출한다.
+다음 새 middle 독립 검수 전 실제 n=1 실행은 금지하며 S1·Stage B·제품/마일스톤 승인은 없다.
+
+검증: doctor rc0/original verified, targeted 21 passed, Fast 399 passed와 Ruff/compileall/mypy/
+CONTEXT_PASS, safety SAFETY_PASS. 상세 `docs/history/laps/20260912_lap363_middle_s1_import_provenance.md`.
+
+---
+
+# lap362 middle STOP → Sol: 필수 probe import provenance 실패
+
+targeted S1 회귀는 21 passed였으나, 저장소 root에서 원본 lap354 probe를 실행하자
+`from tools import runtime_env`가 형제 `Syw2plus_re/tools/__init__.py`를 선택해 ImportError/rc1로
+중단됐다. `PYTHONPATH`는 unset이고 probe는 계산한 repo path를 import 전에 sys.path에 넣지 않는다.
+필수 검증의 예상 밖 실패이므로 다른 argv로 재시도하지 않았고 Fast/safety도 SKIP했다.
+
+승격 작업자는 (1) lap360의 canonical probe argv/environment를 대조하고, (2) 형제 저장소를 읽지 않는
+repo-root import provenance를 명시적으로 고정한 뒤, (3) 역사 probe를 수정하지 않고 fresh 1회
+rc0/`failures=[]`인지 확인한다. 그 결과가 PASS일 때만 아래 lap362 §3 work 봉투를 발효한다.
+게임/하네스/tests 구현·Wine/Xvfb/입력/PNG/커밋은 0이며 제품/마일스톤 승인 없음.
+
+---
+
+# lap362 middle → Luna/high work: S1 원본 단일-load 결선 (필수 probe 통과 전 미발효)
+
+lap361의 trigger 미결선과 trigger 뒤 시작 deadline은 현행에서 재현됐다. 보호 원본은
+PS35 진입 전에 `0x4D5CA0`에서 selected WORD를 1로 초기화하며, slot1 내부 `(400,131)`의
+정상 mouse/click 경로가 1을 유지해 save000 load handler로 이어진다. 따라서
+`docs/work/active/G1_S1_MIDDLE_EXECUTION_ENVELOPE_LAP362.md` §3의 단일 command,
+150초 전체 deadline, exact-once trigger, owned cleanup, 합성 회귀 봉투를 ACCEPT한다.
+
+work는 `tools/runtime_env.py`, `tools/s1_load_evidence.py`, `tests/test_s1_load_evidence.py`만
+수정하고 실제 게임/Wine/Xvfb/클릭/PNG는 0회로 유지한다. targeted/lap354/Fast/safety와
+편집 전후 SHA를 제출하면 다음 새 middle이 독립 검수한다. 그 뒤에만 Astra가 원본 n=1
+실행을 발효할 수 있다. S1·Stage B·제품/마일스톤 승인 없음. 아래 기존 원문은 보존한다.
+
+---
+
+# lap361 Astra → middle: 실행 봉투 BLOCKED
+
+세 현행 SHA는 lap360과 일치하지만 CLI trigger 미결선, trigger 반환 뒤 시작되는 wait deadline,
+pre selected_index 성립 미검증 때문에 실제 S1 run을 발효하지 않았다. 게임/클릭/PNG/구현 0회.
+승격 작업자는 docs/work/active/G1_S1_EXECUTION_DIRECTION_LAP361.md §2~4를 독립 검수하고,
+private trigger+전체 시간 상한+pre 슬롯 상태를 연결하는 work 봉투 하나를 ACCEPT/BLOCKED 판정한다.
+실무 구현 뒤 새 middle 검수와 별도 Astra 실행 발효가 필요하다. 제품/마일스톤 승인 없음.
+Fast/safety/runtime는 근거 부족 중단으로 SKIP, exit0은 승인 아님. 아래 기존 승격 원문 전부 보존.
+
+---
+
+# ESCALATE — lap360 middle ACCEPT 뒤 Astra 실행 봉투 handoff
+
+lap359 erratum의 세 현행 SHA를 fresh 대조했고 모두 일치했다. lap360은 adapter의
+`pre PS35 → trigger 1회 → 단일 deadline PS3 wait → post`와 trigger 보고 0/2회·timeout·
+부분 read·trigger 부재 fail-closed를 독립 재유도했다. targeted 21, lap354 probe rc0/
+`failures=[]`, Fast 399, safety PASS, binary contract 13 PASS, 원본 verified로 lap357 구현 범위를
+**ACCEPT**한다. 실제 게임/load/입력/PNG는 0회이고 S1·Stage B·제품 판정은 UNKNOWN이다.
+
+다음 새 Astra/high는 lap349 §3에 따라 실제 S1 연구 run의 횟수·시간·fixture/slot·좌표/trigger·
+종료·artifact·실패 분류를 한 봉투로 발효하거나 BLOCKED를 판정한다. 구현-불변 연속 2회이므로
+blind retry를 금지한다. 그 전 게임/Wine/Xvfb/클릭/PNG 실행과 제품/마일스톤 이동은 금지한다.
+
+상세: `docs/history/laps/20260912_lap360_middle_lap357_event_boundary_review.md`.
+
+---
+
+# 보존 — lap358 middle → work 수리 후 새 middle 재검수
+
+## lap359 work resolution / handoff
+
+lap357 원문은 보존했고 Erratum을 덧붙여 `tools/runtime_env.py`의 정확한 현행 64-hex SHA를
+`ba0a7beb657ce6c7a174d9323c4254f2d696b74277a974e15a5216d272b7372c`로 정정했다. STATUS의
+현행 SHA도 정정했다. SHA/원문 보존 assertion, `make check` 399 passed, Ruff/compileall/mypy/
+`CONTEXT_PASS`, `bash checks/safety.sh check`의 `SAFETY_PASS`를 fresh 확인했다. 제품 코드,
+게임 실행, 후보 artifact, PNG, 커밋은 0이다.
+
+다음 새 middle은 세 SHA를 다시 대조한 뒤 adapter 호출 순서와 fail-closed 회귀를 독립 검수하고,
+그 후 targeted/Fast/safety를 fresh 실행해야 한다. 실제 private load/open·두 run 결정성·S1·Stage B·
+WM_CLOSE·제품 G1~G4는 계속 UNKNOWN이다.
+
+lap358 / 2026-09-12 / Codex 현재 세션 / 정확한 모델 ID 미주장 / 지정 high / middle.
+lap357 독립 검수의 선행 SHA 대조에서 `tools/runtime_env.py` 현행은
+`ba0a7beb657ce6c7a174d9323c4254f2d696b74277a974e15a5216d272b7372c`인데 lap357 기록과 STATUS는
+lap 번호가 붙은 `357ba0a7…272b7372`(67 hex)를 주장했다. 나머지 두 변경 SHA는 현행과 일치한다.
+필수 provenance 충돌이므로 소스/tests를 수정하지 않았고 targeted/Fast/safety/doctor/실행도 재시도하지 않았다.
+
+## 이어서 검증할 것
+
+1. work tier: lap357 원문을 덮어쓰거나 삭제하지 말고 erratum으로 올바른 64자리 SHA를 추가하고 STATUS를 정정한다.
+2. 다음 새 middle: 세 현행 SHA를 다시 대조한 뒤 adapter 순서와 trigger 0/2회·timeout·부분 read fail-closed를 독립 재유도한다.
+3. 그 다음에만 targeted, lap354 probe, `make check`, `bash checks/safety.sh check`, 필요 시 doctor를 fresh 실행한다.
+4. 실제 private load/open·두 run 결정성·S1 (A)+(B)·Stage B·WM_CLOSE·G1~G4는 계속 UNKNOWN이며 실행/마일스톤 이동 금지다.
+
+상세: `docs/history/laps/20260912_lap358_middle_lap357_event_boundary_review_stopped.md`.
+
+---
+
+# ESCALATE — lap336 middle → 승격 작업자(Astra/사용자 결정)
+
+lap336 / 2026-09-12 / Claude Code `claude-opus-5` / high / middle.
+이번 바퀴 산출물: `docs/work/active/G1_CANDIDATE_R1_MIDDLE_IMPLEMENTATION_REVIEW_LAP336.md`(§4가 본문),
+`docs/history/laps/20260912_lap336_middle_candidate_r1_implementation_review.md`,
+probe `docs/history/laps/probes/20260912_lap336_middle_lap335_candidate_implementation_probe.py`
+(`2e1481b8…505f8e25d`, rc0, stdout `9295dfdf…d1593a0f`).
+후보 실행 예산은 여전히 0회이고 마일스톤 종료/이동·제품 승인은 없다.
+
+## 승격 사유 — 검수 기준선이 재현 불가능해졌다
+
+lap335는 lap334 봉투 §11이 **허가한** `tools/runtime_env.py`를 편집했다. 그 결과
+`20260912_lap332_middle_lap331_r1_artifact_probe.py`와
+`20260912_lap334_middle_candidate_r1_envelope_probe.py`가 **둘 다 rc1로 영구 실패**한다.
+두 probe가 살아 있는 하네스의 SHA를 lap330 값(`997ff15b…cc46eed`)으로 단언하기 때문이다.
+이는 W3(lap300)과 같은 형태이며, lap334가 STATUS에 대해 스스로 진단한 N12가 한 바퀴 뒤 하네스에서 재발한 것이다.
+재pin은 안전 pin 자동 갱신 금지와 W3 선례에 따라 middle/work 단독으로 하지 않았다.
+`LOOP_ALLOW_COMMITS=0`이고 스냅샷도 없어 lap330~334가 검수한 하네스 **원문은 디스크에 남아 있지 않다.**
+lap331 artifact는 여전히 `997ff15b…`를 가리키므로 그 run의 "검수 SHA == 실행 SHA" 재확인은 재현 불가다.
+
+## 승격 작업자가 결정할 것
+
+1. 두 probe를 "범위 만료"로 선언해 이력 보존만 할지, 재pin을 허가할지, 검수 시점 하네스 원문을
+   `docs/history/`에 스냅샷하는 정책을 도입할지.
+2. 검수된 레인의 편집을 허가하는 봉투에 "결합된 과거 probe 재실행"을 필수 항목으로 넣을지
+   (STATUS의 "프로세스 사각"이 lap294·lap296에 이어 세 번째로 실현됐다).
+3. 커밋 금지 상태에서 검수 기준 원문을 어떻게 보존할지.
+
+## 승격 작업자가 이어서 검증할 것
+
+- lap336 probe rc0·stdout SHA 재현과 `make check` 376 passed·`SAFETY_PASS` 재현.
+- 검수 기준선이 `tools/runtime_env.py=922a267c…f8a2575`,
+  `tests/test_lap326_r1_load_origin.py=c04a6265…d769823`라는 사실(둘 다 lap335 기록과 일치).
+- 필수 수리 R-a(봉투 §11.3 artifact 이름 분리 테스트 부재)와 R-b(PS9 stage 예산이 dxwrapper 설치
+  뒤에 시작해 §8 "준비/PS9 40초"를 설치 구간에 적용하지 못함)의 범위 판단. 둘 다 work tier 작업이다.
+- N13: lap335 기록의 "16 passed"는 실제 15 passed(수치 영향 0, 기록만 부정확).
+
+## 금지 (유지)
+
+W3 재pin, 기대 SHA/건수 자동 수정, 원본 n>1, 재클릭, 예산 확대, Stage B, PNG,
+baseline/golden/안전 pin 갱신, ptrace/int3/winedbg/gdb, 새 의존성, G2~G4 확대, WM_CLOSE/P6 착수,
+커밋(`LOOP_ALLOW_COMMITS=0`). 후보 fresh 1 run은 R-a·R-b 수리와 그 독립 재검수 뒤에만 발효한다.
+
+---
+
+# 부록 — lap337 middle 추가 (lap336 원문은 위에 그대로 보존)
+
+lap337 / 2026-09-12 / Claude Code `claude-opus-5` / high / middle.
+본문: `docs/work/active/G1_CANDIDATE_R1_MIDDLE_REPAIR_SCOPE_LAP337.md`,
+기록: `docs/history/laps/20260912_lap337_middle_repair_scope_and_lap336_verification.md`,
+probe: `docs/history/laps/probes/20260912_lap337_middle_lap336_repair_scope_probe.py`
+(`1dd47cd3…c545`, rc0, stdout `c38a73f1…8cdf46`, 2회 + 두 인터프리터 교차 실행 byte-identical).
+**lap336이 올린 세 질문은 그대로 유효하고 lap337은 답하지 않았다. 재pin 0건.**
+
+## lap337이 재현한 것 (승격 작업자가 다시 세울 필요 없음)
+
+- lap336 probe rc0·stdout `9295dfdf…d1593a0f` **재현**(연속 2회 byte-identical).
+- `make check` rc0 **376 passed(57.26s)**·`CONTEXT_PASS`, `checks/safety.sh check` **SAFETY_PASS** 재현.
+- 검수 기준선 `tools/runtime_env.py=922a267c…f8a2575`,
+  `tests/test_lap326_r1_load_origin.py=c04a6265…d769823` **일치 확인**.
+- N13(15 passed, lap335 기록의 16은 부정확) **CONFIRMED**.
+- lap336의 STATUS 보존 충실성 **PASS**(압축본 body SHA `bba77d09…c0fc1954`·130줄 독립 재계산).
+- R-a·R-b 결함 **둘 다 독립 재유도**(R-b는 AST로 `stage_started` 심볼을 직접 읽어 확인).
+
+## lap337이 좁힌 것 — 질문 1의 범위 (결정 아님)
+
+두 stale probe를 재실행해 `failures` 전량을 분해했다:
+
+- `…lap332…probe.py` rc1, failures = `live harness SHA differs from the reviewed SHA`,
+  `live R1 test SHA differs from the reviewed SHA` — **2건 전부 살아 있는 SHA 단언.**
+- `…lap334…probe.py` rc1, failures = `runtime_env.py drifted from the lap330-reviewed harness SHA`
+  — **1건, 역시 살아 있는 SHA 단언.**
+
+그 밖의 모든 단언(lap332의 artifact exact-once·표본 12건 WORD==DWORD·단조·`pending` 0→34·사슬 7지점,
+lap334의 불변 압축본 대조·130줄·C1 재유도)은 **지금도 통과한다.**
+
+⇒ 기계적으로 **복구 불가**인 것은 "lap331 run의 실행 SHA `997ff15b…`가 검수된 하네스 원문과 같다"는
+**동일성 재확인 한 가지**뿐이다(원문은 커밋 0·스냅샷 0이라 디스크에 없음).
+질문 1은 "두 probe를 버릴 것인가"가 아니라 **"죽은 SHA 단언 2~3줄을 어떻게 처리할 것인가"** 다.
+**이 좁힘은 허가가 아니다.** 재pin 금지·안전 pin 자동 갱신 금지·W3 선례는 그대로 유지된다.
+
+## lap337이 결정한 것 (middle 권한 안, 승격 불필요)
+
+- **R-b 수리안 = (a) `stage_started=started`.** (b) "설치 구간 별도 상한"은 준비 합계를 40초 위로
+  올려 봉투 §12 예산 확대 금지에 저촉되므로 기각. 근거는 본문 §4.
+- **R-a 수리안 = 오프라인 AST 이름 단언 추가, 프로덕션 코드 변경 0.** 근거는 본문 §3.
+- 둘 다 work tier 작업이며 회귀 잠금을 함께 넣는다. 핸드오프는 본문 §5.
+
+## 승격 작업자가 이어서 검증할 것 (lap336 목록에 추가)
+
+- lap337 probe rc0·stdout SHA 재현, 그리고 위 "분해" 표가 현재도 같은지.
+- R-b 수리안 (a)가 봉투 §8 문언과 §11.1 대칭성을 동시에 만족한다는 판단이 옳은지.
+- lap337 문서/기록/압축본이 미결·반려를 하나도 지우지 않았는지.
+
+## 금지 (유지, 변경 없음)
+
+W3 재pin, 기대 SHA/건수 자동 수정, 원본 n>1, 재클릭, 예산 확대, Stage B, PNG,
+baseline/golden/안전 pin 갱신, ptrace/int3/winedbg/gdb, 새 의존성, G2~G4 확대, WM_CLOSE/P6 착수,
+커밋(`LOOP_ALLOW_COMMITS=0`). 후보 fresh 1 run은 R-a·R-b 수리와 그 독립 재검수 뒤에만 발효한다.
+
+---
+
+# 부록 — lap338 Astra 중단 / 필수 문서 길이 검사 FAIL
+
+2026-09-12 / Codex gpt-6-astra / 지정 major direction 역할.
+읽은 loop/.lap_counter=338. 메시지 lap337 대신 문서 규칙대로 338 사용, 카운터 수정 0.
+초안: docs/work/active/G1_R1_PROVENANCE_DIRECTION_LAP338.md.
+재pin 불허·편집 전 소스 원문 스냅샷·역사적 identity와 현재 계약 검사 분리를 제안했다.
+STATUS 갱신안의 사전 assert가 131>130으로 실패했다(rc1). 실패한 갱신안은 쓰기 전 중단됐고
+STATUS/이 파일의 후속 변경은 중단 사실과 승격 의무 보존만이다. 테스트 재시도·초안 승인·실행 없음.
+
+승격 작업자가 이어서 검증할 것:
+1. STATUS가 130줄 이하·Blockers 1개이며 직전 원문과 미결이 보존됐는지 독립 검수.
+2. lap338 정책 초안 §2~4의 과거 probe 불변·SHA identity UNKNOWN·현재 필수 게이트 분리 기준 검수.
+3. 검수 뒤 lap337 R-a/R-b work 봉투에 스냅샷 대상/manifest·결합 probe 영향표를 보완할지 판정.
+4. 현재 소스 기준과 lap337 probe를 대조한 뒤 실무로 반환. 후보 run은 수리 후 새 middle 컨펌 전 0회.
+
+증거: lap337 probe failures=[]·stdout c38a73f1220faf992155bc5a98fe814e9e8ded316b0935e5eb3f22f0738cdf46.
+make check 376 passed(56.59s)·Ruff/compileall/mypy/CONTEXT_PASS, safety SAFETY_PASS.
+로그 logs/lap338_astra/make-check.log. 문서 길이 FAIL은 이 PASS들로 상쇄하지 않는다.
+기존 lap336 원문/lap337 부록을 소비하지 않는다. 게임 코드/하네스/테스트 수정·실행·커밋 0.
+
+---
+
+# 부록 — lap339 middle (lap336 원문·lap337/lap338 부록은 위에 그대로 보존, 소비 0)
+
+lap339 / 2026-09-12 / Claude Code `claude-opus-5` / high / middle.
+본문: `docs/work/active/G1_R1_MIDDLE_PROVENANCE_ENVELOPE_LAP339.md`(`e5d4b26a…e8509a6a`),
+기록: `docs/history/laps/20260912_lap339_middle_lap338_provenance_policy_review.md`,
+probe: `docs/history/laps/probes/20260912_lap339_middle_lap338_provenance_policy_probe.py`
+(`761aec2f…2f8018b`, rc0, stdout `3b74cfe2…7c7ad759`, 2회 + 두 인터프리터 byte-identical).
+**실행 0회·후보 artifact 0·재pin 0·게임/하네스/테스트 수정 0.**
+
+## lap338이 middle에 넘긴 4항 — 처리 결과
+
+1. **STATUS 130줄·Blockers 1개·원문/미결 보존 → PASS.** 129줄, 다섯 표제 각 1개.
+   lap338의 STATUS diff 전량이 `## 다음 한 가지`·`## 바퀴 기록` 두 구역뿐이고 Blockers/검증 상태는
+   byte-identical. 삭제된 바퀴 기록 줄은 lap337 압축본 body(130줄 `512abde1…8cd5a6`, 독립 재계산 일치)에
+   원문 보존. **미결·반려 삭제 0건.**
+2. **lap338 §2~4 정책 초안 → ACCEPT**(§2.2는 5개 구체화 필수, 본문 §2.2·§4).
+3. **work 봉투 보완 → 완료.** 스냅샷 대상/manifest 요건(본문 §4)과 결합 probe 영향표 A~H(본문 §3),
+   필수 명령·실패 분류(본문 §5)를 추가해 lap337 §5 앞에 붙였다.
+4. **현재 소스 대조 → 일치.** `tools/runtime_env.py=922a267c…f8a2575`,
+   `tests/test_lap326_r1_load_origin.py=c04a6265…d769823`(lap338 §3이 적은 값과 동일, lap338 소스 편집 0).
+   work tier로 반환한다. 후보 run은 수리 + 다음 새 middle 재검수 전 **0회**.
+
+## 승격 작업자 결정 대기 — 기존 질문 상태
+
+- lap336 질문 (1) 재pin/범위 만료/스냅샷 정책: lap338 §2.1(재pin 불허) + 이번 §2.1 근거로 **좁혀졌다**.
+  새 근거: **현재 필수 게이트 어느 것도 `docs/history/laps/probes`를 실행하지 않는다**
+  (pytest testpaths=`["patches","tests"]`, ruff 대상 `patches tools tests checks`, mypy 명시 파일,
+  `safety.sh`는 `safety.py`만). probe가 `gates_referencing_history_probes: []`로 기계 확인.
+  ⇒ 두 stale probe의 영구 rc1은 필수 게이트를 깨지도 가리지도 않는다. **W3 재pin은 여전히 미결.**
+- lap336 질문 (2)(3): lap338 §2.2/§2.3 + 이번 §4로 **절차가 정의**됐다. 최종 확정만 남았다.
+- **복구 불가 확정:** lap331 run의 "검수 SHA == 실행 SHA" 재확인(영향표 D행). **UNKNOWN 영구 보존.**
+
+## 새 승격 항목 — N14: 130줄 계약에 기계 게이트가 없다
+
+`checks/context_limits.py`의 `CAPS["docs/STATUS.md"]`는 **180**이고, `loop/PROMPT.md`가 요구하는
+**130줄**을 강제하는 필수 게이트는 **없다.** 그래서 각 바퀴가 길이 검사를 손으로 다시 구현하고,
+**lap323·lap333·lap338 세 바퀴가 그 손수 검사의 FAIL로 소모**됐다. lap338이 만난 `131>130`은
+저장소 게이트가 아니라 **자신이 쓴 사전 assert**였다(같은 초안으로 `make check`를 돌렸다면 `CONTEXT_PASS`).
+lap338의 중단은 근거를 전부 보존했고 아무 것도 소비하지 않았으므로 절차상 문제는 아니다.
+
+**제안(이번 바퀴 실행 0):** `CAPS["docs/STATUS.md"]`를 130으로 좁혀 `make check`가 계약을 직접 강제한다.
+게이트를 **조이는** 변경이라 "검사를 고쳐 통과시키기"의 반대지만 검사 파일을 바꾸므로 middle 단독 착수 금지.
+**R-a/R-b와 묶지 않는다**(한 바퀴 한 가지, 다른 파일·다른 계약). Astra/사용자 판정 대기.
+
+## 승격 작업자가 이어서 검증할 것
+
+- lap339 probe rc0·stdout `3b74cfe2…7c7ad759` 재현과 영향표 A~H가 현재도 같은지.
+- N14의 사실관계(`CAPS`=180, PROMPT=130, 세 바퀴 소모)와 게이트 조이기 제안의 승인 여부.
+- 본문 §4 스냅샷 manifest 필수 필드가 "과거 실행 원문 역추정 인증"을 실제로 막는지.
+
+## 금지 (유지, 변경 없음)
+
+W3 재pin, 영향표 A·C probe 편집, 기대 SHA/건수 자동 수정, 원본 n>1, 재클릭, 예산 확대, Stage B, PNG,
+baseline/golden/안전 pin 갱신, ptrace/int3/winedbg/gdb, 새 의존성, G2~G4 확대, WM_CLOSE/P6 착수,
+커밋(`LOOP_ALLOW_COMMITS=0`). 후보 fresh 1 run은 R-a·R-b 수리와 그 독립 재검수 뒤에만 발효한다.
+
+---
+
+# 부록 — lap341 middle 검수 도구 FAIL (기존 원문/부록 소비 0)
+
+lap341 / 2026-09-12 / Codex 현재 세션 / 정확한 모델 ID 미주장 / high / middle.
+대상은 lap340 R-a/R-b work 결과의 독립 검수였고 후보 실행 예산은 0회였다. `.lap_counter=341`을
+PROMPT 계약대로 사용했으며 runtime 주석의 lap340으로 카운터를 되돌리지 않았다.
+
+## 승격 사유
+
+lap341이 새로 만든 offline review probe의 첫 실행이 예상 밖으로 실패했다. 시스템 `python3`는 현재 저장소가
+아닌 형제 `Syw2plus_re/tools`를 import해 rc1, `.venv/bin/python`은 probe 자체의 과잉/오인 단언 3건으로 rc1,
+가정한 `.venv/bin/ruff`는 존재하지 않아 rc127이었다. 사용자 지시의 필수 검증 실패 조건에 따라 probe를
+고치거나 재실행하지 않았고 `make check`·safety·E/F/G·A/C도 착수하지 않았다. lap340 소스 수정 0,
+게임/Wine/Xvfb/입력/PNG/후보 artifact 0, 커밋 0이다.
+
+## 실패 원인 (lap340 구현 판정과 분리)
+
+1. repo root를 `sys.path` 앞에 고정하지 않아 시스템 Python이 형제 저장소의 `tools`를 골랐다.
+2. R-b exact-one 검사에서 snapshot에 정당하게 존재하는 **원본 lane**의 `stage_started=started`까지 금지했다.
+3. artifact literal 필터가 `cleanup incomplete; inspect …json` 오류문도 파일명으로 셌다.
+4. Ruff 진입점을 확인하지 않고 `.venv/bin/ruff`를 가정했다. 이들은 신규 검수 도구 결함이며 lap340 수리의
+   결함 증거가 아니다. 따라서 lap340 판정은 ACCEPT도 REJECT도 아닌 **UNKNOWN**으로 유지한다.
+
+## 승격 작업자가 이어서 검증할 것
+
+- 실패 probe SHA/원문과 위 네 진단을 독립 확인하고, 같은 세션의 사후 수정으로 PASS를 만들지 않는다.
+- 새 검수 세션에서 repo import를 명시적으로 고정하고 `make check`가 쓰는 실제 Ruff 진입점을 사용한다.
+- snapshot/manifest·전후 SHA·허용 diff를 독립 대조한다. R-b는 후보 호출 한 곳만
+  `launch_started→started`, R-a는 정확한 세 파일명과 lane-local exact-once guard로 판정한다.
+- 대상 테스트, `make check`, safety, E/F/G rc0를 fresh 실행하고 A/C rc1이 살아 있는 SHA 단언만인지 기록한다.
+- 전부 PASS하기 전 후보 fresh 1 run을 발효하지 않는다. 제품 G1/Stage B/마일스톤 판정은 0이다.
+
+세부 기록: `docs/history/laps/20260912_lap341_middle_lap340_r1_repair_review.md`.
+실패 probe: `docs/history/laps/probes/20260912_lap341_middle_lap340_r1_repair_review_probe.py`.
+
+---
+
+# 부록 — lap342 middle 필수 G probe 예상 밖 FAIL (기존 원문/부록 소비 0)
+
+lap342 / 2026-09-12 / Codex 현재 세션 / 정확한 모델 ID 미주장 / high / middle.
+lap341 검수 도구의 네 결함은 독립 재현했고, 새 offline probe는 repo import·candidate exact-one·정확한
+artifact literal·실제 Ruff 진입점을 바로잡아 rc0(`failures=[]`)였다. snapshot/현행 SHA와 허용 diff,
+대상 17 passed, `make check` 378 passed, `SAFETY_PASS`, E/F rc0까지 fresh 확인했다. 제품/게임/하네스/
+테스트 수정 0, 후보 실행/artifact/PNG 0, 커밋 0이다.
+
+## 승격 사유
+
+봉투가 필수 rc0로 지정한 G(`20260912_lap339_middle_lap338_provenance_policy_probe.py`)가 예상 밖
+rc1이었다. failures는 다음 두 건뿐이다.
+
+- `STATUS.md names no compaction holding its previous text`
+- `STATUS.md points at no compaction whose declared SHA/line count match its own body`
+
+G는 lap337 압축본의 실제 body 130줄·SHA `512abde1…cd5a6` 자체는 일치시켰고 R-a/R-b·snapshot·gate
+findings도 기대값이었다. 그러나 이후 갱신된 mutable `STATUS.md`가 그 과거 압축본 파일명을 직접 가리킬
+것이라는 단언이 더 이상 성립하지 않는다. 필수 검증 예상 밖 실패 규칙에 따라 G를 수정/재시도하지 않았고,
+A/C와 후보 fresh run도 실행하지 않았다. lap340 판정은 UNKNOWN, 제품 G1 증거 0이다.
+
+## 승격 작업자가 이어서 검증할 것
+
+1. G의 live-STATUS 포인터 결합이 현재에도 유효한 계약인지, lap339 시점만 검증하던 역사적 probe가 mutable
+   STATUS 변화로 만료된 것인지 독립 판정한다. 기대값·STATUS·압축본을 자동 수정해 rc0를 만들지 않는다.
+2. 현재 계약이라면 어떤 최신 압축본 포인터가 STATUS에 반드시 남아야 하는지와 130줄 계약을 함께 명시한 뒤
+   work tier 수리 범위로 넘긴다. 역사적 계약이라면 G를 대신할 불변 snapshot/manifest 검증을 먼저 승인한다.
+3. 승인된 검증 형태가 생긴 다음 새 middle 세션에서 snapshot/SHA/diff, 새 review probe, 대상 테스트,
+   `make check`, safety, E/F/G 또는 승인된 대체, A/C 분해를 모두 처음부터 fresh 실행한다.
+4. 전 항목 PASS 전 후보 fresh 1 run을 발효하지 않는다. W3 재pin, A/C 기대 SHA 수정, Stage B, PNG,
+   baseline/golden 갱신, WM_CLOSE/P6, G2~G4 확대, 커밋은 계속 금지한다.
+
+세부 기록: `docs/history/laps/20260912_lap342_middle_lap340_r1_repair_fresh_review.md`.
+신규 probe: `docs/history/laps/probes/20260912_lap342_middle_lap340_r1_repair_fresh_review_probe.py`.
+
+---
+
+# 부록 — lap343 middle G 계약 판정 (lap342 승격 항목 1~2 해소)
+
+lap343 / 2026-09-12 / Codex 현재 세션 / 정확한 모델 ID 미주장 / high / middle.
+`PROMPT.md`·`AGENTS.md`·`DESIGN.md`와 lap339 G 원문을 독립 대조했다. 현재 계약은 STATUS가 130줄을
+넘을 때 원문 SHA/줄 수/전체 원문을 history에 먼저 보존하라는 것이며, 이후 mutable STATUS가 과거
+압축본 파일명을 영구 직접 가리키라는 요구는 없다. 기존 G도 특정 파일명 고정을 전이 단언으로
+금지하면서 연결 자체를 영구 강제해 내부 충돌한다. 따라서 lap342의 두 포인터 failure는 **역사적
+전이 단언으로 분류**하며 lap340 결함으로 쓰지 않는다.
+
+기존 G와 기대값은 수정하지 않았다. 신규 adapter
+`docs/history/laps/probes/20260912_lap343_middle_lap339_g_contract_adapter_probe.py`
+(`420e86cb…2c832`)가 기존 G SHA를 고정하고 그대로 실행한 뒤 두 포인터 failure만 허용한다. STATUS
+130줄/표제, lap337 압축본 body/header, stale pin, gate·PS9 등 다른 failure는 전부 FAIL로 전파한다.
+두 Python에서 rc0·stdout `3124aa94…d1fc1` byte-identical, Ruff PASS였다.
+갱신 후 STATUS 130줄·Blockers 1개, safety `SAFETY_PASS`, `make check` 378 passed·`CONTEXT_PASS`도 확인했다.
+
+다음 새 middle은 lap342가 중단한 전체 검수를 처음부터 fresh 실행하되 G만 이 adapter로 대체한다.
+이 부록은 lap340 수리 ACCEPT·후보 실행 발효·제품/Stage B/마일스톤 승인이 아니다. A/C stale pin,
+lap331 identity UNKNOWN, W3·N14와 이 파일의 앞선 미결 승격 항목은 그대로 남는다.
+
+---
+
+# 부록 — lap346 middle 후보 artifact 검수 probe 예상 밖 FAIL
+
+lap346 / 2026-09-12 / Codex 현재 세션 / 정확한 모델 ID 미주장 / high / middle.
+대상은 lap345 후보 R1 artifact의 재실행 없는 독립 검수였다. 신규 읽기 전용 probe
+`docs/history/laps/probes/20260912_lap346_middle_lap345_candidate_r1_artifact_probe.py`
+(SHA `43940820cbaed6bd3cbc2d068f47c97de9cb0b757df04e227d251a4dda21933c`)의 첫 실행이 rc1이었다.
+
+## 승격 사유와 보존 판정
+
+probe line 227이 stage 이름 5개와 그 tail 4개를 `zip(..., strict=True)`로 묶어
+`ValueError: zip() argument 2 is shorter than argument 1`을 냈다. 이는 lap345 runtime artifact의
+실패 증거가 아니라 lap346 신규 검수 도구 결함이다. 그러나 필수 검증이 완주하지 않았으므로 artifact
+판정은 **UNKNOWN**이며, 예외 전 SHA 일치를 부분 PASS로 합쳐 ACCEPT하지 않는다. 지시대로 같은 세션에서
+probe 수정·재실행·`make check`·safety를 하지 않았다. 후보 게임 재실행·재클릭·입력·PNG도 0이다.
+
+추가 기록 정정: lap345 history가 log 경로를 `output/g1-r1-candidate-load-origin.log`로 썼지만 실제 파일은
+`output/r1_load_origin_candidate.log`이고, lap345가 기록한 SHA `0c7455a2…103a71`는 이 실제 파일과 일치한다.
+과거 기록은 덮어쓰지 않고 PATH_TYPO로 보존한다. 수치 영향은 아직 0으로 보이나 probe 완주 전 승인하지 않는다.
+
+## 승격 작업자가 이어서 검증할 것
+
+1. 실패 probe 원문/SHA와 5대4 `strict=True` 진단을 독립 확인한다.
+2. 기존 실패 probe를 사후 수정해 같은 실행을 PASS로 바꾸지 말고, 새 lap의 새 검수 artifact에서 인접 stage
+   네 쌍만 비교하도록 수정해 lap345 artifact 검수를 처음부터 정확히 1회 실행한다.
+3. probe 완주 후에만 `make check`와 `checks/safety.sh check`를 fresh 실행한다. 그 전 판정은 UNKNOWN이다.
+4. 현물/기록 log 경로 정정을 새 판정에 포함하고, artifact/manifest/harness/test/EXE/DLL/ini SHA,
+   candidate artifact·lock 각 1건, private module gate, 무배율 클릭 1회, 시계열·40/20/15/15·cleanup/원복을 확인한다.
+5. 후보 게임 재실행·재클릭·pin/baseline/golden 수정, 제품 G1·Stage B·마일스톤 승격은 금지한다.
+
+세부 기록: `docs/history/laps/20260912_lap346_middle_lap345_candidate_r1_artifact_review_fail.md`.
+
+---
+
+# 부록 — lap347 middle 후보 artifact 검수 probe 예상 밖 FAIL
+
+lap347 / 2026-09-12 / Codex 현재 세션 / 정확한 모델 ID 미주장 / high / middle.
+lap346 실패 probe SHA `43940820…1933c`와 5대4 `zip(strict=True)` 결함을 독립 확인하고, 과거 probe를
+수정하지 않은 신규 adapter `20260912_lap347_middle_lap345_candidate_r1_artifact_probe.py`
+(SHA `22c5e2977f5b95e01d24a9065fb1551db654cedb3ee947cac430f587e8b4db55`)에서 양쪽을 4개 slice로
+맞춘 뒤 전체 검수를 처음부터 정확히 1회 실행했다.
+
+## 승격 사유와 보존 판정
+
+신규 probe는 예외 없이 완주했으나 예상 밖 rc1이었다. `failures`는 harness SHA 단언 2건뿐이다.
+lap346 probe의 `HARNESS_SHA`가 65자 `965e370989fdad63ec09da25a3f5b3f3a3c66e364d668ab1d48965e141ddb547b`로,
+정상 64자 현행 `tools/runtime_env.py` 및 lap345 artifact의
+`965e370989fdad63ec9da25a3f5b3f3a3c66e364d668ab1d48965e141ddb547b`보다 `0` 하나 많다.
+따라서 이는 lap345 runtime artifact 실패 증거가 아니라 lap346 신규 검수 도구의 두 번째 전사 결함이다.
+필수 검증 실패 규칙에 따라 같은 세션 재실행·추가 수리·`make check`·safety를 하지 않았고 artifact 판정은
+**UNKNOWN**으로 유지한다. 구현-불변 연속 2회 경고에는 이 65자 기대 SHA 오기를 concrete blocker로 남긴다.
+
+## 승격 작업자가 이어서 검증할 것
+
+1. lap346/lap347 probe SHA와 65자 대 64자 진단을 독립 확인한다.
+2. 두 과거 probe를 수정하지 않고 새 lap artifact에서 정확히 두 제한 수리(인접 stage 4쌍, 정상 64자
+   harness SHA)를 적용해 lap345 artifact 검수를 처음부터 1회만 실행한다.
+3. probe가 `rc0`/`failures=[]`로 완주한 뒤에만 `make check`와 `checks/safety.sh check`를 fresh 실행한다.
+4. 현물/기록 log PATH_TYPO, artifact/manifest/harness/test/EXE/DLL/ini SHA, 각 1건 lane, module gate,
+   무배율 클릭 1회, 시계열·40/20/15/15·cleanup/원복을 모두 판정한다.
+5. 후보 게임 재실행·재클릭·pin/baseline/golden 수정과 제품 G1·Stage B·마일스톤 승격은 금지한다.
+
+세부 기록: `docs/history/laps/20260912_lap347_middle_lap345_candidate_r1_artifact_review.md`.
+
+---
+
+# 부록 — lap348 middle 후보 R1 연구 레인 종결 / Astra 방향 handoff
+
+lap348 / 2026-09-12 / Codex 현재 세션 / 정확한 모델 ID 미주장 / high / middle.
+lap346 probe `43940820…1933c`와 lap347 adapter `22c5e297…db55`를 불변 대조한 새 adapter
+`20260912_lap348_middle_lap345_candidate_r1_artifact_probe.py`(`fdca6f6c…c093`)가 정확히 두 제한 수리
+(인접 stage 4쌍, 정상 64자 harness SHA)를 적용해 최초 1회 rc0/`failures=[]`로 완주했다.
+그 뒤 fresh `make check` 378 passed·Ruff/compileall/mypy/CONTEXT_PASS와 safety `SAFETY_PASS`도 통과했다.
+
+## 판정과 남은 경계
+
+lap345 후보 R1 artifact는 **연구 수집 유효성 ACCEPT**다. artifact/manifest/log/EXE/DLL/ini SHA,
+candidate artifact·lock 각 1건, 무배율 클릭 1회, 12표본, PS/pending/origin, 시간 봉투, module gate,
+cleanup·원복을 모두 확인했다. PATH_TYPO는 실제 log SHA가 기록값과 같아 수치 영향 0이다.
+후보 게임 재실행·재클릭·하네스/테스트/pin/baseline/golden 변경은 0이다.
+
+이 ACCEPT는 제품 G1·Stage B·마일스톤/출시·사용자 승인이 아니다. lap333 Astra 문서가 명시한 대로
+후보 1 run은 S1/F2-R2 결정성, WM_CLOSE, 동일상태 원본/후보 pair를 해결하지 않는다. 따라서 middle이
+Stage B를 임의로 열거나 M1을 마감하지 않고 상위 방향으로 반환한다.
+
+## Astra가 이어서 결정·검증할 것
+
+1. lap348 probe와 기록을 재확인해 후보 R1 연구 레인 종결을 입력으로 받을지 판정한다.
+2. 여전히 유효한 S1/F2-R2·WM_CLOSE 차단을 기준으로 Stage B 재개, 결정성 해소, P6 중 **한 방향만**
+   다음 실행 봉투로 발행한다. 이는 M1 내부 방향 선택이며 M1 종료/M2 이동은 아니다.
+3. W3 재pin·N14, 기존 A/C identity UNKNOWN, 제품/사용자 승인과 G2~G4 미결은 그대로 보존한다.
+
+세부 기록: `docs/history/laps/20260912_lap348_middle_lap345_candidate_r1_artifact_review.md`.
+
+---
+
+# lap349 Astra → Sol/high middle: S1 로드 진입 근거 봉투
+
+현재 lap counter=349(runtime 메시지 348과 차이; counter 쓰기 0). 기존 승격 원문은 보존한다.
+M1 내부 S1/F2-R2 결정성 해소를 선택했으며 마일스톤 종료/이동은 아니다.
+후속 검증: `docs/work/active/G1_S1_LOAD_DIRECTION_LAP349.md` §2의 여섯 항목을 현행 근거로
+채우고 ACCEPT/BLOCKED를 판정한다. 슬롯 근거 부족이면 exact file/address의 work 조사 1개만 인계한다.
+새 실행·클릭·PNG·Stage B·P6 허가 0회; 구현은 Luna/Sonnet5, 컨펌은 다음 새 middle로 분리한다.
+lap348 probe 재현 rc0/failures=[]는 연구 입력 재확인일 뿐 계획 승인/제품 PASS가 아니다.
+MODEL_ROUTING Opus5-only와 이번 사용자 Sol 지시 차이는 공개하며 자동 모델 대체/호출 없음.
+검사 결과와 파일 SHA는 `docs/history/laps/20260912_lap349_astra_s1_load_direction.md`에 남긴다.
+
+검증 추가: lap349 fresh make check rc0/378 passed(58.04s), safety rc0/SAFETY_PASS. 계획 승인 아님.
+
+---
+
+# lap350 middle → 다음 Sol/high: fixture offset 근거 충돌 판정
+
+현재 lap counter=350(runtime 메시지 349와 차이; counter 쓰기 0). lap349 §2 여섯 항목을
+현행 원본과 대조한 결과 전체 봉투는 **BLOCKED**다. 상세 본문은
+`docs/work/active/G1_S1_LOAD_ENTRY_MIDDLE_REVIEW_LAP350.md`, 기록은
+`docs/history/laps/20260912_lap350_middle_s1_load_entry_review.md`다.
+
+## 승격 사유
+
+원본 `b56986e0…a8ac`에서 7 rect hit-test(`0x4D5F80`, mouse DWORD `0xC0CB58/5C`,
+selected WORD `this+0xF9E=index+1`)와 load mode의 `slot-1 → 0x440FF0` 호출은 old bytes로
+연결됐다. 그러나 fixture 근거가 충돌한다.
+
+- lap284-work는 serializer 모델로 save000/006 bulk `1,455,954`, player0 `2,259,634`, roster
+  `2,388,902`를 계산하고 nation/active/roster 375/558을 산출했다.
+- lap286-middle은 다른 함수 경계/인자 추출로 같은 offset·수치를 ACCEPT-WITH-CORRECTION했다.
+- lap322 §14.1은 같은 정사각·짝수 fixture 때문에 width/height와 halving 공식이 구분되지 않아
+  PlayerStruct 파일 오프셋 환산 자체가 불가능하다고 REJECT했다.
+
+또한 `0x440FF0`은 fopen null이면 `0x44101E..0x441025`에서 조기 반환하지만 caller
+`0x4D6B97..0x4D6BA3`은 반환을 검사하지 않고 `ax=3`을 내므로 PS3 단독은 실제 load 완료가 아니다.
+
+## 다음 작업자가 검증할 단 하나
+
+lap286의 bulk/player/roster offset이 (a) offset210/212 width-height 교환과 (b)
+`((w/2)*h)/2` 대 `(w*h)//4`의 모든 허용 조합 아래서 **현재 네 정사각·짝수 fixture에 한해
+불변인지** 계산하고, lap322 §14.1의 “환산 불가”와 양립 가능한지 ACCEPT/BLOCKED로 판정한다.
+과거 probe 재pin, 기대값 조정, 새 fixture 생성, 같은 정적 탐색 재발행은 금지한다.
+
+불변이면 fixture 원시 필드 중 하나를 open-failure와 구별하는 post-PS3 sentinel로 선택하는
+work(Luna/Sonnet5/high) 봉투를 새로 써야 한다. 불변이 아니면 정확히 어느 serializer/file offset
+하나가 갈리는지 work 읽기 전용 조사로 반환한다. 기존 R1 함수를 제품 PASS에 합치거나 게임 실행을
+발효하지 않는다. 실행·추가 클릭·PNG·Stage B·P6·WM_CLOSE·G2~G4·pin/baseline/golden 변경 0.
+
+lap349 입력 probe는 수정 없이 1회 rc0/`failures=[]`, stdout `46902e20…a52a`로 재현했다.
+근거 충돌 중단 규칙에 따라 lap350 새 probe·make check·safety는 SKIP했고 exit0을 승인으로 쓰지 않았다.
+
+---
+
+# lap351 middle → 다음 Sol/high: PlayerStruct 필드 배치 충돌 판정
+
+현재 lap counter=351(runtime 메시지 350과 차이; counter 쓰기 0). lap350의 단일 질문은
+`docs/history/laps/probes/20260912_lap351_middle_fixture_offset_invariance_probe.py`로 판정했다.
+width/height 배정 2개 × halving 식 2개를 전부 열거한 결과 네 fixture 각각 offset tuple 집합이
+하나였고 rc0/`failures=[]`다. 따라서 현재 네 파일에 한해 lap322 §14.1의 환산 불가 결론은 반려한다.
+
+## 승격 사유
+
+load-completion sentinel을 정하기 전 PlayerStruct raw field를 대조하다 별도 근거 충돌을 발견했다.
+lap284/lap286 probe는 `struct.unpack_from("<BBBB", data, player_offset)`의 네 번째 연속 바이트
+`+0x03`을 alliance로 기록한다. 기준 `analysis/memory_maps/player_offsets.md`는 alliance를
+`+0x04`로 정의한다. save000/save006 player0 raw `+0..+4`는 둘 다 `02 00 00 01 fe`라서
+기존 report alliance=`1`과 문서 위치 값=`254`가 실제로 다르다. 기대값 조정이나 과거 probe
+수정으로 숨기지 않았고 전체 S1 load work 봉투를 BLOCKED로 유지했다.
+
+## 다음 작업자가 검증할 단 하나
+
+원본 SHA `b56986e0…a8ac`의 xref와 현재 fixture bytes로 PlayerStruct `+0x00..+0x04`의
+필드 폭·padding/의미를 독립 재유도한다. lap284/lap286 오류가 alliance 한 라벨에만 한정되는지,
+nation/player_num/is_cpu와 fixture 선택 근거는 살아남는지 판정한다. 과거 probe 재pin·기대값 수정,
+게임/Wine/Xvfb/클릭/PNG/Stage B/P6/WM_CLOSE/G2~G4·pin/baseline/golden 변경은 금지한다.
+
+판정이 닫힌 뒤에만 work(Luna/Sonnet5/high)에 별도 S1 load evidence 함수/CLI/artifact와 합성 회귀를
+인계한다. PS3 단독/open-failure는 PASS 금지, reader 결측·불일치는 UNKNOWN, 기존 R1/제품 evidence와
+파일 분리, 실제 실행 예산은 Astra 별도 결정 전 0이다. 상세는
+`docs/work/active/G1_S1_FIXTURE_OFFSET_MIDDLE_REVIEW_LAP351.md`와 lap351 history에 있다.
+
+검증: lap286 probe 수정 없는 재실행 rc0/failures=[], lap351 probe rc0/failures=[], py_compile/Ruff rc0.
+probe SHA `e4f26428…49b240`, output SHA `1a4359cb…65e35`. 새 충돌 발견 뒤 make check/safety는 SKIP했다.
+
+---
+
+# lap352 middle → Luna/high work: PlayerStruct 필드 정정과 S1 reader 봉투
+
+현재 lap counter=352이며 counter 쓰기 0. lap351 probe를 수정 없이 1회 재실행해
+rc0/`failures=[]`, stdout SHA `1a4359cb…1565e35`를 재현했다. 보호 원본 SHA는
+`b56986e0…a8ac`다. 게임/Wine/Xvfb/클릭/PNG/후보 artifact/구현은 0회다.
+
+## 판정
+
+원본 생성자 `0x43EBC0`, 초기화 루프 `0x41BB0C`, `0x41BDE5`, `0x4C3FA0`과
+save000/save006의 8×6 raw bytes가 다음 연속 1B 배치로 수렴했다.
+
+- `+0x00` nation, `+0x01` player_num, `+0x02` is_cpu.
+- `+0x03` self-bit mask=`1<<player_num`.
+- `+0x04` different-team/opponent mask, `+0x05` team_num.
+
+따라서 lap284/lap286의 네 번째 바이트 **위치는 맞지만** `alliance` 라벨은 오해 소지가 있고,
+`player_offsets.md`의 `+0x04=alliance`도 틀렸다. nation/player_num/is_cpu와 player/roster offset은
+살아남는다. 실제 load 완료·일반 동맹 변경·owner `+0x8E`·제품 증거는 여전히 UNKNOWN이다.
+
+## work가 수행할 단 하나
+
+1. `analysis/memory_maps/player_offsets.md` 앞 6바이트 표를 위 이름/주소로 정정한다.
+2. 과거 lap284/lap286 probe/report는 수정·재pin하지 않는다. 기존 R1과 분리된 S1 load-evidence
+   reader/CLI 및 `s1_load_evidence.json`을 추가한다.
+3. group/slot/fixture SHA와 PlayerStruct 8×6 raw bytes를 기록하고 self/opponent mask 공식을 검사한다.
+4. 합성 정상, fopen/open-failure PS3, 잘못된 slot/SHA, reader 결측·부분 read 회귀를 추가한다.
+   PS3 단독·결측·불일치는 PASS 금지다.
+5. targeted tests, `make check`, `checks/safety.sh check`를 fresh 실행하고 다음 새 middle에 넘긴다.
+
+금지: 게임 run/클릭/PNG, EXE/DLL/save/fixture/과거 probe/pin/baseline/golden 수정, 재pin,
+Stage B/P6/WM_CLOSE/G2~G4 확대, 새 의존성, 커밋. 구현 독립 검수 뒤에도 Astra가 횟수·시간·좌표·
+fixture를 별도 승인하기 전 실제 실행 예산은 0회다. 상세는
+`docs/work/active/G1_S1_PLAYERSTRUCT_FIELD_MIDDLE_REVIEW_LAP352.md`와 lap352 history다.
+
+lap352 fresh 검증: `make check` rc0, 378 passed(63.21s), Ruff/compileall/mypy/`CONTEXT_PASS`;
+`checks/safety.sh check` rc0/`SAFETY_PASS`. 이는 실제 load·Stage B·제품 G1 승인 근거가 아니다.
+
+---
+
+# lap354 middle → Luna/high work: S1 collector 결선 수리
+
+현재 lap counter=354이며 counter 쓰기 0. lap353 네 현물 SHA와 save000 SHA/8×6 raw를
+재계산했고 기록과 일치했다. targeted 11 passed와 Ruff/compileall/mypy PASS도 재현했다.
+게임/Wine/Xvfb/클릭/PNG/후보 artifact는 0회다.
+
+## 승격 사유
+
+독립 probe `docs/history/laps/probes/20260912_lap354_middle_lap353_s1_reader_review_probe.py`
+(`b08d0c7b…07a4`)가 rc1/F1~F4를 냈다. `read_post_player_structs`는 테스트 밖 생산 호출자가
+없고 runtime CLI는 group WORD·PS·8×6 raw를 주소에서 읽지 않는다. caller가 fixture raw를
+복사하고 `ps=3`, `open_succeeded=true`라고 주장하면 live reader provenance와 pre/post 변화 없이
+`PASS/LOAD_RESTORED_PLAYER_STRUCTS`가 된다. 따라서 lap352 §2.3과 lap350 §4를 충족하지 못해
+lap353 work를 **REJECT — REQUIRED WORK REPAIR**로 판정한다.
+
+## 다음 작업자가 수행할 단 하나
+
+기존 R1과 offline fixture parser를 보존하면서 `runtime_driver.read` 주입 S1 collector를 실제
+CLI에 결선한다. collector가 PS/group/slot 근거와 owner0..7의 계산 주소·정확한 6-byte raw를
+직접 기록해야 한다. caller 제공 `open_succeeded`는 증거로 신뢰하지 말고, 금지된 hook 없이
+open 성공을 직접 읽을 수 없다면 pre raw와 post-PS3 raw의 변화 및 post==pinned fixture를 함께
+요구한다. pre==post 또는 provenance/PS/group/slot/read 결측은 UNKNOWN이어야 하며, 외부 JSON의
+raw 문자열 복사만으로 PASS가 나면 안 된다. lap354 F1~F4와 read 실패 회귀를 추가한 뒤 targeted,
+`make check`, `checks/safety.sh check`를 fresh 실행해 새 middle에 넘긴다.
+
+독립 필수 검증 rc1에서 중단해 lap354 전체 Fast/safety는 SKIP했다. 실제 실행 횟수·시간·좌표·
+fixture 선택은 Astra 별도 봉투 전 0회다. 게임/클릭/PNG, EXE/DLL/save, 과거 probe/pin/baseline/
+golden, Stage B/P6/WM_CLOSE/G2~G4, 새 의존성·커밋은 금지한다. 상세 판정은
+`docs/work/active/G1_S1_LOAD_EVIDENCE_MIDDLE_REVIEW_LAP354.md`와 lap354 history에 있다.

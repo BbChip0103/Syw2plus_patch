@@ -1,0 +1,6 @@
+LIBRARY _inmm_orig.dll
+EXPORTS
+    _ciSendCommandA @50
+    _imeBeginPeriod @101
+    _imeEndPeriod   @102
+    _imeGetTime     @105

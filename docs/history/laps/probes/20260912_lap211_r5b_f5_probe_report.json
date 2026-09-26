@@ -1,0 +1,278 @@
+{
+  "probe_set": "lap211_r5b_f5_independent",
+  "total": 25,
+  "passed": 25,
+  "failed": 0,
+  "results": [
+    {
+      "probe": "P1_tag_key_missing",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P2_tag_int",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P3_tag_none",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P4_tag_true",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P5_tag_false",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P6_tag_float",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P7_tag_list",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P8_tag_dict",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P9_tag_bytes",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P10_baseline_tag_missing",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P11_baseline_tag_none",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P12_corrupt_record_first_index0",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[0].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[0].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P13_two_corrupt_records",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string",
+        "inputs[5].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string",
+        "inputs[5].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P14_required_stage_tag_corrupted",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[0].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[0].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P14b_required_stage_becomes_missing",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": null,
+      "actual_errors": "required input stage is missing",
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P15_clean_translated_pair",
+      "expect_status": "PASS",
+      "actual_status": "PASS",
+      "expect_errors": [],
+      "actual_errors": [],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P16_unknown_string_tag_is_ignored",
+      "expect_status": "PASS",
+      "actual_status": "PASS",
+      "expect_errors": [],
+      "actual_errors": [],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P17_empty_string_tag_is_ignored",
+      "expect_status": "PASS",
+      "actual_status": "PASS",
+      "expect_errors": [],
+      "actual_errors": [],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P18_F1_missing_candidate_before_camera",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [],
+      "actual_errors": [],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P19_F4_duplicate_tag",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "duplicate input tag: unit_select"
+      ],
+      "actual_errors": [
+        "duplicate input tag: unit_select"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P20_F4_non_object_entry",
+      "expect_status": "INCONCLUSIVE",
+      "actual_status": "INCONCLUSIVE",
+      "expect_errors": [
+        "inputs[4] is not an object"
+      ],
+      "actual_errors": [
+        "inputs[4] is not an object"
+      ],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P21_camera_destination_divergence_still_fail",
+      "expect_status": "FAIL",
+      "actual_status": "FAIL",
+      "expect_errors": [],
+      "actual_errors": [],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P22_candidate_camera_frozen_still_fail",
+      "expect_status": "FAIL",
+      "actual_status": "FAIL",
+      "expect_errors": [],
+      "actual_errors": [],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P23_selection_delta_divergence_still_fail",
+      "expect_status": "FAIL",
+      "actual_status": "FAIL",
+      "expect_errors": [],
+      "actual_errors": [],
+      "verdict": "PASS"
+    },
+    {
+      "probe": "P24_corrupt_record_does_not_mask_fail",
+      "expect_status": "FAIL",
+      "actual_status": "FAIL",
+      "expect_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "actual_errors": [
+        "inputs[4].tag is missing or is not a string"
+      ],
+      "verdict": "PASS"
+    }
+  ]
+}

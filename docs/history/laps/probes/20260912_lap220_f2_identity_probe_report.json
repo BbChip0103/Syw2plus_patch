@@ -1,0 +1,31 @@
+{
+  "cases": {
+    "normal_pair": {
+      "actual": "PASS",
+      "expected": "PASS",
+      "stage_statuses": {
+        "drag_select": "PASS",
+        "minimap": "PASS",
+        "unit_select": "PASS"
+      }
+    },
+    "normalized_identity_and_count_diverge": {
+      "actual": "FAIL",
+      "drag_select": "FAIL",
+      "expected": "FAIL"
+    },
+    "selected_slot_missing_from_scene": {
+      "actual": "INCONCLUSIVE",
+      "expected": "INCONCLUSIVE",
+      "unit_select": "INCONCLUSIVE"
+    },
+    "slot_only_difference": {
+      "actual": "INCONCLUSIVE",
+      "drag_select": "UNKNOWN_SLOT_CORRESPONDENCE",
+      "expected": "INCONCLUSIVE",
+      "unit_select": "UNKNOWN_SLOT_CORRESPONDENCE"
+    }
+  },
+  "failures": {},
+  "status": "PASS"
+}

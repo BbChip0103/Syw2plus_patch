@@ -1,0 +1,272 @@
+{
+  "game_executions": 0,
+  "lap": 228,
+  "preservation": [
+    {
+      "diagnostics_status": "SOUND",
+      "expected": true,
+      "id": "P1_count_1_to_0_via_reader",
+      "intent": "R6-B-R2 deferred semantics: losing the selection still counts",
+      "observed": true,
+      "verdict": "AGREES"
+    },
+    {
+      "diagnostics_status": "SOUND",
+      "expected": true,
+      "id": "P2_count_0_stale_identity",
+      "intent": "count 0 with stale slot bytes must stay sound, exactly as before",
+      "observed": true,
+      "verdict": "AGREES"
+    },
+    {
+      "diagnostics_status": "SOUND",
+      "expected": false,
+      "id": "P3_count_0_to_0",
+      "intent": "empty to empty is still no response",
+      "observed": false,
+      "verdict": "AGREES"
+    },
+    {
+      "diagnostics_status": "SOUND",
+      "expected": true,
+      "id": "P4_count_0_to_1",
+      "intent": "the normal unit_select transition is unaffected",
+      "observed": true,
+      "verdict": "AGREES"
+    },
+    {
+      "diagnostics_status": "SOUND",
+      "expected": true,
+      "id": "P5_identity_change_only",
+      "intent": "lap204 identity-only change is unaffected",
+      "observed": true,
+      "verdict": "AGREES"
+    },
+    {
+      "diagnostics_status": "SOUND",
+      "expected": false,
+      "id": "P6_no_effect",
+      "intent": "genuine no-effect must still be a hard FAIL, not laundered",
+      "observed": false,
+      "verdict": "AGREES"
+    }
+  ],
+  "reachability_and_coverage": [
+    {
+      "count_is_negative": true,
+      "diag_after": {
+        "after_sound": false,
+        "before_sound": true,
+        "status": "CORRUPTED"
+      },
+      "diag_before": {
+        "after_sound": true,
+        "before_sound": false,
+        "status": "CORRUPTED"
+      },
+      "expected_signed_count": -1,
+      "id": "N1_all_ones",
+      "intent": "uninitialised / freed memory read back as 0xFFFFFFFF",
+      "observation": {
+        "count": -1,
+        "selected_slot": null,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: unsupported selected-unit count: -1"
+      },
+      "raw_hex": "ffffffff",
+      "reader_raised": false,
+      "responded_as_after": false,
+      "responded_as_before": false,
+      "verdict": "AGREES"
+    },
+    {
+      "count_is_negative": true,
+      "diag_after": {
+        "after_sound": false,
+        "before_sound": true,
+        "status": "CORRUPTED"
+      },
+      "diag_before": {
+        "after_sound": true,
+        "before_sound": false,
+        "status": "CORRUPTED"
+      },
+      "expected_signed_count": -2147483648,
+      "id": "N2_int_min",
+      "intent": "sign bit only: the most negative count representable",
+      "observation": {
+        "count": -2147483648,
+        "selected_slot": null,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: unsupported selected-unit count: -2147483648"
+      },
+      "raw_hex": "00000080",
+      "reader_raised": false,
+      "responded_as_after": false,
+      "responded_as_before": false,
+      "verdict": "AGREES"
+    },
+    {
+      "count_is_negative": true,
+      "diag_after": {
+        "after_sound": false,
+        "before_sound": true,
+        "status": "CORRUPTED"
+      },
+      "diag_before": {
+        "after_sound": true,
+        "before_sound": false,
+        "status": "CORRUPTED"
+      },
+      "expected_signed_count": -16777215,
+      "id": "N3_torn_high_word",
+      "intent": "torn dword: low word plausible, high word garbage",
+      "observation": {
+        "count": -16777215,
+        "selected_slot": null,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: unsupported selected-unit count: -16777215"
+      },
+      "raw_hex": "010000ff",
+      "reader_raised": false,
+      "responded_as_after": false,
+      "responded_as_before": false,
+      "verdict": "AGREES"
+    },
+    {
+      "count_is_negative": true,
+      "diag_after": {
+        "after_sound": false,
+        "before_sound": true,
+        "status": "CORRUPTED"
+      },
+      "diag_before": {
+        "after_sound": true,
+        "before_sound": false,
+        "status": "CORRUPTED"
+      },
+      "expected_signed_count": -2,
+      "id": "N4_small_negative",
+      "intent": "off-by-two underflow of a deselect path",
+      "observation": {
+        "count": -2,
+        "selected_slot": null,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: unsupported selected-unit count: -2"
+      },
+      "raw_hex": "feffffff",
+      "reader_raised": false,
+      "responded_as_after": false,
+      "responded_as_before": false,
+      "verdict": "AGREES"
+    },
+    {
+      "count_is_negative": true,
+      "diag_after": {
+        "after_sound": false,
+        "before_sound": true,
+        "status": "CORRUPTED"
+      },
+      "diag_before": {
+        "after_sound": true,
+        "before_sound": false,
+        "status": "CORRUPTED"
+      },
+      "expected_signed_count": -1002917822,
+      "id": "N5_ascii_garbage",
+      "intent": "pointer/text bytes landing on the count field",
+      "observation": {
+        "count": -1002225087,
+        "selected_slot": null,
+        "selected_type": "UNKNOWN",
+        "selected_type_provenance": "_CommandCellSnapshotError: unsupported selected-unit count: -1002225087"
+      },
+      "raw_hex": "414243c4",
+      "reader_raised": false,
+      "responded_as_after": false,
+      "responded_as_before": false,
+      "verdict": "AGREES"
+    },
+    {
+      "diag": {
+        "after_sound": false,
+        "before_sound": false,
+        "status": "CORRUPTED"
+      },
+      "id": "N6_both_sides_negative",
+      "intent": "baseline and result both impossible: nothing to compare",
+      "responded": false,
+      "verdict": "AGREES"
+    },
+    {
+      "diag": {
+        "after_sound": false,
+        "before_sound": true,
+        "status": "CORRUPTED"
+      },
+      "id": "N7_negative_with_plausible_identity",
+      "intent": "predicate must reject count<0 on its own, not rely on the reader having blanked slot/type first",
+      "responded": false,
+      "verdict": "AGREES"
+    }
+  ],
+  "role": "middle",
+  "source_sha256": "f39d26fc578c7a33379eb2556f588d4b56a5a24a9ae618ac590947cbfbc4c76e",
+  "summary": {
+    "preservation_defects": [],
+    "reachability_defects": [],
+    "surgicality_verdict": "AGREES",
+    "wait_defects": []
+  },
+  "surgicality": {
+    "behaviour_changes": 2052,
+    "cases": 13689,
+    "changes_all_negative_true_to_false": true,
+    "id": "S1_differential_grid",
+    "intent": "the repair must only turn previously-credited negative-count comparisons into rejections, and change nothing else",
+    "unexpected_changes": [],
+    "verdict": "AGREES"
+  },
+  "target": "G1-R6-B-R3 (lap227)",
+  "wait_cases": [
+    {
+      "expect_classification": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED",
+      "expect_outcome": "TIMEOUT",
+      "id": "W1_negative_every_poll",
+      "intent": "a permanently negative count must not end the wait early and must time out as CORRUPTED, never as FAIL_NO_EFFECT",
+      "result": {
+        "classification": "UNKNOWN_SELECTION_OBSERVATION_CORRUPTED",
+        "outcome": "TIMEOUT",
+        "poll_count": 4,
+        "returned_count": -1
+      },
+      "verdict": "AGREES"
+    },
+    {
+      "expect_classification": null,
+      "expect_outcome": "RESPONDED",
+      "id": "W2_negative_then_real_response",
+      "intent": "a transient negative poll must not consume the window; a real later response still wins",
+      "result": {
+        "classification": null,
+        "outcome": "RESPONDED",
+        "poll_count": 3,
+        "returned_count": 1
+      },
+      "verdict": "AGREES"
+    },
+    {
+      "expect_classification": "FAIL_NO_EFFECT",
+      "expect_outcome": "TIMEOUT",
+      "id": "W3_negative_then_sound_no_effect",
+      "intent": "R6-B-R4 exposure check: one transient negative poll followed by sound unchanged polls is a real no-effect run; if this reports UNKNOWN, R3 widened the registered R4 laundering",
+      "result": {
+        "classification": "FAIL_NO_EFFECT",
+        "outcome": "TIMEOUT",
+        "poll_count": 4,
+        "returned_count": 1
+      },
+      "verdict": "AGREES"
+    }
+  ]
+}
