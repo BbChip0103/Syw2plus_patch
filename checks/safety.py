@@ -13,6 +13,25 @@ from context_limits import check as context_errors
 
 ROOT = Path(__file__).resolve().parents[1]
 ORIGINAL_SHA = "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac"
+
+
+def _resolve_original_exe(root: Path) -> Path | None:
+    """Locate the pinned original EXE by SHA-256; the local cache and the
+    2026-09-26 new source root ([ESL]Syw2plus/) may ship it under different
+    file names."""
+    local = root / "Syw2plus" / "syw2plus_original.exe"
+    if local.is_file():
+        return local
+    new_source_root = root.parent / "[ESL]Syw2plus"
+    if new_source_root.is_dir():
+        for candidate in sorted(new_source_root.glob("*.exe")):
+            if candidate.is_symlink() or not candidate.is_file():
+                continue
+            if hashlib.sha256(candidate.read_bytes()).hexdigest() == ORIGINAL_SHA:
+                return candidate
+    return None
+
+
 BANNED = {
     ".exe",
     ".dll",
@@ -53,8 +72,8 @@ def check(root: Path, anchor: Path, require_game: bool = False) -> list[str]:
             errors.append("Protected reference/golden changed or empty trust anchor")
     except (OSError, ValueError, KeyError):
         errors.append("Missing/invalid explicit safety pin; do not auto-adopt current files")
-    original = root / "Syw2plus/syw2plus_original.exe"
-    if original.is_file():
+    original = _resolve_original_exe(root)
+    if original is not None:
         if hashlib.sha256(original.read_bytes()).hexdigest() != ORIGINAL_SHA:
             errors.append("Original EXE SHA256 mismatch")
     elif require_game:

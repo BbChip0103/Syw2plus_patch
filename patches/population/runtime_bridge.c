@@ -181,7 +181,18 @@ void supply_probe_poll(void *caller)
              * so the allow-list is widened from {5,7} to {5,7,46}; the width/height/
              * flags guards below and the Place->Gate->Spawn + per-entity accounting
              * check are unchanged (card LAP461 section 6-1).
-             * lap526 strategy K1/§83 + lap527 W36 §1: bit 0x4 전투 타입 type 2 추가(N182·N184). */
+             * lap526 strategy K1/§83 + lap527 W36 §1: bit 0x4 전투 타입 type 2 추가(N182·N184).
+             * lap692 work: G2 전비10000 실측을 위해 cost40 후보(pinned
+             * type_costs.json: type28/29=40)를 진단용으로 추가한다. 개인 개체
+             * 상한(250)은 그대로 두고 250*40=10000으로 정확히 맞춰, 브리지 확장 vs
+             * 개인상한 조정 중 브리지 확장을 택한다(analysis/memory_maps/
+             * g2_supply10000_cap_bump_20260926.md 산술 근거). width/height/flags
+             * 게이트는 원본 type 테이블이 그대로 판정하며(28/29/108은 flags로
+             * 거부됨을 이 lap이 실측), 104(cost40, gate-legal)도 추가한다.
+             * 실측 결과 원본 Gate(0x43eda0)가 owner당 실제 개체수 약242에서
+             * 거부해 cost40*242=9680<10000이라 cost40만으로는 부족함이
+             * 드러나, cost65 type103(gate-legal)도 진단 후보에 추가한다
+             * (154기*65=10010, 실측 ~242 한계에 안전 여유). */
             DWORD fixture_type = type;
             DWORD type_offset = fixture_type*0x394u, unit, candidate, cells;
             SHORT fixture_cost = S16(0x9b5238u+type_offset);
@@ -195,7 +206,9 @@ void supply_probe_poll(void *caller)
             slot=0;
             if (fixture_failed) {
                 ok=FALSE; reason="fixture_locked_after_accounting_failure";
-            } else if ((fixture_type != 5u && fixture_type != 7u && fixture_type != 46u && fixture_type != 2u) ||
+            } else if ((fixture_type != 5u && fixture_type != 7u && fixture_type != 46u && fixture_type != 2u &&
+                        fixture_type != 28u && fixture_type != 29u && fixture_type != 104u && fixture_type != 108u &&
+                        fixture_type != 103u) ||
                 (U32(0x9b524cu+type_offset)&14u) != 0 ||
                 width<1 || width>8 || height<1 || height>8) {
                 ok=FALSE; reason="unsupported_army_fixture_type";

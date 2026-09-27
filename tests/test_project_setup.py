@@ -17,7 +17,12 @@ def test_runtime_rejects_both_original_roots():
     )
     driver = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(driver)
-    for path in [ROOT / "Syw2plus", ROOT.parent / "Syw2plus_re/Syw2plus", ROOT.parent / "Syw2plus"]:
+    for path in [
+        ROOT / "Syw2plus",
+        ROOT.parent / "Syw2plus_re/Syw2plus",
+        ROOT.parent / "Syw2plus",
+        ROOT.parent / "[ESL]Syw2plus",
+    ]:
         with pytest.raises(ValueError, match="original"):
             driver.validate_game_root(path)
 

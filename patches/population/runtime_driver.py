@@ -30,6 +30,9 @@ from patches.population.fixed_supply_5000 import (  # noqa: E402
     ORIGINAL_SHA256,
     digest as _digest,
 )
+from patches.population.full_tail_relocation_storage_layout_v1 import (  # noqa: E402
+    layout as _tail_region_layout,
+)
 
 ExecutableProfile: TypeAlias = tuple[str, str]
 ExecutableProfiles: TypeAlias = ExecutableProfile | tuple[ExecutableProfile, ...]
@@ -122,6 +125,16 @@ SUPPORTED_EXECUTABLES: dict[str, ExecutableProfiles] = {
         "fixed_supply_5000",
         "0a1da2263ff099b9fc35d8c63bb82bbefec6dffbae0dcc7458e32887f3f34ad3",
     ),
+    # 2026-09-26: G2 새 목표(활성8인 각각 전비10000, docs/DESIGN.md). Same two-site
+    # cap patch as fixed_supply_5000, immediate only (5000 -> 10000).
+    "supply10000.exe": (
+        "fixed_supply_10000",
+        "039a358ca3e8031ce316bd57e8a66df0358babeba3a544d3e850f740cebc6a1d",
+    ),
+    "g2_supply_10000.exe": (
+        "fixed_supply_10000",
+        "039a358ca3e8031ce316bd57e8a66df0358babeba3a544d3e850f740cebc6a1d",
+    ),
     "g2_unit_pool_n1210.exe": (
         "g2_unit_pool_expansion_v1_n1210",
         "303c78f81f816ed82e495fa4545cc23af3fa7200344eb029b4e9f31cabe96522",
@@ -148,8 +161,27 @@ POOL_PROFILE_LAYOUTS = {
         0x017B8658,
     ),
     "g2_full_capacity_v1_n4001_persistence_compat": (4001, 0x0108C000, 0x017B8658),
+    # lap695 (STATUS 2026-09-27): protected-original G2 candidate, 4093-slot
+    # (4092 usable) tail relocation + owner500 + supply10000. unit_pool base
+    # 0x0108C000 and unit_existence base 0x017E29F8 are the base-preserving
+    # `full_tail_relocation_storage_layout_v1.layout(4093)` outputs for the
+    # first two of the six relocated regions (see FULL_REGION_PROFILES for
+    # the other four -- unit_age/category_slot_list_a/b/active_slot_list --
+    # used by the lap697 global-live cross-check below).
+    "g2_supply10000_pool4092_owner500": (4093, 0x0108C000, 0x017E29F8),
 }
 STOCK_POOL = (1200, 0x0066B790, 0x008990C8)
+
+# Profiles whose "detailed" state should also decode the fourth-through-sixth
+# relocated regions (unit_age, category_slot_list_a/b, active_slot_list) via
+# the full six-region tail-relocation map, so callers can cross-check the
+# authoritative active_slot_list against the unit_existence bitmap (dup/
+# owner-sum verification) instead of trusting a single region in isolation.
+# Value is the capacity passed to `full_tail_relocation_storage_layout_v1.
+# layout()` -- the same capacity registered above in POOL_PROFILE_LAYOUTS.
+FULL_REGION_PROFILES: dict[str, int] = {
+    "g2_supply10000_pool4092_owner500": 4093,
+}
 
 G4_CONTROLLER_OPCODE_OFFSET = 0x0D32
 G4_CONTROLLER_ARGUMENT_OFFSET = 0x0D34
@@ -287,6 +319,28 @@ def state(pid, detailed=False, profile="original"):
                 )
             )
         result["units"] = units
+
+        full_capacity = FULL_REGION_PROFILES.get(profile)
+        if full_capacity is not None:
+            regions_by_name = {r.name: r for r in _tail_region_layout(full_capacity).regions}
+            active_region = regions_by_name["active_slot_list"]
+            count_addr = active_region.new_start + active_region.array_new_span
+            active_count = struct.unpack("<H", read(pid, count_addr, 2))[0]
+            active_slots: list[int] = []
+            if 0 <= active_count <= full_capacity:
+                active_slots = list(
+                    struct.unpack(
+                        f"<{active_count}H",
+                        read(pid, active_region.new_start, active_count * 2),
+                    )
+                )
+            exists_slots = {u["slot"] for u in units}
+            result["active_slot_list"] = {
+                "count": active_count,
+                "slots": active_slots,
+                "duplicate_count": len(active_slots) - len(set(active_slots)),
+                "matches_existence_bitmap": set(active_slots) == exists_slots,
+            }
     return result
 
 
@@ -313,6 +367,8 @@ def validate_game_root(path: Path) -> Path:
         REPO / "Syw2plus",
         REPO.parent / "Syw2plus_re" / "Syw2plus",
         REPO.parent / "Syw2plus",
+        # 2026-09-26 사용자 결정: 원본 게임 기준 경로 전환.
+        REPO.parent / "[ESL]Syw2plus",
     )
     if any(root == p.resolve() or p.resolve() in root.parents for p in originals):
         raise ValueError("Refusing original game directory; use a private complete copy")
@@ -387,6 +443,7 @@ def main():
         "original",
         "fixed_supply_5000",
         "fixed_supply_5000_original_filename",
+        "fixed_supply_10000",
         "g2_unit_pool_expansion_v1_n1210_supply5000",
         "g2_unit_pool_expansion_v1_n1250_supply5000",
         "g2_full_unit_capacity_v1_n1250_supply5000",

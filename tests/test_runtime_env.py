@@ -228,12 +228,26 @@ def test_g4_exact_postload_provenance_requires_marker_adjacent_bounded_edges(tmp
     prefix = tmp_path / "prefix"
     shadow = prefix / runtime_env.G4_AI_SHADOW_RELATIVE_PATH
     shadow.parent.mkdir(parents=True)
-    source = {"full_id": 101, "slot": 1, "owner": 3, "command": 1,
-              "pending": 1, "pending_xy": 0}
+    # ai_shadow.c gives the marker's "source" object an embedded "owner" (see
+    # append_source) but a shadow row's "source" object omits it (the row
+    # already carries "owner" as its own top-level field) — mirror that
+    # asymmetric real schema here so this fixture actually exercises the
+    # owner-location bug, not a synthetic shape that happens to be symmetric.
+    # find_source() in ai_shadow.c requires (full_id & 0xffff) == slot (the
+    # unit's own id low word must equal its array slot) — 0x10001 keeps that
+    # invariant true for slot 1 instead of the arbitrary 101 the old fixture
+    # used (which the new fail-closed check below would otherwise reject).
+    marker_source = {"full_id": 0x10001, "slot": 1, "owner": 3, "command": 1,
+                      "pending": 1, "pending_xy": 0}
+    # find_source() only ever produces a live row (real unit found for the
+    # owner); a fixture whose source is all-zero would be the vacuous
+    # "no live unit" case the fail-closed check below now rejects.
+    shadow_source = {"full_id": 0x10001, "slot": 1, "live": True, "command": 1,
+                      "pending": 1, "pending_xy": 0}
     events: list[dict[str, object]] = [{
         "schema_version": 2, "event": "load_complete", "run_id": "run-1",
         "pid": 7, "tid": 8, "seq": 1, "slot": 1, "result": 1,
-        "tpre": 8, "tload": 10, "next_owner": 3, "source": source,
+        "tpre": 8, "tload": 10, "next_owner": 3, "source": marker_source,
         "candidate_present": False, "candidate_issue_count": 0,
     }]
     for index in range(17):
@@ -245,7 +259,7 @@ def test_g4_exact_postload_provenance_requires_marker_adjacent_bounded_edges(tmp
             "raw_mode": {"program_state": 3, "committed_local": 1,
                          "scenario_selector": 0, "network_mode": 0,
                          "network_modal": 0, "gate_a": 0, "gate_b": 0},
-            "source": source, "tick_rewind": False,
+            "source": shadow_source, "tick_rewind": False,
             "same_tick_reentry": False, "original_call": "forwarded_once",
             "candidate_present": False, "candidate_issue_count": 0,
         })
@@ -259,6 +273,90 @@ def test_g4_exact_postload_provenance_requires_marker_adjacent_bounded_edges(tmp
     assert provenance["pass"] is True
     assert provenance["marker_count"] == 1
     assert provenance["postload"]["pass"] is True
+
+
+def test_g4_exact_postload_provenance_rejects_absent_source(tmp_path: Path):
+    """lap701: an all-zero marker/edge source is a vacuous 0==0 match, not
+    proof the load boundary preserved a real unit — find_source() reports
+    this shape whenever the owner has no live unit (e.g. save000 fixture's
+    deterministic empty owner7). The contract must fail closed, not PASS."""
+    prefix = tmp_path / "prefix"
+    shadow = prefix / runtime_env.G4_AI_SHADOW_RELATIVE_PATH
+    shadow.parent.mkdir(parents=True)
+    absent_marker_source = {"full_id": 0, "slot": 0, "owner": 3, "command": 0,
+                             "pending": 0, "pending_xy": 0}
+    absent_shadow_source = {"full_id": 0, "slot": 0, "live": False, "command": 0,
+                             "pending": 0, "pending_xy": 0}
+    events: list[dict[str, object]] = [{
+        "schema_version": 2, "event": "load_complete", "run_id": "run-1",
+        "pid": 7, "tid": 8, "seq": 1, "slot": 1, "result": 1,
+        "tpre": 8, "tload": 10, "next_owner": 3, "source": absent_marker_source,
+        "candidate_present": False, "candidate_issue_count": 0,
+    }]
+    for index in range(17):
+        events.append({
+            "schema_version": 2, "event": "ai_shadow", "run_id": "run-1",
+            "pid": 7, "tid": 8, "seq": index + 2, "load_marker_seq": 1,
+            "tick": index + 11, "owner": (index + 11) & 7,
+            "entry_ecx": 0x956770 + ((index + 11) & 7) * 0x3ABC,
+            "raw_mode": {"program_state": 3, "committed_local": 1,
+                         "scenario_selector": 0, "network_mode": 0,
+                         "network_modal": 0, "gate_a": 0, "gate_b": 0},
+            "source": absent_shadow_source, "tick_rewind": False,
+            "same_tick_reentry": False, "original_call": "forwarded_once",
+            "candidate_present": False, "candidate_issue_count": 0,
+        })
+    shadow.write_text("\n".join(json.dumps(event) for event in events) + "\n", encoding="utf-8")
+
+    provenance = runtime_env._g4_shadow_provenance(
+        prefix, {runtime_env.G4_AI_SHADOW_ENV: "1"},
+        require_postload=True, expected_run_id="run-1",
+    )
+
+    assert provenance["pass"] is False
+    assert provenance["postload"]["pass"] is False
+    assert "source is absent" in provenance["postload"]["error"]
+
+
+def test_g4_exact_postload_provenance_rejects_source_content_mismatch(tmp_path: Path):
+    prefix = tmp_path / "prefix"
+    shadow = prefix / runtime_env.G4_AI_SHADOW_RELATIVE_PATH
+    shadow.parent.mkdir(parents=True)
+    marker_source = {"full_id": 0x10001, "slot": 1, "owner": 3, "command": 1,
+                      "pending": 1, "pending_xy": 0}
+    # Same owner/tick/ecx as the PASS fixture (those stay consistent by
+    # construction), but a different unit's full_id/slot on the first edge —
+    # a genuine content disagreement the source-comparison must still catch.
+    mismatched_shadow_source = {"full_id": 202, "slot": 9, "live": True, "command": 1,
+                                 "pending": 1, "pending_xy": 0}
+    events: list[dict[str, object]] = [{
+        "schema_version": 2, "event": "load_complete", "run_id": "run-1",
+        "pid": 7, "tid": 8, "seq": 1, "slot": 1, "result": 1,
+        "tpre": 8, "tload": 10, "next_owner": 3, "source": marker_source,
+        "candidate_present": False, "candidate_issue_count": 0,
+    }]
+    for index in range(17):
+        events.append({
+            "schema_version": 2, "event": "ai_shadow", "run_id": "run-1",
+            "pid": 7, "tid": 8, "seq": index + 2, "load_marker_seq": 1,
+            "tick": index + 11, "owner": (index + 11) & 7,
+            "entry_ecx": 0x956770 + ((index + 11) & 7) * 0x3ABC,
+            "raw_mode": {"program_state": 3, "committed_local": 1,
+                         "scenario_selector": 0, "network_mode": 0,
+                         "network_modal": 0, "gate_a": 0, "gate_b": 0},
+            "source": mismatched_shadow_source, "tick_rewind": False,
+            "same_tick_reentry": False, "original_call": "forwarded_once",
+            "candidate_present": False, "candidate_issue_count": 0,
+        })
+    shadow.write_text("\n".join(json.dumps(event) for event in events) + "\n", encoding="utf-8")
+
+    provenance = runtime_env._g4_shadow_provenance(
+        prefix, {runtime_env.G4_AI_SHADOW_ENV: "1"},
+        require_postload=True, expected_run_id="run-1",
+    )
+
+    assert provenance["pass"] is False
+    assert "source mismatch" in provenance["error"]
 
 
 def test_g4_exact_postload_provenance_rejects_missing_marker_or_short_window(tmp_path: Path):

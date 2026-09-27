@@ -15,6 +15,17 @@ allow-list once more to {5,7,46,2}: N182 found the {5,7,46} seeded units all
 lack the bit 0x4 attack-domain flag ("+0x1D8") and so are structurally unable
 to engage; type 2 is the lowest-cost bit-0x4-capable type (N184) and is the
 only additional entry K6 permits.
+
+lap692 work widened the allow-list again to {5,7,46,2,28,29,104,108,103} for
+the G2 전비10000 실측 (2026-09-26 21:54 사용자 판단 다음 우선순위). The pinned
+type table (patches/population/verification_0910/type_costs.json) records
+type 28/29/104/108 at cost 40 and type 103 at cost 65; live probing
+(tools/g2_supply10000_type28_seed_probe.py) found 28/29/108 rejected by the
+existing flags guard (unrelaxed) and only 104/103 gate-legal, and separately
+found the original Gate (0x43eda0) enforces a real per-owner live-entity
+ceiling near 242 (not the +0x2010 field's 250), so a single cost-40 type
+cannot reach 10000 (242*40=9680<10000) -- cost-65 type103 plus a cost-35
+type5 remainder reaches exactly 10000 within that real ceiling.
 """
 import re
 from pathlib import Path
@@ -23,8 +34,9 @@ REPO = Path(__file__).resolve().parents[1]
 SOURCE = REPO / "patches/population/runtime_bridge.c"
 
 ALLOWLIST_RE = re.compile(
-    r"\(fixture_type != 5u && fixture_type != 7u && fixture_type != 46u "
-    r"&& fixture_type != 2u\)"
+    r"\(fixture_type != 5u && fixture_type != 7u && fixture_type != 46u && fixture_type != 2u &&\s*"
+    r"fixture_type != 28u && fixture_type != 29u && fixture_type != 104u && fixture_type != 108u &&\s*"
+    r"fixture_type != 103u\)"
 )
 FLAGS_GUARD_RE = re.compile(r"U32\(0x9b524cu\+type_offset\)&14u\) != 0")
 DIMENSION_GUARD_RE = re.compile(r"width<1 \|\| width>8 \|\| height<1 \|\| height>8")
@@ -40,12 +52,13 @@ def _source_text() -> str:
     return SOURCE.read_text(encoding="utf-8")
 
 
-def test_fixture_type_allowlist_is_exactly_5_7_46_2():
+def test_fixture_type_allowlist_is_exactly_5_7_46_2_28_29_104_108_103():
     text = _source_text()
     assert ALLOWLIST_RE.search(text), (
-        "op5/op6 fixture_type allow-list must be exactly {5,7,46,2} "
-        "(card LAP461 section 6-1, widened by lap526 strategy §83 + W36 "
-        "LAP527 section 2-2); if this fails the allow-list changed without "
+        "op5/op6 fixture_type allow-list must be exactly "
+        "{5,7,46,2,28,29,104,108,103} (card LAP461 section 6-1, widened by "
+        "lap526 strategy §83 + W36 LAP527 section 2-2, then lap692 work for "
+        "G2 전비10000); if this fails the allow-list changed without "
         "updating this pin"
     )
 
@@ -55,7 +68,7 @@ def test_allowlist_pin_is_not_vacuous():
     # and confirm the exact-match pin above would fail to match it. If this
     # assertion fails, ALLOWLIST_RE is too loose to catch a real widening.
     mutated = _source_text().replace(
-        "fixture_type != 2u)", "fixture_type != 2u && fixture_type != 99u)"
+        "fixture_type != 103u)", "fixture_type != 103u && fixture_type != 99u)"
     )
     assert mutated != _source_text()
     assert not ALLOWLIST_RE.search(mutated)

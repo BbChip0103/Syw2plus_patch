@@ -135,4 +135,149 @@
   - [x] 처리(lap686 work): G1/G2/G3/G5를 원본에 단독 적용해 빌드(G4는 v2 훅 사이트가 v1 오퍼랜드와 겹쳐 원본 단독 적용이 **빌드 시점에 실측으로 불가능함을 확인**) + V1_FULL/V2_FULL 재노출. **① 지시된 ≤20 드래그 방법 자체가 반증됐다**: 원본17/19·V1_FULL13/19·V2_FULL12/19로 전부 같은 구간(63~89%), 어느 묶음도 ≤20에서 구별되게 깨지지 않는다(회귀는 규모-의존적). **② 대신 V1_FULL을 dense-50 규모로 실행**해 `ever_command4_count=18/49`(37%) — 같은 규모 V2_FULL(lap685) 0/49·v3 ≤1/49보다 극적으로 나음. **H1/H2/H3(G4) 훅이 지배적 원인**, v1 단독도 100%→37% 잔여 결함 있음(별개, 미확정). 신규 도구 3개(`patches/selection/g5_selection_cap50_bisect.py`, `tools/g5_bisect_attack_probe.py`, `tools/g5_worker_relative_move_attack_probe_v1.py`)+테스트 3개, 제품 EXE 0 변경. `make check`994 passed(711s), SAFETY_PASS. 근거 `docs/history/laps/20260926_lap686_work_g5_bisection_localizes_regression_to_control_group_hooks.md`. G5 최우선·상시 지시는 미처리로 유지한다.
 - [ ] **2026-09-26 lap686(work, 자체 기록):** 다음 work는 middle 없이 H1/H2/H3(v2) 훅이 attack 유지를 깨는 정확한 지점을 gdb로 좁힌다 — (i) H2/H3가 쓰는 unit `+0x344` 필드 근처가 attack의 `+0x384`/`+0x290` 상태와 메모리를 공유/겹치는지, (ii) H3의 `FUN_0040F790`/`FUN_0040F7D0` 호출 경로가 lap677의 `FUN_0040C640`(pending 컨슈머) 분기에 영향을 주는지. 찾으면 훅을 최소 수정 후 `g5_worker_relative_move_attack_probe_v2.py`로 dense-50 재실행해 `ever_command4_count`가 V1_FULL의 18/49 이상으로 회복되는지 확인한다. 그 다음에야 v1 단독 잔여 결함(100%→37%)을 조사한다(저우선).
 - [ ] **2026-09-26 18:59 운영자 승인+힌트(lap686 다음 한 가지, 회부 없이 work):** H1/H2/H3(부대 그룹 훅) 간섭 지점을 좁힌다. 순서: ① **v3에서 H1/H2/H3를 하나씩 뺀 후보 3개**로 dense-50 공격(`ever_command4_count`) 1회씩 → 공격을 살리는 훅 1개 특정(싼 판별 먼저). ② 특정된 훅의 패치 지점이 공격 경로와 공유되는지 정적 확인 — 특히 H3의 `FUN_0040F790` 호출 뒤 3바이트 NOP(스택 이중 정리 수정)이 **다른 호출자(공격 명령 경로)에서도 실행되는 공유 코드**라면 그 경로의 스택 균형이 깨진다; 또 H1/H2가 unit `+0x344` 외 필드(공격 대상 `+0x38C` 인접 등)를 쓰는지 확인. ③ 훅을 호출자 한정(케이브 안에서만 정리)으로 고친 뒤 원본20/후보50 공격 paired 2회 + 그룹 roundtrip 재확인.
+  - [x] 처리(lap687 work): 지시된 3-way(skip=H1/H2/H3) dense-50 공격 실행 신규 도구(`patches/selection/g5_selection_cap50_v2_partial.py`, `tools/g5_worker_relative_move_attack_probe_v2_partial.py`)를 만들어 1회씩 실행 — 1차값은 skip=H1→0/49, skip=H2→18/49, skip=H3→18/49로 "H2∧H3 동시 존재가 원인"처럼 보였다. 그러나 **skip=H1 재실행이 18/49로 뒤집혀 같은 후보·같은 조건에서 0과 18이 둘 다 나오는 비결정성을 확정**했고, 원본 디스어셈블 전수 확인 + lap677의 기존 gdb 진입-카운트 증거(`group_assign_FUN_00445D30`/`order_consumer_FUN_0040F7D0` 둘 다 이 MOVE/ATTACK 시나리오에서 진입 0회)로 H1/H2/H3 훅 코드가 애초에 이 시나리오에서 실행되지 않는다는 정적 반증도 남겼다 — 어떤 훅도 범인으로 확정하지 않는다(1회 실패 가설). 근거 `docs/history/laps/20260926_lap687_work_g5_hook_bisection_probe_nondeterminism.md`. G5 최우선·상시 지시는 미처리로 유지한다. (세션 도중 운영자가 19:25에 독립적으로 같은 비결정성 결론에 도달해 아래 판정을 이미 남겼다.)
 - [ ] **2026-09-26 19:25 운영자 판정(lap687 관측 반영, 다음 work용):** 같은 후보(v2+H1)가 1회차 `ever_command4_count` 0, 2회차 18 ⇒ **공격 probe가 비결정적**이다. 단발 0/18로 원인을 가르는 이분 탐색·훅 추적은 중단한다. 다음 work: ① 공격 probe의 흔들림 원인(적 스폰 위치/시점, 목적지 변환, 공격 가능 판정 P6, 선택 순서)을 raw로 1회 비교해 가장 유력한 1개를 고정(구현 우선). ② 고정 후 **v3 50기 N=5, 원본 20기 N=5** 반복 측정해 `ever_command4_count/attack_capable` 비율 분포로 판정 — 후보 중앙값이 원본 비율(≈85~95%)과 같은 수준이면 공격 50 PASS. ③ 결과 들고 middle 재검수.
+  - [x] 처리(lap688 work): ① 원본 5회 raw 비교로 원인 확정 — 완전실패(0/19) 2회 모두 `observed_target_uids`가 12초 창 전체에서 공백이었다. 원인은 공격 표적을 드래그/MOVE보다 먼저 스폰해 자동교전이 명시적 클릭 전에 표적을 죽이는 레이스(lap672 기존 경고와 일치). 표적 스폰을 ATTACK 클릭 직전으로 옮겨 수정(`tools/g5_worker_relative_move_attack_probe.py`), 완전실패 재현 소거 확인. ② 수정 후 원본20/후보v3(50) 각 N=5: 원본 중앙값58%(19,19,5,11,4/19), 후보 중앙값65%(30,33,49,27,32/49) — 후보가 원본보다 낮지 않음, 원본도 판정문 기대치(85~95%)에 못 미쳐 문자 그대로의 PASS 적용은 middle 판단 필요. 원본·후보 SHA 10회 불변, 제품 EXE 0 변경. 근거 `docs/history/laps/20260926_lap688_work_g5_attack_probe_spawn_timing_fix_and_n5_measurement.md`. G5 최우선·상시 지시는 미처리로 유지한다.
+- [ ] **2026-09-26 lap688(work, 자체 기록):** 다음 middle은 위 raw 분포(원본 21~100%/중앙값58%, 후보 21~100%/중앙값65%, 후보가 낮지 않음)를 검토해 (a) 이 노이즈 수준에서도 공격50을 PASS로 볼지, (b) N을 늘리거나(10+) 표적을 다중화해(생존시간 확보) 재판정할지 결정한다. work는 middle 판정 없이 같은 raw 비교를 반복하지 않는다.
+- [ ] **2026-09-26 20:15 운영자 판정(lap688 N=5 반영):** 공격 반복 측정 — 원본(선택20·가능19) `ever_command4` 19/19/5/11/4(중앙 11, 58%), v3 후보(선택50·가능49) 30/33/49/27/32(중앙 32, 65%), **후보 5/5회 모두 20 초과**. 원본 자체 변동이 크므로 비율 동등 이상 + 매회 20 초과를 공격 브로드캐스트 50의 근거로 삼는다. **다음: G5 전체 middle 독립 재검수**(드래그50·51번째 거부, 그룹/호출/저장로드 50/50/50(lap684), 이동 paired 20/50(lap682), 공격 N=5(lap688), v3 크래시 수정(lap680), make check). 멀티 영향 메모(명령 레코드 형식 불변, 20기 단위 최대 3회 발행 → 패킷 수 최대 3배) 포함 요청.
+  - [x] 처리(lap689 middle, Opus 5.5): 위 lap688 자체기록 (a)/(b)와 20:15 판정을 함께 처리. G5 전체 독립 재검수 **단일플레이 조건부 PASS**. 단 공격 근거는 정정 — `ever_command4`는 표적 무관 command4를 세고 비표적 uid(459945/394410/525480)가 관측돼 자동교전 오염 가능하므로 "매회 20 초과"는 브로드캐스트 증명이 아니다. 같은 raw의 t=0 스냅샷 49기 동시 `pending==0x1000004`+클릭 xy 49/49(후보-1/2, 3청크 전부)와 후보-3 49/49 표적 handle 일치로 승인. N 증가·표적 다중화 재측정은 불필요. 멀티 `UNKNOWN`, 사용자 milestone 3단 대기(APPROVALS 큐). 근거 `docs/history/laps/20260926_lap689_middle_g5_full_independent_review_conditional_pass.md`. G5 최우선·상시 지시는 사용자 판단 전까지 유지한다.
+- [ ] **2026-09-26 lap689(middle, 자체 기록 — work handoff, 비차단):** `tools/g5_worker_relative_move_attack_probe.py` 82~97·127~128행 주석이 lap688에서 반증된 "스폰 위치 혼잡" 가설을 POLL_TIMEOUT/창 확대 근거로 적고 있어 484~498행(실제 원인: 표적 스폰 시점)과 모순된다 → 주석만 정정. 선택 하드닝: 공격 판정에 슬롯별 누적 `ever_pending_exact`(0x1000004)·표적 handle 일치 집합 기록. G5 제품 EXE 변경 금지.
+- [ ] **2026-09-26 20:23 운영자 확인(lap689 수용):** lap689 middle의 공격 근거 교체(클릭 직후 49기 동시 공격 pending+클릭 좌표 2회, 49기 전원 표적 지정 1회)를 수용하고 lap688 `ever_command4` 근거는 철회한다. G5 단일플레이 **조건부 PASS**, 멀티 동기화 UNKNOWN. 사용자 milestone 판단 요청 중. 다음 work: `tools/g5_worker_relative_move_attack_probe.py` 82~97·127~128행 주석 정정(반증된 가설 제거) 1건만 하고 종료.
+- [ ] **2026-09-26 21:54 사용자 판단(AskUserQuestion 응답):** "G5 승인, 다음은 G2 10000". **G5(드래그 선택 20→50)는 단일플레이 milestone 승인**(v3 후보 `e5004764…`; 멀티 동기화는 미확인 — 명령 1건이 20기 단위 최대 3회 발행, 패킷 최대 3배 — 메모로 유지). G5 최우선 지시는 종료. **다음 우선순위: G2 — 활성8인 각각 전비10000 안정 플레이**(DESIGN.md G2, 5000 단계 달성). lap690(주석 정정)이 끝나면 다음 work는 G2 10000 첫 단계(전비 상한 5000→10000 후보 구현 후 8인 실행, 개인 개체 상한1200·전역 풀10,000 병목 측정)부터 구현 우선으로 진행.
+  - [x] 처리(lap691 work): 전비 상한 5000→10000 후보(`patches/population/fixed_supply_10000.py`, 원본 대비 동일
+    두 사이트/길이, immediate만 교체) 구현·테스트17 PASS·격리 부팅 스모크 PASS(크래시 없음, SHA 일치, clean
+    exit). 8인 실행은 미도달 — 전투를 시작하지 않았고 fixture도 아직 없다. 병목은 실행 없이 기존 확정
+    상수로 산술만 냈다: 기존 브리지(type5/cost35 전용)+원본 개인상한250 조합은 최대 전비8750으로 10000
+    미도달(브리지 확장 또는 상한 조정 필요), 전역풀1200은 8인×250(2000)에도 못 미쳐 더 먼저 막힌다.
+    DESIGN의 "개인 개체 상한1200"은 원본 실측값(250)과 다르며 미착륙 실험을 가리키는 것으로 보임 — 해석
+    확정은 다음 middle/strategy로 넘긴다. `make check` 1010 passed. 근거 `docs/history/laps/
+    20260926_lap691_work_g2_supply10000_cap_bump_and_boot_smoke.md`,
+    `analysis/memory_maps/g2_supply10000_cap_bump_20260926.md`. G2 10000 실측(8인 fixture)은 미처리로 유지한다.
+  - [x] 처리(lap692 work): `runtime_bridge.c` op=5/6 allow-list을 cost40/65 후보(28/29/104/108/103)로
+    확장(브리지 확장 선택), owner1인 실측으로 **원본 Gate가 실제 개체수 약242에서 거부**함을 발견(설계
+    문서의 250과 다름, 원인 미상). type103(cost65) 153기+type5 35기 조합으로 owner0 단독 `used=10000`
+    라이브 PASS. 8인 동시 fixture는 미착수(다음 22:52 지시가 그보다 먼저). `make check` 1010 passed.
+    근거 `docs/history/laps/20260926_lap692_work_g2_supply10000_type103_single_owner_pass.md`.
+- [ ] **2026-09-26 22:52 사용자 결정(AskUserQuestion 응답): 원본 게임 기준 경로를 `/home/dev_00/sharedfolder/260320_Syw2plus/[ESL]Syw2plus/`로 전환.** 보호 원본 EXE는 그 안의 `[HQ]Syw2plus 2002.exe`(SHA `b56986e0…`, 기존과 동일). 새 경로도 원본/참고 저장소와 같이 **읽기 전용**. 이전 측정은 그대로 보존, 이후 작업부터 새 경로 사용. **다음 work의 첫 작업(G2 10000보다 먼저):** ① `tools/runtime_env.py` `DEFAULT_SOURCE`를 새 경로로 바꾸고, 원본 EXE를 파일명 대신 **SHA `b56986e0…`로 찾아** 격리 사본 안에서는 기존 이름 `syw2plus_original.exe`로 두도록 수정(`ORIGINAL_EXE` 사용처 호환 유지), ② `tools/check_setup.py:51`, `tools/g4_path_fixture_preflight.py:141~144`, `checks/safety.*`의 원본 SHA/경로 불변 검사 대상에 새 경로 포함, ③ 관련 테스트 갱신 후 `make check`, `checks/safety.sh check`, 새 경로 기준 `runtime_env.py prepare` + 부팅 스모크 1회. 새 경로의 `Data`/`config.hq`/맵이 옛 경로와 다르면 차이를 기록. 끝나면 G2 전비10000 계속.
+  - [x] 처리(lap693 work): 새 경로 전환 완료(`docs/history/laps/20260926_lap693_work_g2_source_path_migration.md`).
+  - [x] 처리(lap694 work): 새 경로 위에서 G2 8인 동시 전비10000 실측 완료 — **전역 1200-슬롯 풀이
+    병목임을 확정**(owner0~6 7인 `used=10000` 도달, owner7은 전역 live 1199에서 거부되어 `used=6845`
+    로 미도달). type103(cost65)+type5(cost35) 156기/owner 조합은 owner당 실측 개체상한(~242) 이내로
+    충분하지만 8*156=1248>1200이라 구조적으로 8/8 동시 도달이 불가능함을 raw로 확인했다. 크래시0,
+    cleanup ok, 원본 SHA 불변, `make check` 1010 passed(766.52s), safety PASS. 근거
+    `docs/history/laps/20260926_lap694_work_g2_supply10000_eight_owner_global_pool_bottleneck.md`.
+    G2 최우선 지시는 미완료로 유지한다(8/8 미도달).
+- [ ] **2026-09-27 lap694(work, 자체 기록):** 다음 work는 middle/strategy 판정으로 병목 해소 방향을
+  좁힌다 — (a) cost>65 gate-legal 타입을 0..200 전수 재탐색해 owner당 150기 이하로 10000에 도달하는
+  조합을 찾는다(풀 무변경, 8*150=1200 이내), (b) 전역 1200-슬롯 풀 확장(`build_runtime_bridge.py
+  --unit-pool-capacity`는 이미 1200~5000 지원하나 구조체 relocation 별도 위험 — 참고: 이번 lap과 무관한
+  G5 lap678 조사가 유사 크기변경에서 크래시 이력 다수를 경고했다)의 승인/타당성 판정. 둘 다 없이 8/8
+  도달로 기록하지 않는다. 8인 모두 human 활성 여부의 UI 확인, 저장/로드, 24k/144k는 이 판정 이후.
+- [ ] **2026-09-27 00:05 운영자 판정(lap694 승격 해소, strategy 대행):** (b) **전역 풀 확장**을 채택. (a) 고비용 타입으로 우회해 10000을 채우는 것은 실제 플레이(전비10000이면 유닛 수가 많아짐)를 대표하지 않아 기각. 다음 work: 이미 실전 검증된 G2 ESL 계열 풀 재배치(`patches/population/g2_esl2608_pool4092_owner500.py`/`g2_esl2606_pool4092_owner500.py`, 개인500·공용4092, 초상화 슬롯 수정 포함)를 **보호 원본(b56986e0) 기준 전비10000 후보에 이식**(구현 우선) → lap694 8인 probe 재실행으로 owner0~7 전원 `used=10000` 확인 → 저장/로드 1회. 개인 상한이 1인 10000 도달에 부족하면 500→1250 등 필요한 값으로 올리되 8×개인 ≤ 풀 조건 유지.
+  - [x] 처리(lap695 work): 신규 `patches/population/g2_supply10000_pool4092_owner500.py`로 보호 원본
+    위에서 직접(ESL 참조 바이너리 불필요, 기존 `g2_full_capacity_persistence_compat_v1` 체인 재사용)
+    4093-슬롯 풀 relocation + 전비10000 + 개인로스터500 + 유휴영웅 초상화 producer 탐색 4093 확장을
+    조합. lap694와 동일 fixture(type103x153+type5x1, 156기/owner)로 8인 재실행 →
+    **owner0~7 전원 `used=10000, count=156, count_cap=500` 도달(PASS_ALL_EIGHT_SUPPLY10000)**, 잠금
+    0회, 크래시0, cleanup ok, 원본SHA 불변. `make check` 1019 passed(769.54s), ruff/mypy/CONTEXT_PASS/
+    safety 전부 PASS. **저장/로드 1회는 미실행**(이번 lap 범위 밖) — 전역 유닛 열거 도구(`global_live_
+    count`)가 이 6-영역 relocation 후보에서 0을 반환해 별도 수리 전까지 전역 풀 중복/손상 확인도
+    보류(안전 규칙 요구사항). 근거
+    `docs/history/laps/20260927_lap695_work_g2_supply10000_pool4092_eight_owner_pass.md`.
+- [ ] **2026-09-27 lap695(work, 자체 기록):** 다음 work는 middle/strategy 회부 없이 두 가지를 이어간다
+  — ① 8인 fixture 상태에서 저장→로드 1회(로드 후 8인 전원 `used=10000` 유지 확인), ② `build_runtime_
+  bridge.py`의 detailed 유닛 열거가 6-영역 전체(카테고리 A/B·active_slot_list 포함) relocation 주소를
+  반영하도록 고쳐 전역 유닛 수/중복 여부를 raw로 검증. 둘 다 끝나면 middle 독립 검수로 G2 8인×10000을
+  올린다.
+- [ ] **2026-09-27 01:05 운영자 지시(lap696 후속, middle 전 1바퀴):** 전역 유닛 열거(`global_live_count`/active_slot_list 등)를 G2 pool4092 6-영역 재배치 주소로 고쳐, 8인×10000 fixture에서 **전역 live=1248(8×156)**, 슬롯 중복 0, owner별 count 합=전역 live, 저장/로드 전후 동일을 raw로 확인. 끝나면 G2 전비10000 후보를 middle 독립 검수로 승격.
+  - [x] 처리(lap697 work): 근본원인 확정 — `global_live_count`가 `read_state(pid, detailed=True)`를
+    profile 인자 없이 호출해 기본 STOCK_POOL(옛 stock 주소, capacity1200)로 폴백, 6-영역 재배치
+    후보에서 항상 0을 반환했다. `patches/population/runtime_driver.py`에 `g2_supply10000_pool4092_
+    owner500` profile을 `POOL_PROFILE_LAYOUTS`(unit_pool/unit_existence 주소, `full_tail_relocation_
+    storage_layout_v1.layout(4093)`과 신규 테스트로 대조 고정)에 등록하고, 신규 `FULL_REGION_PROFILES`
+    + `state(detailed=True)`의 `active_slot_list`(6번째 영역) 디코드(count/entries/중복/bitmap 일치)를
+    추가했다. probe(`tools/g2_supply10000_pool4092_eight_owner_probe.py`)의 4개 `global_live_count`
+    호출 지점에 profile을 연결하고 raw 무결성 판정(`global_pool_integrity`/`loaded_global_pool_
+    integrity`)을 추가. 8인×10000 fixture 라이브 재실행(save-load 포함) → **`final_global_live=1248`
+    == `owner_count_sum` == `active_slot_list_count` == `exists_bitmap_count`, `duplicate_count=0`,
+    `matches_existence_bitmap=true`**, 저장→로드 후에도 동일(`active_slots_unchanged_by_load=true`,
+    `owners_ok_after_load=8`). 지시된 세 가지(전역 live=1248, 중복0, owner합=live, 저장/로드 전후
+    동일) 전부 raw로 확인됐다. `make check` 1025 passed(755.05s), safety PASS, 신규 단위테스트
+    (`patches/population/test_runtime_driver_pool4092_global_live.py`) 6 passed, 제품 EXE 무변경.
+    **미확인 잔여:** category_slot_list_a/b(4·5번째 영역)는 범위 밖(전역 풀 손상이 이 두 영역에서만
+    나면 이번 교차검증으로는 못 잡는다). 근거
+    `docs/history/laps/20260927_lap697_work_g2_pool4092_global_live_enumeration_pass.md`. **G2 8인×
+    10000 후보(lap691~697)는 이제 middle 독립 검수로 승격 가능하다고 판단한다(work tier 판단).**
+- [ ] **2026-09-27 lap698(middle, 자체 기록 — 방향 승격):** G2 8인×10000 후보 독립 검수 결과 2단 `CONDITIONAL PARTIAL PASS`(고비용 fixture 한정 회계·풀 무결성) / 제품 `HOLD`. 재빌드 `11aa9e79…` 일치·raw 1248/중복0 일치·targeted 22 passed·SAFETY_PASS. 그러나 fixture type103(cost65)은 게임 최고가 단일 타입(비용>0 83종 중앙값15)이고 명령 wire 슬롯 12비트(풀 상한 4095) 때문에 1인 평균 ~511기가 천장 → 평균 비용≥20 군대만 8×10000 가능. 00:05 판정("고비용 우회 기각")과 충돌하므로 strategy/운영자가 (A) 비용≥20 기준 수용 후 안정성 단계 / (B) wire 슬롯 확장 중 판정. 비차단 work: 대표 혼합 1인 cap500 천장 실측·판별형 저장/로드·수천 tick 무결성(EXE 무변경). 근거 `docs/history/laps/20260927_lap698_middle_g2_supply10000_independent_review_hold.md`, `loop/ESCALATE_SOL`.
+- [ ] **2026-09-27 01:39 운영자 확인(lap698 수용, A/B는 사용자 판단 요청 중):** lap698 조건부 부분 PASS/HOLD 수용. 00:05 판정의 '고비용 우회 기각'과 충돌하는 점 인정 — 12비트 슬롯 한계(전역 ≈4095, 1인 평균 ≈511기)로 평균 비용<20 군대는 8×10000 불가. (A)/(B) 결정 전까지 work는 lap698이 지정한 EXE 무변경 하네스 확장만 수행: ① 비용 섞인 현실적 군대(중앙값 비용 근처 구성)로 1인·8인 상한 실측, ② 저장 후 상태 변경→로드→복원 확인, ③ 수천 tick 진행 후 전역 1248기·중복0 재확인(가능하면 전투 포함), ④ lap695/697 브리지 SHA 기록 불일치 정정.
+  - [x] 처리(lap699 work): ①~④ 전부 raw 증거로 완료, 게임 EXE 무변경(probe/하네스만 확장).
+    ① 혼합군(cost13/20) 1인·8인 실측: owner당 `count=492/500,used=7020/10000`(목표 대비 -30%),
+    엔진 Gate가 count_cap보다 항상 **-8**에서 거부(cap250 표본의 "실제 거부 ~242"와 동일 오프셋,
+    근본원인은 신규 미해결 질문으로 남김). ② 판별형 저장/로드: 저장 후 owner0 `used`를
+    10000→1로 변조→로드→`restored_used=10000` 확인(no-op 로드가 아님을 최초 판별). ③ 3000-tick
+    진행 후 전역 1248/중복0/bitmap 일치 유지(population 안정), 전투 시도는 엔진이 `raw_return=0`
+    으로 거부(fixture 유닛이 비전투형 추정, UNKNOWN 유지). ④ "불일치"는 `bridge_sha256`이 서로
+    다른 두 대상(빌드 매니페스트=소스 해시/probe provenance=컴파일된 DLL 해시)에 같은 이름으로
+    쓰인 명명 충돌이었음을 확인, lap695/697 문서를 정정(원문 수치 `28980e42…`는 실제로 맞았다).
+    `make check` 1025 passed(761.95s), SAFETY_PASS. A/B 판정은 여전히 strategy/사용자 전권 대기.
+    근거 `docs/history/laps/20260927_lap699_work_g2_median_cost_ceiling_discriminative_saveload_tick_stability.md`.
+    G2 최우선 지시는 A/B 판정 대기로 유지한다.
+- [ ] **2026-09-27 03:21 사용자 판단(AskUserQuestion 응답):** "현 한계 인정. 전비 상한 10000은 포기하고 기존 전비 상한 5000으로 만족". **G2 목표를 전비5000(달성 판단 유지)으로 되돌리고 10000 트랙 종료.** 10000 후보(lap691~699, `g2_supply10000_*`)와 증거는 보존만 하고 더 진행하지 않는다. A/B 판정 대기 해소. **다음 우선순위(운영자 결정): G4 — 길찾기/자유대전 AI**(STATUS 표: AI 개선 제품 비교·post-load·사용자 승인 미충족). 다음 work는 G4의 마지막 미충족 항목 중 post-load(저장/로드 후 AI 개선 유지) 확인부터 구현 우선으로 진행. G1은 그 다음.
+  - [x] 처리(lap700 work): G4 W2(read-only AI shadow load 계측) 재개. lap626이 mypy 10건으로
+    `BLOCKED`했던 지점은 이미 해소돼 있었다(귀속 lap 불명). objdump 피연산자 값을 손으로
+    추적해 `tools/inmm_stub/ai_shadow.c`의 `g4_load_call_wrapper`가 스택 언밸런스로 **항상
+    크래시**하는 실결함(`addl $8,%esp`가 저장된 원본 EAX까지 버려 반환주소를 EAX로, slot 값을
+    `ret` 대상으로 오독)을 발견·수리(`$8`→`$4`), 같은 파일 기존 테스트가 깨진 값을 그대로
+    요구하던 assertion도 교정. `tools/runtime_env.py`의 `_g4_postload_contract` source 비교가
+    marker/row의 비대칭 스키마(`owner`가 marker는 `source` 안, row는 최상위)를 잘못 비교해
+    라이브 데이터에서 항상 거짓 FAIL하던 버그도 수리, post-load 17행 대기 폴링을 옵트인
+    경로에 추가(기존 데드라인 불변). fresh pinned save000 3회(LEGACY_SOURCE 사용 — 새 기본
+    `[ESL]Syw2plus/save/`엔 save000.dat 없음)로 **`EXACT_POSTLOAD_EDGE_PASS` 최초 raw
+    PASS**(run3 `20260927_041011_2268874_0`, marker1·postload22행). `make check` 1026
+    passed(759.23s), SAFETY_PASS. **candidate AI 정책은 여전히 없어(read-only shadow만)
+    "AI 개선 제품 비교"는 미착수 — 이번 lap은 post-load 계측 계약만 닫았다.** 독립
+    검수·사용자 승인 없음. 근거
+    `docs/history/laps/20260927_lap700_work_g4_w2_postload_abi_and_contract_fix_exact_pass.md`.
+    다음은 middle 독립 검수(APPROVALS 대기열 참고), G4 최우선 지시는 미완료로 유지한다.
+  - [x] 처리(lap701 middle): lap700 독립 검수 — ABI·폴링 CONFIRMED, 그러나 run3 source 부재
+    (owner7 무유닛, 0==0)로 `BLOCKED(postload_contract:marker_source_absent)`. 다음 work는 계약
+    fail-closed 보강 + save006 fixture 전환 실행(STATUS "다음 한 가지"). G4 최우선 지시는 미완료 유지.
+  - [x] 처리(lap702 work → lap703 middle): fail-closed 계약 + save006 non-vacuous
+    `EXACT_POSTLOAD_EDGE_PASS`를 lap703이 원문 재확인으로 확정, **G4 W2(load-boundary 계측) 종결**.
+    AI 개선 candidate는 아직 없음. 다음 work: G4-P1 원본 길찾기 baseline probe(DESIGN §G4 "원본
+    병목과 반복 가능한 비교 장면부터"). G4 최우선 지시는 미완료 유지. 근거
+    `docs/history/laps/20260927_lap703_middle_g4_w2_independent_review_confirmed.md`.
+- [x] **2026-09-27 05:55 운영자 관찰(lap704 진행 중 참고):** baseline run1 목적지 화면좌표 `[1375,337]`로 클릭했는데 slot1198 이동 0(path_length 0), near-control `[604,243]`은 도착. 이전 G5 관측상 게임 화면은 1600×1200 프레임 좌상단 800×600(HUD y≥480)에 그려지므로 x>800 클릭은 게임 밖일 가능성이 크다 — safe box를 실제 렌더 영역(0..800, 0..480)으로 제한하고, 원거리 이동은 목적지가 화면 밖이면 **미니맵 클릭** 또는 카메라 이동 후 클릭으로 발행.
+  - [x] 처리(lap705 work): 원인을 실측 창 크기(800×600, `runtime_env._game_window_ids` 확인)와 12방향 컴퍼스 탐색이 그 밖을 골랐던 것으로 확정. `safe_screen_box()`를 실측 `content_info` width/height에서 유도.
+- [x] **2026-09-27 06:05 운영자 지시(lap704 BLOCKED 후속):** 새 probe의 fixture 19기는 1틱도 안 움직였지만, **lap682 `tools/g5_worker_relative_move_attack_probe.py`는 원본 20/20 이동 수렴을 2/2 재현**했다(같은 원본 EXE). 원인을 새로 추측하지 말고 **lap682 probe의 fixture 생성·드래그·우클릭 절차를 그대로 재사용**(차이는 목적지 거리와 궤적 기록만 추가)해 원본 20기 원거리 이동 baseline 3회를 측정한다. 두 probe의 fixture 차이(유닛 type·소유자·스폰 방식·보정 단계의 9회 우클릭 여부)는 1줄 diff로 기록. 목적지는 실제 렌더 영역 안(또는 미니맵)으로.
+  - [x] 처리(lap705 work): 두 probe의 fixture/드래그/9점 보정 절차는 이미 완전 동일함을 확인(1줄 diff: 차이 0건). 목적지를 lap682와 동일 축(dy)으로 10타일까지 늘려 fresh 3회 측정 — `20/20`·`20/20`·`0/20` 이동명령 도달(raw, 원인 미귀속). 상세 `docs/history/laps/20260927_lap705_work_g4_path_baseline_long_distance_reused_procedure.md`. 다음 한 가지는 STATUS.md에 기록(N≥5 반복으로 spawn world 상관 확인).
+- [ ] **2026-09-27 07:45 운영자 판정(lap706 승격 해소, strategy 대행):** (a) 채택 — 대표 baseline scene은 worker world **(93,56)**(8/8 재현 20/20 명령 도달). (10,49)는 명령 도달 자체가 0인 입력/지형 문제라 길찾기 지표에서 제외하고 사유만 기록(c는 후순위). 다음 work: (93,56) scene에서 **길찾기 약점이 드러나는 조건**으로 원본 baseline N=3 확보 — 거리 20타일 이상(미니맵 또는 카메라 이동 후 클릭) 및 장애물/좁은 통로를 끼는 목적지 1개씩, 지표는 도착률·도착 tick 분포·path_ratio·정체(stagnation) 유닛 수. 가장 나쁜 지표 1개를 G4 개선 후보의 목표로 STATUS에 적는다.
+  - [ ] 부분 처리(lap707 work): obstacle_row 조건은 world (93,56) N=3 확보·PASS(`path_ratio_max`
+    2.540을 G4 1차 목표 지표로 STATUS에 기록). long_distance_pan 조건은 메커니즘 자체는 world
+    (10,49)에서 N=5 PASS했으나 world (93,56)에서 카메라 팬 원위치 복귀가 6/6 실패해 BLOCKED(가설
+    실패 2회, 다음 회차로 이관 — STATUS "다음 한 가지"/`docs/history/laps/20260927_lap707_*.md`).
+- [ ] **2026-09-27 08:55 운영자 판정(lap707 후속, 구현 우선):** 측정 하네스 보강은 여기서 멈추고 **G4 길찾기 개선 후보 v1 구현**으로 넘어간다. 1차 지표는 lap707이 정한 obstacle_row(world 93,56) `path_ratio_max`(원본 최대 2.540) + 도착률. work: ① 원본 길찾기 함수(경로 탐색 노드/스텝 예산, 우회 한도, 재탐색 주기 상수)를 정적으로 특정 — 기존 G4 기록(`docs/history/laps/*g4*`, `analysis/memory_maps/*path*`) 먼저 재사용, ② 상수 1~2개(예: 탐색 예산/우회 한도 상향)를 바꾼 후보 v1을 빌드, ③ obstacle_row 원본 N=3 대 후보 N=3 paired로 path_ratio·도착률 비교, 크래시 0 확인. 원거리 팬 복귀 문제는 후순위(미니맵 우클릭 전환은 후보 비교가 나온 뒤).
+  - [x] 처리(lap708 work): 후보 v1(로컬 4방향 nudge 재시도 한도 `0x40C395` 4→8) obstacle_row
+    N=3 paired — `H1 FALSIFIED`(path_ratio_max 불변, arrival_rate 소폭 하락). 다음 work가
+    `FUN_0041AF90` vtable 대상/마진 상수를 이어서 특정. 상세
+    `docs/history/laps/20260927_lap708_work_g4_move_retry_budget_v1_falsified.md`.
+  - [x] 처리(lap709 work): `FUN_0041AF90` vtable 대상(`0x46b840`) 정적 확정, bounding-box
+    마진(30→60타일) 후보 v2 obstacle_row N=3 paired — `H2 FALSIFIED`(unit_type 21/31 매치
+    표본 모두 원본과 소수점까지 동일). 실패 가설 2/2 도달. 상세
+    `docs/history/laps/20260927_lap709_work_g4_search_margin_budget_v2_falsified.md`,
+    `analysis/memory_maps/g4_move_order_local_step_retry_20260927.md`§7.
+- [ ] **2026-09-27 10:45 운영자 판정(G4 가설 2회 소진 — v1 재시도 한도, v2 탐색 마진 모두 원본과 동일):** obstacle_row(8타일)는 원본도 path_ratio≈1.93·도착 14~18/20으로 개선 여지가 작다. **목표 지표를 원거리 도착률로 전환**(lap707: 33~35타일에서 원본 도착 평균 ≈49%). 다음 work: ① 원거리 명령을 **미니맵 우클릭**으로 발행해 카메라 팬 복귀 문제를 우회(lap707 BLOCKED 해소), world(93,56)에서 원본 N=3, ② 미도착 유닛별 원인 분류(정체 위치·마지막 명령 상태·유닛 간 충돌/대기열 정체 vs 경로 실패)를 raw로 집계, ③ 가장 많은 원인 1개를 v3 가설로 STATUS에 기록(구현은 다음 lap).
+- [ ] **2026-09-27 12:05 운영자 판정(G4 길찾기 트랙 종료, lap711 관측 반영):** 측정시간 ≈165s로 늘려도 원거리 도착 13/20 불변 — 미도착 7기는 정체/충돌 0·목적지 3~5타일 앞 정지로, 20기 밀집 도착 시 도착반경(3타일) 밖에 서는 **정상 군집 정지**로 본다. v1/v2 반증과 합쳐 **원본 길찾기에는 개선할 뚜렷한 결함이 측정되지 않음**으로 기록하고 길찾기 후보 트랙을 닫는다(보존만). **G4 다음 대상: 자유대전(스커미시) AI.** 다음 work: ① 기존 G4 AI 계측(`tools/inmm_stub/ai_shadow.c`, lap700~703 post-load 확인)을 써서 원본 AI 1~2명 대 1 자유대전을 N분 진행하며 AI 행동 지표(자원 수입·생산량·군대 규모·첫 공격 시각·유휴 일꾼 수)를 원본 N=3 측정, ② 가장 약한 지표 1개를 AI 개선 후보 v1 목표로 STATUS에 기록, ③ 가능하면 같은 lap에서 상수 1~2개짜리 후보 v1까지 구현(구현 우선).
+- [ ] **2026-09-27 13:05 운영자 판정(lap712 v1 목표 조정):** 기준선 3/3 재현 수용. 단 v1 목표는 효과 크기가 큰 쪽으로 바꾼다 — owner0 유휴 일꾼 평균 0.68은 작고, **owner1(nation2) AI가 280초 동안 자원 23,068을 쓰지 않고 쌓으며(+1,734/분) 생산 12·군대 10으로 owner0(생산 21·군대 16)보다 약하다.** v1 = **AI 자원 소비(생산 결정) 개선**: 원본 AI 생산 결정 루틴에서 생산을 막는 조건(자원 보유 임계값, 동시 생산 큐 수, 건물당 생산 한도, 결정 주기 등)을 정적으로 찾아 상수 1~2개를 바꾼 후보 v1을 만들고, 같은 fixture로 원본 N=3 대 후보 N=3 paired 비교(지표: owner1 쌓인 자원↓, 생산 수·군대 규모↑, 크래시 0). 유휴 일꾼은 보조 지표로 계속 기록.
+- [ ] **2026-09-27 13:45 운영자 관찰/방향(lap713 v1 H-CROWD 7→14: 후보 3/3이 원본과 바이트 수준 동일 지표 — 무효과):** 추측으로 상수를 더 바꾸지 말고 **라이브로 어느 게이트가 owner1 발주를 막는지 계측**한다. 다음 work: 원본 fixture에서 `FUN_00406B00`/`FUN_0043E7F0`의 각 거부 분기(G-1~G-8, H-TYPEMAX/H-RATIO 포함)에 non-invasive breakpoint(또는 ai_shadow 카운터)를 걸어 280초 동안 **owner별 거부 사유 히스토그램**을 raw로 수집 → 최다 거부 게이트 1개를 v2 대상으로. H-TYPEMAX/H-RATIO가 최다면 그 표의 런타임 값(Data에서 채워진 값)을 읽어 기록하고, 표를 채우는 코드/데이터 쪽 수정 후보를 v2로.
+  - [x] 처리(lap714 work): `FUN_00406C70` 생산표 레이아웃을 새로 해독하고 신규
+    `tools/g4_ai_gate_histogram_probe.py`(읽기전용 `process_vm_readv`, EXE 패치/breakpoint 없이
+    같은 목적 달성)로 lap712 seed1 fixture 280초 전체를 owner0/1 전 생산건물×생산레코드
+    단위로 매 tick 분류 — **H-TYPEMAX/H-RATIO/H-CROWD 0회, 전량 H_AVAIL(owner0 772/owner1
+    620)+PREREQ_OWN(owner0 398/owner1 692)**, `WOULD_ACCEPT` 0건. 두 owner 모두 최초 HQ와
+    이후 지은 건물 전부가 이 두 사유로 100% 거부됨을 확인(owner1 전용 결함이 아님). 운영자가
+    14:45에 이 결과를 반영한 다음 v2 방향(건설 결정 히스토그램)을 바로 이어 지시했다(아래).
+    `make check` 1079 passed(835.61s)+`SAFETY_PASS`, 신규 테스트 18개, 원본 SHA 3회 불변. 근거
+    `docs/history/laps/20260927_lap714_work_g4_ai_production_gate_histogram_h_avail_prereq_own.md`.
+- [ ] **2026-09-27 14:45 운영자 방향(lap714 거부 히스토그램 반영, 다음 work):** 280s 원본에서 H_CROWD/H_TYPEMAX/H_RATIO=0, owner1 거부는 **PREREQ_OWN 692**(선행 건물 미보유; HQ type58의 kind102/98 등)와 H_AVAIL 620이 전부. ⇒ 병목은 유닛 발주 게이트가 아니라 **AI가 선행 건물을 짓지 않는 것(건설/테크 진행)**. v2: ① AI 건설 결정 루틴(건물 발주 함수·건설 우선순위 표/조건)을 정적으로 특정하고 같은 방식으로 **건설 거부 사유 히스토그램**을 owner별 raw 수집, ② owner1이 선행 건물(PREREQ 대상)을 못 짓는 최다 사유 1개를 상수 1~2개로 완화한 후보 v2, ③ 원본 N=3 대 v2 N=3 paired(지표: owner1 선행건물 보유 시각, PREREQ_OWN 거부 수↓, 생산·군대↑, 쌓인 자원↓, 크래시 0). 보조: WOULD_ACCEPT=0 기록이 샘플 시점 문제인지 확인해 계측 신뢰성 한 줄 기록.
+- [ ] **2026-09-27 15:12 사용자 지시:** "4번 - 길찾기 및 AI는 일단 보류하자. 지금까지 작업분 커밋해서 리모트 깃헙에 푸시하고, 1번 - 원본과 같은 화면 구성인데 고해상도인 것을 최우선으로 해봐". **G4(길찾기·자유대전 AI) 보류**(lap715 건설 게이트 계측은 중단, 도구·기록 보존). 작업분은 운영자가 커밋·푸시(루프의 `LOOP_ALLOW_COMMITS=0`은 유지). **G1 최우선: 원본과 같은 화면 구성(UI 배치·비율·보이는 범위의 구도)을 유지하면서 1600×1200 고해상도로 렌더.** 다음 work는 기존 G1 기록(`docs/history/laps/*g1*`, `analysis/memory_maps/*g1*|*resolution*`)으로 현재 상태·막힌 지점을 먼저 요약하고, 구현 우선으로 가장 작은 다음 후보를 만들어 격리 실행 캡처로 원본(800×600) 대비 구도 동일성·HUD 배치·깨짐 여부를 확인한다.

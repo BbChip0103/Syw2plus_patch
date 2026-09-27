@@ -153,7 +153,11 @@ def probe_model_clis(
 # above: callers must opt in to any process or filesystem side effects.
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SOURCE = (REPO_ROOT.parent / "Syw2plus_re" / "Syw2plus").resolve()
+# 2026-09-26 사용자 결정: 원본 게임 기준 경로를 [ESL]Syw2plus/로 전환(보호 원본 EXE는
+# 그 안의 "[HQ]Syw2plus 2002.exe", SHA는 기존과 동일). 옛 경로(Syw2plus_re/Syw2plus)는
+# 읽기 전용 참고로 보존하며 기본 소스로는 더 이상 쓰지 않는다.
+DEFAULT_SOURCE = (REPO_ROOT.parent / "[ESL]Syw2plus").resolve()
+LEGACY_SOURCE = (REPO_ROOT.parent / "Syw2plus_re" / "Syw2plus").resolve()
 DEFAULT_RUNTIME_ROOT = REPO_ROOT / "local" / "runtime"
 SCREENSHOT_ROOT = Path("/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/captures")
 ORIGINAL_EXE = "syw2plus_original.exe"
@@ -259,6 +263,8 @@ G1_S1_LOAD_BUTTON_POINT: tuple[int, int] = (316, 372)
 G1_S1_MINIMAP_PROBE_POINT: tuple[int, int] = (35, 560)
 G1_S1_DESELECT_PROBE_POINT: tuple[int, int] = (400, 220)
 G1_S1_DRAG_PROBE_BOUNDS: tuple[int, int, int, int] = (520, 200, 780, 455)
+G1_S1_SLOT_NAV_MAX_PRESSES = 12
+G1_S1_SLOT_NAV_BUDGET = 5.0
 G1_R1_PS9_STAGE_BUDGET = 40.0
 G1_R1_PS35_STAGE_BUDGET = 20.0
 # S1 reuses the already bounded PS35-stage budget; it does not create a new
@@ -375,6 +381,52 @@ def _sha256(path: Path) -> str:
 
 G4_AI_SHADOW_ENV = "INMM_AI_SHADOW"
 G4_AI_SHADOW_RELATIVE_PATH = Path("drive_c") / "inmm_ai_shadow.jsonl"
+G4_POSTLOAD_MIN_ROWS = 17
+G4_POSTLOAD_WAIT_BUDGET = 45.0
+G4_POSTLOAD_POLL_INTERVAL = 0.2
+
+
+def _g4_wait_for_postload_rows(
+    prefix: Path, *, deadline: float, min_rows: int = G4_POSTLOAD_MIN_ROWS,
+    poll_interval: float = G4_POSTLOAD_POLL_INTERVAL,
+) -> dict[str, Any]:
+    """Poll the private shadow artifact until the bounded post-load window fills.
+
+    Read-only: this only gives the already-running private game process real
+    time to emit AI-shadow rows before the caller proceeds to teardown. It
+    does not install, judge, or PASS/FAIL the post-load contract itself.
+    """
+
+    shadow_path = prefix / G4_AI_SHADOW_RELATIVE_PATH
+    attempts = 0
+    marker_count = 0
+    postload_rows = 0
+    last_error: str | None = None
+    while True:
+        attempts += 1
+        try:
+            lines = shadow_path.read_text(encoding="utf-8").splitlines()
+            events = [json.loads(line) for line in lines if line.strip()]
+            marker_indices = [i for i, e in enumerate(events) if e.get("event") == "load_complete"]
+            marker_count = len(marker_indices)
+            if marker_count >= 1:
+                last_marker_index = marker_indices[-1]
+                postload_rows = sum(
+                    1 for e in events[last_marker_index + 1 :] if e.get("event") == "ai_shadow"
+                )
+            last_error = None
+        except (OSError, json.JSONDecodeError) as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
+        if marker_count >= 1 and postload_rows >= min_rows:
+            break
+        if time.monotonic() >= deadline:
+            break
+        time.sleep(poll_interval)
+    return {
+        "attempts": attempts, "marker_count": marker_count,
+        "postload_rows": postload_rows, "min_rows_observed": postload_rows >= min_rows,
+        "error": last_error,
+    }
 
 
 def _g4_postload_contract(
@@ -436,7 +488,27 @@ def _g4_postload_contract(
             raise RuntimeSafetyError("G4 exact post-load first edge was not forwarded exactly once")
         if first.get("tick_rewind") != ((tload + 1) < tpre):
             raise RuntimeSafetyError("G4 exact post-load tick rewind predicate mismatch")
-        source_keys = ("full_id", "slot", "owner", "command", "pending", "pending_xy")
+        # A 0==0 match (marker full_id/slot both 0, first row source.live
+        # False) is vacuous: find_source() in ai_shadow.c zeroes every field
+        # and reports live=FALSE when the owner has no live unit, so an
+        # all-zero marker/edge pair "agrees" without ever proving the
+        # load-boundary source identity survived the load. Fail closed on
+        # that case instead of accepting the empty match (lap701 finding).
+        marker_full_id, marker_slot = marker["source"].get("full_id"), marker["source"].get("slot")
+        if not isinstance(marker_full_id, int) or not isinstance(marker_slot, int) or marker_full_id == 0 or marker_slot == 0:
+            raise RuntimeSafetyError("G4 exact post-load marker source is absent (no live unit for owner)")
+        if (marker_full_id & 0xFFFF) != marker_slot:
+            raise RuntimeSafetyError("G4 exact post-load marker source full_id/slot mismatch")
+        if first.get("source", {}).get("live") is not True:
+            raise RuntimeSafetyError("G4 exact post-load first edge source is not live")
+        # The marker's "source" object embeds "owner" (see ai_shadow.c
+        # append_source); the shadow row instead carries "owner" as its own
+        # top-level field and omits it from the nested "source" object. Same
+        # authoritative value, different JSON location per each event's
+        # documented schema (card §3) — compare accordingly, not key-for-key.
+        if marker["source"].get("owner") != first.get("owner"):
+            raise RuntimeSafetyError("G4 exact post-load marker/edge source mismatch")
+        source_keys = ("full_id", "slot", "command", "pending", "pending_xy")
         if {key: marker["source"].get(key) for key in source_keys} != {
             key: first.get("source", {}).get(key) for key in source_keys
         }:
@@ -543,7 +615,12 @@ def _protected_roots() -> tuple[Path, ...]:
 
 
 def validate_original_source(source: Path) -> tuple[Path, Path]:
-    """Validate a real, complete source and the exact original executable."""
+    """Validate a real, complete source and find the exact original executable.
+
+    The original executable is identified by SHA-256/size, not a fixed file
+    name: different source roots ship it under different names (e.g.
+    ``syw2plus_original.exe`` vs ``[HQ]Syw2plus 2002.exe``).
+    """
     _reject_path_links(source)
     source = source.expanduser()
     source = _real(source)
@@ -551,13 +628,26 @@ def validate_original_source(source: Path) -> tuple[Path, Path]:
         raise RuntimeSafetyError(f"unsafe source directory: {source}")
     if any(source == root or root in source.parents for root in _protected_roots()):
         raise RuntimeSafetyError(f"unsafe/protected source directory: {source}")
-    exe = source / ORIGINAL_EXE
-    if exe.is_symlink() or not exe.is_file():
-        raise RuntimeSafetyError(f"missing or linked original executable: {exe}")
-    digest = _sha256(exe)
-    if digest != ORIGINAL_SHA256:
-        raise RuntimeSafetyError(f"original SHA-256 mismatch: {digest}")
-    return source, exe
+    preferred = source / ORIGINAL_EXE
+    preferred_digest: str | None = None
+    if preferred.exists() or preferred.is_symlink():
+        if preferred.is_symlink() or not preferred.is_file():
+            raise RuntimeSafetyError(f"missing or linked original executable: {preferred}")
+        preferred_digest = _sha256(preferred)
+        if preferred_digest == ORIGINAL_SHA256:
+            return source, preferred
+    for candidate in sorted(source.glob("*.exe")):
+        if candidate == preferred or candidate.is_symlink() or not candidate.is_file():
+            continue
+        if _sha256(candidate) == ORIGINAL_SHA256:
+            return source, candidate
+    if preferred_digest is not None:
+        # A file already sits at the conventional name but its content is
+        # wrong; surface that distinctly from "nothing here at all".
+        raise RuntimeSafetyError(f"original SHA-256 mismatch: {preferred_digest}")
+    raise RuntimeSafetyError(
+        f"original executable (expected SHA-256 {ORIGINAL_SHA256}) not found under {source}"
+    )
 
 
 def _reject_links(root: Path) -> None:
@@ -740,9 +830,18 @@ def prepare(
     try:
         shutil.copytree(source, game, symlinks=False)
         _assert_private_copy(source, game)
-        copied_exe = game / ORIGINAL_EXE
-        if _sha256(copied_exe) != ORIGINAL_SHA256:
+        copied_source_exe = game / source_exe.name
+        if _sha256(copied_source_exe) != ORIGINAL_SHA256:
             raise RuntimeSafetyError("private original executable failed post-copy hash")
+        copied_exe = game / ORIGINAL_EXE
+        if copied_exe != copied_source_exe:
+            # Source ships the original under a different file name (e.g. the
+            # new [ESL]Syw2plus root); keep the conventional ORIGINAL_EXE name
+            # inside the private copy so every downstream ``game / ORIGINAL_EXE``
+            # reference keeps working unchanged.
+            shutil.copy2(copied_source_exe, copied_exe)
+            if _sha256(copied_exe) != ORIGINAL_SHA256:
+                raise RuntimeSafetyError("private original executable failed post-copy hash")
         support = {
             name: _sha256(game / name)
             for name in ("_inmm.dll", "_inmm_orig.dll", "dxwrapper.dll", "ddraw.dll", "syw2x.dll")
@@ -804,7 +903,7 @@ def prepare(
         manifest = {
             "manifest_version": 1,
             "run_id": run.name,
-            "source": {"root": str(source), "exe": ORIGINAL_EXE, "exe_sha256": _sha256(source_exe),
+            "source": {"root": str(source), "exe": source_exe.name, "exe_sha256": _sha256(source_exe),
                        "read_only_policy": "agent-read-only; OS write protection not asserted",
                        "copy_mode": "copytree; symlinks/hardlinks rejected"},
             "game": {"root": str(game), "exe": str(copied_exe), "exe_sha256": _sha256(copied_exe),
@@ -3744,6 +3843,7 @@ def g1_s1_original_load_evidence(
     dxwrapper_2x: bool = False, minimap_probe: bool = False, deselect_probe: bool = False,
     ps35_screenshot: bool = False, drag_probe: bool = False,
     bridge: Path | None = None, g4_exact_postload: bool = False,
+    g4_load_fixture: str | None = None,
 ) -> dict[str, Any]:
     """Own one bounded original save000 load observation from copy to cleanup.
 
@@ -3751,6 +3851,12 @@ def g1_s1_original_load_evidence(
     fresh private copy/prefix through :func:`prepare`, uses exactly one menu
     click for PS9->PS35 and one strict-interior load click, and writes one new
     artifact after owned cleanup.  It intentionally performs no memory writes.
+
+    ``g4_load_fixture`` is an opt-in override of the default save000 fixture,
+    usable only together with ``g4_exact_postload`` (e.g. to pick save006.dat
+    when save000's deterministic next-load owner has no live unit — see
+    G4_W2_EXACT_POSTLOAD_MARKER_LAP623 card §7). It must name an entry already
+    pinned in ``s1.FIXTURES``.
     """
 
     from tools import s1_load_evidence as s1
@@ -3759,10 +3865,14 @@ def g1_s1_original_load_evidence(
         raise RuntimeSafetyError("G4 exact post-load requires an explicit --bridge")
     if bridge is not None and not g4_exact_postload:
         raise RuntimeSafetyError("G4 --bridge requires --g4-exact-postload")
+    if g4_load_fixture is not None and not g4_exact_postload:
+        raise RuntimeSafetyError("G4 --g4-load-fixture requires --g4-exact-postload")
+    if g4_load_fixture is not None and g4_load_fixture not in s1.FIXTURES:
+        raise RuntimeSafetyError(f"G4 --g4-load-fixture is not a pinned fixture: {g4_load_fixture}")
 
     command_started = time.monotonic()
     operation_deadline = command_started + G1_S1_TOTAL_DEADLINE - G1_S1_CLEANUP_RESERVE
-    fixture_spec = s1.FIXTURES["save000.dat"]
+    fixture_spec = s1.FIXTURES[g4_load_fixture or "save000.dat"]
     prepare_started = command_started
     source_real, source_exe = validate_original_source(source)
     source_fixture = source_real / "save" / fixture_spec.name
@@ -3771,7 +3881,7 @@ def g1_s1_original_load_evidence(
         expected_sha256=fixture_spec.expected_sha256,
     )
     if source_fixture_identity["status"] != "PASS":
-        raise RuntimeSafetyError("NO_RUN: protected source save000 identity is not pinned")
+        raise RuntimeSafetyError(f"NO_RUN: protected source {fixture_spec.name} identity is not pinned")
     if time.monotonic() - prepare_started > G1_S1_STAGE_BUDGETS["prepare"]:
         raise RuntimeSafetyError("S1 prepare stage exceeded its 60 second cap")
     manifest = prepare(
@@ -3804,7 +3914,7 @@ def g1_s1_original_load_evidence(
         "deadline_seconds": G1_S1_TOTAL_DEADLINE,
         "operation_deadline_seconds": G1_S1_TOTAL_DEADLINE - G1_S1_CLEANUP_RESERVE,
         "fixture": {
-            "name": fixture_spec.name, "group_word": 0, "selected_index": 1,
+            "name": fixture_spec.name, "group_word": 0, "selected_index": fixture_spec.selected_index,
             "synthetic": False, "resource_grant": False,
             "path": str(game / "save" / fixture_spec.name),
             "expected_size": fixture_spec.expected_size,
@@ -4009,6 +4119,55 @@ def g1_s1_original_load_evidence(
                 "elapsed_seconds": round(input_end - input_started, 3),
             }
 
+            if fixture_spec.selected_index != 1:
+                # PS35 entry hard-initializes the highlighted slot to 1
+                # (0x4D5CA0, see docs/history/laps/20260912_lap362_...); a
+                # non-default fixture (save006.dat, slot 7) needs an explicit
+                # list-cursor move before the Load click, verified by
+                # re-reading SELECTED_INDEX_ADDRESS rather than assuming any
+                # fixed number of keypresses worked.
+                nav_started = time.monotonic()
+                nav_observations: list[dict[str, Any]] = []
+                nav_attempts = 0
+                while True:
+                    raw_index = read_memory(s1.SELECTED_INDEX_ADDRESS, 2)
+                    current_index = int.from_bytes(raw_index, "little", signed=False) if len(raw_index) == 2 else None
+                    nav_observations.append({
+                        "attempt": nav_attempts, "selected_index": current_index,
+                        "elapsed_seconds": round(time.monotonic() - nav_started, 3),
+                    })
+                    if current_index == fixture_spec.selected_index:
+                        break
+                    if nav_attempts >= G1_S1_SLOT_NAV_MAX_PRESSES or time.monotonic() > operation_deadline:
+                        evidence["stages"]["slot_navigation"] = {
+                            "status": "FAIL", "attempts": nav_attempts, "observations": nav_observations,
+                            "start_elapsed": round(nav_started - command_started, 3),
+                            "end_elapsed": round(time.monotonic() - command_started, 3),
+                            "elapsed_seconds": round(time.monotonic() - nav_started, 3),
+                        }
+                        raise RuntimeSafetyError(
+                            "S1 slot navigation could not reach "
+                            f"selected_index={fixture_spec.selected_index} within "
+                            f"{G1_S1_SLOT_NAV_MAX_PRESSES} DOWN presses (last observed {current_index})"
+                        )
+                    nav_key_argv = [sys.executable, str(REPO_ROOT / "tools/x11_send_keys.py"),
+                                     "--display", display, "DOWN"]
+                    subprocess.run(
+                        nav_key_argv, env=env, stdout=log, stderr=log,
+                        timeout=_s1_stage_timeout(command_started, nav_started, G1_S1_SLOT_NAV_BUDGET), check=True,
+                    )
+                    nav_attempts += 1
+                    time.sleep(0.15)
+                evidence["stages"]["slot_navigation"] = {
+                    "status": "PASS", "attempts": nav_attempts, "observations": nav_observations,
+                    "start_elapsed": round(nav_started - command_started, 3),
+                    "end_elapsed": round(time.monotonic() - command_started, 3),
+                    "elapsed_seconds": round(time.monotonic() - nav_started, 3),
+                    "helper_sha256": _sha256(REPO_ROOT / "tools" / "x11_send_keys.py"),
+                }
+                if time.monotonic() > operation_deadline:
+                    raise RuntimeSafetyError("S1 slot navigation exceeded the operation deadline")
+
             pre_started = time.monotonic()
             pre = s1.read_s1_snapshot(read_memory, phase="pre")
             origin_pre = _g1_r1_read_origin_checked(read_memory, site="s1_pre")
@@ -4020,8 +4179,10 @@ def g1_s1_original_load_evidence(
                 "elapsed_seconds": round(pre_end - pre_started, 3),
             }
             evidence["pre"] = {"snapshot": _s1_public_snapshot(pre), "origin": origin_pre}
-            if (pre.get("ps"), pre.get("group_word"), pre.get("selected_index")) != (35, 0, 1):
-                raise RuntimeSafetyError("S1 direct pre did not observe PS35/group0/slot1")
+            if (pre.get("ps"), pre.get("group_word"), pre.get("selected_index")) != (35, 0, fixture_spec.selected_index):
+                raise RuntimeSafetyError(
+                    f"S1 direct pre did not observe PS35/group0/slot{fixture_spec.selected_index}"
+                )
             if pre_elapsed > G1_S1_STAGE_BUDGETS["direct_pre"]:
                 raise RuntimeSafetyError("S1 direct pre stage exceeded its 2 second cap")
             if ps35_screenshot:
@@ -4081,9 +4242,11 @@ def g1_s1_original_load_evidence(
                 return 1
 
             def precondition(sample: Mapping[str, Any]) -> Mapping[str, Any]:
-                if (sample.get("ps"), sample.get("group_word"), sample.get("selected_index")) != (35, 0, 1):
+                if (sample.get("ps"), sample.get("group_word"), sample.get("selected_index")) != (
+                    35, 0, fixture_spec.selected_index,
+                ):
                     raise RuntimeSafetyError("S1 precondition changed before load trigger")
-                return {"ps": 35, "group_word": 0, "selected_index": 1, "origin": origin_pre}
+                return {"ps": 35, "group_word": 0, "selected_index": fixture_spec.selected_index, "origin": origin_pre}
 
             collected = s1.collect_load_event_boundary(
                 read_memory, trigger=trigger, timeout=G1_S1_STAGE_BUDGETS["ps3_wait"],
@@ -4118,7 +4281,7 @@ def g1_s1_original_load_evidence(
             }
             result = s1.evaluate(
                 fixture_path=candidate_fixture, fixture_name=fixture_spec.name,
-                group_word=0, selected_index=1, post=collected,
+                group_word=0, selected_index=fixture_spec.selected_index, post=collected,
             )
             evidence["evaluation"] = result
             for key in ("fixture_identity", "fixture_players", "pre_ps3_players", "post_ps3_players",
@@ -4147,6 +4310,19 @@ def g1_s1_original_load_evidence(
                 "includes": ["post_snapshot", "evaluate", "payload_prepare"],
                 "payload_bytes": len(prepared_payload.encode("utf-8")),
             }
+            if g4_exact_postload:
+                postload_wait_started = time.monotonic()
+                postload_wait = _g4_wait_for_postload_rows(
+                    prefix,
+                    deadline=min(operation_deadline, postload_wait_started + G4_POSTLOAD_WAIT_BUDGET),
+                )
+                evidence["stages"]["g4_postload_wait"] = {
+                    "status": "PASS" if postload_wait["min_rows_observed"] else "UNKNOWN",
+                    "start_elapsed": round(postload_wait_started - command_started, 3),
+                    "end_elapsed": round(time.monotonic() - command_started, 3),
+                    "elapsed_seconds": round(time.monotonic() - postload_wait_started, 3),
+                    **postload_wait,
+                }
             if minimap_probe and result.get("status") == "PASS":
                 probe_started = time.monotonic()
                 camera_before = _read_camera(read_memory)
@@ -5316,6 +5492,7 @@ G4_FIXED_CHAIN_GOALS = frozenset({
 G4_CANDIDATE_EXES = {
     "g4_controller_cadence_50.exe": "FUN_0043F5D0 case-2 build-intent cooldown 100->50",
     "g4_gather_cooldown_100.exe": "FUN_0043F5D0 case-3 gather-intent cooldown 200->100",
+    "g4_production_crowd_cap_14.exe": "FUN_00406B00 G-7 H-CROWD density cap 7->14",
 }
 G4_INTERVENTION_GOALS = frozenset({
     "_g4_issue_idle_attack_probe",
@@ -7363,6 +7540,8 @@ def g1_baseline(
                 raise RuntimeSafetyError("G2 candidate executable bytes do not match fixed_supply_5000.patched_bytes")
         elif g4_candidate_exe == "g4_controller_cadence_50.exe":
             from patches.ai.controller_cadence_probe import patched_bytes
+        elif g4_candidate_exe == "g4_production_crowd_cap_14.exe":
+            from patches.ai.g4_production_crowd_cap_v1 import patched_bytes
         else:
             from patches.ai.gather_cooldown_probe import patched_bytes
 
@@ -8760,6 +8939,7 @@ def runtime_main(argv: Sequence[str] | None = None) -> int:
     s1_original.add_argument("--drag-probe", action="store_true")
     s1_original.add_argument("--bridge", type=Path)
     s1_original.add_argument("--g4-exact-postload", action="store_true")
+    s1_original.add_argument("--g4-load-fixture", choices=["save006.dat"])
     s1_candidate = sub.add_parser("g1-s1-candidate-load-evidence")
     s1_candidate.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     s1_candidate.add_argument("--runtime-root", type=Path, default=DEFAULT_RUNTIME_ROOT)
@@ -8812,6 +8992,8 @@ def runtime_main(argv: Sequence[str] | None = None) -> int:
                 load_kwargs["bridge"] = args.bridge
             if args.g4_exact_postload:
                 load_kwargs["g4_exact_postload"] = True
+            if args.g4_load_fixture is not None:
+                load_kwargs["g4_load_fixture"] = args.g4_load_fixture
             result = g1_s1_original_load_evidence(
                 args.source, runtime_root=args.runtime_root,
                 **load_kwargs,

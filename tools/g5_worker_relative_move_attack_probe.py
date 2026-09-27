@@ -79,9 +79,23 @@ ORIGINAL_SHA = runtime_env.ORIGINAL_SHA256
 DEFAULT_SOURCE = runtime_env.DEFAULT_SOURCE
 TARGET_SHA = "e5004764e945350a0391d69035f8c8f0d305fcca7d6aaa54066836bac3de6977"
 DEFAULT_RUNTIME_ROOT = REPO / "local" / "runtime" / "g5-lap682-worker-relative-convergence"
+# lap688: raw comparison of the two identical lap687 skip=H1 dense-50 runs
+# (0/49 vs 18/49 ever_command4_count from the exact same candidate/input)
+# found the attack-destination *screen* point stayed nearly fixed (121,383 vs
+# 121,384 -- ruling out the calibration/destination-transform as the wobble
+# source) while the *absolute world* position swung from y=27 to y=169 out of
+# a 0..180 map -- the unseeded solo lobby spawns the worker (and therefore
+# every worker-relative offset) at a different absolute map location each
+# run. This first looked like spawn-position-dependent pathfinding/congestion
+# timing, but lap688's later raw N=5 comparison (see the attack-target-spawn
+# comment below) falsified that: the real cause was the attack target being
+# auto-aggro'd to death by nearby friendlies before the explicit click ever
+# fired, a race that spawn timing (not congestion) controlled. These wider
+# poll/sample windows are kept only as a defensive buffer against slow ticks,
+# not because congestion timing was confirmed.
 POLL_INTERVAL = 0.5
-POLL_TIMEOUT = 12.0
-RETRY_POLL_TIMEOUT = 8.0
+POLL_TIMEOUT = 30.0
+RETRY_POLL_TIMEOUT = 20.0
 # Calibration grid: same nine screen points g5_screen_world_calibration.py
 # already validated for a single-unit affine fit under this game's camera.
 CALIBRATION_SCREEN_POINTS = [
@@ -108,7 +122,10 @@ SAFE_SCREEN_BOX = (0, 1580, 0, 460)
 # 0x1000003 and idle reads back 0x1000001/0x10001, so this value is unique
 # to an attack order actually being queued.
 ATTACK_PENDING_WORD = 0x1000004
-ATTACK_SAMPLE_WINDOW_S = 3.0
+# lap688: widened from 3.0s alongside POLL_TIMEOUT above as a defensive
+# buffer against slow ticks; the actual attack-probe wobble cause turned out
+# to be the auto-aggro spawn-timing race fixed below, not congestion timing.
+ATTACK_SAMPLE_WINDOW_S = 12.0
 ATTACK_SAMPLE_INTERVAL_S = 0.1
 
 
@@ -430,31 +447,6 @@ def run_probe(source: Path, runtime_root: Path, artifact_root: Path, *, variant:
         attack_primary_destination = usable_attack_destinations[0]
         attack_retry_destination = usable_attack_destinations[1] if len(usable_attack_destinations) > 1 else None
 
-        # lap684 narrowing: every prior UI-click attack attempt (lap667-682,
-        # 15+ tries) clicked empty ground or an unverified sprite location.
-        # This run instead spawns a real owner-1 target exactly on the
-        # self-calibrated attack destination's world tile, so the computed
-        # screen click is guaranteed (up to the affine fit's own residual) to
-        # land on a live hostile unit rather than open ground.
-        attack_target_world = tuple(int(v) for v in attack_primary_destination["world"])
-        target_receipt = supply.call(
-            op=5, owner=1, unit_type=SEED_TYPE,
-            x=attack_target_world[0], y=attack_target_world[1], count=1,
-        )
-        if not target_receipt.get("ok") or target_receipt.get("fixture_added") != 1:
-            raise ProbeError(f"attack target fixture failed: {target_receipt}")
-        attack_target_slot = int(target_receipt.get("producer", {}).get("slot", 0))
-        if not 0 < attack_target_slot < 1200:
-            raise ProbeError(f"attack target slot missing: {target_receipt}")
-        attack_target_base = UNIT_BASE + attack_target_slot * UNIT_STRIDE
-        attack_target_handle = int.from_bytes(read_memory(pid, attack_target_base + 0x29C, 4), "little")
-        result["attack_target_fixture"] = {
-            "owner": 1, "type": SEED_TYPE, "world": list(attack_target_world),
-            "screen": attack_primary_destination["screen"],
-            "slot": attack_target_slot, "handle": attack_target_handle,
-        }
-        time.sleep(0.5)
-
         click(*DRAG_START, drag_to=DRAG_END)
         time.sleep(1)
         after = selection_snapshot(pid, base=selection_base, capacity=selection_capacity)
@@ -487,6 +479,39 @@ def run_probe(source: Path, runtime_root: Path, artifact_root: Path, *, variant:
             result["move_convergence_retry"] = retry_move_result
             move_result = retry_move_result
         result["captures"].append(capture(display, artifact_root / "after-move-retry.png", log))
+
+        # lap688: raw comparison of 5 fresh original-20 runs found the exact
+        # same "0/attack_capable" total miss (raw_command_histogram all-3,
+        # observed_target_uids empty) recurring even for the *original* exe
+        # (2 of 5 runs), while the passing runs converged the MOVE phase just
+        # as fast (<0.5s) -- ruling out congestion/timing-budget as this
+        # failure mode's cause. What differs is that the target used to sit
+        # exactly next to the dense friendly fixture from before the drag
+        # select through the whole (now up to 30s) MOVE poll, i.e. lap672's
+        # already-flagged auto-aggro confound: a lone owner-1 unit parked a
+        # couple of tiles from 19-50 armed owner-0 units for many seconds is
+        # frequently auto-engaged and killed by nearby idle units *before*
+        # the explicit attack click ever fires, leaving nobody left to issue
+        # the order against. Spawning the target immediately before the
+        # attack click (instead of before the drag/MOVE phase) cuts that
+        # exposure window from several seconds to a fraction of one.
+        attack_target_world = tuple(int(v) for v in attack_primary_destination["world"])
+        target_receipt = supply.call(
+            op=5, owner=1, unit_type=SEED_TYPE,
+            x=attack_target_world[0], y=attack_target_world[1], count=1,
+        )
+        if not target_receipt.get("ok") or target_receipt.get("fixture_added") != 1:
+            raise ProbeError(f"attack target fixture failed: {target_receipt}")
+        attack_target_slot = int(target_receipt.get("producer", {}).get("slot", 0))
+        if not 0 < attack_target_slot < 1200:
+            raise ProbeError(f"attack target slot missing: {target_receipt}")
+        attack_target_base = UNIT_BASE + attack_target_slot * UNIT_STRIDE
+        attack_target_handle = int.from_bytes(read_memory(pid, attack_target_base + 0x29C, 4), "little")
+        result["attack_target_fixture"] = {
+            "owner": 1, "type": SEED_TYPE, "world": list(attack_target_world),
+            "screen": attack_primary_destination["screen"],
+            "slot": attack_target_slot, "handle": attack_target_handle,
+        }
 
         # --- Phase ATTACK: sample the pending-command word for the exact
         # ATTACK_PENDING_WORD value over a fixed post-click window and take

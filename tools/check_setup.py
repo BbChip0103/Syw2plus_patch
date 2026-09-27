@@ -12,6 +12,22 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SHA = "b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac"
+# 2026-09-26 사용자 결정: 원본 게임 기준 경로가 [ESL]Syw2plus/로 바뀌었다. 로컬 캐시 사본이
+# 없으면 새 경로에서 SHA로 원본 EXE를 찾는다(파일명은 버전마다 다르다).
+NEW_SOURCE_ROOT = ROOT.parent / "[ESL]Syw2plus"
+
+
+def _resolve_original_exe() -> Path | None:
+    local = ROOT / "Syw2plus" / "syw2plus_original.exe"
+    if local.is_file():
+        return local
+    if NEW_SOURCE_ROOT.is_dir():
+        for candidate in sorted(NEW_SOURCE_ROOT.glob("*.exe")):
+            if candidate.is_symlink() or not candidate.is_file():
+                continue
+            if hashlib.sha256(candidate.read_bytes()).hexdigest() == SHA:
+                return candidate
+    return None
 
 # ``python tools/check_setup.py`` puts ``tools/`` (not the repository root)
 # on sys.path, while package/type-check invocations start at the root.
@@ -48,8 +64,8 @@ def main() -> int:
             versions[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
             versions[name] = None
-    original = ROOT / "Syw2plus/syw2plus_original.exe"
-    digest = hashlib.sha256(original.read_bytes()).hexdigest() if original.is_file() else None
+    original = _resolve_original_exe()
+    digest = hashlib.sha256(original.read_bytes()).hexdigest() if original else None
     tools = probe_tools()
     libraries = probe_libraries()
     missing_tools = [name for name, status in tools.items() if not status.present]

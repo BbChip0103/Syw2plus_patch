@@ -455,7 +455,7 @@ static void __attribute__((naked, noinline)) g4_load_call_wrapper(void)
         "pushl %%eax\n\t"
         "pushl 8(%%esp)\n\t"
         "call _g4_load_complete\n\t"
-        "addl $8, %%esp\n\t"
+        "addl $4, %%esp\n\t"
         "popl %%eax\n\t"
         "ret\n\t"
         ::: "memory", "eax"

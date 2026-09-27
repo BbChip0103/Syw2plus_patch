@@ -48,12 +48,23 @@ def test_exact_postload_hook_pins_load_site_marker_sequence_and_rollback():
     assert '"pushl %%eax\\n\\t"' in wrapper
     assert '"pushl 8(%%esp)\\n\\t"' in wrapper
     assert '"call _g4_load_complete\\n\\t"' in wrapper
-    assert '"addl $8, %%esp\\n\\t"' in wrapper
     assert '"popl %%eax\\n\\t"' in wrapper
     assert "call *g_load_original_target" not in wrapper
     assert wrapper.index('"pushl 4(%%esp)\\n\\t"') < wrapper.index('"call *_g_load_original_target\\n\\t"')
     assert wrapper.index('"call *_g_load_original_target\\n\\t"') < wrapper.index('"pushl %%eax\\n\\t"')
     assert wrapper.index('"call _g4_load_complete\\n\\t"') < wrapper.index('"popl %%eax\\n\\t"')
+    # g4_load_complete(slot, result) is 2 cdecl args (8 bytes pushed); the
+    # caller-side cleanup must total exactly 8 bytes across the explicit
+    # `addl` and the register-restoring `popl %eax` immediately after the
+    # call, or the original caller's own `slot` arg and return address end
+    # up misaligned and `ret` jumps to garbage (`addl $8, %esp` here would
+    # discard the saved result instead of restoring it into eax).
+    assert '"addl $8, %%esp\\n\\t"' not in wrapper
+    assert wrapper.count('"addl $4, %%esp\\n\\t"') == 3
+    call_complete_idx = wrapper.index('"call _g4_load_complete\\n\\t"')
+    cleanup_idx = wrapper.index('"addl $4, %%esp\\n\\t"', call_complete_idx)
+    pop_idx = wrapper.index('"popl %%eax\\n\\t"')
+    assert call_complete_idx < cleanup_idx < pop_idx
     assert "result != 1u" in source
     assert '"event\\\":\\\"load_complete' in source
     assert '"load_marker_seq\\\":' in source

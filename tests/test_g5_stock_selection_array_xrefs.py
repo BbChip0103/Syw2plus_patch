@@ -29,7 +29,7 @@ def test_watched_addresses_match_the_v1_relocation_triple() -> None:
 
 
 def test_inventory_finds_no_residual_reference_in_the_original_exe() -> None:
-    executable = runtime_env.DEFAULT_SOURCE / runtime_env.ORIGINAL_EXE
+    _, executable = runtime_env.validate_original_source(runtime_env.DEFAULT_SOURCE)
     result = xrefs.inventory(executable)
     assert result["residual_count"] == 0
     assert result["residual_hits"] == []

@@ -136,12 +136,27 @@ def build_report(*, exe: Path, wrapper: Path, astar: Path, runtime_env: Path,
     }
 
 
+def _resolve_default_exe(root: Path, legacy_exe: Path) -> Path:
+    """2026-09-26 사용자 결정: 새 경로([ESL]Syw2plus/)를 먼저 SHA로 찾고, 없으면 옛
+    Syw2plus_re/Syw2plus/syw2plus_original.exe(읽기 전용 보존)로 fallback한다."""
+    new_source_root = root.parent / "[ESL]Syw2plus"
+    if new_source_root.is_dir():
+        for candidate in sorted(new_source_root.glob("*.exe")):
+            if candidate.is_symlink() or not candidate.is_file():
+                continue
+            if _sha256(candidate) == ORIGINAL_SHA256:
+                return candidate
+    return legacy_exe
+
+
 def main(argv: list[str] | None = None) -> int:
     root = Path(__file__).resolve().parents[1]
     original_root = root.parent / "Syw2plus_re"
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--exe", type=Path,
-                        default=original_root / "Syw2plus" / "syw2plus_original.exe")
+    parser.add_argument(
+        "--exe", type=Path,
+        default=_resolve_default_exe(root, original_root / "Syw2plus" / "syw2plus_original.exe"),
+    )
     parser.add_argument("--wrapper", type=Path,
                         default=original_root / "analysis/ghidra_output/FUN_0041af90.c")
     parser.add_argument("--astar", type=Path,
