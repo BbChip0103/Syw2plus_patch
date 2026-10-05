@@ -45,13 +45,18 @@ export LOOP_JUDGE
 # (모델 이름 체계가 서로 달라서 LOOP_MODEL 을 같이 쓸 수 없다)
 : "${LOOP_CODEX_MODEL:=}"        # legacy work-model alias; prefer LOOP_CODEX_WORK_MODEL
 
-# Explicit role models. Defaults are fixed, verified IDs; do not rely on CLI defaults.
-: "${LOOP_CODEX_WORK_MODEL:=gpt-5.6-luna}"
-: "${LOOP_CODEX_MIDDLE_MODEL:=gpt-5.6-sol}"
-: "${LOOP_CODEX_ASTRA_MODEL:=gpt-6-astra}"
-: "${LOOP_CLAUDE_WORK_MODEL:=claude-sonnet-5}"
-: "${LOOP_CLAUDE_MIDDLE_MODEL:=claude-opus-5}"
-: "${LOOP_CLAUDE_STRATEGY_MODEL:=claude-fable-5}"
+# Explicit role models. Both providers default to "latest of each family".
+# Claude Code resolves sonnet/opus/fable itself. Codex has no such alias, so
+# luna/sol/astra are resolved to the newest gpt-<ver>-<family> in the Codex
+# model cache by resolve_codex_role_models (after env.local.sh). A full ID
+# such as gpt-5.6-luna pins that version. Unresolvable alias -> empty -> FATAL.
+: "${LOOP_CODEX_WORK_MODEL:=luna}"
+: "${LOOP_CODEX_MIDDLE_MODEL:=sol}"
+: "${LOOP_CODEX_ASTRA_MODEL:=astra}"
+: "${LOOP_CODEX_MODELS_CACHE:=$HOME/.codex/models_cache.json}"
+: "${LOOP_CLAUDE_WORK_MODEL:=sonnet}"
+: "${LOOP_CLAUDE_MIDDLE_MODEL:=opus}"
+: "${LOOP_CLAUDE_STRATEGY_MODEL:=fable}"
 
 # LOOP_JUDGE=codex 일 때 비주얼 판정에 쓸 middle-tier 모델.
 # 작업자와 같은 공급자여도 모델을 달리 지정하면 모델 편향을 분리할 수 있다.
@@ -73,6 +78,42 @@ export LOOP_CODEX_ESCALATION_MODEL LOOP_CLAUDE_ESCALATION_MODEL LOOP_ESCALATION_
 export LOOP_ROLE LOOP_MIDDLE_PROVIDER LOOP_STRATEGY_PROVIDER
 export LOOP_CODEX_WORK_MODEL LOOP_CODEX_MIDDLE_MODEL LOOP_CODEX_ASTRA_MODEL
 export LOOP_CLAUDE_WORK_MODEL LOOP_CLAUDE_MIDDLE_MODEL LOOP_CLAUDE_STRATEGY_MODEL
+export LOOP_CODEX_MODELS_CACHE
+
+# Print the newest listed gpt-<ver>-<family> slug, or nothing.
+latest_codex_model() {
+  python3 - "$LOOP_CODEX_MODELS_CACHE" "$1" <<'PY' 2>/dev/null
+import json, re, sys
+cache, family = sys.argv[1], sys.argv[2]
+pat = re.compile(r"gpt-(\d+(?:\.\d+)*)-" + re.escape(family))
+best = None
+for m in json.load(open(cache)).get("models", []):
+    hit = pat.fullmatch(m.get("slug", ""))
+    if hit and m.get("visibility") == "list":
+        key = tuple(int(x) for x in hit.group(1).split("."))
+        if best is None or key > best[0]:
+            best = (key, m["slug"])
+if best:
+    print(best[1])
+PY
+}
+
+# Call after env.local.sh. Leaves full IDs untouched; records failures in
+# LOOP_CODEX_RESOLVE_ERRORS so loop.sh can stop before any session.
+resolve_codex_role_models() {
+  local var alias resolved
+  LOOP_CODEX_RESOLVE_ERRORS=""
+  for var in LOOP_CODEX_WORK_MODEL LOOP_CODEX_MIDDLE_MODEL LOOP_CODEX_ASTRA_MODEL \
+             LOOP_CODEX_MODEL LOOP_CODEX_JUDGE_MODEL; do
+    alias="${!var:-}"
+    case "$alias" in luna|sol|astra|terra) ;; *) continue ;; esac
+    resolved="$(latest_codex_model "$alias")"
+    [ -n "$resolved" ] || LOOP_CODEX_RESOLVE_ERRORS+="$var=$alias "
+    printf -v "$var" '%s' "$resolved"
+  done
+  export LOOP_CODEX_WORK_MODEL LOOP_CODEX_MIDDLE_MODEL LOOP_CODEX_ASTRA_MODEL
+  export LOOP_CODEX_MODEL LOOP_CODEX_JUDGE_MODEL LOOP_CODEX_RESOLVE_ERRORS
+}
 
 # codex 에 그대로 넘길 여분 인자 (공백 구분). 모델/추론 강도 override는 금지한다.
 # model/effort는 각 role의 고정 argv로만 전달한다.

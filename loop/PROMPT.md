@@ -12,9 +12,12 @@
 INBOX400·APPROVALS300)를 넘기면 안전검사가 실패해 루프가 STOP하므로, 넘기지 말고 미리 압축한다.
   INBOX 압축 시 **미처리 사용자 지시·상시 지시(구현 우선, 묻지 말고 결정, 현행 목표 우선순위)는 원문 요지를 INBOX에 남긴다** — 포인터만 남기는 전체 압축 금지.
 - **디스크 위생:** 게임 실행이 끝나면 그 회차가 만든 `local/runtime/<run>/game` 사본(~2.7GB)은 지운다(output·manifest·prefix·로그는 보존). 디스크 여유 20GB 미만이면 실행 전에 자기 회차의 옛 사본부터 정리한다.
+- **런타임 provenance 보존:** 위 삭제 허용은 `game` 사본만이다. `local/runtime/<run>` 전체·manifest·output·prefix를 `rm -rf`로 지우지 않는다. 종료된 private prefix 공간 회수는 raw cleanup/소유권/프로세스 부재 확인 → lossless archive·전파일/metadata 검증·실제 restore 검증 뒤 해당 disposable prefix만 수행하고 기록한다. 원본/참고/공유 raw·PNG/기존 경로는 그대로 둔다.
 기억은 아래 파일뿐이다. 이전 세션이 놓친 일을 읽고 검수한 후 한 가지를 진행한다.
 
 ## 모델 역할
+
+**2026-10-04 최신 사용자 override:** 전체 루프 Claude로 전환. 큰 방향·상위 계획=Opus, 중간 독립검수=fresh Opus, 실무=Sonnet, 모두high·모델 Fast OFF. 아래 과거 Astra/Fable/Codex 명칭과 충돌하면 `docs/MODEL_ROUTING.md` 최신 계약·실제 launch argv를 따른다. 기존 기술 카드의 모델명은 작성 당시 provenance이며 카드의 안전/기술 계약은 유지한다. 자동 폴백 금지.
 
 이번 호출의 지정 역할과 `docs/MODEL_ROUTING.md`를 따른다(모두high).
 상위방향/큰계획=선택된 Astra 또는Fable, 중간계획/컨펌=Sol 또는Opus5, 실무=Luna 또는Sonnet5.
@@ -99,3 +102,9 @@ G2는 활성8명/군대 구성/공유풀/메모리/시간/저장/지원동기화
 G3는중단이므로현재검증대상이아니다. G4는원본대비 길찾기·전략 지표가 필요하다.
 모델의 exit0, skip, 과거24k를 제품 완료로 쓰지 않는다. 불명확하면 근거와 좁은 다음 probe를 적는다.
 마지막 응답은 목표/변경/검증/미검증/다음 한 가지의5줄 이내로 끝낸다.
+
+- 긴 명령 대기: `pgrep -f "make check"`처럼 대기 루프 자신의 명령줄에 들어 있는 문자열로 기다리지 마라(자기 자신과 매치돼 끝나지 않는다). 백그라운드 PID를 저장해 `while kill -0 $PID; do sleep 20; done`으로 기다린다.
+
+- 긴 명령(Codex 명령당 약 600초 제한): `make check`(13~15분)·게임 실행 probe처럼 오래 걸리는 명령은 `setsid nohup sh -c '<명령> > logs/gates/<이름>.log 2>&1; echo $? > logs/gates/<이름>.exit' < /dev/null > /dev/null 2>&1 & echo $! > <pidfile>; sleep 3; kill -0 $(cat <pidfile>) && ls -la logs/gates/<이름>.log`처럼 **같은 명령 안에서 3초 대기 후 생존·로그 생성을 확인**하고 띄우고(바로 반환하면 setsid 전에 프로세스 그룹과 함께 정리될 수 있다)(setsid가 없으면 명령 세션 종료 때 함께 죽는다; 종료코드는 .exit 파일로 회수), 이후 짧은 명령으로 `kill -0 $(cat <pidfile>)` 생존 확인과 로그 tail을 반복해 끝까지 기다린 뒤 결과를 판정한다. 중간에 끊긴 결과를 PASS로 적지 않는다.
+- `make check` 전에 `make lint`와 `make typecheck`(수십 초)를 먼저 돌려 통과시킨다. check는 test(13분)→lint 순이라 lint 1건 때문에 전체를 재실행하게 된다.
+- 검증 fingerprint는 STATUS·INBOX·APPROVALS·PROMPT·README만 제외하고 lap 기록(docs/history)·ESCALATE_SOL·기타 문서를 포함한다. 그러므로 lap 기록·handoff·ESCALATE_SOL을 **먼저 다 쓰고** 마지막에 `make check`를 1회만 돌린 뒤, 결과 수치는 STATUS에만 보강한다(검사 후 lap 기록을 고치면 재검사가 필요해진다).

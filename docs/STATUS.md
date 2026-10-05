@@ -1,143 +1,98 @@
 # STATUS — 매 바퀴 갱신하는 기억
 
-lap676~707 상세(과거 압축 포인터 4단, G5 milestone 승인, G2 8인×10000 A/B 종료, G4 W2
-post-load 종결, G4-P1 baseline)는 이 헤더 블록 22줄 SHA256
-`040af76a408205aa53ff8472700899ee235c7b73b35715e078ceb6159534fb8d`으로
-`docs/history/20260927_status_lap714_precompaction.md`에 원문 그대로 보존했다. 각 lap
-전체 근거는 `docs/history/laps/20260926_lap67{6..9}_*.md`·`lap68{0..9}_*.md`·
-`20260927_lap69{5..9}_*.md`·`lap70{0..7}_*.md`에 그대로 있다.
+lap993 압축 전 전문127줄·SHA256 `82ecc7f4b9a94503c1bf4a4279743dfe986b608d1661ded30c114de3d7167e2a`은
+`docs/history/20261005_status_lap993_precompaction.md`에 byte-exact 보존했다(lap959~987 바퀴 기록·검증 줄 포함).
+그 이전 전문은 `docs/history/20261004_status_lap962_precompaction.md`(127줄, SHA256 `99344198…ca33`)와 각 history 포인터에 있다.
 
 ## 지금 상태
 
-**2026-10-03 최신 사용자 판단: G2·G5 달성·종료.** 사용자가 직접 플레이 후 종료를 승인했다.
-기존 UNKNOWN/BLOCKED 등 측정 한계는 보존하고 새 기술 PASS로 바꾸지 않는다. G1 HOLD/STOP은 해제하지 않는다.
+**2026-10-03 사용자 판단: G2·G5 직접 플레이 확인·달성·종료.** 기술 UNKNOWN/BLOCKED를 새 PASS로 바꾸지 않는다.
 [사용자 결정·게시 범위](feedback/G2_G5_USER_COMPLETION_20261003.md)
-
-**G5는 2026-09-26 21:54 사용자 판단으로 단일플레이 milestone 승인, 최우선 지시 종료**(멀티 동기화는
-`UNKNOWN` 메모 유지, 명령당 60B 레코드 최대3회 발행).
-
-**G2는 2026-09-27 03:21 사용자 판단으로 전비10000 트랙 종료, 전비5000(달성 판단 유지)으로 복귀.**
-10000 후보(lap691~699, `g2_supply10000_*`)와 근거는 보존만 하고 더 진행하지 않는다.
-
-**G4 W2(post-load AI 유지 계측)는 lap702 non-vacuous `EXACT_POSTLOAD_EDGE_PASS`(save006 slot7,
-`_g4_postload_contract` fail-closed 불변식) 달성 후 lap703 middle 독립 검수로 CONFIRMED·종결**
-(제품 G4 PASS 아님 — candidate AI 정책 자체가 여전히 없다, `candidate_present=false`). 상세는 위
-압축 포인터.
-
-**lap704~711(work) G4-P1 길찾기 baseline→개선후보 v1/v2 FALSIFIED→v3 타임아웃 FALSIFIED,
-길찾기 트랙 종료:** 원문 SHA256 보존 후 압축 —
-`docs/history/20260927_status_lap712_precompaction.md`(원문 47줄, SHA256
-`84dbd4ba962b641b787a94403cc937163fb1e22dc72329a2ee6d2bfd15bec211`). 각 lap 전체 근거는
-`docs/history/laps/20260927_lap70{4,5,6,7,8,9}_work_*.md`,
-`docs/history/laps/20260927_lap711_work_*.md`에 그대로 있다.
-
-**lap712(work) G4 자유대전 AI 행동 baseline 요약**(원본 N=3 완전 재현, 가장 약한 지표
-`idle_worker_count` owner0 0.679 대 owner1 0.129, `command==4` 0건): 전문은 이 문단이 아니라
-처음부터 `docs/history/laps/20260927_lap712_work_g4_ai_freeforall_behavior_baseline.md`에
-있다(별도 압축 불필요, STATUS는 요약만 유지).
-
-**lap713(work) G4 AI 자유대전 생산 후보 v1(H-CROWD 밀집상한 7→14) FALSIFIED:** 기존
-`analysis/memory_maps/ai_production_decision_path_00406770_20260923.md`(lap501)가 확정한
-AI 생산 결정 경로 8게이트 중 EXE에 정적 즉치값으로 있는 유일한 생산 억제 상수(`FUN_00406B00`
-@`0x406c44`, 동종·동소유 11×11 밀집 ≥7이면 그 kind 발주 중단)를 7→14로 올린 후보
-(`patches/ai/g4_production_crowd_cap_v1.py`, named candidate-exe로 `runtime_env.py`
-승인 메커니즘 재사용)를 lap712와 같은 seed1 fixture로 N=3 실행 — **owner0/1 종점
-생산·군대·자원 지표가 lap712 원본 N=3과 완전히 동일**(효과 0). H-TYPEMAX/H-RATIO는 런타임
-표 참조라 이 lap의 정적 상수 접근으로는 애초에 못 바꾼다. `make check` 1061 passed(868.47s)+
-`SAFETY_PASS`. 상세
-`docs/history/laps/20260927_lap713_work_g4_ai_production_crowd_cap_v1_falsified.md`.
-
-**lap714(work) G4 AI 생산 게이트 라이브 히스토그램(신규 `tools/g4_ai_production_table.py`+
-`tools/g4_ai_gate_histogram_probe.py`):** lap713 13:45 지시(어느 게이트가 owner1 발주를
-막는지 계측)를 실행. `FUN_00406C70` 디스어셈블로 생산표 레코드 레이아웃을 새로 해독(건물타입/
-생산kind/선행유닛kind·count/기술kind, lap501이 미해독으로 남긴 부분)하고, seed1 fixture 280초
-동안 owner0/1이 보유한 모든 생산건물×생산레코드 조합을 매 tick 분류했다(`process_vm_readv`
-읽기 전용, 새 breakpoint/EXE 패치 없음). **결과: 278개 표본에서 H-TYPEMAX·H-RATIO·H-CROWD는
-owner0/1 전부 0회. 100%가 H_AVAIL(가용 플래그=0: owner0 772회/owner1 620회)과
-PREREQ_OWN(선행유닛 미보유: owner0 398회/owner1 692회) 둘로만 갈린다** — owner0(HQ type49:
-kind7/110→H_AVAIL, kind94→PREREQ_OWN)·owner1(HQ type58: kind31/75→H_AVAIL, kind102/98→
-PREREQ_OWN) 모두 최초 건물의 전 생산레코드가 280초 내내 100% 거부, `WOULD_ACCEPT` 0건. 이후
-지은 건물(owner0 type50/51, owner1 type60)도 같은 두 사유로 100% 거부. lap712/713이 전제한
-"owner1만 약하다"가 아니라 **두 owner 모두 이 두 게이트로 구조적으로 막혀 있음**을 새로 확인.
-`make check` 1079 passed(835.61s)+`SAFETY_PASS`, 신규 테스트 18개, 원본 SHA 3회(스모크+
-전체런1+전체런2) `source_unchanged=true`, EXE/원본 미변경(순수 메모리 읽기). work tier 다음
-middle 검수 요청. 상세
-`docs/history/laps/20260927_lap714_work_g4_ai_production_gate_histogram_h_avail_prereq_own.md`.
+2026-10-03 14:37 KST G1 자율 지속 지시 적용. 기술 HOLD/승격은 내부 인계이며 일반 작업의 사용자 재허가 대기가 아니다.
 
 | 목표 | 판정 | 미충족 |
 |---|---|---|
-| G1 | 제품 미완료 | 1600×1200 원본 구도 외 사용자/제품 승인 |
-| G2 | 전비5000 단계 달성(복귀). 8인×10000 트랙 종료(10000 후보 근거는 보존) | 사용자 승인 |
-| G3 | 사용자 지시로 중단 | 현재 범위 제외 |
-| G4 | 제품 미완료. 길찾기 트랙 종료. 생산후보 v1(H-CROWD) FALSIFIED. 라이브 게이트 계측 완료: H_AVAIL·PREREQ_OWN이 100%, H-TYPEMAX/RATIO/CROWD 0회(lap714) | 가용 플래그·선행조건 표가 이 시나리오에서 생산을 원천 차단하는 이유 미조사, candidate AI 정책 채택된 것 없음, 사용자 승인 |
-| G5 | **단일플레이 milestone 승인(2026-09-26 21:54 사용자)** | 멀티 동기화 `UNKNOWN`(별도 표시, 최우선 지시 종료) |
+| G1 | **lap969 work: H-T(툴팁 BltFast overlay 미러) PASS(partial), lap971 middle 독립 재계산 불일치0·수용**: fresh save006 pair 2회 교집합 7,181→**3,689/3,689**(T-2≤5,450)·HUD 상자 3,492→**0**(T-1≤1,750)·present 899/891·p95 9/10ms·cov p50 98.50%·안전0·V1/V2/V2q/Scale2x PASS·V2s raw 2,780/2,784. 남은 3,689 = P6 로고 2,102(명시 잔여)·유닛 덩어리 961·선택 HP 바 423·기타. lap966 H-E3 수용(lap968) 유지, PS9 99.454%·명시 잔여 PS3 최악 4.463% 유지 | pair HOLD = V2s raw production 2,785>2,000(완벽 Scale2x 기준 자체 3,547 → **사용자 판단 큐**)·minimap 관측 경쟁은 lap972 H-M 하네스 수리로 해소(lap973 수용)·남은 steady stale 3,545→**lap994 H-F2 후 3,266**(HP 바 279→0; **lap995 middle 독립 재계산 불일치0·확인 pair r4 재현 → H-F2 PASS(partial) 수용**, r2 성능 outlier는 환경 변동 판정) → **lap996 work H-F3(`0x466B50` 미러) 3,266→2,305**(유닛 961→0 3/3·신규 0·안전0·present 893~901·p95 7ms; **lap997 middle 독립 재계산 불일치0 → H-F3 PASS(partial) 수용**; 잔여 2,305 = P6 로고 2,102+GDI TextOutA 글자 203(lap992 census 좌표 일치 3곳) → lap998 work H-G(TextOutA IAT `0x4E502C` 미러) 로고 밖 203→**0**·교집합 2,305→**2,102**; **lap999 middle 독립 재계산 불일치0 → H-G PASS(partial) 수용**, r3 성분 D 24px는 기준 포함 7 run 공통 일시 stale(프레임 880에서 해소)·H-G 무관; 잔여 2,102 = P6 로고 전부 → **lap1000 work H-L(`0x4672E0` 로고 반투명 RLE 미러) 로고 2,102→0·39프레임 전체 steady 교집합 0**(r2/r3; r1은 프레임 880 부재로 공통 38프레임 성분 D 24=기준 동일)·신규 0·blend 892/892 mirrored·reject 0·안전 0·present 868/886/886·p95 7ms·cov p50 99.30%·V2s production raw 2,852/2,856/2,856(기존 gate); **lap1001 middle 독립 재계산 불일치0 → H-L PASS(partial) 수용, 고정 카메라 steady stale 0**, 성분 D는 기준 동일 일시 stale·H-L 무관 → lap1002 work D-2 스크롤 성능(1칸 이동×2) p95 6/6ms(고정 6)·ticks/s 비 1.003·안전0·reject0; **lap1003 middle 독립 재계산 불일치0 → H-D2 PASS(partial) 수용**, 연속 스크롤 미측정 → lap1004 work H-D2c 스크롤 뒤 캡처(하네스만) → **lap1005 middle 독립 재계산 불일치0(독자 Scale2x 대비 99.28%·V2s 1,824 중 비설명 8·새 띠 어긋남 0) → H-D2c PASS(partial) 수용**, D2-4 1칸×2 관측 PASS → 다음 work H-D2h 키 유지 연속 스크롤)(lap992 H-F `0x466070` 미러 → **lap993 middle 독립 재계산 불일치0·H-F PASS(partial) 수용**, HP 423→279, F-1 ≤42 FAIL 기록 유지; 잔여 HP 279 = `0x465B30` 사각형 테두리(역어셈블·census·호출 `0x479009` 색 246 일치) → 다음 work H-F2; 유닛 961 `0x466B50`(ret 0x18)은 그다음)·burst UNKNOWN·PS35·P6/P7 HD·D-2·두 번째 장면·사용자승인 |
+| G2 | 2026-10-03 사용자 달성·종료 | 기존 hero/DxWnd/멀티/미니맵 UNKNOWN/BLOCKED는 한계로 보존 |
+| G3 | 사용자 중단 | 현재 범위 제외 |
+| G4 | 사용자 보류 | candidate AI 정책 없음 |
+| G5 | 2026-10-03 사용자 달성·종료 | 기존 멀티 env/미니맵 UI/체력바 등 한계 보존 |
+| G6·G7 | **2026-10-05 03:01 사용자 지시로 최우선**. lap978 H-G6a PASS(partial) 수용. lap979 work H-G6s(게임 자체 로비 갱신 `0x4B7700`으로 **실제 local=2**, 직접 쓰기 0·60초 유지·AI 비조종): O·P G6-1 `[1×6]`(결함 재현)·C `[1..6]`, G6-2/3/4 PASS. **lap980 middle 독립 재계산 불일치0 → H-G6s PASS(partial) 수용**. S-1 방향키 BLOCKED는 채팅 EDIT 포커스 가능성(정적: 입력란 subclass가 방향키를 EDIT로 넘김, 캡처 캐럿) | **lap981 work H-G6k: 대기실 키 전달 BLOCKED**(f0~f5 전 변형 key word 0, 채팅 EDIT가 포커스 유지 확인·PS3 대조는 word=1)·사용자 ↑/↓ 경로 미재현(포커스 조작 UNKNOWN)·사본 표 id 칸 2~7=own(사용자 표와 동일성 UNKNOWN)·이름 글자 미갱신·fixed_start/사람 플레이 미실행· **lap982 work H-G7o PASS(관측)**: P·O 모두 A local=2, C 인게임 로드 local 2 유지(문구 0), **D 새 프로세스 타이틀 로드 → local 0·표 id 전부 0(표 미복원)·ps 27→29 "패배했습니다."** 재현, 수리 경로 R1 불가. **lap983 middle 독립 재계산 불일치0 → H-G7o PASS(관측) 수용, 수리 경로 R4 채택**(로드 스트림의 시작 로비 스냅샷 `0x632F7C`→live `0x632C9C` 복사 뒤 `0x43AF40`, 솔로 게이트, hook `0x441310`) → **lap984 work H-G7r PASS(partial, 기술)**: R4 구현(hook `0x441310`+cave 56 B, 저장 스냅샷 복원+`0x43AF40`, 솔로 게이트) 격리 실행 4회 — 새 프로세스 타이틀 로드 local 0→**2**·ps `[3]`만(lap982 `[3,27,29]` 패배 해소)·선택 owner 2, 인게임 로드 무변화, seat0 회귀 0, lap982 기존 save001 수리, G6+G7 스택 동일 → **lap985 middle 독립 재계산 불일치0·후보 SHA 4개 재조립 일치 → H-G7r PASS(partial) 수용**. 새 위험: `0x43AF40` 일치 없음→local 이전 값 잔존(1P 세이브 교차·같은 프로세스 로드 UNKNOWN) · DESIGN G6/G7 사용자 합격 아님 · **lap986 work H-G7x PASS(partial, 기술)**: R4 단독은 X-1/X-2/X-4 PASS이나 X-3(자리 2 게임 중 1P 세이브 인게임 로드) local 2 잔존·ps `[3,27,29]` FAIL(port 동일) → R4b(솔로 게이트 안 `[0xB63FC4]=0` 후 `0x43AF40`, cave 66 B, cand67 `fb7c2131…`)로 X-1~X-4·R-1·R-3 전부 PASS(타이틀 복귀 시 local 0 관측). **lap987 middle 독립 재계산 불일치0·R4b 후보 SHA 4개 재조립 일치 → H-G7x PASS(partial) 수용, R4b(cand67 `fb7c2131…`)가 G7 현행 후보** · G6 재측정 on cand67·fixed_start 런타임·사용자 합격 미실행 · **lap988 work H-G6r PASS(partial, 기술)**: cand67(`fb7c2131…`) seat 2 G6-1 `[1,2,3,4,5,6]`·G6-2 1→3·G6-3 3→2·G6-4 cap 50 PASS·local 2·60초 안정, seat 0 대조 동일 PASS(lap979 cand 대비 회귀 0), fixed_start cand67(`58b9b22a…`) 새 프로세스 타이틀 로드 local 0→2·ps `[3]`·owner 2·크래시 0(G6 on fixed_start SKIP). 하네스 `cand67`·`--port fixed_start` 추가(테스트 RED→GREEN). **lap989 middle 독립 재계산 불일치0·후보 SHA 재조립 일치 → H-G6r PASS(partial) 수용, APPROVALS에 G6·G7 사용자 합격 요청 등록(시험 EXE 스테이징 `temp/…/20261005_lap989_middle_review/user_test_staging/`)** · 사용자 합격 대기·fixed_start G6 미측정 · **lap991 work H-G6f PASS(partial, 기술)**: 하네스 `--port fixed_start`·`--scroll-keys`(고정판 자리 2는 카메라가 맵 모서리라 보정 깨짐→Down:2.0 스크롤), fixed_start `port` seat 2 G6-1 `[1×6]` 결함 재현·`cand67`(`58b9b22a…`) seat 2 G6-1 `[1..6]`·G6-4 cap 50·local 2 60초 PASS, seat 0 대조 PASS(G6-2/3 seat 2 숫자는 1→8/8→7, 결함 쪽도 동일 — 하네스 지오메트리). **lap1001 middle 독립 재계산(stage raw 직접 유도) 불일치0 → H-G6f PASS(partial, 기술) 수용** · 사용자 합격 대기 |
 
 ## 지금 막힌 것 (Blockers)
 
-**world (93,56)의 `long_distance_pan` 카메라-복귀 결함은 여전히 후순위 미해결**(lap711 run1이 raw로
-재확인 — 카메라 팬 37.6타일 도달은 성공하나 복귀 보정 3회 후에도 drift 21~27타일, 드래그 선택
-0/20). world (10,49)를 baseline으로 계속 쓴다. 그 world의 미도착 문제는 lap711로 원인이 좁혀졌다
-— 아래 "다음 한 가지" 참고(v3 FALSIFIED, v4 가설 제시).
+**lap962 갱신: G1 pair HOLD의 남은 유일 사유는 기존 V2s raw production 2,785>2,000이다. 이것은 제품 수리로 풀 수 없다(원본을 완벽히 Scale2x한 기준만으로 3,547, covered 축소 금지). 그래서 APPROVALS에 사용자 판단 요청으로 올렸고, 결정 전에는 raw gate를 유지한다(W-1 미적용).** 판단 대기 동안 독립 G1 수리(lap966 H-E3 lap968 수용, 다음 H-T 툴팁 BltFast)는 계속하며 루프 정지가 아니다. 진단 근거: unexplained 80~254·PNG seam 없음(lap962 카드 §3). lap953 반투명 writer PASS(partial)·P6 명시 잔여·lap946 생산 K1~K6 PASS(partial)·P-6 UNKNOWN·lap936 r3 불수용은 유지한다.
+
+## 다음 한 가지
+
+- **다음 한 가지: Sonnet work H-D2h — 키 유지 연속 스크롤**(옵트인 `--terrain-scroll-hold`: keyup을 짝 observation checkpoint에서 멈춘 상태로 보내 두 lane 같은 36 tick 동안 누름, 기본 1칸 흐름 불변) fresh save006 pair 순차 2회. 사전등록 H-0~H-2는 `docs/history/laps/20261005_lap1005_middle_g1_d2c_acceptance_hold_scroll.md` handoff. 그다음 후보: 두 번째 장면 pair. G6/G7은 사용자 합격(APPROVALS lap989) 대기이며 루프를 막지 않는다.
+- (G1 진행) H-F(hook `0x466070`) lap993 수용, H-F2(hook `0x465B30`) lap995 수용, H-F3(hook `0x466B50`) lap997 수용, H-G(TextOutA IAT `0x4E502C`) lap999 수용, H-L(`0x4672E0`) lap1001 수용, 모두 uncommitted 보존. HD 혼합 화질은 P6 잔여 유지. 성분 D(`y515..520×x616..619`, 프레임 300..620 일시 stale)는 별개 미조사. census는 mirror와 hook 주소(`0x466D50`·`0x4664D0`·`0x465B30`)가 겹치므로 `--census-only`로만 쓴다.
+- (참고) H-F 원 사양: 카드 `docs/work/active/G1_MIDDLE_W70_HW_ACCEPTANCE_RECT_FILL_DIFF_MIRROR_HANDOFF_LAP975.md` §4.
+- 사용자 재개(INBOX 2026-10-05 00:39) 적용. `g1_mirror_replay_viewport`는 유지한다.
+- replay fill `[0,w)×[0,h)` 한정은 lap962가 보류했다(R-2 충족, 잔여는 새 key 고유 비용). 성능 회귀가 다시 측정될 때만 재검토한다.
+- strategy 재호출 조건: lap933 §6·lap938 §7·lap944 §6·lap946·lap952 §6·lap956 §7·lap958 §5·lap960 §6·lap962 §6에 더해 lap965 §6·lap968 §6(H-T 반증 + GDI 글자 경로 hook 불가). 그 밖의 HOLD·수리는 work ↔ middle로 처리한다.
+- D-2 scroll-performance·최종 입력 효과·전체HD coverage≥90%·HUD/tinted/GDI·두 번째장면·G1 사용자승인은 남는다. P단계는 비마일스톤, 기술 부분수용은 제품 마감 아님.
+- G1 일반 구현/수리/격리실행/독립검수는 자동 연결한다. 사용자 STOP·안전위반·외부/자격 blocker 또는 최종 사용자 마일스톤만 별도 보고한다. 새 근거충돌 종료는 내부 승격이며 재허가 질문이 아니다.
+- 원본/참고/기존raw/golden/안전핀 보호·기준/validator 무완화·개인세션 비접촉·G2/G5 수정/재개·G3/G4 재개·커밋/게시/자동deploy 금지. 단일 writer·각 세션1lap·약10분 보고 유지.
 
 ## 검증 상태
 
-lap714(work, 자체 raw 관측): `make check` **1079 passed(835.61s)** 전부 PASS, 신규 테스트
-18개(생산표 디코드 5+게이트 분류기 13), 원본 SHA 3회(스모크20s+전체280s×2) `source_unchanged=true`,
-cleanup 매회 ok, EXE/원본 미변경.
-lap713: `make check` 1061 passed(868.47s) PASS, 신규 patch 회귀 7개, 원본 SHA 3회 불변.
-lap711/709/703 상세는 위 압축 포인터에 원문 그대로 있다.
-
-## 다음 한 가지
-**2026-09-27 15:12 사용자 지시:** "4번 - 길찾기 및 AI는 일단 보류하자. 지금까지 작업분 커밋해서 리모트 깃헙에 푸시하고, 1번 - 원본과 같은 화면 구성인데 고해상도인 것을 최우선으로 해봐". **G4(길찾기·자유대전 AI) 보류**(lap715 건설 게이트 계측은 중단, 도구·기록 보존). 작업분은 운영자가 커밋·푸시(루프의 `LOOP_ALLOW_COMMITS=0`은 유지). **G1 최우선: 원본과 같은 화면 구성(UI 배치·비율·보이는 범위의 구도)을 유지하면서 1600×1200 고해상도로 렌더.** 다음 work는 기존 G1 기록(`docs/history/laps/*g1*`, `analysis/memory_maps/*g1*|*resolution*`)으로 현재 상태·막힌 지점을 먼저 요약하고, 구현 우선으로 가장 작은 다음 후보를 만들어 격리 실행 캡처로 원본(800×600) 대비 구도 동일성·HUD 배치·깨짐 여부를 확인한다.
-**2026-09-27 14:45 운영자 방향(lap714 거부 히스토그램 반영, 다음 work — 최신·우선):** 280s
-원본에서 H_CROWD/H_TYPEMAX/H_RATIO=0, owner1 거부는 **PREREQ_OWN 692**(선행 건물 미보유; HQ
-type58의 kind102/98 등)와 H_AVAIL 620이 전부. ⇒ 병목은 유닛 발주 게이트가 아니라 **AI가 선행
-건물을 짓지 않는 것(건설/테크 진행)**. v2: ① AI 건설 결정 루틴(건물 발주 함수·건설 우선순위
-표/조건)을 정적으로 특정하고 같은 방식으로 **건설 거부 사유 히스토그램**을 owner별 raw 수집,
-② owner1이 선행 건물(PREREQ 대상)을 못 짓는 최다 사유 1개를 상수 1~2개로 완화한 후보 v2,
-③ 원본 N=3 대 v2 N=3 paired(지표: owner1 선행건물 보유 시각, PREREQ_OWN 거부 수↓, 생산·
-군대↑, 쌓인 자원↓, 크래시 0). 보조: `WOULD_ACCEPT=0` 기록이 샘플 시점 문제인지 확인해 계측
-신뢰성 한 줄 기록. H_AVAIL(가용 플래그) 자체가 시나리오 정적 데이터인지도 v2 부산물로 확인.
-idle_worker_count·matchup·world(93,56) 팬 복귀는 계속 후순위 보존.
+- 원본 EXE SHA `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`, 비합성 save006
+  `616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064` read-only MATCH(lap962 직접 재확인). 8 player records는 활성8인 부하증명 아님.
+- 두 snapshot wrapper compiled ABI·exact5-byte hook ownership/rollback source 검토 완료. 동적 API 실패 주입/실제 강제 rollback 원복은 미검증. 두 호출 중0x4250F7의 이 장면 실실행은 미입증.
+- 최근 full Fast: lap1000 `make check` **PASS(exit0), 1591 passed·5 skipped/768.37s**(위 바퀴 기록). 직전: lap988 `make check` **PASS(exit0), 1582 passed·5 skipped/787.32s**, `checks/safety.sh check` SAFETY_PASS·CONTEXT_PASS, 로그 `logs/gates/lap988-work-full-check.log` SHA256 `595e1b31dba627fcdf460681424215318e144d631059206a100610a4cd4c8606`(런타임 증거 아님). 직전: lap979 `make check` **PASS(exit0), 1548 passed·5 skipped/1089.10s**, SAFETY_PASS·CONTEXT_PASS, 로그 `logs/gates/lap979-work-full-check.log` SHA256 `aa8870d7e2ee4524859fbc038238cb7745afeaf559b660fade1c90b3dc625f60`. 직전 lap977 `make check` **PASS(exit0), 1543 passed·5 skipped/836.53s**(로그 `logs/gates/lap977-work-full-check.log`). 직전 lap974 `make check` **PASS(exit0), 1526 passed·5 skipped/885.56s**, SAFETY_PASS·CONTEXT_PASS, 로그 `logs/gates/lap974-work-full-check.log` SHA256 `9a3f6d4ab93de5a564064ffbbd7012eda4ccd4ec095baa5226d23804ff43abb5`. 직전 lap969 `make check` **PASS(exit0), 1521 passed·5 skipped/863.81s**, SAFETY_PASS·CONTEXT_PASS, 로그 `logs/gates/lap969-work-full-check.log` SHA256 `4b8115451893ec8aaea6194dfdb195099bb87d084cabbe17c2ea500ef8e97f44`. 직전 lap966 **PASS, 1519 passed·5 skipped/887.56s**. 그 전 lap963 `make check` **PASS(exit0), 1518 passed·5 skipped/1082.62s**(skip5=pinned local stock/ESL references 부재), SAFETY_PASS·CONTEXT_PASS, 로그 `logs/gates/lap963-work-full-check.log` SHA256 `f0c66ae7e53bebeeb16b5f441ddf4ea3a588a2047c7c5cf96259c2dc79fc4d01`(lap961: 1517 passed/1027.60s). Fast는 실제 앱/24k/144k 증거가 아니다.
+- 수용된 부분 기술 근거(제품 마감 아님): lap946 생산 K1~K6, lap948/950 census·PS9 표, lap952/954 residual·P6 명시 잔여, lap956 PS9 메뉴 미러, lap958 stale mask, lap962 W-2. 상세는 위 압축 전 원문.
 
 ## 바퀴 기록
 
-- lap714(work, 이 세션): 13:45 방향(라이브 게이트 히스토그램)을 실행 — 신규
-  `tools/g4_ai_production_table.py`(`FUN_00406C70` 생산표 레코드 레이아웃 해독, 143행=생산65+
-  연구78, lap501 수치와 일치)와 `tools/g4_ai_gate_histogram_probe.py`(읽기전용 `process_vm_readv`
-  분류기, 새 EXE 패치 없음)로 lap712 seed1 fixture 280초를 owner0/1 전 생산건물×생산레코드
-  단위로 매 tick 분류 — **H-TYPEMAX/H-RATIO/H-CROWD 0회, 전량 H_AVAIL+PREREQ_OWN**(owner0
-  772+398, owner1 620+692), `WOULD_ACCEPT` 0건. 상세는 위 "지금 상태". `make check`
-  1079 passed(835.61s)+`SAFETY_PASS`, 신규 테스트 18개, 원본 SHA 3회 불변. work tier 다음
-  middle 검수 요청. 상세
-  `docs/history/laps/20260927_lap714_work_g4_ai_production_gate_histogram_h_avail_prereq_own.md`.
-- lap713(work, 이 세션): 13:05 판정(AI 자원 소비 개선)을 수행 — `ai_production_decision_path_...md`
-  (lap501)가 확정한 8게이트 중 EXE 정적 즉치값인 유일한 생산 억제 상수 H-CROWD(밀집상한, 원래 7)를
-  14로 올린 후보(`patches/ai/g4_production_crowd_cap_v1.py`, named candidate-exe로
-  `runtime_env.py` 승인 메커니즘 확장)를 만들어 lap712 seed1 fixture로 N=3 실행. 후보 3/3의
-  owner0/1 종점 생산·군대·자원 지표가 lap712 원본 N=3과 완전히 동일 — **`FALSIFIED`**(밀집
-  게이트가 이 fixture의 두 owner 모두에서 안 걸림). 신규 patch 회귀 테스트 7개,
-  `make check` 1061 passed(868.47s)+`SAFETY_PASS`, 원본 SHA 3회 불변, EXE/원본 미변경. work tier
-  다음 middle 검수 요청. 상세
-  `docs/history/laps/20260927_lap713_work_g4_ai_production_crowd_cap_v1_falsified.md`.
-- lap712(work, 이 세션): 12:05 운영자 판정 다음 work ①②를 수행 — 신규
-  `tools/g4_ai_behavior_probe.py`(+ 순수 함수 회귀 테스트 4개)로 `g1-baseline
-  --g4-chain-goal _custom_game_chain_inject_seed1 --g4-sample-seconds 280`을 원본 N=3 fresh
-  실행(3/3 완전 재현). owner별 자원수입/생산/군대규모/첫공격시각/유휴일꾼 5개 지표 산출,
-  `idle_worker_count`를 가장 약한 지표로 선정(owner0 0.679 대 owner1 0.129, 자원 순증감 방향과
-  일치) — matchup 의존 가능성 명시, 범용 결함 미승격. 280초 내 공격 0건(옛 소스 경로 대비 불일치,
-  원인 미조사). v1 구현은 하지 않음(다음 work가 `FUN_004B03D0` 완료조건 특정부터). `make check`
-  1054 passed(867.50s)+`SAFETY_PASS`, 원본 SHA 3회 전부 불변, EXE/원본 미변경. 상세
-  `docs/history/laps/20260927_lap712_work_g4_ai_freeforall_behavior_baseline.md`.
-- lap691~711(work/middle) 요약: G2 8인×10000 트랙 종료(691~699) → G4 W2
-  `EXACT_POSTLOAD_EDGE_PASS` 확정·종결(700~703) → G4-P1 baseline·world 양분(704~707) →
-  개선후보 v1/v2 FALSIFIED(708~709) → 미니맵 우회 BLOCKED(710) → v3 타임아웃 FALSIFIED·길찾기
-  트랙 종료(711). 상세는 `docs/history/20260927_status_lap699_precompaction.md`,
-  `docs/history/20260927_status_lap705_precompaction.md`,
-  `docs/history/20260927_status_lap709_precompaction.md`,
-  `docs/history/20260927_status_lap710_precompaction.md`,
-  `docs/history/20260927_status_lap712_precompaction.md`와 각
-  `docs/history/laps/20260927_lap{691..711}_*.md`.
+lap942~961 기록 전문은 위 `20261004_status_lap962_precompaction.md`에 있다. 각 상세는 `docs/history/laps/`.
 
-G5의 선택/호출/이동/save-load 부분 runtime 증거와 과거 실패 provenance는 `docs/history/laps/` 및
-공유 `temp/Syw2plus_patch/`에 보존한다. G5는 사용자 milestone 승인 완료, 멀티 동기화만 `UNKNOWN`이다.
+- lap959~lap987 바퀴 기록은 위 `20261005_status_lap993_precompaction.md` 원문(그 줄들 그대로)과 각 `docs/history/laps/` 기록에 있다.
+
+- lap989 middle(Claude Code `claude-opus-5-5`): lap988 ESCALATE_SOL 처리. probe-result 3개를 제품 helper 없이 재계산(공유 temp `20261005_lap989_middle_review/recalc_lap989.json` SHA `c0ee4034…ac6e`) 불일치0 — g6r_a/b G6-1 `[1..6]` 사슬·G6-2 pair 추가·G6-3 victim 제거·G6-4 cap 50, s2 first_match 2 = local, F-1 D local 0→2·ps `[3]`·owner 2·save SHA 일치. 후보 2개 SHA 독립 재조립 일치, 하네스 기본 normal 불변 → **H-G6r PASS(partial) 수용**. 시험 EXE 2개(`fb7c2131…`·`58b9b22a…`)+안내문을 공유 temp `user_test_staging/`에 생성(사용자 폴더 미기록), APPROVALS에 G6·G7 사용자 합격 요청 등록. 마일스톤 경계라 `loop/ESCALATE_SOL`을 root 전달용으로 교체. 게임 실행/source/commit 0. 기록 `docs/history/laps/20261005_lap989_middle_g6_hg6r_acceptance_user_test_request.md`. 검사 결과는 아래 줄에 보강한다.
+- lap989 middle 기록 freeze 뒤 SAFETY_PASS·CONTEXT_PASS, focused(loop_context·patch_loop·model_routing·g6_shift_click_probe·g7_save_load_probe·g6_shift_click_count_bound·g7_title_load_seat_restore) **100 passed/119.55s**(skip 0), 로그 `logs/gates/lap989-middle-focused.log` SHA256 `a8dc87e98d1e08b25ccd3bb84e3619f622078605298198f61c78508931db3dfd`. 전체 `make check` SKIP(문서만 변경, source 불변·lap988 full PASS 1582).
+
+- lap990 middle(Claude Code `claude-opus-5-5`): lap989 root용 `loop/ESCALATE_SOL`(마일스톤 경계)이 남은 채 기동. 스테이징 EXE 2개(`fb7c2131…`·`58b9b22a…`)·안내문(`2145f0a9…`)·입력 이식판 SHA·현재 source 메모리 재조립 모두 일치, `260921_temp` 배치 없음 → 전달물 재확인 PASS, 사용자 합격 대기 유지. H-G6f FEASIBLE(정적: 막힌 곳은 g6 probe `_install` normal 하드코딩뿐, fixed_start lobby-snapshot은 lap988 f1에서 소비됨) → handoff 구체화. ESCALATE_SOL은 root 몫이라 확인 줄만 추가·보존. 문서만, 게임/source/commit 0. 기록 `docs/history/laps/20261005_lap990_middle_g6g7_delivery_recheck_hg6f_handoff.md`. 검사 결과는 아래 줄에 보강한다.
+- lap990 middle 기록 freeze 뒤 SAFETY_PASS·CONTEXT_PASS, focused(loop_context·patch_loop·model_routing·g6_shift_click_probe·g7_save_load_probe·g6_shift_click_count_bound·g7_title_load_seat_restore) **100 passed/118.18s**(skip 0; 첫 시도는 patch 테스트 경로 오기로 exit 4·수집 0, 경로 수정 후 재실행), 로그 `logs/gates/lap990-middle-focused.log` SHA256 `8a7732e9a08546bbfcb093753382ed43aaecb7406dada2f47c420e402f121ce5`. 전체 `make check` SKIP(문서만 변경, source 불변·lap988 full PASS 1582).
+- lap991 work(Claude Code `claude-sonnet-5-5`): H-G6f — g6 probe `--port fixed_start`·`--scroll-keys`(테스트 12→15 RED→GREEN). fixed_start port seat 2 G6-1 `[1×6]` 재현, cand67 seat 2 `[1..6]`·cap 50·local 2 60초 PASS, cand67 seat 0 대조 PASS(첫 4 시도는 하네스 보정/병렬 부하 FAIL 보존). 기록 `docs/history/laps/20261005_lap991_work_g6_fixed_start_hg6f.md`. 검사 결과는 아래 줄.
+- lap991 work 기록 freeze 뒤 `make check` **PASS(exit0), 1585 passed·5 skipped/770.45s**, lint·typecheck PASS, CONTEXT_PASS, 로그 `logs/gates/lap991-work-full-check.log` SHA256 `501551220f7c3bf28ea5cb47854c07b2205776af9ee112145ba2bb4b3f5fd05d`(Fast, 런타임 증거 아님).
+- lap992 work(Claude Code `claude-sonnet-5-5`): G1 H-F — 신규 `g1_rect_fill.h`+hook `0x466070`(5B `8B 44 24 04 53`, 화면 frame만, 전후 diff→`g1_overlay_blt_apply`), 테스트 2개 RED→GREEN. fresh save006 scale2x pair 2회(exit 2=V2s raw 기존 gate HOLD): 호출 30.6k/30.9k·mirrored 121k·reject 0, 교집합 3,689→**3,545**(r1=r2)·HP 423→**279**(F-1 ≤42 FAIL, 부분개선)·신규 stale 0·HUD 0·present 886/899·p95 7ms·안전 0. 잔여 HP = 테두리 행+구분선, census 2회 마지막 writer `0x465C71`(`0x465B30` 사각형 테두리 함수 안, 미hook). `make lint`·`typecheck` PASS, focused 68 passed. 변경 uncommitted, 인계 `loop/ESCALATE_SOL`. `make check` 결과는 아래 줄.
+- lap992 work 기록 freeze 뒤 `make check` **PASS(exit0), 1587 passed·5 skipped/813.85s**, lint·typecheck PASS, CONTEXT_PASS, 별도 `checks/safety.sh check` SAFETY_PASS, 로그 `logs/gates/lap992-work-full-check.log` SHA256 `6b8526fb1e3f4c7dbdeed59174e575cd77693859eacef3677c62fc348a9281fc`(Fast, 런타임 증거 아님; 런타임 증거는 pair 2회·census 2회).
+
+- lap993 middle(Claude Code `claude-opus-5-5`): lap992 ESCALATE_SOL 처리·삭제. r1/r2·lap972 r1·census 2개를 제품 helper 없이 재계산(공유 temp `20261005_lap993_middle_review/recalc_lap993.json` SHA `79ec5baa…8181`) 불일치0 — 공통 덤프 39 교집합 3,689→3,545(r1=r2 픽셀 동일)·HP 423→279·신규0·제거 144 전부 HP 안쪽 칸, 잔여 = 테두리 행 203+구분선 76. 계수·안전0·present 886/899·p95 7ms 재확인, source 7개 SHA·bridge 사본 일치. 원본 역어셈블: `0x465B30` thiscall 테두리(leaf, clip `+0x4D0..`, 네 변 `0x465C17/47/6E/85`), 호출 `0x479009`(색 246·ecx `0xE5BF18`) 뒤 `0x47903F` 채움 → **H-F PASS(partial) 수용**(F-1 FAIL 기록 유지), 다음 work H-F2 사전등록. STATUS 압축(원문 보존). 문서만, 게임/source/commit 0. 기록 `docs/history/laps/20261005_lap993_middle_g1_hf_acceptance_rect_border_hf2.md`. 검사 결과는 아래 줄에 보강한다.
+- lap993 middle 기록 freeze 뒤 SAFETY_PASS·CONTEXT_PASS, focused(loop_context·patch_loop·model_routing·g1_rect_fill·g1_overlay_blt·g1_mirror2x·g1_census) **109 passed/128.90s**(skip 0), 로그 `logs/gates/lap993-middle-focused.log` SHA256 `0fae067b147d5b3dd7c8c0b61a47ffd4b10f4031ea3043eb02e923e8f6f24da7`. 전체 `make check` SKIP(문서만 변경, source 불변·lap992 full PASS 1587; 다음 work가 source 변경 뒤 실행).
+
+- lap994 work(Claude Code `claude-sonnet-5-5`): G1 H-F2 — hook `0x465B30`(8B `83 EC 10 53 8B 5C 24 18`, 사각형 테두리)+wrapper `mirror_rect_border`(H-F와 같은 diff 미러·`g1_rect_fill_region`·계수 `rect_border_465B30_*`), 테스트 1개 RED→GREEN. fresh save006 scale2x pair 3회(전부 exit 2 = V2s raw 기존 gate HOLD): F2-1 HP 279→**0**(3/3)·F2-2 신규 0(r3 교집합 3,545→**3,266**=−279)·F2-3 테두리 호출 31.8k/27.0k·reject 0·안전 0. F2-4 r1(present 867·p95 7ms)·r3(889·8ms) PASS, **r2 FAIL(present 762·p95 22ms; 다른 저장소 루프·chrome 동시 부하 정황, 입증 아님)**. 변경 uncommitted, 인계 `loop/ESCALATE_SOL`. 기록 `docs/history/laps/20261005_lap994_work_g1_rect_border_diff_mirror_hf2.md`.
+- lap994 work 기록 freeze 뒤 `make check` **PASS(exit0), 1588 passed·5 skipped/784.40s**, lint·typecheck PASS, CONTEXT_PASS, 별도 `checks/safety.sh check` SAFETY_PASS, 로그 `logs/gates/lap994-work-full-check.log` SHA256 `844196b3f8182746df585abf806a86d30de767124ccbf37a89e5d05d3eab24fd`(Fast, 런타임 증거 아님; 런타임 증거는 pair 3회).
+
+- lap995 middle(Claude Code `claude-opus-5-5`): lap994 ESCALATE_SOL 처리·삭제(원문은 기록에 보존). r1/r2/r3를 제품 helper 없이 새 스크립트로 재계산(공유 temp `20261005_lap995_middle_review/recalc_lap995.json` SHA `ce6d1cf9…2d14`) 불일치0 — HP 279→0·신규 stale 0·교집합 3,545→3,266·테두리 계수·reject 0·안전 0, source 5개 SHA·bridge 사본 일치. r2 성능 outlier 판정용 같은 명령 확인 pair r4(코드 변경 0) → present 886·p95 7ms·HP 0·신규 0·교집합 3,266·안전 0으로 r1/r3 재현, r2는 첫 1/4 구간 p95 7ms 뒤 군집·present 간격 p95 125ms·`elapsed_ms`는 wrapper 실행을 포함하지 않음 → 환경 변동 판정 → **H-F2 PASS(partial) 수용**. `0x466B50` 재역어셈블로 H-F3 사전등록. source/commit 0. 기록 `docs/history/laps/20261005_lap995_middle_g1_hf2_acceptance_flip_rle_hf3.md`. 검사 결과는 아래 줄에 보강한다.
+- lap995 middle 기록 freeze 뒤 SAFETY_PASS·CONTEXT_PASS, focused(loop_context·patch_loop·model_routing·g1_rect_fill·g1_overlay_blt·g1_mirror2x·g1_census) **110 passed/119.86s**(skip 0), 로그 `logs/gates/lap995-middle-focused.log` SHA256 `4e3e9222306e62ac9b5cec4576f0f760dbe3700555166d6494899ba7d017fa58`. 전체 `make check` SKIP(문서만 변경, source 불변·lap994 full PASS 1588; 다음 work가 source 변경 뒤 실행). 런타임 증거는 확인 pair r4.
+
+- lap996 work(Claude Code `claude-sonnet-5-5`): G1 H-F3 — hook `0x466B50`(8B `51 53 56 57 8B 7C 24 18`, 좌우반전 리맵 RLE, 클립 없음)+wrapper `mirror_flip_rle`(화면 경계 검사+diff 미러·계수 `flip_rle_466B50_*`), 테스트 1개 RED→GREEN. fresh save006 scale2x pair 3회(전부 exit 2 = V2s raw 기존 gate HOLD): F3-1 유닛 961→**0**(3/3)·F3-2 신규 0(교집합 3,266→**2,305**=−961)·F3-3 호출 955/949/959=mirrored·reject 0·F3-4 안전 0·present 899/893/901·p95 7ms·cov p50 98.8%·minimap/Scale2x/V2/V2q PASS(V2s raw 2,886/2,827/2,819 기록만). 변경 uncommitted, 인계 `loop/ESCALATE_SOL`. 기록 `docs/history/laps/20261005_lap996_work_g1_flip_rle_diff_mirror_hf3.md`.
+- lap996 work 기록 freeze 뒤 `make check` **PASS(exit0), 1589 passed·5 skipped/777.98s**, lint·typecheck PASS, CONTEXT_PASS, 별도 `checks/safety.sh check` SAFETY_PASS, 로그 `logs/gates/lap996-work-full-check.log` SHA256 `24a50c70929ceaf275a5f1a204e13dbd21591471d16e64dca38434a75d18a5da`(Fast, 런타임 증거 아님; 런타임 증거는 pair 3회).
+
+- lap997 middle(Claude Code `claude-opus-5-5`): lap996 ESCALATE_SOL 처리·삭제(원문은 기록 부록). r1/r2/r3를 제품 helper 없이 새 스크립트로 재계산(공유 temp `20261005_lap997_middle_review/recalc_lap997.json` SHA `0893a9ce…282`) 불일치0 — 유닛 961→0·신규 0·교집합 3,266→2,305(r1=r2=r3)·flip_rle 955/949/959=mirrored·reject 0·안전 0·present 899/893/901·p95 7ms, source 4개 SHA·bridge 사본 일치, hook 바이트 원본 일치 → **H-F3 PASS(partial) 수용**. 잔여 203을 lap992 census raw로 지목: 3묶음이 TextOutA 표본 `(226,503)14×11`·`(746,10)24×11`·`(540,581)30×11` 안에 정확히 들어감(residual map=hook 밖 writer) → GDI 글자. census가 같은 IAT 슬롯을 이미 교체·복원했으므로 lap968 "GDI hook 불가" 조건 불성립 → work H-G 사전등록. 게임/source/commit 0. 기록 `docs/history/laps/20261005_lap997_middle_g1_hf3_acceptance_textout_hg.md`. 검사 결과는 아래 줄에 보강한다.
+- lap997 middle 기록 freeze 뒤 SAFETY_PASS·CONTEXT_PASS, focused(loop_context·patch_loop·model_routing·g1_rect_fill·g1_overlay_blt·g1_mirror2x·g1_census) **111 passed/123.89s**(skip 0), 로그 `logs/gates/lap997-middle-focused.log` SHA256 `58185aaf58f85d870cf09e30223920440af2e18a8d1ba2ee56039bbe9fe5e5d4`. 전체 `make check` SKIP(문서만 변경, source 불변·lap996 full PASS 1589; 다음 work가 source 변경 뒤 실행).
+
+- lap998 work(Claude Code `claude-sonnet-5-5`): G1 H-G — gdi32 `TextOutA` IAT 슬롯 `0x4E502C`(슬롯 값=실제 TextOutA일 때만 교체·detach 복원)+`mirror_textout`(렌더러 `0xE5BF18` 버퍼, 텍스트 extent±1 사각형, `GdiFlush` 뒤 diff 미러·계수 `textout_iat_*`), 테스트 1개 RED→GREEN. fresh save006 scale2x pair 4회(전부 exit 2 = V2s raw 기존 gate HOLD): G-1 로고 밖 교집합 203→**0**(r1/r2/r4, A·B·C 4/4 전부 0; r3만 24 = 프레임 880 덤프 없음으로 공통 38프레임, 같은 프레임 기준 lap996도 227이라 신규 0·성분 D `y515..520×x616..619`)·G-2 신규 0·교집합 2,305→**2,102**(=P6 로고 전부)·G-3 호출 ~16k·changed ~10k·mismatch 0·복원 1·G-4 안전 0·present 900/901/868/886·p95 7ms·cov 98.86%. 변경 uncommitted, 인계 `loop/ESCALATE_SOL`. 기록 `docs/history/laps/20261005_lap998_work_g1_textout_iat_diff_mirror_hg.md`.
+- lap998 work 기록 freeze 뒤 `make check` **PASS(exit0), 1590 passed·5 skipped/772.77s**, lint·typecheck PASS, CONTEXT_PASS, 별도 `checks/safety.sh check` SAFETY_PASS, 로그 `logs/gates/lap998-work-full-check.log` SHA256 `29719d8eb6d1b309231cd6e788801afa70e7f79b3b2d7104ba253ee239c6ec0d`(Fast, 런타임 증거 아님; 런타임 증거는 pair 4회).
+
+- lap999 middle(Claude Code `claude-opus-5-5`): lap998 ESCALATE_SOL 처리·삭제(원문은 기록 부록). r1~r4를 제품 helper 없이 새 스크립트로 재계산(공유 temp `20261005_lap999_middle_review/recalc_lap999.json` SHA `47e8a031…fe7d7`) 불일치0 — 로고 밖 203→0(r1/r2/r4)·A/B/C 4/4 0·신규 0·교집합 2,305→2,102·textout 계수·복원 1·안전 0·present 900/901/868/886·p95 7ms, source 4개 SHA·bridge 사본·산출물 해시·IAT `0x4E502C`=TextOutA 일치 → **H-G PASS(partial) 수용**. r3 성분 D는 7 run 공통 프레임 300..620 일시 stale(880에서 해소)·H-G 무관. `0x4672E0` 역어셈블·xref(호출 2곳 ecx=`0xE5BF18`, 프롤로그 분기 0)로 H-L 사전등록. 게임/source/commit 0. 기록 `docs/history/laps/20261005_lap999_middle_g1_hg_acceptance_logo_blend_hl.md`. 검사 결과는 아래 줄에 보강한다.
+- lap999 middle 기록 freeze 뒤 SAFETY_PASS·CONTEXT_PASS, focused(loop_context·patch_loop·model_routing·g1_rect_fill·g1_overlay_blt·g1_mirror2x·g1_census) **112 passed/123.13s**(skip 0), 로그 `logs/gates/lap999-middle-focused.log` SHA256 `d77f663a5e5a9b3955263a6bdd41d273fd9aa4feed79e6da4112c165331caf5a`. 전체 `make check` SKIP(문서만 변경, source 불변·lap998 full PASS 1590; 다음 work가 source 변경 뒤 실행).
+
+- lap1000 work(Claude Code `claude-sonnet-5-5`): G1 H-L — hook `0x4672E0`(6B `51 53 56 8B F1 57`, 로고 반투명 RLE, 인자 하위16비트 부호확장·화면 밖 reject)+wrapper `mirror_blend_rle`(before 사본→원본→`g1_overlay_blt_apply` diff 미러·계수 `blend_4672E0_*` 8개), 테스트 1개 RED→GREEN, lint·typecheck PASS. fresh save006 scale2x pair 3회(전부 exit 2 = V2s production raw 기존 gate HOLD): L-1 로고 2,102→**0**(3/3)·L-2 신규 0·r2/r3 39프레임 전체 교집합 **0**(r1은 880 부재 공통 38프레임, 성분 D 24=기준 동일)·L-3 invocations 892=mirrored=changed·reject 0·L-4 안전 0·present 868/886/886·p95 7ms·cov p50 99.30%·V2s production raw 2,852/2,856/2,856. 변경 uncommitted, 인계 `loop/ESCALATE_SOL`. 기록 `docs/history/laps/20261005_lap1000_work_g1_blend_rle_diff_mirror_hl.md`. `make check` 결과는 아래 줄.
+- lap1000 work 기록 freeze 뒤 `make check` **PASS(exit0), 1591 passed·5 skipped/768.37s**, lint·typecheck PASS, CONTEXT_PASS, 별도 `checks/safety.sh check` SAFETY_PASS, 로그 `logs/gates/lap1000-work-full-check.log` SHA256 `d68c8050db4367b8de562e0f92521c54c733291e491d8d95fce46a9d79d09434`(Fast, 런타임 증거 아님; 런타임 증거는 pair 3회).
+
+- lap1001 middle(Claude Code `claude-opus-5-5`): lap1000 ESCALATE_SOL 처리·삭제(원문은 기록 부록). r1~r3를 제품 helper 없이 새 스크립트로 재계산(공유 temp `20261005_lap1001_middle_review/recalc_lap1001.json` SHA `37db64c6…b165`) 불일치0 — 로고 2,102→0(3/3)·신규 0·39프레임 교집합 r2/r3 0·r1 880 부재=present 868<880·성분 D 6 run 공통 일시 stale·blend 892=mirrored=changed·reject 0·안전 0·V2s 2,852/2,856/2,856, source 4개·bridge·원본 hook 바이트 일치 → **H-L PASS(partial) 수용**. lap991 H-G6f probe-result 3개도 stage raw로 재계산(`recalc_g6f.json` `36632500…e450`) 불일치0 → 수용. 다음 work D-2 사전등록. 게임/source/commit 0. 기록 `docs/history/laps/20261005_lap1001_middle_g1_hl_acceptance_d2_scroll.md`. 검사 결과는 아래 줄에 보강한다.
+- lap1001 middle 기록 freeze 뒤 SAFETY_PASS·CONTEXT_PASS, focused(loop_context·patch_loop·model_routing·g1_rect_fill·g1_overlay_blt·g1_mirror2x·g1_census·g6_shift_click_probe) **128 passed/124.51s**(skip 0), 로그 `logs/gates/lap1001-middle-focused.log` SHA256 `7eb472e5dc7a49e730f272726f995517a6049c9d0b886c767df2fca91f778c42`. 전체 `make check` SKIP(문서만 변경, source 불변·lap1000 full PASS 1591; 다음 work가 실행).
+
+- lap1002 work(Claude Code `claude-sonnet-5-5`): G1 D-2 스크롤 성능 — 제품·gate 변경 0, 현재 source 그대로 fresh save006 `--hd-source scale2x --terrain-scroll --p4b-s-snapshot` pair 순차 2회(전부 exit 2 = V2s production raw 2,857>2,000 기존 gate HOLD). D2-0 parity PASS·state diff 0, D2-1 스크롤 창(sim_tick 24692..24824) n=133 p95 **6ms**(고정 창 p95 6·한도 22)·max 9(2/2), D2-2 baseline에 sim_tick 없어 candidate 스크롤÷고정 대체 ticks/s 비 **1.0028/1.0029**, D2-3 안전 7종 0·hook reject 전부 0·cleanup ok·크래시 0(overlay_blt_rejects 1,638/1,639·textout reject_target 5,554는 기록만), D2-4 스크롤 후 PNG/stale_mask는 하네스에 없어 **UNKNOWN**(trace stale_pixels 중앙값 고정 3,867/스크롤 2,180/이후 0). 인계 `loop/ESCALATE_SOL`. 기록 `docs/history/laps/20261005_lap1002_work_g1_d2_scroll_performance.md`. 전체 `make check` SKIP(source·test 불변, lap1000 full PASS 1591 유효); 런타임 증거는 pair 2회.
+
+- lap1003 middle(Claude Code `claude-opus-5-5`): lap1002 ESCALATE_SOL 처리·삭제(원문은 기록 부록). s1/s2 trace_raw·pair-result를 제품 helper·`analyze_d2.py` 없이 새 스크립트로 재계산(공유 temp `20261005_lap1003_middle_review/recalc_lap1003.json` SHA `a292da2e…b3bb0`) 불일치0 — 고정 n=123 p95 6/6·스크롤 n=133 p95 6/6(한도 22)·DOWN만 p95 7/8·ticks/s 비 1.0028/1.0029·baseline sim_tick 0건(대체 규칙 타당)·안전 7종 0·hook reject 0·cleanup ok, reject 수준 lap1000 대조 같은 수준(textout 상수 ~5.55k, overlay는 blend 호출당 1.07 vs 1.01~1.14), source 4개 SHA 일치 → **H-D2 PASS(partial) 수용**. 전사 정정: 스크롤 coverage DOWN 474,565·RIGHT 474,804(`coverage_30_present`, UNKNOWN 아님). 한계: 스크롤=1칸×2(terrain RLE 증분 16·30), 연속 스크롤 미측정. 다음 work H-D2c 사전등록. 게임/source/commit 0. 기록 `docs/history/laps/20261005_lap1003_middle_g1_d2_acceptance_scroll_capture.md`. 검사 결과는 아래 줄에 보강한다.
+- lap1003 middle 기록 freeze 뒤 SAFETY_PASS·CONTEXT_PASS, focused(loop_context·patch_loop·model_routing·g1_rect_fill·g1_overlay_blt·g1_mirror2x·g1_census·g1_saved_scene_probe) **289 passed/129.32s**(skip 0), 로그 `logs/gates/lap1003-middle-focused.log` SHA256 `406f6489f888b539b7f62299a68f86fb13988bd00af63da6b37ffb939540783a`. 전체 `make check` SKIP(문서만 변경, source 불변·lap1000 full PASS 1591; 다음 work가 하네스 변경 뒤 실행).
+
+- lap1004 work(Claude Code `claude-sonnet-5-5`): G1 H-D2c — 하네스만(제품·gate 변경 0): `--terrain-scroll` 최종 관측 뒤 두 lane `scroll_after` 캡처(candidate는 present barrier 선행)+pair `scroll_after_comparison` 진단 추가(`_diagnostic_capture_comparisons`), 테스트 3개 RED→GREEN. fresh save006 pair 순차 2회(exit 2 = V2s production raw 기존 HOLD): C-0 parity PASS·required_tags 불변·scale2x PASS, C-1 스크롤 창 p95 6/6(고정 6/6)·ticks/s 비 1.0035/1.0026·reject 수준 lap1002 동일, C-2 scroll_after V1/V2/V2q PASS·V2s 1,824≤2,000·월드 30% 초과 행/열 0·육안 띠 어긋남 없음·PNG 두 run SHA 동일 → **H-D2c PASS(partial)**(D2-4 UNKNOWN→1 장면 관측 PASS). 한계: 1칸×2 스크롤·한 장면. 인계 `loop/ESCALATE_SOL`. 기록 `docs/history/laps/20261005_lap1004_work_g1_d2c_scroll_after_capture.md`.
+- lap1004 work 기록 freeze 뒤 `make check` **PASS(exit0), 1594 passed·5 skipped/772.38s**, lint·typecheck PASS, CONTEXT_PASS, 별도 `checks/safety.sh check` SAFETY_PASS, 로그 `logs/gates/lap1004-work-full-check.log` SHA256 `6a9f420569b7ec8eaceeef1107c68c1c2ff5119bb752d813e0cf2630493bef8e`(Fast, 런타임 증거 아님; 런타임 증거는 pair 2회).
+
+- lap1005 middle(Claude Code `claude-opus-5-5`): lap1004 ESCALATE_SOL 처리·삭제(원문은 기록 부록). s1/s2 pair-result·scroll_after PNG 4개·trace_raw를 제품 helper·work 스크립트 없이 새 스크립트 3개로 재계산(공유 temp `20261005_lap1005_middle_review/recalc_lap1005.json` SHA `17805454…8789` 외 2개) 불일치0 — V2s 1,824·V2q 0·V2 +163·nearest 110,127, 4 PNG SHA 두 run 동일, 독자 Scale2x 대비 99.28%(비설명 V2s 8), 원본 화면 (32,64) 평행이동 = 실제 1칸 대각 스크롤, 새 띠 1칸 어긋남 0, 성능 p95 6/6·비 1.0035/1.0026·안전0·reject0, required_tags·gate 코드 불변, bridge source 전부 lap1002와 동일(dll 6바이트 타임스탬프) → **H-D2c PASS(partial) 수용**. 전사 정정: production V2s는 2,857→2,816(판정만 동일). 다음 work H-D2h(키 유지 연속 스크롤) 사전등록. 게임/source/commit 0. 기록 `docs/history/laps/20261005_lap1005_middle_g1_d2c_acceptance_hold_scroll.md`. 검사 결과는 아래 줄에 보강한다.
+- lap1005 middle 기록 freeze 뒤 SAFETY_PASS·CONTEXT_PASS, focused(loop_context·patch_loop·model_routing·g1_saved_scene_probe·g1_mirror2x) **257 passed/125.88s**(skip 0, exit 0), 로그 `logs/gates/lap1005-middle-focused.log` SHA256 `9aca62493cd9f3873d642df08395b24a69412bc4aa821b06f25405abec5b8085`. 전체 `make check` SKIP(문서만 변경, source 불변·lap1004 full PASS 1594; 다음 work가 하네스 변경 뒤 실행).

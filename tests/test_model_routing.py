@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import json
 import shutil
 import subprocess
 
@@ -13,9 +14,29 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# Codex has no "latest" alias, so the loop resolves luna/sol/astra from the
+# Codex model cache. Tests pin a fixture cache instead of the host's.
+MODELS_CACHE = {
+    "models": [
+        {"slug": "gpt-6.1-sol", "visibility": "list"},
+        {"slug": "gpt-6-astra", "visibility": "list"},
+        {"slug": "gpt-6-sol", "visibility": "list"},
+        {"slug": "gpt-6-luna", "visibility": "list"},
+        {"slug": "gpt-5.6-sol", "visibility": "list"},
+        {"slug": "gpt-5.6-luna", "visibility": "list"},
+        {"slug": "gpt-7-luna", "visibility": "hide"},
+    ]
+}
+
+
 @pytest.fixture
-def project(tmp_path: Path) -> Path:
+def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     root = tmp_path / "patch"
+    cache = tmp_path / "models_cache.json"
+    cache.write_text(json.dumps(MODELS_CACHE))
+    monkeypatch.setenv("LOOP_CODEX_MODELS_CACHE", str(cache))
+    for name in ["LOOP_CODEX_WORK_MODEL", "LOOP_CODEX_MIDDLE_MODEL", "LOOP_CODEX_ASTRA_MODEL", "LOOP_CODEX_MODEL"]:
+        monkeypatch.delenv(name, raising=False)
     for name in ["loop", "checks", "docs"]:
         shutil.copytree(
             ROOT / name,
@@ -70,16 +91,40 @@ def require_original_fixture() -> None:
 @pytest.mark.parametrize(
     ("role", "expected"),
     [
-        ("work", "-m gpt-5.6-luna -c model_reasoning_effort=high"),
+        ("work", "-m gpt-6-luna -c model_reasoning_effort=high"),
+        ("middle", "-m gpt-6.1-sol -c model_reasoning_effort=high"),
         ("astra", "-m gpt-6-astra -c model_reasoning_effort=medium"),
     ],
 )
-def test_codex_roles_have_fixed_model_and_role_effort(project: Path, role: str, expected: str):
-    result = dry(project, role)
+def test_codex_roles_resolve_latest_model_and_role_effort(project: Path, role: str, expected: str):
+    result = dry(project, role, LOOP_MIDDLE_PROVIDER="codex")
     assert result.returncode == 0, result.stdout + result.stderr
     output = latest_lap(project)
     assert expected in output
     assert "resume" not in output and "continue" not in output
+    assert not (project / "agent_called").exists()
+
+
+def test_explicit_codex_model_id_pins_version(project: Path):
+    result = dry(project, "work", LOOP_CODEX_WORK_MODEL="gpt-5.6-luna")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "-m gpt-5.6-luna -c model_reasoning_effort=high" in latest_lap(project)
+    assert not (project / "agent_called").exists()
+
+
+@pytest.mark.parametrize("cache", ["missing", "no-family"])
+def test_unresolvable_codex_alias_stops_before_session(
+    project: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cache: str
+):
+    path = tmp_path / "bad_cache.json"
+    if cache == "no-family":
+        path.write_text(json.dumps({"models": [{"slug": "gpt-6-sol", "visibility": "list"}]}))
+    monkeypatch.setenv("LOOP_CODEX_MODELS_CACHE", str(path))
+    result = dry(project, "work")
+    assert result.returncode != 0
+    logs = "\n".join(p.read_text() for p in (project / "logs").glob("loop-*.log"))
+    assert "luna" in logs and "최신 Codex 모델" in logs
+    assert "gpt-5.6-luna" not in logs
     assert not (project / "agent_called").exists()
 
 
@@ -88,9 +133,9 @@ def test_explicit_claude_work_and_middle_alternatives(project: Path):
     assert result.returncode == 0, result.stdout + result.stderr
     output = latest_lap(project)
     assert "claude --print" in output
-    assert "--model claude-sonnet-5" in output
+    assert "--model sonnet" in output
     assert "--effort high" in output
-    assert "--model claude-opus-5" in output
+    assert "--model opus" in output
     assert not (project / "agent_called").exists()
 
 
@@ -115,7 +160,7 @@ def test_strategy_can_switch_to_explicit_claude_fable(project: Path):
     output = latest_lap(project)
     command = output.split("--- 실행되었을 명령", 1)[1].split("--- 중간", 1)[0]
     assert "claude --print" in command
-    assert "--model claude-fable-5" in command
+    assert "--model fable" in command
     assert "--effort medium" in command
     assert "gpt-6-astra" not in command
     assert not (project / "agent_called").exists()
@@ -130,7 +175,7 @@ def test_fable_strategy_high_is_an_explicit_override(project: Path):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     output = latest_lap(project)
-    assert "--model claude-fable-5 --effort high" in output
+    assert "--model fable --effort high" in output
     assert not (project / "agent_called").exists()
 
 
@@ -165,7 +210,7 @@ def test_models_reports_selected_fable_strategy_without_agent_call(project: Path
         timeout=20,
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "strategy -> claude/claude-fable-5 effort=medium" in result.stdout
+    assert "strategy -> claude/fable effort=medium" in result.stdout
     assert "No automatic fallback" in result.stdout
     assert not (project / "agent_called").exists()
 
@@ -238,7 +283,7 @@ def test_enabled_work_dispatches_codex_model_and_high_effort_without_resume(proj
     )
     assert result.returncode == 0, result.stdout + result.stderr
     command = calls.read_text()
-    assert "-m gpt-5.6-luna" in command
+    assert "-m gpt-6-luna" in command
     assert "-c model_reasoning_effort=high" in command
     assert "resume" not in command and "continue" not in command
 
@@ -271,11 +316,11 @@ def test_enabled_plan_uses_explicit_claude_opus_middle_model(project: Path):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     command = calls.read_text()
-    assert "--model claude-opus-5" in command
+    assert "--model opus" in command
     assert "--effort high" in command
     assert "--resume" not in command and "--continue" not in command
     logs = "\n".join(path.read_text() for path in (project / "logs").glob("loop-*.log"))
-    assert "worker=claude/claude-opus-5" in logs
+    assert "worker=claude/opus" in logs
 
 
 def test_enabled_strategy_dispatches_explicit_claude_fable(project: Path):
@@ -307,7 +352,7 @@ def test_enabled_strategy_dispatches_explicit_claude_fable(project: Path):
     )
     assert result.returncode == 0, result.stdout + result.stderr
     command = calls.read_text()
-    assert "--model claude-fable-5" in command
+    assert "--model fable" in command
     assert "--effort medium" in command
     assert "gpt-6-astra" not in command
     assert "--resume" not in command and "--continue" not in command
@@ -346,9 +391,9 @@ def test_worker_escalation_stops_for_explicit_middle_review(project: Path):
     assert result.returncode == 75, result.stdout + result.stderr
     command = calls.read_text()
     assert command.count("codex:") == 1
-    assert "codex:exec" in command and "-m gpt-5.6-luna" in command
-    assert "claude:--print" not in command and "--model claude-opus-5" not in command
-    assert "--model claude-sonnet-5" not in command
+    assert "codex:exec" in command and "-m gpt-6-luna" in command
+    assert "claude:--print" not in command and "--model opus" not in command
+    assert "--model sonnet" not in command
     assert (project / "loop/ESCALATE_SOL").is_file()
     assert "middle review pending" in result.stdout
 

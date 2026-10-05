@@ -16,6 +16,7 @@ cd "$PROJECT_DIR" || exit 1
 . "$SCRIPT_DIR/env.sh"
 # 개인 오버라이드 (있으면)
 [ -f "$SCRIPT_DIR/env.local.sh" ] && . "$SCRIPT_DIR/env.local.sh"
+resolve_codex_role_models
 
 # --dry-run 플래그
 for arg in "$@"; do
@@ -220,6 +221,10 @@ preflight() {
     selected_model="$(role_codex_model "$LOOP_ROLE")" || return 1
   else
     selected_model="$(role_claude_model "$LOOP_ROLE")" || return 1
+  fi
+  if [ -z "$selected_model" ] && [ -n "${LOOP_CODEX_RESOLVE_ERRORS:-}" ]; then
+    log "FATAL: 최신 Codex 모델을 찾지 못했다 (${LOOP_CODEX_RESOLVE_ERRORS% }; cache=$LOOP_CODEX_MODELS_CACHE)"
+    return 1
   fi
   [ -n "$selected_model" ] || { log "FATAL: role=$LOOP_ROLE 모델이 비어 있다"; return 1; }
   if [ -n "${LOOP_CODEX_ESCALATION_MODEL:-}" ] && [ "$LOOP_MIDDLE_PROVIDER" = "codex" ] \
@@ -468,8 +473,11 @@ EOP
 GENERAL_ROUTING_PROMPT=$(cat <<'EOP'
 
 이번 세션은 일반 작업자다. 다음 중 하나라도 해당하면 억지로 재시도하거나 마감하지 마라.
-- 필수 빌드·테스트·검증이 예상 밖으로 실패했다.
-- 구현 근거가 불명확하거나 서로 충돌한다.
+- 필수 빌드·테스트·검증이 예상 밖으로 실패했고, 원인 추적→수정→재실행을 이번 세션에서
+  3회 반복한 뒤에도 원인을 설명하지 못한다. 원인이 이번 변경·하네스·입력 좌표처럼 추적 가능한
+  구현 결함이면 넘기지 말고 고쳐서 다시 실행한다(PROMPT.md ③ 반복 원칙).
+- 구현 근거가 불명확하거나 서로 충돌한다(과거 기록과 raw가 실질적으로 어긋나는 등). 단순 전사 오류
+  (잘린 해시·오타)는 raw를 직접 재계산해 확인되면 기록만 바로잡고 계속한다.
 - 현재 작업이 마일스톤을 마감하거나 다음 마일스톤으로 넘기는 경계다.
 
 그 경우 현재 변경과 근거를 보존하고 `loop/ESCALATE_SOL` 파일을 만든 뒤,

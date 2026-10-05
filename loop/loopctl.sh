@@ -22,6 +22,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 . "$SCRIPT_DIR/env.sh"
 [ -f "$SCRIPT_DIR/env.local.sh" ] && . "$SCRIPT_DIR/env.local.sh"
+resolve_codex_role_models
 
 UNIT="syw2plus-patch-loop.service"
 UNIT_SRC="$SCRIPT_DIR/syw2plus-patch-loop.service"
