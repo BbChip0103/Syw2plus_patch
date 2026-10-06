@@ -1,0 +1,13 @@
+# 2026-09-30 | lap 806 | G2 ESL2608 Phase-E 환경 blocker 확인 및 최종 점검 보고서
+
+- 날짜/lap/목표: 2026-09-30 / 806 / G2 ESL2608 두 후보의 체크리스트 마감 준비와 Phase E 멀티 환경 판정.
+- 가설: lap742의 native IPXWrapper 방 생성 실패 원인과 현재 Wine DirectPlay 환경이 달라졌다면 짧은 멀티 재시도가 새 결과를 줄 수 있다. 동일하면 `BLOCKED(env)`를 유지하고 최종 보고서로 닫는다.
+- 변경파일: `docs/work/G2_ESL2608_CHECK_REPORT_20260930.md`, `../260921_temp/G2_2608_점검결과_DxWnd창모드안내_20260930.txt`, `docs/STATUS.md`, 이 기록. 제품 EXE·원본·참고 저장소·G2 패치 소스는 수정하지 않았고 커밋하지 않았다.
+- 원본·후보 SHA: normal baseline `cade60b2451519ec4e305d91279b1c377cf797c813a939c5b54c2e9b30b176a3`, candidate `83c7df80a3273d95d58e7a493866bbb40ad705d10120bc05db660400961fad60`; fixed baseline `f5f816eeb3d8b531ff030f4b43b2f2338ccf0d2257a5684b034e1f8dc8ee1973`, candidate `1bdcadf9edeccc16d92696e580a60fc71f13a13b6bba22cafb8c9f50e749262f`.
+- Phase E 짧은 재확인 명령: `wine --version`; `sha256sum /usr/lib/i386-linux-gnu/wine/i386-windows/{dpwsockx.dll,dplayx.dll} ../Syw2plus_re/Syw2plus/{dpwsockx.dll,ipxwrapper.dll,IPXConfigWIN32.reg}`; `strings -n 5 .../dpwsockx.dll | rg 'DPWSCB_|stub'`; 기존 runtime raw/log SHA 재확인.
+- 측정값/판정: Wine `9.0 (Ubuntu 9.0~repack-4build3)` 및 builtin `dpwsockx` SHA `3b4f6a9d355114fb78f1e2a3961f48324b654c7e246a1bcd0925f3cdbe7986c9`가 동일했다. 보존된 lap742 native IPX 재현 raw/log는 서비스 공급자 로드 실패, `DPERR_UNAVAILABLE`, null page fault를 기록한다. **Phase E = `BLOCKED(env: native ipxwrapper/directplay provider unavailable under wine9.0)`**. 새 2인 동기화·패킷 와이어 증거는 SKIP; 같은 방 생성 경로의 소모적 재시도는 하지 않았다.
+- 체크리스트 결론: A/B/D 및 worker rally는 baseline parity/4-way PASS; hero runtime `UNKNOWN(fixture contract)`; DxWnd `BLOCKED(env: target launch)`; 부하·멀티는 미검증 또는 BLOCKED. 사용자 신고 Shift+클릭은 차이 미재현, 창모드는 환경 blocker, 장수 집결은 worker PASS·hero UNKNOWN으로 보고했다.
+- fixture/환경: 앞선 Phase A/B/C/D raw의 private Wine win32 prefix/Xvfb 1600x1200, ESL2608 Data overlay, stock selection cap20, 100 active synthetic selection fixture, owner-1 combat target, save006/구세이브, synthetic producer slot4092를 각 기록과 대조했다. 이번 Phase E 재확인은 read-only 환경 점검이며 게임·runtime fixture를 새로 만들지 않았다.
+- raw provenance: crash result `c0cb357431662e65693e5ad170dea43a6d31d38bf9031399c2541752c0fb876a`, backtrace log `5e0df2c1a1e263982007ddfecf7e7e15a27f55e35ededab491b049ff0d04bf46`; 상세는 `docs/history/laps/20260928_lap742_work_g5_checklist_g_multiplayer_ipx_crash_blocked.md`와 `...lap743_work_g5_checklist_g_final_attempt_blocked_confirmed.md`.
+- 회귀/검증: 문서·handoff·안내를 모두 먼저 작성한 뒤 `make lint`, `make typecheck`, `make check`, `checks/safety.py check`를 실행한다. 제품 EXE 새 생성은 하지 않는다.
+- 다음 행동: 새 middle/Sol 세션이 이 보고서와 lap802~805 raw, DxWnd blocker 및 체크리스트를 독립 검수하고, 지원 Windows/DxWnd 환경 확보 여부와 hero runtime fixture를 판정한다. 이후에만 새 이름 수정판/사용자 승인을 결정한다.

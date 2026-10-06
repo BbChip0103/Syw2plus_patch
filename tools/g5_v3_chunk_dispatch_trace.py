@@ -59,7 +59,6 @@ PACKED_WORD_STORE = 0x004E4E40 + (0x004AE619 - HOOK_SITE)
 OVERRIDE_FLAG = 0x008930A4
 OVERRIDE_TARGET = 0x008930A0
 CRASH_ACCESSOR_ENTRY = 0x0040FED0
-SELECTION_COUNT = 0x0108C000
 
 armed_path = os.path.join(CONTROL, "armed.json")
 stop_path = os.path.join(CONTROL, "stop.flag")
@@ -75,34 +74,34 @@ state = {
 chunk_counter = {"n": -1}
 
 
-def read_u16(address):
+def read_u16(address: int) -> int:
     return struct.unpack("<H", bytes(gdb.selected_inferior().read_memory(address, 2)))[0]
 
 
-def read_s16(address):
+def read_s16(address: int) -> int:
     return struct.unpack("<h", bytes(gdb.selected_inferior().read_memory(address, 2)))[0]
 
 
-def read_u32(address):
+def read_u32(address: int) -> int:
     return struct.unpack("<I", bytes(gdb.selected_inferior().read_memory(address, 4)))[0]
 
 
-def reg(name):
+def reg(name: str) -> 'int | None':
     try:
         return int(gdb.selected_frame().read_register(name)) & 0xFFFFFFFF
     except Exception:
         return None
 
 
-def log(event, **fields):
-    record = {"event": event, "wall_time": time.time()}
+def log(event: str, **fields: object) -> None:
+    record: 'dict[str, object]' = {"event": event, "wall_time": time.time()}
     record.update(fields)
     with open(events_path, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")
         handle.flush()
 
 
-def return_address():
+def return_address() -> 'str | None':
     try:
         esp = int(gdb.selected_frame().read_register("esp")) & 0xFFFFFFFF
         raw = bytes(gdb.selected_inferior().read_memory(esp, 4))

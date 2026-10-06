@@ -63,11 +63,11 @@ state = {
 }
 
 
-def read_bytes(address, size):
+def read_bytes(address: int, size: int) -> bytes:
     return bytes(gdb.selected_inferior().read_memory(address, size))
 
 
-def read_u32(address):
+def read_u32(address: int) -> int:
     return struct.unpack("<I", read_bytes(address, 4))[0]
 
 
@@ -86,8 +86,8 @@ def read_words(address, count):
     return [read_pointer_value(address + index * 4) for index in range(count)]
 
 
-def frame_registers():
-    values = {}
+def frame_registers() -> 'dict[str, int | None]':
+    values: 'dict[str, int | None]' = {}
     for name in ("eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp"):
         try:
             values[name] = int(gdb.selected_frame().read_register(name)) & 0xFFFFFFFF

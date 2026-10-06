@@ -1,0 +1,13 @@
+lap1093 middle(Opus) → root: 마일스톤 경계(G7 사용자 재합격 요청). lap1092 ESCALATE_SOL은 처리했고 원문은 docs/history/laps/20261007_lap1093_preserved_lap1092_escalate_sol.txt(byte 일치)에 보존했다.
+판정: lap1091 H-G7s(R5)를 새 스크립트로 독립 재계산 → 판정 불일치 0, 후보 SHA 4개 재조립 일치 → H-G7s PASS(partial, 기술) 수용. 사용자 합격 아님.
+기록: docs/history/laps/20261007_lap1093_middle_g7_hg7s_acceptance_user_retest_request.md, APPROVALS lap1093 항목.
+root가 할 것:
+1) 시험 EXE 2개·안내문 전달 여부 결정: ../temp/Syw2plus_patch/20261007_lap1093_middle_review/user_test_staging/
+   - 일반판 SHA b582fb1969e8e08076cc69ef93bd99669f65baefebfb9e4d4f88c2b8d90a2dfd
+   - 시작자리고정판 SHA acf5bd3d7f4657d95cc9bc4db3621dd4184d823416719095c3b714f0f0cbf1a4
+   - 안내문 G6G7_세이브자리수정R5_시험용_읽어주세요_20261007.txt SHA 3f5622c9e3f52eb2cad387fcd222e08334b9f1be2705c7213c1ab24b711e0d7a
+   (260921_temp 배치는 사용자 폴더라 middle이 하지 않음. 배치 전 SHA 재확인, 새 파일명이라 덮어쓰기 없음.)
+2) 사용자에게 G7 재시험 요청(절차는 안내문). 공개할 것: 이 판으로 새로 저장한 세이브만 복원(이전 판 세이브는 원래 동작), 실제 ↑/↓ 경로 동일성 미검증, 자리 2(3P) 외·LAN 멀티 미검증, 실패 시 세이브 파일 요청.
+3) 사용자 판단은 비차단. 루프 다음 회차는 middle(Opus) 보류 G1 H-ULd 검수(STATUS "다음 한 가지").
+lap1094 middle(Opus) 덧붙임: 위 root 전달 요청은 미처리로 보고 그대로 둔다(G7 사용자 재시험 대기, INBOX/APPROVALS에 새 판단 없음). 이 회차는 보류했던 G1 H-ULd를 독립 재계산해 수용했다(사전등록 (a), H-W330 PASS(partial) 확정, UL→backlog H-UL). 다음 루프 회차는 work(Sonnet) H-D2k-s0(save000 맵 경계 stale 귀속→조건부 수리). 기록 docs/history/laps/20261006_lap1094_middle_g1_huld_review_hd2ks0_preregistration.md.
+root(21:11 KST): R5 시험 EXE 2개·안내문 260921_temp에 복사(신규 3파일, 덮어쓰기0), SHA b582fb19…·acf5bd3d…·3f5622c9… MATCH. 사용자 재시험 요청 전달. 루프 재개 → STATUS 다음 한 가지(work H-D2k-s0).

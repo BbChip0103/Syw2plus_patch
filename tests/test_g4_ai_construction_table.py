@@ -8,6 +8,12 @@ decode (``tools/g4_ai_construction_table.py``), which extends
 from __future__ import annotations
 
 import struct
+import subprocess
+import sys
+from types import SimpleNamespace
+from pathlib import Path
+
+import pytest
 
 from tools import g4_ai_construction_table as ct
 from tools import runtime_env
@@ -70,3 +76,44 @@ def test_decode_record_reads_every_field_in_declared_order() -> None:
 def test_decode_record_returns_none_at_zero_terminator() -> None:
     blob = _make_record(0, 0, 0, 0, 0)
     assert ct._decode_record(blob, 0, index=0) is None
+
+
+def _pe(*sections, image_base=0x12340000):
+    return SimpleNamespace(
+        sections=list(sections), OPTIONAL_HEADER=SimpleNamespace(ImageBase=image_base)
+    )
+
+
+def _section(virtual_address, raw_size, raw_offset, virtual_size=None):
+    return SimpleNamespace(
+        VirtualAddress=virtual_address,
+        SizeOfRawData=raw_size,
+        PointerToRawData=raw_offset,
+        Misc=SimpleNamespace(VirtualSize=raw_size if virtual_size is None else virtual_size),
+    )
+
+
+def test_va_translation_uses_fixed_image_base_and_first_raw_section_match() -> None:
+    first = _section(0x1000, 0x20, 0x300)
+    overlapping = _section(0x1000, 0x20, 0x900)
+    assert ct._va_to_file_offset(_pe(first, overlapping), 0x00401000) == 0x300
+    assert ct._va_to_file_offset(_pe(first, overlapping), 0x0040101F) == 0x31F
+
+
+def test_va_translation_uses_raw_end_exclusive_and_rejects_virtual_tail() -> None:
+    section = _section(0x2000, 0x10, 0x400, virtual_size=0x80)
+    assert ct._va_to_file_offset(_pe(section), 0x0040200F) == 0x40F
+    with pytest.raises(ValueError, match=r"^VA 0x00402010 is not in a raw section$"):
+        ct._va_to_file_offset(_pe(section), 0x00402010)
+    with pytest.raises(ValueError, match=r"^VA 0x00402080 is not in a raw section$"):
+        ct._va_to_file_offset(_pe(section), 0x00402080)
+
+
+def test_cli_help_does_not_import_pefile_in_direct_or_module_entry() -> None:
+    script = Path(ct.__file__).resolve()
+    for command in ([sys.executable, "-S", str(script), "--help"],
+                    [sys.executable, "-S", "-m", "tools.g4_ai_construction_table", "--help"]):
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        assert result.returncode == 0, result.stderr
+        assert "--source" in result.stdout
+        assert "pefile" not in result.stderr

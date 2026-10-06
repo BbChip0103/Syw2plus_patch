@@ -43,3 +43,6 @@ htmlcov/
 /loop/FULL_TEST
 /loop/ESCALATE_SOL
 /loop/.lap_counter
+
+# oh-my-claudecode session state (any depth)
+**/.omc/

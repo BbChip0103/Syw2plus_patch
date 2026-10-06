@@ -54,8 +54,8 @@ state["fatal"] = None
 state["events"] = 0
 
 
-def frame_registers():
-    values = {}
+def frame_registers() -> "dict[str, str | None]":
+    values: "dict[str, str | None]" = {}
     for name in ("eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp"):
         try:
             values[name] = hex(int(gdb.selected_frame().read_register(name)) & 0xFFFFFFFF)
@@ -64,7 +64,7 @@ def frame_registers():
     return values
 
 
-def return_address():
+def return_address() -> "str | None":
     """The word at [esp] at function entry: the call site's return address."""
     try:
         esp = int(gdb.selected_frame().read_register("esp")) & 0xFFFFFFFF

@@ -64,12 +64,12 @@ state = {"hits": {name: 0 for name in TARGETS}, "marker_hits": 0, "fatal": None}
 last_seen: dict[str, dict] = {name: None for name in TARGETS}
 
 
-def read_u16(address):
+def read_u16(address: int) -> int:
     return struct.unpack("<H", bytes(gdb.selected_inferior().read_memory(address, 2)))[0]
 
 
-def frame_registers():
-    values = {}
+def frame_registers() -> 'dict[str, str | None]':
+    values: 'dict[str, str | None]' = {}
     for name in ("eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp"):
         try:
             values[name] = hex(int(gdb.selected_frame().read_register(name)) & 0xFFFFFFFF)
@@ -78,7 +78,7 @@ def frame_registers():
     return values
 
 
-def esp_word():
+def esp_word() -> 'str | None':
     try:
         esp = int(gdb.selected_frame().read_register("esp")) & 0xFFFFFFFF
         return hex(struct.unpack("<I", bytes(gdb.selected_inferior().read_memory(esp, 4)))[0])
@@ -86,8 +86,8 @@ def esp_word():
         return None
 
 
-def log(event, **fields):
-    record = {"event": event, "wall_time": time.time()}
+def log(event: str, **fields: object) -> None:
+    record: 'dict[str, object]' = {"event": event, "wall_time": time.time()}
     record.update(fields)
     with open(events_path, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")

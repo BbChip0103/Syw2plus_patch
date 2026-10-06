@@ -1,0 +1,29 @@
+# 2026-10-02 | lap879 middle | G1 P4b scroll pause handshake review — HOLD / work handoff
+
+- 지정 역할: 중간 tier 진단·계획·확인. 현재 Codex native 내부 세부 model ID/effort는 노출되지 않아 Sol/Opus로 실행했다고 주장하지 않는다. 구현·빌드·게임 실행·subagent·커밋 0. `loop/.lap_counter` 879 읽기만. `loop/PROMPT.md`①~⑥, INBOX 최신 지시/APPROVALS 반려/STATUS 전체/DESIGN1~4/모델 계약을 읽었다. 최신 결정대로 G1 진행, G2 5000 유지/G3 중단/G4 보류/G5 종료. 이전 미커밋 파일 보존.
+- 한 가지 가설: lap878 r5의 24728/24788 오류가 서로 다른 tick reader의 불일치가 아니라 이전 checkpoint의 pause 파일을 다음 목표에서 재사용하는 관측 하네스 race인가. 입력=현재 probe/test 및 r5 세 lane raw/result/GDB log/generated observer; 성공=원본 read-only와 오프라인 원래 제어 흐름으로 원인을 설명, 실패=실제 pause/nonce/phase 증거 없이 제품 PASS 추정. 새 runtime은 금지.
+
+## 독립 확인과 판정
+
+- probe SHA `9a77c340b55a9c44daffd3f3071267a3076696ed2c7b48093830413096cac76b`, test SHA `7a8b8a53a6a84b1fa02e308f177cee54be026292a42a3b76defdf67782b2a283`: lap878 기록 MATCH, generated observer 세 lane 모두 현재 생성 함수 결과와 byte-exact MATCH. 원본 EXE SHA `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`, 비합성 fixture `../Syw2plus_re/Syw2plus/save/save006.dat` SHA `616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064` 재해시 MATCH. 원본/fixture는 읽기만.
+- r5 phase raw SHA 세 개 모두 lap878 기록 MATCH. baselineA/B/candidate는 각각 enter/return24692 1쌍, enter/return24728 1쌍뿐이고 **24788 event는 0개**다. unmatched24692/24728 수는 A15/11, B33/35, candidate7/21. GDB log 각 lane의 실제 중단점은 return breakpoint2이며, 완료24824/24860·전체 checkpoint·pause/release nonce 기록은 없다. r5 diagnostic shell exit=2를 확인했으며 exit0/PASS가 아니다.
+- **현재 기록의 실질 해석 충돌:** 이전 ESCALATE의 “target/observer phase tick24788”은 raw에 없다. 24788은 host `for checkpoint_tick`의 다음 **기대값**, GDB가 읽은 phase tick이 아니다. 이번 결과는 60tick 메모리 reader divergence를 증명하지 않는다. 과거 문서/raw는 수정하지 않고 이 정정을 남긴다.
+- **재현된 하네스 결함:** `tools/g1_saved_scene_probe.py:1854`~1904는 pause 파일 존재만 기다리고 이전 release 소비/파일 제거/새 nonce를 기다리지 않는다. snapshot24728 처리 직후 파일이 아직 존재하면 다음 RIGHT24788 iteration이 같은 파일을 읽는다. 소스 AST의 원래 명령문을 그대로 오프라인 실행(후속 input drive만 제외)해 r5와 동일 오류 문자열 `before=24728 after=24728 tick=24788`을 재현했다. 잘못된 pause 검증 전에 RIGHT key-down도 호출된다. 이는 실제 target 입력 없는 synthetic fake transport 재현이다. 당시 pause 파일을 보존하지 않았으므로 **실제 historical interleaving은 강한 추론**, 재현된 결함과 구분한다.
+- **관측 판정 결함:** `_scroll_phase_observation`는 `simulation_update_return_unmatched`를 검사하지 않고 넘어간다(625~631행). 유효 entry/return 뒤 unmatched return을 하나 추가한 오프라인 fixture에서도 `status=PASS`, `all_writer_quiescence_proven=true`를 반환했다. 41개 기존 test의 PASS는 이 결함 부재를 증명하지 않는다.
+- 원본 pinned disassembly: `0x41C873` bytes `0f84e2000000`, `0x41C880` bytes `0f84d5000000`은 tick-store 전에 `0x41C95B`→`0x41C961`로 갈 수 있다. `0x41C8C9=a3b8248900`, `0x41C8CE=7223`, `0x41C961=c3` MATCH. 따라서 unmatched가 모두 손상이라는 결론도 금지: tick를 올리지 않는 호출의 정상 return 가능성이 있다. 현재 raw는 그 branch/호출 identity를 기록하지 않아 귀속 UNKNOWN. `0x41C961`을 일반 완료 경계로 승인하지 않는다.
+- 결론: **HOLD / 관측 하네스 수리 FEASIBLE(오프라인 결함 재현), 동일 완료phase/all-writer quiescence 미증명.** 실제 tick-reader divergence·제품 회귀는 UNKNOWN, B'/G1 HOLD. raw/phase 해석 충돌과 완료 증명 공백 때문에 사용자 stop 조건을 적용, 추가 game/FULL_TEST 실행 없이 승격 handoff를 보존한다. 같은 계획 회차 반복 대신 아래 work 수리가 필요하다.
+
+## 명시적 work-tier handoff (승격 검수 후 실행)
+
+1. 승격 검수자는 위 오프라인 재현과 raw를 확인하고, 기존 관측 전용 승인 안에서 probe/tests 수리를 허용할지 판정한다. 게임/DLL/HD/별도 validator/기준 수정 권한은 없다. 다음 소유자는 work(Luna/Sonnet), 중간 tier가 구현을 대신하지 않는다.
+2. host/observer의 pause lifecycle을 nonce+exact tick+inferior+thread로 고정: 소비된 pause 재사용을 막고 release 소비를 확인한다. timeout/미래 목표/오래된 파일/부분 JSON·중복 nonce는 무효 처리, atomic control 파일 전달. 유효한 현재 pause·완전 stopped census·snapshot·phase를 확인한 **뒤에만** 키를 보낸다. 실패에서도 모든 pause/snapshot/release/ack/key-up 증거를 보존한다.
+3. ambiguous unmatched return은 PASS로 통과시키지 않는다. 원본의 pre-tick early-return 경로를 관측 전용 진입/branch context로 구분하고 모든 raw event를 보존해 각 호출을 설명한다. no-update 분기로 확인되지 않는 unmatched/duplicate/gap/in-flight writer는 INVALID. raw 필터링·기존값 교정·단순 무시 금지; 별도 제품 validator 변경 필요 시 다시 승격한다.
+4. runtime 전 실제 생산 루프의 느린 release 소비(24728→24788), partial/stale pause, 동일 nonce 중복, INPUT-before-validation 금지, unmatched/no-update/진짜 phase 누락, census running/incomplete, snapshot중 thread/census 변화의 회귀를 고정한다. 성공 판정은 exit0 대신 정확한 acceptance 필드로 확인한다.
+5. 오프라인 수리·독립 범위 확인 후에만 고정 r1 일정 DOWN24692→24728/RIGHT24788→24824/FINAL24860의 새 격리 진단. baselineA-baselineB 먼저 수용 후 candidate 비교; 모든 checkpoint의 동일-thread entry→terminal return·pause→bulk read→release 동안 전체 stopped census·receiver exact input 증거 필수. `PASS_BOUNDED_SCROLL_DIAGNOSTIC`만 가능, 이후 새 middle 검수와 별도 gdb-free B' gate 필요. C/P5/G1 마감 금지.
+
+## 검증·보존
+
+- 명령: `make doctor`; `make lint`; `make typecheck`; `.venv/bin/python -m pytest -q tests/test_g1_saved_scene_probe.py`; `PYTHONPATH=. .venv/bin/python /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261002_lap879_middle_review/review.py`; pinned EXE `i686-w64-mingw32-objdump -d -Mintel --start-address=0x41c860 --stop-address=0x41c963`; SHA256 재계산. doctor 원본 verified(PASS), optional root runtime manifest 부재는 별도 false; lint/typecheck PASS, focused41 PASS/0.16s. 전체 Fast `make check`, 패치 생성/원복, build, 게임/24k/144k는 **SKIP(사용자 충돌 stop 및 중간 역할 범위)**; 이전 Fast를 현재 fingerprint PASS로 쓰지 않는다.
+- 오프라인 artifact: `/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261002_lap879_middle_review/`의 `review.py`, `recalculation.json`, `synthetic_control/`. recalculation SHA `be6503ac1e0bb516d0db9958b3ea8705bf08006af692c7501a086b698308c580`. script 재현 결과에 save hash/pinned byte 재계산을 별도 보강했다; 합성 pause PID99/camera[158,100]/fake memory tick24728, 실제 활성 플레이어 부하증명 아님. 과거5개 artifact root와 raw는 그대로 보존.
+- 변경파일: 이 lap 기록, `docs/history/20261002_lap879_prior_lap878_escalate_sol_archive.md`, STATUS, APPROVALS, `loop/ESCALATE_SOL`만. 이전 marker 전문 SHA `e16c6ec398d1ccc1776710537aaad04ba3dac66a20e3172d468996a93bfd6ad4`를 byte-exact archive 후 갱신. 소스/테스트/EXE/DLL/원본/기존raw/안전pin/golden 수정0, commit0/uncommitted. 종료 safety/context/문서크기는 STATUS에 보강한다.
+- 다음 한 가지: 승격 검수자가 재현된 관측 하네스 결함·phase 해석 충돌을 확인하고 **위 수리안을 work tier에 인계**. 실제 완료 phase/quiescence 증거 전 B'/G1 HOLD 유지.

@@ -1,0 +1,15 @@
+lap=881
+role=middle
+result=HOLD_CONTROL_ACCEPTANCE_ORDER
+scope=G1 P4b observation-only scroll diagnostic; B-prime/G1 HOLD
+reason=Elevated condition requires baselineA/B exact control acceptance before candidate. Actual main invokes all three lanes before evaluating controls; invalid-phase and state-mismatch offline counterexamples still invoke candidate. This is implementation/authority-condition conflict, not transcription error or reproduced game divergence.
+evidence=docs/history/laps/20261002_lap881_middle_g1_p4b_control_acceptance_order_hold.md
+artifact=/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261002_lap881_middle_review/recalculation.json
+artifact_sha256=7e47a2042d3455eb2dd47945c5a89af71e2cf11a28c887557825638879a38db4
+source_sha256=6dfb111dbefa8d06c352408bda65b96438535edce4bc4bf89e248be4f4261cb0
+test_sha256=37e7eee37d9a9750f8efcfe0497399b9e13f488bec53cfdf13834cce4f740236
+preserved=lap880 pair/raw unchanged; five checkpoint captured fields equal and phase-parser/consumed ack checks pass, but bounded diagnostic not independently accepted
+verify_next=Elevated Sol independently verify condition versus main order and actual AST rejection replays; confirm observer-only main/tests repair scope and hand off implementation to work tier
+work_handoff=Evaluate and persist exact baseline control acceptance before invoking candidate; rejected controls must record HOLD/candidate SKIP with zero candidate calls; actual-main offline rejection tests, then scoped fresh diagnostic and new middle review
+limits=No game hands-on edits by middle; no further runtime/build/C/P5/B-prime or milestone acceptance now; no commits, validator/threshold/original/golden/historical raw changes
+fresh_checks=doctor verified; focused45/lint/typecheck PASS; full make check/runtime SKIP under user conflict stop; old exit0 not current verification

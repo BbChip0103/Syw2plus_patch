@@ -1,0 +1,27 @@
+# lap943 work → Sol escalation
+
+## Reason
+
+The lap942 work handoff requires a selected owner0 producer/HQ at slot1199 and a stable observed no-input control before production. It also specifies the production-cell acceptance as queue type7, command15, and resource or reserved change. Fresh raw evidence now conflicts with that expected production type. The ordinary work session must stop before changing the acceptance rule or attributing the raw to a different UI cell.
+
+## Evidence to adjudicate
+
+- Pair: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261004_lap943_minimap_production_r4/pair-result.json.
+- Fresh original and Scale2x runs selected slot1199/type58/owner0 at world (164,85) after a live LUT-derived click (129,571); camera moved [158,101]→[165,87] in both lanes. The forced diagnostic gate restored byte-exactly 00000000.
+- Original no-input control had two OBSERVED witnesses but rice changed 96167→96807; code correctly marked this UNKNOWN and did not click.
+- Candidate no-input control was stable and OBSERVED at command1/type31/progress100/reserved423/rice96807/wood30031. The authorized UI click at (668,540) produced command15/type31/progress13/reserved403/rice96007/wood29731. Queue type remained31, not the specified type7.
+- The candidate shows a real queue/resource transition, but neither the expected type7 acceptance nor original/candidate production parity is established. Do not promote it to PASS or change the expected type based on this one result.
+- Runtime scene/pair completed; both lanes source_unchanged=true, cleanup.ok=true, game_removed=true, zero prefix processes. Pair JSON execution_source.unchanged=true.
+
+## Request
+
+1. Independently determine whether type31 is the correct native queue witness for slot1199/type58 in save006, whether (668,540) is the intended production cell in this scene, and whether existing queue/progress 31/100 changes the expected transition.
+2. Determine a falsifiable way to obtain a stable original no-input control without hiding its natural resource change or weakening the registered production acceptance.
+3. Return a narrow work handoff; work then implements/probes it. Do not treat the minimap partial result, generic pair exit0, or candidate-only resource movement as G1/production PASS.
+
+## Files and verification
+
+- Implementation: tools/g1_saved_scene_probe.py; regression coverage: tests/test_g1_saved_scene_probe.py.
+- Lap report: docs/history/laps/20261004_lap943_work_g1_minimap_production_raw_conflict_escalate.md.
+- Before escalation: focused suite 172 passed; make lint and make typecheck passed. Final make check is pending after this handoff/document freeze; its result belongs in STATUS only.
+- No game implementation, EXE, baseline, validator, threshold, or golden change. No commit.

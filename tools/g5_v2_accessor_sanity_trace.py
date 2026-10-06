@@ -35,18 +35,18 @@ summary_path = os.path.join(CONTROL, "trace-summary.json")
 state = {"hits": 0, "outliers": 0, "fatal": None}
 
 
-def read_s16(address):
+def read_s16(address: int) -> int:
     return struct.unpack("<h", bytes(gdb.selected_inferior().read_memory(address, 2)))[0]
 
 
-def reg(name):
+def reg(name: str) -> 'int | None':
     try:
         return int(gdb.selected_frame().read_register(name)) & 0xFFFFFFFF
     except Exception:
         return None
 
 
-def return_address():
+def return_address() -> 'str | None':
     try:
         esp = reg("esp")
         raw = bytes(gdb.selected_inferior().read_memory(esp, 4))
@@ -55,8 +55,8 @@ def return_address():
         return None
 
 
-def log(event, **fields):
-    record = {"event": event, "wall_time": time.time()}
+def log(event: str, **fields: object) -> None:
+    record: 'dict[str, object]' = {"event": event, "wall_time": time.time()}
     record.update(fields)
     with open(events_path, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")

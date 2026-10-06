@@ -1,0 +1,13 @@
+lap=932
+role=middle
+goal=G1 P5-T
+reason=Implementation evidence conflicts with the D2 same-boundary review premise: clipped mask allocation is measured in the alloc bucket but omitted from the parent clip timer (g1_mirror2x.c:1343,1348,1351).
+decision=HOLD_SCOPE_CONTRACT; retain P5-T/G1 HOLD. No game implementation edits, milestone closure, or current-source fullFast approval.
+evidence=docs/history/laps/20261004_lap932_middle_existing_scope_conflict_preserved.md
+handoff=docs/work/active/G1_MIDDLE_W70_P5T_D2_SCOPE_HOLD_REUSE_HANDOFF_LAP931.md
+raw=/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261004_lap932_middle_scope/scope_confirmation.json
+raw_sha256=2c8e95c7cc350b93ad06c5c4ddad7d709940cbae72e5eaaae1204eb661dc2f86
+authority=Ordinary middle explicitly assigned by user; promoted authority not claimed. Existing scope conflict confirmed, not resolved.
+prior_escalate=docs/history/20261004_lap932_prior_escalate_sol_byte_exact.txt
+prior_escalate_sha256=6ac2e72c28297818cd2870f1c3a5e3f6f0c73d451adcf47b5f2de19be951dea9
+next=Promoted Sol independently verifies timer scope and preserves raw/PT-c/PT-d failures; hands the bounded timer correction plus byte-identical replay2/mask capacity reuse contract to work tier. Work implements and tests OOM/partial/growth/stale-byte/restore paths, then same-source GREEN -> consecutive Bprime2 -> C1/C2/C3 -> Fast -> new middle. No threshold or mirror-scope relaxation.

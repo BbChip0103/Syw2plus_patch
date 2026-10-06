@@ -1,0 +1,12 @@
+# 2026-09-29 | lap 772 | 목표 G1 W60 r4 독립 검수
+
+- 실제 provider/model/effort / 지정 역할: Codex native 중간 tier(모델 ID 비노출), high; 진단·계획·확인만 수행하고 게임 구현은 수정하지 않았다.
+- 가설 / 사용자 관찰: lap771 r4의 minimap `FAIL_NO_EFFECT`가 W60 회귀인지, S1/S2 raw가 카드의 `FEASIBLE` 기준을 충족하는지 독립 재계산한다.
+- 예상 PASS / FAIL 조건: 메뉴·PS3 converted present, 같은 프레임 nearest-2x≥0.999, 원본/W60 입력 parity, tick≥300, primitive install/call/covered/stale/state-hash raw가 모두 있으면 PASS; 하나라도 없거나 HUD 깨짐·stale 합성 결함이면 HOLD/FAIL.
+- 변경 파일 / 커밋: 문서·판정만 변경 — STATUS `5b38c3ea…07d8`, APPROVALS `1be7c163…c627`, 활성 W60 카드 `ee753125…ac1e`, `loop/ESCALATE_SOL` `e0bbb95f…f2f0`, 이 기록; visual-verdict는 ignored `.omx/state/g1-w60/ralph-progress.json` `5baba1a4…6532`. 게임 코드 변경·커밋 없음.
+- 원본 / 후보 SHA / 환경 / fixture: 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 검수한 r4 bridge `9a6ba6d…931dc34`; fresh 재빌드 `755e37b2…3267e`(PE timestamp 때문에 byte-identical 재현 아님). r4는 private copy/prefix/Xvfb 1600×1200, default two-player random, synthetic=false; 이번 middle은 새 게임 실행0.
+- 실행 명령 / 로그: r4 raw/evidence/verdict·캡처 SHA 재계산, `jq` program_state별 converted 집계, 원본 old bytes `0x466D50=83ec148b54241c`·`0x4664D0=55568b7424108be9` 확인, `make doctor`, `make -B -C tools/inmm_stub`, fresh `make check`. 최초 background 래퍼는 연산자 우선순위로 make를 시작하지 못해 output/exit 0개였고 r2로 교정; r2 `1142 passed, 5 skipped`(674.82s), Ruff/compileall/mypy/context PASS, log `logs/gates/make-check-lap772-r2.output` SHA `f6a51b10…fc59`.
+- 측정 / 판정: **S1 FAIL** — PS3 converted 236/236이나 PS9/7/5는 각 converted 0, 메뉴 캡처는 1600×1200 좌상단 800×600뿐; tick 233<300; same-frame 800 dump/nearest oracle 없음. minimap 실제 물리점은 코드상 `(300,1040)`이고 캡처상 미니맵 내부지만, lap763/764의 원본 gate `0x97597c=0` 계보 때문에 no-effect는 W60 회귀가 아니라 paired 미검증이다.
+- 측정 / 판정: **S2 FAIL·미계측** — raw event 종류에 primitive/install-success/call/covered/stale가 0이고 counter 호출자도 없다. `g_covered`는 미초기화, compose는 `y*stride+x`로 mask를 쓰나 present는 `y*800+x`로 읽으며, `expected800[p]==expected800[p]`는 stale 비교가 아니다. 두 번째 detour 실패 시 첫 detour 원복도 없고 detach가 빈 함수다. 후보 캡처 하단 HUD/미니맵 검은 띠·파편으로 visual-verdict 15/100 `fail`.
+- 회귀 / 남은 위험 / 승인: W60 구조 자체의 `NOT_FEASIBLE` 판정은 아님. 현재 후보는 `HOLD/BLOCKED(candidate correctness)`이며 G1 완료·S3·사용자 승인 금지. 얕은 source-string pytest PASS는 runtime 증거가 아니다.
+- 다음 한 가지: work tier가 mask 초기화/논리 인덱스/expected snapshot stale fallback/transactional rollback과 raw 계측을 테스트로 고정해 최소 수정 후, 동일 gate target `(90,553)` 원본(W60 off)/후보(on) paired + source oracle + tick≥300을 fresh 실행한다.

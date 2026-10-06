@@ -18,7 +18,6 @@ BASE = 0x0108C000
 COUNT = BASE
 USER_TARGET = BASE + 20 * 4
 CONSUMER = 0x0041DC40
-TICK = 0x00  # optional; this trace does not guess a version-specific tick VA
 DEADLINE = time.time() + 120
 
 events_path = os.path.join(CONTROL, "trace-events.jsonl")
@@ -35,11 +34,11 @@ state = {
 }
 
 
-def read_bytes(address, size):
+def read_bytes(address: int, size: int) -> bytes:
     return bytes(gdb.selected_inferior().read_memory(address, size))
 
 
-def read_u32(address):
+def read_u32(address: int) -> int:
     return struct.unpack("<I", read_bytes(address, 4))[0]
 
 
@@ -52,15 +51,15 @@ def log(event, **fields):
         handle.flush()
 
 
-def frame_pc():
+def frame_pc() -> 'str | None':
     try:
         return hex(int(gdb.selected_frame().pc()) & 0xFFFFFFFF)
     except Exception:
         return None
 
 
-def frame_registers():
-    values = {}
+def frame_registers() -> 'dict[str, str | None]':
+    values: 'dict[str, str | None]' = {}
     for name in ("eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp"):
         try:
             values[name] = hex(int(gdb.selected_frame().read_register(name)) & 0xFFFFFFFF)

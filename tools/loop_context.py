@@ -12,11 +12,11 @@ ENTRY = re.compile(r'^- \[(.)\] ')
 FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})')
 
 
-def markdown_structure(lines):
+def markdown_structure(lines: list[str]) -> tuple[dict[int, int], set[int]]:
     """Do not treat examples inside Markdown fences as document structure."""
-    headings = {}
-    fenced = set()
-    fence = None
+    headings: dict[int, int] = {}
+    fenced: set[int] = set()
+    fence: str | None = None
     for index, line in enumerate(lines):
         if fence is not None:
             fenced.add(index)
@@ -34,7 +34,7 @@ def markdown_structure(lines):
     return headings, fenced
 
 
-def render_context(data, source):
+def render_context(data: bytes, source: str) -> str:
     lines = data.decode('utf-8').splitlines(keepends=True)
     headings, fenced = markdown_structure(lines)
     entries = {i for i, line in enumerate(lines) if i not in fenced and ENTRY.match(line)}
@@ -46,7 +46,7 @@ def render_context(data, source):
         '원문 범위를 먼저 열어 남은 조건과 최신 증거를 확인한다. 원문이 바뀌면 다시 생성한다.\n\n',
     ]
 
-    def reference(start, end):
+    def reference(start: int, end: int) -> str:
         return f'[{source}:{start + 1}–{end}]({source}#L{start + 1}-L{end})'
 
     index = 0
@@ -86,7 +86,7 @@ def render_context(data, source):
     return ''.join(output)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--inbox', type=Path, default=ROOT / 'docs/feedback/INBOX.md')
     args = parser.parse_args()

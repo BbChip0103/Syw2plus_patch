@@ -399,10 +399,9 @@ def compare_evidence(baseline: Mapping[str, Any], candidate: Mapping[str, Any]) 
         status = "INCONCLUSIVE"
     elif "FAIL" in stage_statuses:
         status = "FAIL"
-    elif any(item in {"INCONCLUSIVE", "UNKNOWN_DISPUTED_ORACLE", "UNKNOWN_SLOT_CORRESPONDENCE"}
-             for item in stage_statuses):
-        status = "INCONCLUSIVE"
-    elif baseline_input_errors or candidate_input_errors:
+    elif (any(item in {"INCONCLUSIVE", "UNKNOWN_DISPUTED_ORACLE", "UNKNOWN_SLOT_CORRESPONDENCE"}
+              for item in stage_statuses)
+          or baseline_input_errors or candidate_input_errors):
         status = "INCONCLUSIVE"
     else:
         status = "PASS"

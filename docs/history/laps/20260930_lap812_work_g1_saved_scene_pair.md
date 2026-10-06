@@ -1,0 +1,13 @@
+# 2026-09-30 | lap 812 | 목표 G1
+
+- 실제 provider/model/effort / 지정 역할: Codex native 세션 / work tier hands-on 구현·테스트·격리 실행.
+- 가설: random 새 게임은 원본/후보 whole-image pair가 아니므로, 보호된 `save006.dat`를 양쪽 private copy에 로드하면 같은 저장 장면에서 원본 800×600과 W60 후보 1600×1200의 입력·구도·primitive 증거를 비교할 수 있다.
+- 변경파일: `tools/g1_saved_scene_probe.py`, `tests/test_g1_saved_scene_probe.py`. 실행 source는 `[ESL]Syw2plus`에서 SHA로 찾은 `[HQ]Syw2plus 2002.exe`, fixture는 읽기 전용 `Syw2plus_re/Syw2plus/save/save006.dat`이다. 원본/참고/EXE/save는 쓰지 않았고 커밋하지 않았다.
+- 원본/후보 SHA: 보호 원본 및 두 private EXE `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; save006 `616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064`; lap812-r5 bridge `0bacc0191bdab1a2a4ead6a95595f4d190cc718132d0cf157a018160b65d6a62`(lap813이 `bridge/_inmm.dll`·`supply_bridge_build.json`·두 manifest에서 독립 재계산해 잘못 전사된 `740d4f61…`를 정정).
+- 실행: `PYTHONPATH=. .venv/bin/python tools/g1_saved_scene_probe.py --runtime-root local/runtime/g1_saved_scene_lap812_r5 --artifact-root /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g1_saved_scene_lap812_r5`. Wine32/private prefix/Xvfb 1600×1200, baseline original 800×600, candidate `SYW2_G1_NATIVE_2X_BLIT=1` + `SYW2_G1_MIRROR2X=1`, synthetic=false. PE32 owned-close helper로 양쪽 trace summary를 완결했고 game copy 삭제·prefix residue0이다.
+- 측정/PASS: PS9→PS35→slot7→PS3 저장 로드 양쪽 PASS; save navigation baseline `[1,2,3,3,4,5,6,6,7]`, candidate `[1,2,2,3,4,4,5,6,6,7]`; 불변 owner/nation/cap와 unit `(slot,type,owner,internal_id)` identity equal. baseline/candidate loaded PNG는 각각 800×600/1600×1200, nearest 비교 equal ratio `0.9382020833`(candidate differing `118652/1920000`).
+- candidate raw `e9a6230905cd042b7da970d65c29c0ae1b33387753fa2ab14106188fb987a3ae`: validator `PASS`, events1382, converted242(states3/9/35), mirror270, primitive5336, covered129835, nearest oracle1.0. baseline raw `b6bc32d6debb261b71773787b7b2ef318674f94d43f843912275a74a22ddb50a`.
+- 입력 결과/한계: 동일 logical selection `(270,48)`은 양쪽에서 로드 직후 count1→1이라 새 선택 효과 증거가 아니다. drag는 1→0으로 변했지만 독립적인 0→선택 계약은 미증명; minimap camera `[158,101]→[158,101]`은 `UNKNOWN(original/environment)`; production은 native queue 효과와 tick 진행을 분리하지 못해 `UNKNOWN`이다. 이 세 항목을 PASS로 승격하지 않는다.
+- 보수 판정: **work PASS / G1 overall HOLD**. W60 presentation raw와 same-save identity는 fresh paired로 확보했지만, 결정적 동일 장면의 전체 입력 parity·primitive 전체 coverage·성능·사용자 3단 승인은 미완료.
+- 수리 계보: r1 파일명 가정, r2 env 중복 키, r3 selected-index 모듈 경로, r4 `state(False)` 상세 읽기와 save 좌표를 각각 원인 추적해 수정했다. 각 실패 artifact는 `temp/Syw2plus_patch/g1_saved_scene_lap812*` 아래 보존했고 private game copy는 모두 제거했다.
+- 다음 행동: 새 middle/컨펌 세션이 lap812-r5 raw·scene identity·PNG/bridge SHA를 독립 재계산하고, selection precondition(로드 후 count1)·minimap/production UNKNOWN과 nearest 0.9382를 수용할지 판정한다.

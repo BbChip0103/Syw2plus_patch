@@ -63,7 +63,7 @@ def read_u32(inferior, address):
     return int.from_bytes(bytes(inferior.read_memory(address, 4)), "little")
 
 
-def reg(name):
+def reg(name: str) -> "int | None":
     try:
         return int(gdb.selected_frame().read_register(name)) & 0xFFFFFFFF
     except Exception:

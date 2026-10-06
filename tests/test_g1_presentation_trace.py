@@ -12,6 +12,7 @@ import tempfile
 import pytest
 
 from tools.check_g1_presentation_trace import validate, validate_native_split
+from tools.g1_mirror2x_probe import validate_native2x_control
 from tools.runtime_env import RuntimeSafetyError, _presentation_trace_install_gate
 
 
@@ -108,6 +109,12 @@ def test_production_trace_writer_uses_bounded_serializer_and_exact_write():
     _assert_production_trace_writer_contract(source)
 
 
+def test_non_primary_blt_trace_uses_initialized_base_details():
+    source = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
+    marker = 'trace_method_event("blt", "active", base_details,'
+    assert marker in source
+
+
 def test_production_trace_writer_regression_rejects_failure_order_mutations():
     source = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
     write_marker = "if (!write_line(line, length)) return FALSE;\n    ++g_event_count;"
@@ -127,6 +134,50 @@ def test_production_trace_writer_regression_rejects_failure_order_mutations():
         _assert_production_trace_writer_contract(
             source[:failure_start] + failure_source.replace(failure_marker, failure_mutation, 1)
         )
+
+
+def test_aggregate_flush_preserves_summary_slot_and_reports_pending_records():
+    source = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
+    flush_start = source.index("static void trace_emit_aggregates(void)")
+    flush_end = source.index("\n}\n\nstatic DWORD aggregate_record_count", flush_start)
+    flush = source[flush_start:flush_end]
+    overflow_start = source.index("static void trace_overflow(const char *scope)")
+    overflow_end = source.index("\n}\n\nstatic void trace_event", overflow_start)
+    overflow = source[overflow_start:overflow_end]
+    summary_start = source.index("static void trace_emit_summary(void)")
+    summary_end = source.index("\n}\n\nstatic DWORD module_end", summary_start)
+    summary = source[summary_start:summary_end]
+
+    assert "g_aggregate_output_dropped_count" in source
+    assert "g_event_count >= TRACE_MAX_EVENTS - 1u" in flush
+    assert flush.index("g_event_count >= TRACE_MAX_EVENTS - 1u") < flush.index(
+        'trace_event_raw("aggregate"'
+    )
+    assert "g_event_count >= TRACE_MAX_EVENTS - 1u" in overflow
+    assert overflow.index("g_event_count >= TRACE_MAX_EVENTS - 1u") < overflow.index(
+        'trace_event_raw("overflow"'
+    )
+    assert "++g_aggregate_output_dropped_count" in flush
+    assert '\\"aggregate_output_dropped_count\\":%u' in summary
+
+    primary_start = source.index("static void trace_primary_method_event(")
+    primary_end = source.index("\n}\n\nstatic void trace_emit_aggregates", primary_start)
+    primary = source[primary_start:primary_end]
+    assert "g_method_detailed_counts[index] < detail_limit" in primary
+    assert "TRACE_REQUIRED_DETAIL_RESERVE" in primary
+    assert "g_primary_required_states_seen" in primary
+    assert "preserve_required_state" in primary
+    assert "trace_method_aggregate(index, object_identity, original_pointer" in primary
+    assert "++g_method_aggregated_counts[index]" in primary
+
+    # The production contract is one summary slot after the aggregate stream.
+    event_count_before_flush = 2002
+    pending_records = 46
+    available_for_aggregates = 2048 - 1 - event_count_before_flush
+    emitted_records = min(pending_records, available_for_aggregates)
+    omitted_records = pending_records - emitted_records
+    assert emitted_records == 45
+    assert omitted_records == 1
 
 
 def test_native_serializer_regression_rejects_old_1024_byte_mutation(tmp_path: Path):
@@ -195,7 +246,7 @@ def test_valid_identity_chain_passes(tmp_path: Path):
         _event(1, "install", stage="complete", import_name="DirectDrawCreateEx",
                import_thunk="0x004D7938", iat_slot="0x004E5018", loader_target="0x70001000",
                original_pointer="0x70001000", module_start="0x70000000", module_end="0x70100000",
-               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=2048, method_limit=256,
+               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=8192, method_limit=256,
                aggregate_limit=64),
         _event(2, "direct_draw_create_ex", dd_object="0x1000",
                iid="15E65EC0-3B9C-11D2-B92F-00609797EA5B", caller="0x400100",
@@ -249,7 +300,7 @@ def test_native_split_validator_requires_converted_pinned_present(tmp_path: Path
         _event(1, "install", stage="complete", import_name="DirectDrawCreateEx",
                import_thunk="0x004D7938", iat_slot="0x004E5018", loader_target="0x70001000",
                original_pointer="0x70001000", module_start="0x70000000", module_end="0x70100000",
-               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=2048, method_limit=256,
+               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=8192, method_limit=256,
                aggregate_limit=64),
         _event(2, "direct_draw_create_ex", dd_object="0x1000",
                iid="15E65EC0-3B9C-11D2-B92F-00609797EA5B",
@@ -341,7 +392,7 @@ def test_exact_method_boundary_and_state_transition_aggregate_passes(tmp_path: P
         _event(1, "install", stage="complete", import_name="DirectDrawCreateEx",
                import_thunk="0x004D7938", iat_slot="0x004E5018", loader_target="0x70001000",
                original_pointer="0x70001000", module_start="0x70000000", module_end="0x70100000",
-               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=2048,
+               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=8192,
                method_limit=256, aggregate_limit=64),
         _event(2, "direct_draw_create_ex", dd_object="0x1000",
                iid="15E65EC0-3B9C-11D2-B92F-00609797EA5B", caller="0x400100",
@@ -423,3 +474,19 @@ def test_install_gate_rejects_malformed_or_missing_trace(tmp_path: Path):
     with pytest.raises(RuntimeSafetyError, match="missing"):
         _presentation_trace_install_gate(missing, raw_copy, "run-1")
     assert raw_copy.read_text(encoding="utf-8") == "{not-json}\n"
+
+
+def test_native2x_control_validator_accepts_1600_surface_without_mirror(tmp_path: Path):
+    path = tmp_path / "control.jsonl"
+    events = [
+        _event(1, "create_surface", returned_surface="0x2000",
+               descriptor={"flags": 33, "backbuffer_count": 1}),
+        _event(2, "get_surface_desc", surface="0x2000",
+               actual_desc={"width": 1600, "height": 1200}),
+        _event(3, "summary", event_count=2, dropped_count=0,
+               aggregate_output_dropped_count=0),
+    ]
+    path.write_text("\n".join(json.dumps(item) for item in events) + "\n", encoding="utf-8")
+    report = validate_native2x_control(path)
+    assert report["status"] == "PASS"
+    assert report["mirror_present_count"] == 0

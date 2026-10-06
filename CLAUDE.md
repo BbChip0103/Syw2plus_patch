@@ -5,7 +5,7 @@
 
 - 우선 입력: docs/feedback/INBOX.md, APPROVALS.md의 반려
 - 현재 다음 한 가지: docs/STATUS.md
-- 목표: docs/DESIGN.md의 최신 사용자 판단 순서를 따른다. 현재 최우선은 G6·G7(2026-10-05 사용자 지시), 그다음 G1 원본 구성1600×1200
+- 목표: docs/DESIGN.md의 최신 사용자 판단 순서를 따른다. 현재 최우선은 G1(G6·G7 2026-10-06 달성·종료) 원본 구성1600×1200
   (G2 전비 상한 5000 확정, G4 보류, G5 단일플레이 승인·종료, 최대16인 G3는 중단)
 - 기억: docs/history/laps/ + 후보SHA/가설/측정/실패/다음 작업
 - 검증: make check, checks/safety.sh check; 실제 원본/부하/멀티는 별도

@@ -41,7 +41,7 @@ summary_path = os.path.join(CONTROL, "trace-summary.json")
 state = {"hits": 0, "fatal": None}
 
 
-def region_hex(address, length):
+def region_hex(address: int, length: int) -> str:
     try:
         raw = bytes(gdb.selected_inferior().read_memory(address, length))
         return raw.hex()
@@ -49,8 +49,8 @@ def region_hex(address, length):
         return f"error: {exc!r}"
 
 
-def log(event, **fields):
-    record = {"event": event, "wall_time": time.time()}
+def log(event: str, **fields: object) -> None:
+    record: "dict[str, object]" = {"event": event, "wall_time": time.time()}
     record.update(fields)
     with open(events_path, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")

@@ -17,6 +17,57 @@ SOURCE = '''# INBOX\n\n> New instructions win.\n\n## 처리 대기\n\n### Priori
 
 
 class LoopContextTest(unittest.TestCase):
+    def test_representative_render_is_exact(self):
+        self.assertEqual(MODULE.render_context(SOURCE, 'INBOX.md'), '''# INBOX 읽기 색인 (원문을 수정하지 않음)
+Source: `INBOX.md`; SHA-256: `cfdf5ae3ed19618139701b350137ab578829f608ec4763d572f6d4b97cb85840`
+
+지시 본문·우선순위는 아래 그대로 읽는다. 체크 완료는 상시 규칙 폐기가 아니다.
+생략한 lap 기록과 되물음은 해결 여부를 추정하지 않는다. 작업할 항목·관련 질문의
+원문 범위를 먼저 열어 남은 조건과 최신 증거를 확인한다. 원문이 바뀌면 다시 생성한다.
+
+# INBOX
+
+> New instructions win.
+
+## 처리 대기
+
+### Priority — newest first
+
+Always follow this policy.
+
+지시 원문 전체: [INBOX.md:11–16](INBOX.md#L11-L16)
+- [x] Completed task; its policy still applies.
+  Keep this continuation.
+
+> 최근 작업기록 발췌 (완료 판정 아님): → (lap 1) Old result
+> 생략한 기록 원문: [INBOX.md:14–15](INBOX.md#L14-L15)
+
+지시 원문 전체: [INBOX.md:17–26](INBOX.md#L17-L26)
+- [ ] Pending task
+  Full pending instruction.
+
+> 최근 작업기록 발췌 (완료 판정 아님): → (lap 2) More investigation
+> 생략한 기록 원문: [INBOX.md:20–21](INBOX.md#L20-L21)
+
+A new unindented instruction after the history.
+
+  → Unknown indentation stays verbatim.
+
+## 처리 완료
+
+지시 원문 전체: [INBOX.md:29–30](INBOX.md#L29-L30)
+- [x] Preserve this directive too.
+
+## 되물음
+
+### Q2 unresolved
+원문 전체 (상태 판정 없음): [INBOX.md:33–39](INBOX.md#L33-L39)
+
+### Q1 resolved
+원문 전체 (상태 판정 없음): [INBOX.md:40–42](INBOX.md#L40-L42)
+
+''')
+
     def test_preserves_directives_and_indexes_only_explicit_history(self):
         result = MODULE.render_context(SOURCE, 'INBOX.md')
         for text in ['> New instructions win.', '### Priority — newest first',

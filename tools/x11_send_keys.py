@@ -21,7 +21,6 @@ X11 = ctypes.cdll.LoadLibrary("libX11.so.6")
 Xtst = ctypes.cdll.LoadLibrary("libXtst.so.6")
 
 Display_p = ctypes.c_void_p
-Window = ctypes.c_ulong
 KeySym = ctypes.c_ulong
 Bool = ctypes.c_int
 

@@ -211,14 +211,15 @@ def _classify_imm_operand(
     with the recorded evidence.
     """
     bucket = value - base
-    if insn.mnemonic in _ADDRESS_LOAD_MNEMONICS and bucket == 0:
-        structural = "ADDRESS"
-    elif (
-        insn.mnemonic in _ADDRESS_BOUNDARY_MNEMONICS
-        and bucket == 0
-        and insn.operands
-        and insn.operands[0].type == capstone.x86.X86_OP_REG
-        and _find_matching_stride_add(insns, index, insn.operands[0].reg, elem_size)
+    if (
+        (insn.mnemonic in _ADDRESS_LOAD_MNEMONICS and bucket == 0)
+        or (
+            insn.mnemonic in _ADDRESS_BOUNDARY_MNEMONICS
+            and bucket == 0
+            and insn.operands
+            and insn.operands[0].type == capstone.x86.X86_OP_REG
+            and _find_matching_stride_add(insns, index, insn.operands[0].reg, elem_size)
+        )
     ):
         structural = "ADDRESS"
     else:
@@ -482,11 +483,11 @@ def build_candidate(original: bytes, n: int = CAPACITY) -> tuple[bytes, dict[str
         for region, sites in sites_by_region.items():
             delta = deltas[region]
             count = 0
-            for site in sites:
-                new_value = (site.old_value + delta) & 0xFFFFFFFF
-                if new_value == site.old_value:
+            for fixup in sites:
+                new_value = (fixup.old_value + delta) & 0xFFFFFFFF
+                if new_value == fixup.old_value:
                     continue  # delta==0 (unit_pool): genuinely a no-op, not a skipped fixup.
-                _patch_literal(out, pe, site.va, site.old_value, new_value)
+                _patch_literal(out, pe, fixup.va, fixup.old_value, new_value)
                 count += 1
             b3_applied[region] = count
     finally:

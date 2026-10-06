@@ -453,7 +453,14 @@ def run_probe(
         raise ProbeError(f"artifact root must be new: {artifact_root}")
     artifact_root.mkdir(parents=True)
     source = source.expanduser().resolve()
-    source_exe = source / runtime_env.ORIGINAL_EXE
+    # The original executable's file name varies by source root (e.g.
+    # ``syw2plus_original.exe`` vs ``[HQ]Syw2plus 2002.exe`` under
+    # ``[ESL]Syw2plus/``); resolve it the same SHA-first way
+    # ``runtime_env.prepare`` already does instead of assuming a fixed name.
+    try:
+        _, source_exe = runtime_env.validate_original_source(source)
+    except runtime_env.RuntimeSafetyError as exc:
+        raise ProbeError(f"protected source executable SHA mismatch before run: {exc}") from exc
     if sha256(source_exe) != ORIGINAL_SHA:
         raise ProbeError("protected source executable SHA mismatch before run")
 

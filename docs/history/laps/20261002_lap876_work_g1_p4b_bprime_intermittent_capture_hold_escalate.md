@@ -1,0 +1,15 @@
+# 2026-10-02 | lap876 work | G1 P4b B' fresh gdb-free pair
+
+- 지정 역할: 일반 work/실구현 작업자. 제품 코드 수정은 하지 않았다. source·validator·임계값·원본·fixture·기존 raw 변경0, 커밋0. 구현0, 새 소스 변경0.
+- 가설: gdb 없이 같은 save006에서 고정 카메라와 DOWN/RIGHT scroll pair를 실행하면 B'의 coverage·입력·camera·captured state parity를 판단할 수 있다. 성공 기준은 P4b card §4 B'의 기존 Scale2x validator, fixed40, DOWN/RIGHT 각30 present, 55%/0.9, outside0, layer move/transfer, 동일 키·카메라·전체 captured state, source/cleanup이다.
+- 선행 검수: STATUS lap875의 다음 한 가지와 card `docs/work/active/G1_STRATEGY_W70_P4B_TERRAIN_CACHE_LAYER_LAP863.md`를 따랐다. `tests/test_g1_saved_scene_probe.py` 33 passed. `checks/context_limits.py` CONTEXT_PASS. 시작 시 runtime counter=876; 원본 EXE SHA와 pinned save006 SHA는 세 pair manifest에서 기대값 MATCH.
+- 환경/fixture: 보호 원본 `Syw2plus/syw2plus_original.exe`, SHA `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 비합성 fixture `save006.dat`, SHA `616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064`. 원본의 player record 8개는 활성8인 부하 증명이 아니다. 각 run은 새 baseline/candidate game 사본·Wine prefix·Xvfb display를 썼고 종료 후 game 사본 제거, prefix 프로세스0, source unchanged.
+- 실행: 아래 명령을 독립 새 경로로 3회 수행했다(기존 결과 덮어쓰기 없음).
+  - `PYTHONPATH=. .venv/bin/python -u tools/g1_saved_scene_probe.py --runtime-root local/runtime/lap876_p4b_bprime --artifact-root /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261002_lap876_p4b_bprime --terrain-scroll --hd-source scale2x`
+  - 같은 인자, suffix `_r2` / artifact `20261002_lap876_p4b_bprime_r2`.
+  - 같은 인자, suffix `_r3` / artifact `20261002_lap876_p4b_bprime_r3`.
+- 수치: 세 run 모두 loaded scene equality, 같은 DOWN→RIGHT 순서·각 한 칸 camera 변화·target input tick·coherent snapshot, candidate fixed coverage p50 약337,649→last20 약355,700(90% 유지), scroll coverage 55% 기준264,000 초과, outside diff0, move calls `1`(DOWN)/`513`(RIGHT), unsupported0, transfer>0, crash0, cleanup/source PASS.
+- 판정: r1은 terrain pair `HOLD`: 공통 tick24728 DOWN snapshot equality, tick24824 RIGHT snapshot에서 lane 간 captured unit5 차이, final tick24860에서 unit3 차이(`complete_records_equal=false`). r2와 r3는 같은 gate에서 captured-state parity 포함 `PASS`; pair summary는 각각 `scene_state_equal=true`. r1 pair JSON SHA `004890a142fe76ac70c070b573733b07f74a8ce335111c87ab08d715441163ee`, r2 `655ef398aa6137c581ea38f1505f723ef36f349f5f7d1e1dd1d5cf2e1937cd1e`, r3 `29aaf9d7ca46198494999a5ba7e02c648d281c686f526d12ade7d8f7b41f96a2`. 모든 lane의 probe-result/trace_raw는 같은 artifact 디렉터리에 보존했다.
+- 원인 경계: key/camera/target tick과 source/cleanup은 통과했고 validator·threshold는 미변경이다. 단일 run의 captured state 차이를 재현하지 못했고 원인을 raw에서 설명하지 못했다. 이를 제품 회귀, 하네스 결함, 혹은 무해한 nondeterminism 중 하나로 단정하지 않는다. 승인된 work 범위 밖인 game/DLL/validator 수정도 하지 않았다.
+- 검증: 실행 3회 중 pair PASS 2 / HOLD 1. 그래서 B'는 수용하지 않고 HOLD. 사용자 규칙의 실패 3회 원칙에 따라 추가 런타임 시도를 멈추고 `loop/ESCALATE_SOL` 작성. Fast: focused33 PASS, context PASS; lint/typecheck/full make check는 문서·marker 작성 후 진행하고 그 수치만 STATUS에 추가한다. 원본·후보 EXE 해시 불변; PNG 생성 없음.
+- 다음 한 가지: 승격 작업자가 3개 artifact의 동일 tick captured-state 차이 및 pair gate 적용을 독립 검수하고 다음 work의 허용 범위를 지정한다. B' 독립 수용 전 C로 진행하지 않는다. G1 milestone 경계가 아니다.

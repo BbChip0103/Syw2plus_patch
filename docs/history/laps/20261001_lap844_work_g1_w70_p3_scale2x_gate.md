@@ -1,0 +1,13 @@
+# 2026-10-01 | lap 844 | 목표 G1 W70 P3 Scale2x gate
+
+- 역할 / 범위: work tier. G1 W70 P3 gate 증거 보강만 수행했으며 P4·GDI·사용자 승인으로 진행하지 않았다. 커밋 0 (`LOOP_ALLOW_COMMITS=0`).
+- 가설: first-present trace barrier 뒤에 paired capture를 취하고, baseline/candidate 공통 primary-present timing을 기록하면 lap843의 검은 캡처·단일 성능 측정 gap을 닫을 수 있다. Minimap 원본이 UNKNOWN이면 product PASS로 승격하지 않고 diagnostic parity만 별도 판정한다.
+- 변경 파일: `tools/g1_saved_scene_probe.py` (trace barrier, 0.5초 안정화, bounded load retry, save slot 탐색 20회, minimap diagnostic parity); `tests/test_g1_saved_scene_probe.py` (barrier/parity 회귀); `tools/inmm_stub/direct_draw_trace.c` (공통 primary present elapsed p50/p95/max histogram).
+- 보호된 원본 EXE SHA: `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`. fixture: non-synthetic `save006.dat`, SHA `616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064`, selected index 7, 8-player loaded scene. 모든 private lane `source_unchanged=true`, 원본/참고 저장소 쓰기 없음.
+- 실패/수리: perf1은 12-key save navigation 상한에서 slot6 실패, retry는 candidate PS35 timeout이었다. navigation 20회·load click 1회 retry·first-present barrier 이후 0.5초 안정화를 적용했고 perf2~6은 정상 종료했다. perf6 최초 launch는 빈 artifact root를 미리 만든 harness 오류(exit1)였고 빈 디렉터리만 제거 후 재실행했다.
+- fresh paired perf 증거: `temp/Syw2plus_patch/lap844_p3_perf4/`, `perf5/`, `perf6/`; pair SHA는 각각 `1c4385c72348bbc1c871ec8f55da3103f6394229c7cff4adf6d291033330f683`, `e3d41ec3b1811c7e4a88999941a003b447b2a16c0723f07dfc7ab76ac634c24d`, `b7e05b8fd91cf17f2cc38bf211d868f1621b229e2a2ff3d8682e80b76d1537d5`.
+- 측정: perf4/5/6 baseline tick span `24210/24155/24104`, candidate `24692/24611/24921` (candidate delta `+1.99%/+1.89%/+3.39%`, 기준 -5% 이내). 공통 primary-present p95 baseline `2/2/2ms`, candidate `17/16/16ms` (delta `+15/+14/+14ms`, 기준 +16ms 이내). candidate p50/max `8/21`, `7/22`, `8/22ms`.
+- paired visual/gate: perf4~6 baseline/candidate status PASS, first-present 후 menu/loaded PNG non-black, loaded sizes 800x600/1600x1200, `scene_state_equal=true`, Scale2x validator PASS. selection/empty/drag checks PASS. `minimap_diagnostic_parity=PASS`, effect `ORIGINAL_PARITY_UNKNOWN`, same result/camera/unit and exact gate restore 모두 true. product `minimap_gate_restore`·`production_effect`는 양 lane UNKNOWN/HOLD이며 성공으로 쓰지 않는다.
+- 기계 검증: saved-scene/Scale2x targeted pytest 10 passed, `make lint` PASS, `make typecheck` PASS, `make -C tools/inmm_stub clean all` PASS(기존 compiler warnings만), `git diff --check` PASS. 최종 Fast `make check`는 handoff/STATUS 작성 후 1회 수행한다.
+- 판정: P3 gate는 work-tier 기준 `PASS(partial)`로 middle 독립 검수에 넘긴다. G1 milestone은 아니다. GDI, P4/전체 HD coverage, product-level minimap/production proof, G1 사용자 3단 승인은 미충족이다.
+- 다음 한 가지: middle tier가 perf4~6 raw/pair/DLL/source SHA와 timing 산식을 독립 재계산하고 P3 수용 여부를 판정한다. middle 수용 전 P4를 시작하지 않는다.

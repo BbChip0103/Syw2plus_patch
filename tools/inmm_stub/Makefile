@@ -15,9 +15,9 @@ TARGET  = _inmm.dll
 
 all: $(TARGET)
 
-SRCS = inmm_stub.c control_logging.c control_protocol.c control_registry.c control_state_bridge.c control_executor.c control_input_bridge.c control_handler_bridge.c asset_hook.c sfx_hook.c direct_draw_trace.c final_d3d9_trace.c ai_shadow.c trace_record_serializer.c
+SRCS = inmm_stub.c control_logging.c control_protocol.c control_registry.c control_state_bridge.c control_executor.c control_input_bridge.c control_handler_bridge.c asset_hook.c sfx_hook.c direct_draw_trace.c g1_mirror2x.c g1_screen_watch.c g1_hd_asset.c g1_perf_sections.c g1_census.c g1_state_snapshot.c final_d3d9_trace.c ai_shadow.c trace_record_serializer.c
 
-$(TARGET): $(SRCS) inmm_stub.def
+$(TARGET): $(SRCS) g1_census_contract.h g1_census_residual.h g1_census_watch.h g1_stale_mask.h g1_layer_drift.h g1_screen_watch.h g1_scratch_bounds.h g1_state_snapshot.h g1_panel_layer.h g1_overlay_blt.h g1_rect_fill.h g1_cache_fill.h inmm_stub.def
 	$(CC) $(CFLAGS) -o $(TARGET) $(SRCS) inmm_stub.def $(LDFLAGS) \
 		-Wl,--out-implib,lib_inmm.a
 	@echo "✅ Built: $(TARGET)"

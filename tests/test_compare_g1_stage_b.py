@@ -201,6 +201,56 @@ def test_input_record_with_non_string_tag_prevents_overall_pass():
     ]
 
 
+def test_fail_status_precedes_input_errors_and_report_keeps_both():
+    baseline = evidence()
+    candidate = evidence(stage_overrides={
+        "minimap": {"result": "FAIL"},
+    })
+    candidate["inputs"].append({"tag": "minimap", "result": "PASS"})
+
+    report = compare.compare_evidence(baseline, candidate)
+
+    assert report["status"] == "FAIL"
+    assert report["stages"]["minimap"]["status"] == "FAIL"
+    assert report["input_errors"]["candidate"] == ["duplicate input tag: minimap"]
+    assert report["production"]["status"] == "NOT_COMPARED"
+
+
+def test_disputed_status_and_input_errors_remain_inconclusive_with_full_report():
+    baseline = evidence()
+    candidate = evidence()
+    minimap = next(item for item in candidate["inputs"] if item["tag"] == "minimap")
+    minimap["result"] = "UNKNOWN_BUDGET_EXHAUSTED"
+    candidate["inputs"].append({"tag": "minimap", "result": "PASS"})
+
+    report = compare.compare_evidence(baseline, candidate)
+
+    assert report["status"] == "INCONCLUSIVE"
+    assert report["stages"]["minimap"]["status"] == "UNKNOWN_DISPUTED_ORACLE"
+    assert report["input_errors"]["candidate"] == ["duplicate input tag: minimap"]
+    assert report["scene"]["status"] == "PASS"
+    assert report["production"]["status"] == "NOT_COMPARED"
+
+
+def test_scene_mismatch_precedes_fail_and_input_errors_with_full_report():
+    baseline = evidence()
+    candidate = evidence(alternate_type=True, stage_overrides={
+        "minimap": {"result": "FAIL"},
+    })
+    candidate["inputs"].append({"tag": "minimap", "result": "PASS"})
+
+    report = compare.compare_evidence(baseline, candidate)
+
+    assert report["status"] == "UNKNOWN_SCENE_MISMATCH"
+    assert report["scene"]["status"] == "UNKNOWN_SCENE_MISMATCH"
+    assert all(
+        item["status"] == "UNKNOWN_SCENE_MISMATCH"
+        for item in report["stages"].values()
+    )
+    assert report["input_errors"]["candidate"] == ["duplicate input tag: minimap"]
+    assert report["production"]["status"] == "NOT_COMPARED"
+
+
 def test_disputed_timeout_reads_after_last_and_never_passes():
     baseline = evidence()
     candidate = evidence()

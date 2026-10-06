@@ -150,6 +150,60 @@ def test_guard_disabled_reintroduces_both_regressions(original, monkeypatch):
         assert patched[off : off + 6] != original[off : off + 6]
 
 
+def _decoded(*instructions):
+    engine = mod.capstone.Cs(mod.capstone.CS_ARCH_X86, mod.capstone.CS_MODE_32)
+    engine.detail = True
+    return list(engine.disasm(b"".join(instructions), 0x401000))
+
+
+def test_imm_classifier_accepts_decoded_mov_and_skips_stride_lookup(monkeypatch):
+    [insn] = _decoded(b"\xB8\x90\xB7\x66\x00")  # mov eax, 0x66b790
+    monkeypatch.setattr(
+        mod, "_find_matching_stride_add",
+        lambda *args: pytest.fail("mov alternative must short-circuit before stride lookup"),
+    )
+    assert mod._classify_imm_operand([], 0, insn, 0x66B790, 0x66B790, 4,
+                                     {0x401000: "ADDRESS"}, 0x401000) == "ADDRESS"
+
+
+@pytest.mark.parametrize(
+    ("stride", "register", "expected"),
+    [(4, "eax", "ADDRESS"), (8, "eax", "NOT_ADDRESS"), (4, "ebx", "NOT_ADDRESS")],
+)
+def test_imm_classifier_uses_decoded_cmp_stride_and_register(stride, register, expected):
+    add = b"\x83\xC0" + bytes([stride]) if register == "eax" else b"\x83\xC3" + bytes([stride])
+    instructions = _decoded(add, b"\x3D\x90\xB7\x66\x00")
+    index = len(instructions) - 1
+    key = instructions[index].address
+    assert instructions[index].mnemonic == "cmp"
+    assert mod._classify_imm_operand(
+        instructions, index, instructions[index], 0x66B790, 0x66B790, 4,
+        {key: expected}, key,
+    ) == expected
+
+
+def test_imm_classifier_rejects_missing_or_mismatching_oracle():
+    instructions = _decoded(b"\x83\xC0\x04", b"\x3D\x90\xB7\x66\x00")
+    index = len(instructions) - 1
+    insn = instructions[index]
+    key = insn.address
+    with pytest.raises(mod.BuildAbortedError, match="unclassified imm site"):
+        mod._classify_imm_operand(instructions, index, insn, 0x66B790, 0x66B790, 4, {}, key)
+    with pytest.raises(mod.BuildAbortedError, match="Step1 classification says NOT_ADDRESS"):
+        mod._classify_imm_operand(
+            instructions, index, insn, 0x66B790, 0x66B790, 4,
+            {key: "NOT_ADDRESS"}, key,
+        )
+
+
+def test_imm_classifier_keeps_nonzero_bucket_out_of_address_class():
+    [insn] = _decoded(b"\xB8\x91\xB7\x66\x00")
+    assert mod._classify_imm_operand(
+        [], 0, insn, 0x66B791, 0x66B790, 4,
+        {insn.address: "NOT_ADDRESS"}, insn.address,
+    ) == "NOT_ADDRESS"
+
+
 # ---------------------------------------------------------------------------
 # N=1210 candidate -- the actual work card capacity used by this module
 # (see module docstring for why 1210, not the work card's suggested 1300).

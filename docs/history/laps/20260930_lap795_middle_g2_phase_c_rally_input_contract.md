@@ -1,0 +1,11 @@
+# 2026-09-30 | lap 795 | G2 ESL2608 Phase-C 집결지 입력 계약 독립 확인
+
+- 실제 provider/model/effort / 지정 역할: Codex native 세션(표면이 정확한 모델 ID를 노출하지 않음) / middle 진단·컨펌 / high 지정. 게임 코드·하네스 구현과 runtime 실행은 하지 않았다.
+- 가설 / 사용자 관찰: lap794의 집결지 실패는 제품 writer가 아니라 잘못된 UI 입력(`R` 셀 또는 지도 우클릭) 때문이다. baseline에서 command `0x15`의 UI 설명자·패널 상태·지도 입력·writer 경로를 정적으로 닫으면 work가 fresh 1회로 판별할 수 있다.
+- 예상 PASS / FAIL 조건: PASS는 설명자 `0x11`→action `0x15`→지도 좌클릭→`0x4AE550/0x4AEC60/0x40FF90/0x412540`→선택 HQ `+0x654/+0x656`를 한 경로로 고정하는 것. 정적 경로가 기존 raw/캡처와 충돌하거나 실제 slot을 상수 좌표만으로 확정해야 하면 FAIL/BLOCKED다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted): `analysis/memory_maps/g2_esl2608_phase_c_ui_contract_lap794.md`, `docs/STATUS.md`, `loop/ESCALATE_SOL`, 이 기록; 모두 문서/handoff이며 uncommitted. 제품 EXE·패치·probe/test 코드는 변경하지 않았다. 세션 시작 fingerprint `e3437dcffeb57ba99a5d16feb6cff67b984fb7ee`(문서 작성 전).
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: normal baseline SHA `cade60b2451519ec4e305d91279b1c377cf797c813a939c5b54c2e9b30b176a3` 재계산 일치. 새 runtime/fixture 없음. 검수 대상 lap794 r2/r3/r4는 private Wine/Xvfb, nation3/2/2, HQ slot1199이며 raw SHA `bf53ae19…6c0834`/`9e15c7bd…2e84c`/`366d52bc…e40fe3` 재계산 일치.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `sha256sum`으로 baseline·세 raw·캡처를 재해시하고, `objdump -d -M intel --start-address/--stop-address`로 `0x496556..`, `0x49958D..`, `0x41EBF6..`, `0x4AE550`, `0x4AEC60`, `0x40FF90`, `0x412540`을 대조했다. lap794 r4 캡처 SHA `512cf333…982c4`; 2026-09-26 HQ/rally 캡처 SHA `5476a2de…f464`/`2ba2b82e…a1d2`.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN): **FEASIBLE / static contract PASS, runtime HOLD.** 설명자 `0x11`은 action `0x15`, 단축키 `T/t`; live slot은 `0x8930A6+2*i`. 패널 클릭 후 `0x892FFE==0x15`, 이어 지도 좌클릭이 필요한 계약이다. r2의 `(704,503)` `R` 셀+좌클릭은 선택 `1→0`·rally 불변, r3의 `R` 셀+우클릭과 r4 우클릭-only도 계약 밖이다. 캡처상 붉은 깃발 `(776,503)`은 후보지만 runtime Data가 slot을 채우므로 12-slot read로 확인해야 한다.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: lap794의 writer와 nation-indexed hero counter 수정 방향은 수용하지만 runtime 미검증이다. 집결지 제품 결함·Phase-C 4-way·배포·사용자 승인으로 승격하지 않는다. Fast는 산출물 작성 뒤 최종 1회 수행하며 결과 수치는 STATUS에만 보강한다.
+- 다음 한 가지: work tier가 normal baseline fresh 1회에서 HQ 선택 직후 12-slot을 기록해 descriptor `0x11`의 셀(예상 `(776,503)`)을 좌클릭하고 `0x892FFE==0x15`를 확인한 뒤 다른 유효 지면을 좌클릭한다. `0x412540` 진입 command/packed XY/`ecx==HQ`와 rally 변화, nation-indexed hero 생산을 함께 기록한다. 실패해도 이 1회 뒤 rally는 `UNKNOWN(입력 계약 미성립)`으로 닫고 Phase D로 이동한다.

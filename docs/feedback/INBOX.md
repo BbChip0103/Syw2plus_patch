@@ -25,3 +25,16 @@
   - lap981 처리 메모(원문 유지): H-G6k 결과 = 키 전달 BLOCKED(채팅 EDIT 포커스 유지). 방향키 직전 포커스 조작 확인 질문을 APPROVALS에 올렸다. 사용자 경로 동일성은 UNKNOWN이며 이 항목은 답 전까지 미처리로 둔다.
 
 - [ ] **2026-10-05 08:41 KST root: G6·G7 시험판 사용자 전달 완료.** lap989/990 ESCALATE_SOL 처리: `260921_temp`에 일반판(`fb7c2131…`)·시작자리고정판(`58b9b22a…`)·안내문(`2145f0a9…`) 복사, 배치 후 SHA MATCH, 기존 파일 덮어쓰기 0. 사용자 합격 판단은 APPROVALS lap989 항목 대기(비차단). ESCALATE_SOL 원문은 `docs/history/laps/20261005_lap990_root_escalate_sol_g6g7_delivery.txt`에 보존 후 삭제. 루프 재개: 다음 work = STATUS H-G6f(시작자리고정판 G6 3회), 그 뒤 G1 H-F.
+
+- [ ] **2026-10-06 01:43 KST 사용자 결정: G1 V2s W-1 채택.** "Scale2x로 설명되지 않는 단일 흑색 블록 ≤2,000"을 V2s gate로 사용하고 raw V2s는 공개 진단으로 계속 기록한다(APPROVALS lap962 항목 해소). 다음 middle이 gate 코드/aggregate를 W-1로 바꾸는 work를 사전등록·구현하게 하고(과거 pair-result 불변, coverage 축소 금지, V1/V2/V2q·tag 불변), 이후 pair 판정을 W-1 기준으로 재집계한다. 진행 중 H-O(우측 stale)와 병행 가능.
+
+- [ ] **2026-10-06 19:31 KST 사용자 G6·G7 플레이 결과(최우선):** “G6 G7 해봤는데 선택 문제는 해결된 것 같아. 근데 세이브 로드 시에 제대로 안되는 것 같아. 첫 번째 자리 이외 자리를 고르고 시작했을 때 세이브 후 로드하면 또 첫 번째 자리에 있었던 컴퓨터 유닛/건물로 로드가 돼”. 추가 확인: **타이틀 로드·게임 중 로드 둘 다**, **일반판(fb7c2131…)·시작자리고정판(58b9b22a…) 둘 다**. 판정: G6 사용자 PASS, **G7 사용자 FAIL**. G1 큐보다 G7 재작업 우선.
+  - 격리 측정(lap982~988)은 실제 ↑/↓ 경로가 아닌 lobby-snapshot 우회로 seat 2를 만들었다(↑/↓는 채팅 EDIT 포커스로 BLOCKED). 사용자 실경로에서는 세이브 스냅샷 `0x632F7C` 표에 사용자 자리가 없거나 다르게 기록돼 R4b가 local을 0으로 비운 뒤 1P로 귀결하는 것으로 의심된다. 특히 **게임 중 로드도 실패**한 것은 R4b(로드 시 local=0 후 재계산)가 원래 정상이던 인게임 로드를 회귀시켰을 가능성이 크다.
+  - lap1090 middle 처리 메모(원문 유지, 미처리 유지): R4b를 사용자 실경로 FAIL로 철회하고, 실제 자리 결정 방식에 의존하지 않는 R5(저장 때 local·live 로비 표를 세이브 꼬리에 기록 → 로드 때 그대로 복원, 꼬리 없으면 무변화 → 인게임 로드 원래 동작 유지)를 사전등록했다. 다음 work H-G7s가 구현·격리 실행, 그 뒤 middle 검수 → 사용자 재시험. 카드 `docs/work/active/G7_MIDDLE_LAP1090_USER_FAIL_R5_SAVE_TRAILER_HANDOFF.md`.
+  - 다음 middle: (1) 실제 ↑/↓ 자리 이동 경로를 재현(채팅 EDIT 포커스 해제 방법 재조사 또는 대기실 ↑/↓ 처리기 정적 분석으로 ↑/↓가 쓰는 표/필드 확정), (2) 그 경로로 만든 세이브의 스냅샷 표·플레이어 블록 파싱, (3) R4b 재설계(인게임 로드 무회귀가 필수, 표에서 못 찾으면 local을 바꾸지 않는 등) 사전등록. 시험판은 수정 전까지 사용자 합격 대상 아님.
+  - lap1091 work 처리 메모(원문 유지, 미처리 유지 — middle 검수·사용자 재시험 전): H-G7s R5 구현·격리 실행 완료. W-1 진단이 R4b에서 사용자 증상(local 0·ps 27/29)을 재현했고 cand-r5(G6+R5)는 같은 주입 저장을 타이틀·인게임 로드 모두 저장 자리로 복원(S-1~S-8·fixed_start PASS, 기술). 실제 ↑/↓ 경로 재현은 W-3에서 BLOCKED 유지. 기록 `docs/history/laps/20261007_lap1091_work_g7_r5_save_trailer_hg7s.md`. 사용자 시험판은 middle 수용 뒤 스테이징.
+  - lap1093 middle 처리 메모(원문 유지, 미처리 유지 — 사용자 재시험 전): H-G7s 독립 재계산 불일치 0·후보 SHA 4개 재조립 일치 → PASS(partial, 기술) 수용. 시험판 G6+R5 일반판 `b582fb19…`·시작자리고정판 `acf5bd3d…`를 공유 temp `20261007_lap1093_middle_review/user_test_staging/`에 스테이징, APPROVALS lap1093 재합격 요청, root 전달은 ESCALATE_SOL. 기록 `docs/history/laps/20261007_lap1093_middle_g7_hg7s_acceptance_user_retest_request.md`.
+
+- [ ] **2026-10-06 21:11 KST root: G7 R5 시험판 사용자 전달 완료.** lap1093/1094 ESCALATE_SOL 처리: `260921_temp`에 일반판(`b582fb19…`)·시작자리고정판(`acf5bd3d…`)·안내문(`3f5622c9…`) 복사, SHA MATCH, 덮어쓰기 0. 사용자 재시험은 APPROVALS lap1093 항목 대기(비차단). 원문 보존 `docs/history/laps/20261006_lap1094_root_escalate_sol_g7_r5_delivery.txt`. 루프 재개.
+
+- [ ] **2026-10-06 21:21 KST 사용자 결정: G6·G7 달성·종료.** “해보니까 G6 G7 해결된 것 같아. README.md 도 업데이트 하고 이 시점에서 푸시 함 날리자”. R5 시험판 기준 사용자 합격. G6·G7 작업 큐 종료, **G1이 다시 최우선**. root가 README 갱신·커밋·푸시를 수행했다(사용자 명시 지시; 루프 자체의 커밋 금지는 유지). G6·G7 새 결함 보고 없이 자동 재개하지 않는다.

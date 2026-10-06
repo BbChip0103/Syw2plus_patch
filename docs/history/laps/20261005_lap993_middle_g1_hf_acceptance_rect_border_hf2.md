@@ -1,0 +1,28 @@
+# 2026-10-05 | lap993 | 목표 G1 (middle: H-F 독립 검수 → H-F2 사전등록)
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-opus-5-5`, high, Fast OFF / 중간 tier(진단·계획·확인) 1 lap. 게임 코드 hands-on 수정 0.
+- 가설 / 사용자 관찰: lap992 `loop/ESCALATE_SOL` 처리. lap992 H-F(hook `0x466070` 전후 diff 미러)의 수치(교집합 3,689→3,545, HP 423→279, 신규 0, r1=r2)가 제품 helper 없이 재현되는지, 잔여 HP 279의 writer가 `0x465B30`(사각형 테두리) 계열인지 확인한다.
+- 예상 PASS / FAIL 조건: 재계산 불일치 0이면 수용 판정 가능. 잔여 writer가 `0x465B30`이면 H-F2를 그 함수의 diff 미러로 사전등록. 불일치가 있거나 writer가 다른 함수면 H-F 수용 보류.
+- 변경 파일 / source fingerprint / 커밋: 문서만(이 기록·STATUS·`loop/ESCALATE_SOL` 삭제·STATUS 압축 원문 보존). 게임/source/commit 0. lap992 uncommitted source 7개 SHA256 앞 12자리 독립 재계산이 lap992 기록과 일치: `g1_rect_fill.h` `5c9d47a81deb`·`g1_mirror2x.c` `ee7d038c7dba`·`g1_mirror2x.h` `c922bfe5292c`·`direct_draw_trace.c` `85ae33db6c9b`·`Makefile` `052ea5379f0e`·`tests/test_g1_rect_fill.py` `bec320165459`·`tests/test_g1_panel_layer.py` `e5e780a32213`. r1·r2 `bridge/` 사본의 `g1_mirror2x.c`·`g1_rect_fill.h`·`direct_draw_trace.c`가 현재 source와 byte 동일(`cmp`) → 실행 바이너리 source = 현재 uncommitted source.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 EXE `b56986e0…08a8ac`(역어셈블 스크립트가 SHA assert, read-only). 입력 raw = lap992 fresh save006 scale2x pair r1/r2·census cw_a/cw_b, 기준 = lap972 r1(lap973 수용). 활성8인 부하 증명 아님.
+- 실행 명령 / 로그 / 캡처 경로 및 해시(공유 temp `20261005_lap993_middle_review/`):
+  - `recalc_lap993.py`(numpy+stdlib, 제품·lap992 분석 helper import 없음) → `recalc_lap993.json`.
+  - `disasm_lap993.py`(lap975 스크립트 복사, capstone, 원본 SHA assert) → `disasm_465B30.txt`; `xref_lap993.py` → `xref_lap993.txt`.
+  - 입력 SHA256: lap992 r1 mask `1c6ce88c…`·trace `199285c2…`·pair `be947df6…`, r2 mask `7c8c597c…`·trace `df8d34e4…`·pair `be630ea2…`, lap972 r1 mask `ce0d2e80…`, cw_a census `c7e4d9dd…`, cw_b census `6ed3fe4f…`.
+- 측정값 / 판정:
+  - **재계산 불일치 0.** 세 run 공통 steady 덤프 39개(300~880): 교집합 lap972 r1 3,689 → lap992 r1 3,545 = r2 3,545, r1 마스크 == r2 마스크(픽셀 동일). 영역: HP 423→279, 유닛 961·가장자리(x≥760·y<480) 813·HUD 상자 0 불변. 신규 stale 0(전체·HP 밖), 제거 144 전부 HP 안.
+  - 구조: 제거 144 = HP 안쪽 행(154·155·157·158)의 x≢401 (mod 3) 칸 전부, 테두리 행·구분선 제거 0. 잔여 279 = 테두리 행 153·156·159 203 + 안쪽 행 x≡401 (mod 3) 구분선 76, 그 밖 0.
+  - F-3: invocations r1 30,663·r2 30,917, mirrored_calls 30,174/30,423, mirrored_pixels 121,386/122,382, reject_target·size·guard 전부 0. F-4: 안전 7종 max 0(cache_clip_verify·identity_key 포함), PS3 present 886/899, p95 7/7ms(기준 lap972 9ms), cov p50 98.535%/98.528%, scale2x·V2·V2q·input·minimap PASS, V2s FAIL(기존 raw gate) → pair HOLD.
+  - census: cw_a(401,153) 63 present 모두 `0x4662DE`(block_copy)→`0x465C1A`→`0x465C71`(값 246), cw_b(404,154) 63 모두 `0x4662DE`→`0x466E67`→`0x465C88`→`0x465C71`(246). 마지막 writer `0x465C71` 63/63 둘 다. watch EIP는 쓰기 다음 명령이다(`0x465C71` = `0x465C6E` 왼쪽 변 쓰기, `0x465C1A` = `0x465C17` 윗변, `0x465C88` = `0x465C85` 오른쪽 변). census `in_hook=1`은 census 자체 writer 표의 `rect_border`(target `0x465B30`, prologue 8) 안이라는 뜻이다(설치 이벤트로 확인).
+  - **역어셈블(원본):** `0x465B30` = thiscall 사각형 테두리, `ret 0x14`, 5인자 (x0, y0, x1, y1, color). prologue `83 EC 10 53 8B 5C 24 18`(8 B, 상대 분기 없음). 축별 정렬 → renderer clip `[ecx+0x4D0..0x4DC]`(xmin,ymin,xmax,ymax 포함) 밖이면 반환 → 잘린 변은 그리지 않음 → 윗변 `0x465C17`·아랫변 `0x465C47`·왼변 `0x465C6E`·오른변 `0x465C85`, buffer `[ecx+0x1514]`·stride `[ecx+0x10]`. 함수 안에 call 없음(leaf). 쓴 픽셀은 모두 `g1_rect_fill_region`(같은 인자·clip)의 사각형 안이다. 호출 12곳 `0x403D8B`·`0x403EEA`·`0x405054`·`0x405324`·`0x4058B7`·`0x4519C7`·`0x479009`·`0x479126`·`0x4791F9`·`0x479335`·`0x4D5D41`·`0x4D5E83`(lap992 기록과 일치). cw_a 스택 복귀 `0x47900E` = 호출 `0x479009` 바로 뒤, 그 직전 `push 0xF6`(=246, watch 값과 일치)·`mov ecx, 0xE5BF18`(watch ecx와 일치). 같은 함수의 `0x47903F`이 H-F의 `0x466070` 호출이므로 HP 바 = 테두리(`0x465B30`) → 채움(`0x466070`) 순서로 그린다. 형제 변형 `0x465CA0`은 호출 1곳(`0x43412E`)으로 이번 잔여와 무관.
+  - **판정: H-F PASS(partial) 수용.** 사전등록 F-1(≤42)은 FAIL로 기록 유지. 원인은 예측 과소(HP 바를 채움 함수 하나로 그린다고 가정)이고, 반증 (i)(>380)은 아님. 잔여 279는 전부 `0x465B30` 계열로 확정. F-2·F-3·F-4 PASS, 회귀 0.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 제품 회귀 0. 한계: 바뀐 픽셀만 HD로 갱신(H-T와 같은 한계, stale 마스크는 논리값 기준이라 이번 수치에는 영향 없음). census와 mirror가 같은 주소(`0x466D50`·`0x4664D0`, H-F2 뒤 `0x465B30`)를 hook하므로 census는 계속 `--census-only`(mirror 비활성)로만 써야 한다. 사용자 승인 아님. G6/G7 사용자 합격(APPROVALS lap989)은 그대로 대기, lap991 H-G6f probe-result 재계산은 별도 middle 몫으로 남는다.
+- 다음 한 가지: **work H-F2 — `0x465B30` 사각형 테두리 diff 미러**(아래 사전등록).
+
+## H-F2 사전등록 (work 1 lap)
+
+- 구현: H-F `mirror_rect_fill`과 같은 패턴으로 hook `0x465B30`, steal 8 B `83 EC 10 53 8B 5C 24 18`(old bytes 검사·rollback). thiscall 5인자 (x0,y0,x1,y1,color), `ret 0x14`. 대상 사각형 = `g1_rect_fill_region(x0,y0,x1,y1,clip)`(clip = renderer `+0x4D0..+0x4DC`). 화면 frame만(H-F와 같은 target 판정), 크기는 `g1_overlay_blt_accepts`(≤320×128; 큰 테두리는 reject로 세고 미러 안 함). 호출 전 사각형 사본 → 원본 → `g1_overlay_blt_apply`. 두 함수 모두 leaf라 before 버퍼 재사용도 가능하나 별도 버퍼가 더 단순하면 그쪽. 계수 `rect_border_465B30_{invocations,mirrored_calls,mirrored_pixels,reject_target,reject_size,reject_guard}`, 요약 키 추가. 회귀 테스트(RED→GREEN): prologue bytes·ret·주소 핀, region 계산(잘린 변·뒤집힌 좌표), 계수 노출.
+- 실행: lap992와 같은 fresh save006 scale2x pair 2회(`--hd-source scale2x --stale-mask 6-12,30-34,300-301,585-620,880`). 비교 기준 = lap992 r1(공통 덤프).
+- PASS: F2-1 HP 바(x401~494·y153~159) 279 → ≤42. F2-2 HP 밖 신규 stale 0, 전체 교집합 = 3,545 − HP 감소분. F2-3 invocations>0·mirrored_calls>0, reject 3종 보고. F2-4 안전 0·present ≥850·p95 ≤12ms·cov p50 ≥98.4%·Scale2x/V2/V2q/input/minimap PASS(V2s raw는 기존 gate, 기록만).
+- 반증: (i) invocations>0인데 HP >240(테두리 diff가 잔여를 거의 못 지움 → 순서/target 판정 재검토), (ii) 화면 대상 호출 0, (iii) 안전>0·크래시·HP 밖 신규 stale·p95>12ms.
+- 예상 잔여(H-F2 뒤, 3,545−279=3,266 안팎): 유닛 덩어리 961(`0x466B50`, `ret 0x18` 6인자)·P6 로고 2,102(명시 잔여, 가장자리 영역 813과 일부 겹침)·기타. 다음 가설은 `0x466B50`.

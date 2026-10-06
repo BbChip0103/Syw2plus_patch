@@ -1,0 +1,13 @@
+lap=926
+role=ordinary-work
+reason=HOLD_P5T_SCROLL_COST_ATTRIBUTION
+goal=G1 P5-T remains HOLD; G1 remains HOLD; no milestone approval requested or inferred
+history=docs/history/laps/20261004_lap926_work_g1_p5t_tick_bound_scroll_cost_escalate.md
+handoff=Sol/middle independently review the candidate GREEN raw, opt-in QPC sections, source GetTickCount accumulator, and bounded marker change. Decide whether these data support a specific measurable L1/L2 repair or a supported stop/alternative probe; do not lower 52.0ms, reduce mirror scope, or promote diagnostic data.
+evidence=/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261004_lap926_p5t/green/pair-result.json
+evidence_sha256=cb5606f14fbed216d5501f61a2e70ee6132c9196e5cdedaaf610f7a4a6bdcf29
+diagnostic=/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261004_lap926_p5t/diagnostic_sections/pair-result.json
+diagnostic_sha256=69462752c45f3bc41927b6e24a79737bc0685ddc2ed73da832bed66c40d843a1
+conflict=Uninstrumented GREEN measured 24/30 and 26/30 samples at 71/61ms median cadence. QPC sections cover about 1.5ms/present while old primitive_reinvoke_elapsed_ms_total reports 25.9/27.6ms/present but accumulates per-call GetTickCount millisecond deltas. Available measurements do not attribute the >52ms frame interval to L1/L2 or establish a safe repair.
+verify=Independently recompute sample tick boundaries, interval deltas, and QPC section totals from immutable raw; inspect whether marker instrumentation changed timing. Then give work one measurable repair or a bounded alternate diagnostic. Do not modify historical raw/golden/pins/thresholds.
+stop=Source/test changes and artifacts are preserved. No Bprime/C runtime accepted; no milestone closure, original/reference writes, commit, or deploy.

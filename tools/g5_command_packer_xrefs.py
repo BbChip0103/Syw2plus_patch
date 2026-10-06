@@ -16,7 +16,6 @@ scope for a decoded-immediate xref scan and are reported as a stated gap.
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass, field
 import hashlib
 import json
 from pathlib import Path
@@ -39,13 +38,6 @@ KNOWN_ORDER_FUNCTIONS = {
     "group_assign_FUN_00445D30": 0x00445D30,
     "order_consumer_FUN_0040F7D0": 0x0040F7D0,
 }
-
-
-@dataclass
-class CallSite:
-    address: int
-    pushes: list[int] = field(default_factory=list)
-    containing_window_start: int = 0
 
 
 def _sha256(path: Path) -> str:
@@ -119,7 +111,6 @@ def inventory(executable: Path) -> dict[str, Any]:
         known_function_hits = {
             name: [f"0x{a:08x}" for a in direct_calls if addr <= a < addr + 0x2000]
             for name, addr in KNOWN_ORDER_FUNCTIONS.items()
-            for addr in [addr]
         }
 
         return {

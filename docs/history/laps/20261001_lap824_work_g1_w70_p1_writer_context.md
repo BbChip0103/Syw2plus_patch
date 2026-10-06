@@ -1,0 +1,26 @@
+# 2026-10-01 | lap 824 | G1 W70 P1 writer-context attribution
+
+- 실제 provider/model/effort / 지정 역할: Codex native main 세션(세부 model ID 비노출), work tier hands-on 구현, high 추론.
+- 가설 / 사용자 관찰: 기존 P1 census는 DirectDraw 표면 크기만 기록하고 `0x403B20` 호출 문맥을 last-writer map에 보존하지 않았다. 관측 전용 context detour와 surface identity/caller 보강으로 offscreen BltFast와 terrain 후보를 같은 state/present 계보에 묶는다.
+- 예상 PASS / FAIL 조건: old bytes 일치·측정 전용·원본/fixture 불변, 3회 fresh 격리 실행 crash0/tick/cleanup PASS. DirectDraw offscreen은 destination/source/caller/state identity 재현 시 `PASS(partial)`. `0x403B20`이 primitive pixel write로 이어지면 context map nonzero, 그렇지 않으면 실제 indirect method을 기록하고 `UNKNOWN`으로 닫는다.
+- 변경 파일 / source fingerprint / 커밋(없으면 uncommitted):
+  - `tools/inmm_stub/g1_census.c` `bc1bb60f521af019d89f9a137d59e30fa7a8a37cf11712fdb9a0cbb6f80482b6`
+  - `tools/inmm_stub/g1_census.h` `15547f9581cae6c4630b0d5f5b535aa1fd5ea13e72f366158c754336308f5e71`
+  - `tools/inmm_stub/direct_draw_trace.c` `f4cabc6f5a0af749a48c8b5779e9ebf1f1ea84b52e9935a79187e411ba4132b4`
+  - `tools/g1_saved_scene_probe.py` `1b57e224a55f69c8a0b526aac7fb0ba5287ebbf3394b0f4520c9ce920540da60`
+  - `tests/test_g1_census.py` `b29dfcfcbcd13c2459147b566cccf9cfba8baf31575c918c3a6b609d0e73d815`
+  - 커밋 없음(`LOOP_ALLOW_COMMITS=0`); `_inmm.dll`은 진단 bridge 산출물.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 보호 원본 `Syw2plus/syw2plus_original.exe` SHA `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac` 불변; 후보 EXE 없음; private Wine32/Xvfb `1600x1200x24`, baseline logical 800x600, non-synthetic `save006.dat` SHA `616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064`; 활성 플레이어/군대는 save006 fixture 계약 그대로이며 숫자 확장 fixture 아님.
+- 실행 명령 / 로그 / 캡처 경로 및 해시:
+  - `python3 -m pytest -q tests/test_g1_census.py tests/test_g1_saved_scene_probe.py`: r1/r2/r3 변경 후 각 9 passed.
+  - `make -C tools/inmm_stub`: build PASS(기존 경고만, link/PE export PASS).
+  - `PYTHONPATH="$PWD" python3 tools/g1_saved_scene_probe.py --runtime-root local/runtime/g1_w70_lap824_p1_context_r{1,2,3} --artifact-root ../temp/Syw2plus_patch/g1_w70_lap824_p1_context_r{1,2,3} --census-only` (각각 새 private runtime/artifact root, 동기 완주).
+  - r1 result PASS, census raw SHA `a46e0fa4b1e5cb4e7b61ec89e0644ad27880278fdd92ecad717b5543041dafa1`, cleanup `prefix_processes_after=[]`, `game_removed=true`.
+  - r2 result PASS, census raw SHA `c7b44c0691afff462c76669d67d1a964d087be7241299a7109af36318bb19e65`, context-map SHA `6e3f4c031f1075fb3ebd2879209745bbe2385855969c0b66b1b612ff1e8b231e`, cleanup PASS.
+  - r3 result PASS, census raw SHA `6ae6befc7c645f5735b0f543f696745384abe242ffd4e0c487e30813bcb663ba`, census map SHA `7871c9b1961c11e4fee9701292be6a4757b94e98e2380dcfccf12bd341693f10`, context-map SHA `6f7ddd3a620cfc277d70aee111444b3fb33842aa65d83d2baf7be85f770bad55`, cleanup PASS.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN):
+  - DirectDraw: r2 offscreen `BltFast` 82건, r3 102건. 전부 PS35, destination `0x01E6E478` `832x600` caps2112, source `0x01E6E9D0` `800x600` caps2112, caller/return `0x00493CCB`; **PASS(partial)**.
+  - terrain: `0x00403B20` old prologue FNV `0x314926AF` active, r3 context call 27건. vtable `0x004E5300/0x004E53C0`의 `+0x30`은 전부 `0x00403C10`; context-map 64 record에서 terrain pixel 0건. `0x403C10`은 참고 disassembly상 문자열/데이터 복사 유틸리티이므로 terrain pixel writer 귀속은 **UNKNOWN(간접 copy 경로, primitive map 미포함)**. 제품 writer로 승격하지 않는다.
+  - 각 실행 present attribution은 64/64, 100%, 원본/fixture 변경 0, crash 0. 이는 PS9/primary 관측 범위의 Fast census이며 G1 완료나 HD coverage 증거가 아니다.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 기존 primitive hook은 unchanged original call; context map은 별도 파일로 보존. 사용자 승인 없음. `0x403C10` 이후 실제 pixel destination을 확인하지 못했고 GDI/terrain cache copy/HD candidate는 미검증. r1에서 surface 표본 32개가 PS9에서 소진된 harness 한계를 확인해 surface 전용 256 상한과 live descriptor probe를 추가했고 r2/r3로 수리 후 재실행했다.
+- 다음 한 가지: 다음 work는 **동일 P1 범위에서 `0x403C10` 이후 실제 destination/pixel writer를 read-only로 귀속**하거나, 해당 경로가 pixel writer가 아님을 raw/static 근거로 닫는 좁은 probe를 수행한다. 그 전에는 W70 candidate/Scale2x/GDI 확장을 시작하지 않는다.

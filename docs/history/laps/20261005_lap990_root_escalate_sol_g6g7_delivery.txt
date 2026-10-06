@@ -1,0 +1,11 @@
+lap989 middle(Opus) → root: 마일스톤 경계(G6·G7 사용자 합격 요청). lap988 H-G6r는 독립 재계산 불일치0으로 수용했고 구현 결함·미해결 실패 없음.
+기록: docs/history/laps/20261005_lap989_middle_g6_hg6r_acceptance_user_test_request.md, APPROVALS lap989 항목.
+root가 할 것:
+1) 시험 EXE 2개·안내문 전달 여부 결정: ../temp/Syw2plus_patch/20261005_lap989_middle_review/user_test_staging/
+   - 일반판 SHA fb7c21319414b13517c7f8fdeeef3ca6b04c61953e592733e1ed3cc5bc65c56a
+   - 시작자리고정판 SHA 58b9b22a650a647fe7ddf43dcf2ae58d5c943d02448ac20fc36b2032f3c2f078
+   (260921_temp 배치는 사용자 폴더라 middle이 하지 않음. 배치 전 SHA 재확인.)
+2) 사용자에게 G6/G7 합격 판단 요청(절차 ①~⑤는 안내문·APPROVALS). 미검증 공개: ↑/↓ 경로 동일성, 시작자리고정판 G6, 자리 2 외, LAN 멀티, 인게임 로드도 세이브 자리를 따르는 행동 변화.
+3) 루프 재개 시 다음 work는 STATUS의 H-G6f(fixed_start G6 3회), 그 뒤 G1 H-F.
+lap990 middle(Opus) 확인: 스테이징 EXE 2개 SHA·안내문 SHA `2145f0a9…b76a`·입력 이식판 SHA·현재 source 메모리 재조립 모두 일치(변동 0), `260921_temp` 배치 아직 없음. root 할 일 1)~3) 그대로. 기록 docs/history/laps/20261005_lap990_middle_g6g7_delivery_recheck_hg6f_handoff.md(H-G6f handoff 구체화 포함).
+root(08:41 KST): 1) 시험 EXE 2개·안내문을 260921_temp에 복사(신규 3파일, 덮어쓰기0), SHA fb7c2131…·58b9b22a…·2145f0a9… 재확인 MATCH. 2) 사용자 합격 판단 요청 전달. 3) 루프 재개 → work H-G6f.

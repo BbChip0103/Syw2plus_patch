@@ -33,6 +33,9 @@ from patches.population.fixed_supply_5000 import (  # noqa: E402
 from patches.population.full_tail_relocation_storage_layout_v1 import (  # noqa: E402
     layout as _tail_region_layout,
 )
+from patches.population.g2_esl2608_runtime_layout import (  # noqa: E402
+    ESL2608_LAYOUT,
+)
 
 ExecutableProfile: TypeAlias = tuple[str, str]
 ExecutableProfiles: TypeAlias = ExecutableProfile | tuple[ExecutableProfile, ...]
@@ -169,6 +172,13 @@ POOL_PROFILE_LAYOUTS = {
     # the other four -- unit_age/category_slot_list_a/b/active_slot_list --
     # used by the lap697 global-live cross-check below).
     "g2_supply10000_pool4092_owner500": (4093, 0x0108C000, 0x017E29F8),
+    # ESL2608 appends its storage after the versioned source sections. Keep
+    # this separate from the generic 4093-slot profile above.
+    "g2_esl2608_pool4092_owner500": (
+        ESL2608_LAYOUT.capacity,
+        ESL2608_LAYOUT.unit_pool_base,
+        ESL2608_LAYOUT.unit_existence_base,
+    ),
 }
 STOCK_POOL = (1200, 0x0066B790, 0x008990C8)
 
@@ -181,6 +191,7 @@ STOCK_POOL = (1200, 0x0066B790, 0x008990C8)
 # layout()` -- the same capacity registered above in POOL_PROFILE_LAYOUTS.
 FULL_REGION_PROFILES: dict[str, int] = {
     "g2_supply10000_pool4092_owner500": 4093,
+    "g2_esl2608_pool4092_owner500": ESL2608_LAYOUT.capacity,
 }
 
 G4_CONTROLLER_OPCODE_OFFSET = 0x0D32
@@ -202,9 +213,10 @@ class IOV(ctypes.Structure):
 
 LIBC = ctypes.CDLL(None, use_errno=True)
 LIBC.process_vm_readv.restype = ctypes.c_ssize_t
+LIBC.process_vm_writev.restype = ctypes.c_ssize_t
 
 
-def read(pid, address, size):
+def read(pid: int, address: int, size: int) -> bytes:
     buf = ctypes.create_string_buffer(size)
     n = LIBC.process_vm_readv(
         pid,
@@ -217,6 +229,24 @@ def read(pid, address, size):
     if n != size:
         raise OSError(ctypes.get_errno(), f"read {pid}:{address:x}, got {n}/{size}")
     return buf.raw
+
+
+def write(pid, address, data):
+    """Diagnostic-only write into the spawned child's memory (never an
+    attached/foreign process -- same private-Wine-session scope as ``read``,
+    used only to seed synthetic test state such as G5's stale-tail fixtures)."""
+    buf = ctypes.create_string_buffer(bytes(data), len(data))
+    n = LIBC.process_vm_writev(
+        pid,
+        ctypes.byref(IOV(ctypes.cast(buf, ctypes.c_void_p), len(data))),
+        1,
+        ctypes.byref(IOV(address, len(data))),
+        1,
+        0,
+    )
+    if n != len(data):
+        raise OSError(ctypes.get_errno(), f"write {pid}:{address:x}, wrote {n}/{len(data)}")
+    return n
 
 
 def decode_g4_groups(data: bytes) -> dict[str, object]:
@@ -344,7 +374,7 @@ def state(pid, detailed=False, profile="original"):
     return result
 
 
-def atomic_json(path, data):
+def atomic_json(path: Path, data: object) -> None:
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2))
     tmp.replace(path)

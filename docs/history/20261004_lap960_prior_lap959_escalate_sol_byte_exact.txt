@@ -1,0 +1,14 @@
+lap959 work → middle 승격 (gate 충돌 · 마일스톤 경계 아님)
+
+보존: tools/inmm_stub/g1_mirror2x.c, tests/test_g1_mirror2x.py (uncommitted, 되돌리지 않음).
+근거 기록: docs/history/laps/20261004_lap959_work_g1_tinted_offscreen_bind.md
+실행 증거: <공유temp>/20261004_lap959_work_tinted_offscreen/ (pair-result.json, analysis_lap959.json), logs/gates/lap959_tinted_r1.log
+
+수리 효과는 큼(위쪽 줄 stale 26,951→58, PS3 p50 90.42→97.21%, steady stale 42.8k→10.2k, 안전지표 전부 PASS).
+그러나 v2s_capture_gate production FAIL: single_black_blocks 1,699→2,813 > 한도 2,000 (증가분 = 새로 HD가 덮은 위쪽 줄, 모서리 Scale2x 흑색 subpixel, scale2x gate PASS).
+work는 gate 한도를 바꾸지 않았다(금지). 또한 성능 저하: PS3 present 899→788, elapsed p95 12→23ms, viewport_replays 912→3,362.
+
+middle이 확인할 것:
+1. v2s 한도(2,000)가 Scale2x 모서리 효과를 coverage 증가와 함께 세는 구조인지 독립 재계산하고, 한도 유지/재정의 중 판정(변경 시 APPROVALS 기록).
+2. 성능 저하가 허용 범위인지, 허용 밖이면 identity key 재사용 등 최소 수리 인계.
+3. minimap_diagnostic_parity HOLD(same_unit_before_after false) 원인이 타이밍 변동인지 확인.

@@ -1,0 +1,10 @@
+lap=937
+role=ordinary_middle
+reason=HOLD_POST_RELEASE_PRESENT_UNPROVEN
+G1 lap936 final raw proves selection IDs/capture-before-after equality but does not prove seq1052/1056 followed button-up: after_seq1028 was sampled before injection. Candidate binding also permits UNKNOWN present gate. Controlled pre-release-only rows reproduce helper PASS; actual runtime row ordering is UNKNOWN, not proven pre-release.
+Preserve existing source/raw/PNG; no implementation changes or milestone closure. Promoted worker must verify caller/binding defects and counterexample, then explicitly hand minimal harness repair and fresh paired execution to work tier. No extended replanning or original/golden/threshold changes.
+handoff=docs/work/active/G1_MIDDLE_W70_INPUT_CAPTURE_BOUNDARY_HOLD_LAP937.md
+history=docs/history/laps/20261004_lap937_middle_g1_input_capture_boundary_hold.md
+evidence=/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261004_lap937_middle_input_review/recalculation.json
+evidence_sha256=668093726f67c39dbe4f0723be0cb3b2e08747ff7c55f3799904e7747802e2c7
+Fresh fullFast/runtime=SKIP(user evidence-gap stop); exit0 is not verification/approval.

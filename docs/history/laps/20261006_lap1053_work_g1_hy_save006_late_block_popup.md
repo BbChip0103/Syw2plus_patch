@@ -1,0 +1,21 @@
+# 2026-10-06 | lap1053 | G1 work — H-Y save006 늦은 stale 블록 재현·위치·writer 귀속 (진단 전용)
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-sonnet-5-5` high, 실무(work). 제품 source 변경 0.
+- 가설 / 사용자 관찰: lap1052 정정 3의 save006 늦은 stale 블록(lap1051 r1 p782..834 434 px, r2 p433..474 360 px)은 (a) 반복되는 미후킹 writer의 일정 영역이거나 (b) 부하 의존 run 변형이다.
+- 예상 PASS / FAIL 조건: Y-0 안전 7종 0·cleanup·source_unchanged·pair PASS. Y-1 run별 p≥40 비0 구간 표. Y-2 bbox·run 간 교집합, 위치가 정해지면 watch pair로 마지막 writer EIP 귀속.
+- 변경 파일 / source fingerprint / 커밋: 없음(제품 source·테스트 0, uncommitted 기존 변경 그대로). 분석 스크립트는 공유 temp에만 있다.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 원본 EXE `b56986e0…8ac`, 비합성 save006 `616b7997…a064`(pair source_unchanged true 6/6). 후보 = lap1051 제품(H-X 포함) 그대로. save006 fixture, `--hd-source scale2x`.
+- 실행 명령 / 로그 / 캡처 경로 및 해시:
+  - 스크립트 `temp/Syw2plus_patch/20261006_lap1053_work_hy/run_y.sh`(pair 3회, `--stale-mask 6-12,300,420-480/3,585,620,770-850/3,880`), `run_yw.sh`(watch pair 3회, 같은 마스크 + `--layer-drift --screen-watch --drift-samples "250,224;280,221;300,222"`). 각 launch 1회, 직전 1분 load 1.7~3.8(<8, 대기 0), run 뒤 `game` 사본만 삭제.
+  - 로그 `logs/gates/lap1053_hy_s6_r{1,2,3}.log`(SHA256 앞 16자 `f3daeb2f`·`ec607e67`·`cec0bdb9`)·`lap1053_hy_w_r{1,2,3}.log`(`7b056097`·`12f5f1d5`·`7c9b8869`), exit 전부 0.
+  - 분석 `analyze_y.py`(`analysis_y.json` `7d4d934d…`·`analysis_yw.json` `e8f5473b…`), `analyze_y_attr.py`(`attr_y.json` `fd377def…`; lap1051 `analyze_x_attr.py`를 샘플 좌표만 바꿔 복제).
+- 측정값 / 판정:
+  - **Y-0 PASS:** 6 run 모두 pair PASS(9 gate), 안전 7종 0, cleanup·source_unchanged true/true, scene_equal true, p95 7/7/7(s6)·11/12/11(watch, 계측 부하), 마지막40 중앙값 0 ×6.
+  - **Y-1 재현 2/6(s6 1/3, watch 1/3):** s6 r3 p581..633(53 present) **434 px**, watch r2 p440..480(41 present) **281 px**. 나머지 4 run은 p65~70의 1 px×3만 있고 늦은 블록 0. lap1051과 합치면 4/8 run. **load 의존 아님**: 블록 run의 직전 load 2.77(s6 r3), 3.76(watch r2)로 비블록 run(1.68~3.81)과 겹침. 구간 위치(p433..474·p581..633·p782..834·p440..480)와 길이(41~53 present)가 매번 다르다 → 시각이 일정치 않은 일시 요소.
+  - **Y-2 위치:** 마스크 bbox s6 r3 프레임 585·620 모두 **y218..226 × x240..322, 434 px**(두 프레임 픽셀 단위 동일); watch r2 프레임 441..480 14장 모두 **y218..226 × x240..291, 281 px**. 높이 9행·x240에서 시작하는 같은 상자이고 폭만 다르다(텍스트 길이 차). 이 상자는 **save000의 남은 유일 stale(p298..338 팝업 상자 y218..226×x240..323, 303/412 px)과 같은 좌표다.** run 간 교집합은 구간이 달라 의미 없음(블록 run이 1개/조합).
+  - **귀속(watch r2, 샘플 (250,224)·(280,221) 각 stale present 52·55):** 블록 구간 41 present 전부 마지막 writer = EIP **`0x745699CF`**, tid **288**, 모듈 base `0x74490000`(mod 2), 스택 `0,0,0,0`, 기록 값 `val 0` — lap1022 H-B3·lap1026 H-A에서 save000 표본 A를 쓴 **`wined3d.dll` 별도 스레드와 같은 유형·같은 tid**. 나머지 11~13 present(p2..15)는 기존 `0x467692`(후크 `0x467580`, 스택 `0x419EF5`←`0x41A012`) = 이미 미러된 경로. 샘플 3(300,222)은 상자 밖이라 블록 0. 비블록 run 4개는 `0x467692` 11~15 present뿐.
+  - **상관(mirror2x_metrics 마지막 줄):** 블록 run 2개(s6 r3·watch r2)에서만 `overlay_rect_blt_keysrc_calls`=5·`mirrored_calls`=5·`heal_presents`=56/44가 0이 아니고, 블록 0인 4 run은 전부 0이다. 즉 블록 = **게임이 가끔 띄우는 팝업의 KEYSRC 확대 Blt**(lap1026 H-A가 `hook_blt` 미러+heal로 다룬 같은 경로). 같은 두 run에서만 `rect_solid_465E80_reject_target`=`reject_size`=2(비블록 0)이 함께 나온다 → 같은 팝업 생성 때 `0x465E80` 호출 2회가 미러에서 반려됐다. 반려 rect 크기·대상은 미확인(UNKNOWN).
+  - **결론: 부하 변형 아님, 미후킹 게임 함수도 아님.** 블록은 save000 팝업 상자와 동일한 팝업 KEYSRC 경로의 heal 후 잔여이고 writer는 wined3d 스레드(후킹 불가)다. 사전등록 규칙상 writer가 기후킹 경로(`hook_blt`)의 잔여라 FEASIBLE hook 후보를 새로 쓰지 않고 **HOLD로 middle에 넘긴다.** pair gate는 이 지표를 보지 않아 영향 없음(V2s·coverage 불변).
+  - 제품 회귀 단서 0: 블록이 H-V~H-X 이전·이후 어느 쪽에서 생겼는지는 팝업이 시각 비결정이라 구분 불가(H-V/H-W 제품 4 run 0은 팝업 비출현 run일 가능성, 위 상관으로 UNKNOWN→"팝업 비출현"이 가장 단순한 설명이나 직접 증명 아님). H-X 호출 0이고 source가 이번 lap 불변이라 H-X 인과는 계속 낮다.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 게임 6회 launch 외 변경 0. 전체 `make check`는 SKIP(source·테스트 불변, lap1051 full PASS 1639 유효). SAFETY/CONTEXT 결과는 STATUS에 보강. 남은 위험: 팝업 상자 잔여(save000 303/412·save006 281~434)의 heal 후 잔류 원인 — `hook_blt` KEYSRC 확대 Blt 후에도 wined3d가 매 present 상자 텍스트 줄을 `val 0`으로 다시 쓰는데 후보 미러/`g_layer_expected`가 이를 따라가지 못하는 것으로 보이며, `0x465E80` 반려 2회와의 인과는 미확정. 기술 부분 진단이며 G1 마일스톤 승인이 아니다. 독립 검수는 다음 middle.
+- 다음 한 가지: middle H-Y 검수(재계산: `analysis_y.json`·`attr_y.json`의 구간·bbox·EIP, 팝업 상관) → 그 뒤 work H-Z(팝업 상자 잔여 수리 가설 정의: `0x465E80` 반려 rect 크기/대상 로깅 + `hook_blt` heal 후 상자 텍스트 줄 wined3d 재기록의 후보 미러 정합).

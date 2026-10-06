@@ -55,7 +55,10 @@ import argparse
 import json
 import struct
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import pefile
 
 IMAGE_BASE = 0x00400000
 CONSTRUCTION_TABLE_VA = 0x004EDA24
@@ -63,7 +66,7 @@ RECORD_SIZE = 0x14
 MAX_RECORDS = 200  # generous static bound; the real table has 39
 
 
-def _va_to_file_offset(pe, va: int) -> int:
+def _va_to_file_offset(pe: pefile.PE, va: int) -> int:
     for section in pe.sections:
         start = IMAGE_BASE + int(section.VirtualAddress)
         raw_size = int(section.SizeOfRawData)

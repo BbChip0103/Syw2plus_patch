@@ -1,0 +1,10 @@
+# 2026-09-29 | lap 777 | G1 W60 menu surface-role gate
+
+- 실제 provider/model/effort / 지정 역할: Codex native work; hands-on 구현.
+- 가설 / 사용자 관찰: 메뉴 primary 1600×1200 ← backbuffer peer 1600×1200은 live caps/identity와 좌상단 논리 800×600 gate로 허용할 수 있다. mirror 실패 fallback은 원래 BltFast를 재호출하지 않아야 한다.
+- 변경 파일 / source fingerprint / 커밋: `tools/inmm_stub/g1_present_contract.h` `48628bc4…019cd`, `tools/inmm_stub/g1_mirror2x.h` `4ce978a0…1d7cb`, `tools/inmm_stub/direct_draw_trace.c` `a55fbc3d…8472dc`, `tests/test_g1_mirror2x.py` `e0b3b902…a96b5d`; 커밋 없음(LOOP_ALLOW_COMMITS=0).
+- 원본 SHA / 후보 SHA / 환경 / fixture: 보호 원본 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; PE32 bridge SHA `75afd2e96426710ccc496d157fd897db607eb70fdfe90bbe2d48e970ea39e7fa`; 새 private copy/prefix/Xvfb 1600×1200, Wine32, default two-player random, synthetic=false, gate write=false.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: targeted `pytest tests/test_g1_mirror2x.py` 11 passed; exact `make check` **1147 passed, 5 skipped**, exit 0; `bash checks/safety.sh check` `SAFETY_PASS`; run manifest `local/runtime/g1_w60_lap777_gate/20260929_213125_3324387_0/manifest.json` SHA `82c827a1…30a1fd`; raw `output/g1_presentation_trace/trace_raw.jsonl` SHA `07d0ae51be84f724969d6b0171f541872fa4f9cfbd520464c547e625426ba9a1`; evidence SHA `c4085437785ac6653684b2870ae4e8b9eb247d3e23569fdcd01f261b536e71b5`; verdict SHA `49c28951d70f4303d8dbe9d4bb08bb1ed713120b82c5b11d1a6f523575156098`.
+- 측정값 / 판정: live PS9/PS7 menu peer `variant=2`, converted 739, mirror records 740, nearest oracle 1.0, fallback attempted 0. Trace event cap overflow 2건. PS7 local lobby 진입 실패로 `tick=0`, nation/unit 0; PS5/PS3, tick≥300, off/on paired는 실행하지 않음. **`BLOCKED(runtime input/harness)`**.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: compiled table-driven gate가 offscreen 832×600, menu backbuffer, self-source/caps/xy/src rect 거부를 통과했다. Fast/safety PASS는 제품 runtime PASS가 아니며, middle 독립 raw 검수 및 입력 실패 귀속이 필요하다. S3/G1/사용자 승인은 금지.
+- 다음 한 가지: middle이 raw/evidence/inputs를 독립 대조해 PS7 입력 실패가 하네스·surface hook·게임 경계 중 어디인지 판정하고, 해결 후에만 fresh PS5/PS3와 off/on paired를 수행한다.

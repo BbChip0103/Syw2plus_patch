@@ -1,0 +1,6 @@
+lap1092 work(Sonnet): 다음 작업이 middle(Opus) 독립 검수라 work가 진행하지 않고 승격한다. 제품 변경 0.
+승격 작업자가 이어서 검증할 것(STATUS "다음 한 가지" 그대로):
+1) H-G7s 독립 재계산: 후보 SHA 4개(G6+R5 normal b582fb19…·fixed acf5bd3d…, R5만 4de640e6…·7426e555…) 재조립, cave 2개(save 96B 0x18A7D00·load 157B 0x18A7E00) capstone, 공유 temp 20261007_lap1091_g7_r5/ probe-result 15개를 새 스크립트로 재계산(W-1 vs S-1/S-2, S-5 교차, fixed_start, S-6 꼬리 없는 세이브). 기록 docs/history/laps/20261007_lap1091_work_g7_r5_save_trailer_hg7s.md.
+2) 수용 시 사용자 시험판(일반판·시작자리고정판 G6+R5) 스테이징·APPROVALS 재합격 요청.
+3) 그다음 보류한 lap1089 G1 H-ULd 검수(docs/history/laps/20261007_lap1089_work_g1_huld_diag_ct_control.md).
+work 확인: R5/probe 테스트 33 passed. 기록 docs/history/laps/20261007_lap1092_work_g7_handoff_no_middle_review.md.

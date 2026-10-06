@@ -1,0 +1,17 @@
+# 2026-10-05 | lap 991 | 목표 G6 (시작자리고정판 G6 3회, H-G6f)
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-sonnet-5-5` / high, 실무(work) 1 lap. 일반 작업자 세션, `loop/ESCALATE_SOL` 없음.
+- 가설 / 사용자 관찰: g6 probe를 `--port fixed_start`로 돌리면 시작자리고정판에서도 G6를 측정할 수 있다(FEASIBLE, lap990). 막힌 곳은 `_install`이 normal 이식판을 하드코딩한 것 하나였다. 구현 중 두 번째 막힘 발견: 고정판에서 자리 2는 시작 유닛이 맵 모서리 (1,1)에 있어 카메라가 모서리라, 기존 화면→월드 보정(screen-world calibration)이 맵 밖(0,0 clamp)으로 깨지고 fixture가 안 깔린다(`too few isolated fixture rows: 0`). 자리 0은 시작 (93,56)이라 무관.
+- 예상 PASS / FAIL 조건(사전등록, lap990 handoff): private EXE SHA = `703deaf4…`/`58b9b22a…`; fixed_start `port` seat 2 → G6-1 `[1×6]` stuck_at_one(결함 재현); `cand67` seat 2 → G6-1 `[1..6]`·G6-2 증가·G6-3 감소·G6-4 cap 50·local 2 60초; `cand67` seat 0 대조 동일 PASS. 반증: lobby-snapshot 뒤 local≠2면 BLOCKED.
+- 변경 파일 / source fingerprint / 커밋: uncommitted — `tools/g6_shift_click_probe.py`(`943218c5dd84aefa`: `PORT_EXES{normal,fixed_start}`·`_install(variant, port="normal")`·`run_probe(port=, scroll_keys=)`·`--port`·`--scroll-keys`·`parse_scroll_keys`·결과 JSON `port`; 스크롤 계획이 있을 때만 앵커를 스크롤 전에 선택하고 보정의 warm-up drag 생략, 기본 동작 불변)·`tests/test_g6_shift_click_probe.py`(`09955446ae20c9de`: 12→15개, RED 2 failed → GREEN, 스크롤 파싱 테스트 포함). 제품 patch/bridge/EXE 불변. g7 probe는 손대지 않음(자체 `PORT_EXES` 중복 유지).
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 입력 이식판 fixed_start `703deaf4c07b4497…`(`260921_temp`, read-only 해시 MATCH). cand67 `58b9b22a…`. 격리 private game/prefix/Xvfb 1600×1200, 실행 뒤 game 사본 삭제(`game_removed` true, prefix 프로세스 0). fixture = engine-seeded op5 synthetic 유닛(owner = local), 자리 2는 `--scroll-keys Down:2.0`으로 카메라를 모서리에서 내린 뒤 보정.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `logs/gates/lap991-g6f-*.sh/.out/.exit`; artifact `../temp/Syw2plus_patch/20261005_lap991_g6f/{port2,cand67_s2,cand67_s0,scroll1,scrollb1,scrollb2,cand67_s2_scroll}`. 정식 증거 probe-result SHA256 앞16자: port seat2 `scrollb2` `74e78f511e8cf147`·cand67 seat2 `cand67_s2_scroll` `646d26e76fd73871`·cand67 seat0 `cand67_s0` `3ba0659c354792dc`.
+- 측정값 / 판정 (PASS, FAIL, SKIP, UNKNOWN):
+  - 첫 시도(스크롤 없음) port·cand67 seat 2: local 2 도달했으나 fixture 0 → 하네스 결함(보정 clamp), 제품 결과 아님. `scroll1`(Down:3, 앵커 미선택): 앵커가 화면을 벗어나 보정 singular. `scrollb1`(Down:1.2): 동시 2 실행 중 ps7 timeout(병렬 기동 부하, 이 실행만 재현 안 함, 정식 증거 아님). 이 4건은 FAIL로 보존.
+  - **fixed_start `port` seat 2 (`scrollb2`) COMPLETE**: local_at_ps3 2·60초 locals_seen `[2]`·G6-1 `[1,1,1,1,1,1]` stuck_at_one(결함 재현 ✓)·G6-2 1→8·G6-3 8→7·G6-4 cap 미충족(결함 쪽)·isolated 9·EXE `703deaf4…`.
+  - **fixed_start `cand67` seat 2 (`cand67_s2_scroll`) COMPLETE**: local 2·60초 `[2]`·G6-1 `[1,2,3,4,5,6]`·G6-2 grows 1→8·G6-3 8→7(victim 제거)·G6-4 cap PASS·isolated 9·EXE `58b9b22a…`.
+  - **fixed_start `cand67` seat 0 (`cand67_s0`) COMPLETE** (스크롤 없음, 시작 (93,56)): local 0·G6-1 `[1..6]`·G6-2 1→3·G6-3 3→2·G6-4 PASS·isolated 10.
+  - 사전등록 대비 차이: seat 2의 G6-2/3 숫자가 1→3/3→2가 아니라 1→8/8→7이다. 고정판 자리 2의 가시 영역이 작아 드래그 사각형이 다른 fixture 유닛 4기를 같이 잡은 하네스 지오메트리 때문이며 결함 쪽 `port`도 같은 1→8/8→7이다(G6-2/3 경로는 G6 패치와 무관한 비교 대조). 판정 플래그(grows/removes)는 모두 의도대로이며 숫자 불일치를 PASS로 숨기지 않고 기록한다.
+  - 판정: **H-G6f PASS(partial, 기술)**. G6-1 결함 재현→수리와 G6-4 cap 50이 시작자리고정판 자리 2에서 확인됨.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 사용자 합격 대기(APPROVALS lap989) 유지. 사용자 ↑/↓ 경로 동일성(lap981 질문)·자리 2 외 자리·LAN 멀티 UNKNOWN. 사람 플레이 미실행. 다음 middle이 위 3 probe-result를 독립 재계산해야 수용된다(자기 승인 아님). 독립 안전: 원본/참고 쓰기 0, 다른 프로세스 접촉 0.
+- 다음 한 가지: 루프의 G6/G7 기술 증거는 충분하므로 G1 H-F(`0x466070` 클립 rect fill diff 미러, STATUS 보류 항목)로 복귀. middle은 이 회차 probe-result 3개 독립 재계산.

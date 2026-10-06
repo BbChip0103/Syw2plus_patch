@@ -47,7 +47,6 @@ MODE = os.environ["G5_STACK_BUILDER_TRACE_MODE"]
 CONTROL = os.environ["G5_STACK_BUILDER_TRACE_CONTROL"]
 DEADLINE = time.time() + 60
 STAGING_DEST = 0x00893130
-MAX_SAMPLES = 30
 
 armed_path = os.path.join(CONTROL, "armed-%s.json" % MODE)
 stop_path = os.path.join(CONTROL, "stop.flag")
@@ -56,16 +55,16 @@ events_path = os.path.join(CONTROL, "builder-events.jsonl")
 summary_path = os.path.join(CONTROL, "trace-summary-%s.json" % MODE)
 
 
-def read_u32(address):
+def read_u32(address: int) -> int:
     return struct.unpack("<I", bytes(gdb.selected_inferior().read_memory(address, 4)))[0]
 
 
-def read_u16(address):
+def read_u16(address: int) -> int:
     return struct.unpack("<H", bytes(gdb.selected_inferior().read_memory(address, 2)))[0]
 
 
-def frame_registers():
-    values = {}
+def frame_registers() -> 'dict[str, str | None]':
+    values: 'dict[str, str | None]' = {}
     for name in ("eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp"):
         try:
             values[name] = hex(int(gdb.selected_frame().read_register(name)) & 0xFFFFFFFF)
@@ -81,7 +80,7 @@ def caller_backtrace():
         return []
 
 
-def esp_word():
+def esp_word() -> 'str | None':
     try:
         esp = int(gdb.selected_frame().read_register("esp")) & 0xFFFFFFFF
         return hex(read_u32(esp))
@@ -89,8 +88,8 @@ def esp_word():
         return None
 
 
-def log(event, **fields):
-    record = {"event": event, "wall_time": time.time()}
+def log(event: str, **fields: object) -> None:
+    record: 'dict[str, object]' = {"event": event, "wall_time": time.time()}
     record.update(fields)
     with open(events_path, "a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")

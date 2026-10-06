@@ -637,6 +637,27 @@ def test_g1_presentation_cli_forwards_native_2x_blit_opt_in(
     assert captured["dxwrapper_2x"] is False
 
 
+def test_g1_presentation_cli_forwards_paired_fixture_controls(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+):
+    captured: dict[str, object] = {}
+
+    def fake_trace(manifest: Path, **kwargs: object) -> dict[str, object]:
+        captured["manifest"] = manifest
+        captured.update(kwargs)
+        return {"overall": "BLOCKED"}
+
+    monkeypatch.setattr(runtime_env, "g1_presentation_trace", fake_trace)
+    result = runtime_env.runtime_main([
+        "g1-presentation-trace", "--manifest", str(tmp_path / "manifest.json"),
+        "--g1-input-sequence", "--g1-minimap-gate", "--g1-type49-fixture",
+    ])
+    assert result == 0
+    assert captured["g1_input_sequence"] is True
+    assert captured["g1_minimap_gate"] is True
+    assert captured["g1_type49_fixture"] is True
+
+
 def test_g1_presentation_cli_forwards_native_2x_stretch_opt_in(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ):
@@ -1682,7 +1703,7 @@ def test_g1_command_cell_reader_fails_closed_when_49b6d0_predicate_is_false(
     assert caught.value.primary_snapshot["before"]["blocks"]["A6"]["values"][-1]["raw_value"] == 0
 
 
-def test_g1_production_click_stays_closed_for_eligible_raw_snapshot():
+def test_g1_production_click_stays_closed_without_raw_primary_action():
     read = _command_cell_reader_fixture()
     production_cell = runtime_env._read_g1_command_cell_provenance(
         read, runtime_env.ORIGINAL_SHA256
@@ -1696,8 +1717,50 @@ def test_g1_production_click_stays_closed_for_eligible_raw_snapshot():
     assert calls == []
     assert blocked == {
         "status": "BLOCKED",
-        "reason": "production click blocked: primary field/action and worker mapping are not approved",
+        "reason": "production click blocked: raw primary action is unavailable",
     }
+
+
+def test_g1_production_provenance_and_click_fix_primary_slot_mapping():
+    primary = tuple(
+        (1,) + (0,) * (runtime_env.G1_PRIMARY_COMMAND_TABLE_WORD_COUNT - 1)
+        if name == runtime_env.G1_PRODUCTION_PRIMARY_BLOCK
+        else (0,) * runtime_env.G1_PRIMARY_COMMAND_TABLE_WORD_COUNT
+        for name, _offset in runtime_env.G1_PRIMARY_COMMAND_TABLE_BLOCKS
+    )
+    production_cell = runtime_env._g1_read_production_cell_provenance(
+        _command_cell_reader_fixture(primary_values=primary), runtime_env.ORIGINAL_SHA256,
+    )
+    calls: list[str] = []
+
+    authorized = runtime_env._g1_production_click_if_authorized(
+        production_cell, lambda: calls.append("mouse subprocess")
+    )
+
+    assert calls == ["mouse subprocess"]
+    assert authorized == {
+        "status": "AUTHORIZED", "action": "primary_A6[0]",
+    }
+    assert production_cell["raw_primary_action"] == {
+        "block": "A6", "index": 0, "raw_value": 1,
+    }
+
+
+def test_g1_production_effect_requires_native_worker_queue_and_reservation():
+    before = {
+        "players": [{"owner": 0, "reserved": 0}],
+        "units": [{"slot": 1199, "owner": 0, "type": 49, "command": 1,
+                    "production_type": 0}],
+    }
+    after = {
+        "players": [{"owner": 0, "reserved": 10}],
+        "units": [{"slot": 1199, "owner": 0, "type": 49, "command": 15,
+                    "production_type": 7}],
+    }
+
+    assert runtime_env._g1_production_effect(before, after, selected_slot=1199)
+    after["players"][0]["reserved"] = 0
+    assert not runtime_env._g1_production_effect(before, after, selected_slot=1199)
 
 
 def test_g1_input_geometry_does_not_pre_scale_logical_coordinates():
@@ -1755,6 +1818,31 @@ def test_g1_scene_snapshot_records_approved_scene_identity():
     assert snapshot["world_bounds"]["width"] == 96
     assert snapshot["world_bounds"]["height"] == 88
     assert snapshot["tick"] == 123
+
+
+def test_g1_type49_fixture_contract_is_explicit_and_fail_closed():
+    scene = {"tick": 4}
+    passing = {
+        "owners": {"0": {"nation": 1}},
+        "owner0_hq_type": {"observed_owner0_types": [7, 49]},
+    }
+    assert runtime_env._g1_type49_fixture_contract(scene, passing) == {
+        "name": "type49_hq_nation1_fixture",
+        "expected_owner0_nation": 1,
+        "expected_selected_type": 49,
+        "observed_owner0_nation": 1,
+        "observed_owner0_types": [7, 49],
+        "scene_tick": 4,
+        "status": "PASS",
+        "reason": None,
+    }
+    failing = {
+        "owners": {"0": {"nation": 3}},
+        "owner0_hq_type": {"observed_owner0_types": [7, 49]},
+    }
+    result = runtime_env._g1_type49_fixture_contract(scene, failing)
+    assert result["status"] == "BLOCKED"
+    assert result["reason"] == "owner0 nation is not fixture nation1"
 
 
 def _run_g1_selection_sequence_with_injected_reader(

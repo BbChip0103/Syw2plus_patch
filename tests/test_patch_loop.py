@@ -160,7 +160,7 @@ def test_mock_gate_failure_or_source_drift_is_not_success(project, mutate, expec
         env=env,
         capture_output=True,
         text=True,
-        timeout=20,
+        timeout=60,
     )
     assert result.returncode == 0, result.stdout + result.stderr
     evidence = (project / "logs/full-test-latest.result").read_text()

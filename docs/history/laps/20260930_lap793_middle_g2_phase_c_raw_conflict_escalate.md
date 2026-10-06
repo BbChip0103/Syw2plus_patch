@@ -1,0 +1,12 @@
+# 2026-09-30 | lap 793 | G2 ESL2608 Phase C raw 독립 검수
+
+- 실제 provider/model/effort / 지정 역할: Codex `gpt-5.6-sol` / high / middle 진단·확인. 게임 코드·EXE·probe 구현과 실제 게임 실행은 하지 않았다.
+- 목표 / 가설: lap792의 `BLOCKED(harness)` 근거를 네 raw에서 독립 재계산하고, 집결·장수 UI 계약 미확정이 제품 결함과 분리됐는지 및 work handoff가 실행 가능한지 판정한다.
+- 예상 PASS / FAIL 조건: 네 raw가 기록대로 worker 생산 `2→3`을 모두 보이고 rally·hero만 실패하면 blocker를 수용한다. raw와 기록 또는 raw 생성 source identity가 실질적으로 어긋나면 PASS/재실행으로 넘기지 않고 `loop/ESCALATE_SOL`을 갱신한다.
+- 변경 파일 / source fingerprint / 커밋: 이 lap 기록, `docs/STATUS.md`, `loop/ESCALATE_SOL`, lap792 escalation archive만 문서 변경. 게임/패처/하네스/EXE 변경·커밋 없음. 시작 시 runtime fingerprint는 `320f02c3a24a3105d97c6a4f7ffb285088c43fb2`; 최종 Fast fingerprint는 STATUS에만 기록한다.
+- 원본·후보 SHA / 환경 / fixture: normal baseline/private EXE `cade60b2451519ec4e305d91279b1c377cf797c813a939c5b54c2e9b30b176a3`, candidate pin `83c7df80a3273d95d58e7a493866bbb40ad705d10120bc05db660400961fad60`; lap792 fresh Wine/Xvfb/ESL2608 overlay, synthetic spawn 없음. fixed_start와 candidate Phase C는 미실행이다.
+- 독립 대조 명령 / raw: `jq`로 `/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/g2_esl2608_lap792/normal_baseline*/probe-result.json` 네 파일의 provenance, stage, checks, source/cleanup을 재계산하고 `sha256sum`·`stat`으로 해시와 생성 시각을 확인했다. raw SHA는 `a8acdf47…9bf71`, `e21815a4…a752`, `a6b75fa3…e7c`, `9f713f04…579a`로 lap792 기록과 일치한다.
+- 측정값 / 판정: **HOLD / ESCALATE(evidence-source conflict).** 첫 raw `a8ac…`는 worker order(쌀 -800, reserved +10)는 있으나 `count 2→2`, `worker_produced=false`, hero stage 없음이며 rally true도 `hq_before/hq_after`가 없는 구형 판정이다. 후속 세 raw만 worker `2→3`, 신규 type7/7/21·cmd3을 보이고 rally 필드 불변, hero `0→0`이다. 따라서 lap792/STATUS의 “fresh 4회 모두 count 2→3”은 raw와 실질적으로 어긋난다. 현 probe mtime `06:12:16`은 마지막 raw `05:55:45` 뒤라 현재 source를 네 raw의 동일 source로 간주할 수도 없다.
+- 수용 가능한 근거 경계: 후속 3개 raw는 worker UI 생산 완료와 rally/hero 미성립을 지지하고, 네 raw 모두 baseline/private SHA 일치·`source_data_unchanged=true`·game removed·prefix 0이다. 그러나 첫 raw를 4번째 완료 반복으로 세거나 현 source의 테스트 통과를 과거 raw 생성 계약의 증명으로 쓰지 않는다. 제품 EXE 결함, Phase C paired PASS, 배포·사용자 승인으로 승격하지 않는다.
+- 회귀 / 미검증: Phase A/B의 기존 4-way PASS는 영향받지 않는다. rally write xref·명령 ID·버튼/단축키/마우스 조건, hero command-panel enable 조건, normal/fixed_start × baseline/candidate Phase C, DxWnd·저장/부하·멀티는 미검증이다.
+- 다음 한 가지: 승격 작업자가 raw별 probe revision/source identity를 복원하거나 첫 raw를 명시적 사전수리 실패로 제외하는 판정을 남긴다. 그 뒤 work tier는 baseline EXE의 `+0x654/+0x656` write xref와 hero 버튼 활성 경로를 먼저 특정하고, 고정된 현 스키마로 normal baseline fresh 1회를 실행해 worker/rally/hero 계약을 동시에 검증한다. 그 전에는 4-way Phase C·배포·G1 재개 금지.

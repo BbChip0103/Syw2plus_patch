@@ -178,6 +178,7 @@ G1_SELECTOR_STATE_ADDRESSES: dict[str, int] = {
     "solo": 0x0106A86C,
 }
 G1_COMMITTED_MODE_ADDRESS = 0x004ED848
+G1_MINIMAP_INPUT_GATE_ADDRESS = 0x0097597C
 G1_LOCAL_PLAYER_INDEX_ADDRESS = 0x00B63FC4
 G1_READY_STATE_BASE_ADDRESS = 0x00632CF0
 G1_LOCAL_PLAYER_RANGE = range(8)
@@ -214,6 +215,13 @@ G1_COMMAND_CELL_POOL_READ_SIZE = (
 )
 G1_COMMAND_CELL_READ_SIZE = 0x5C
 G1_COMMAND_CELL_TARGET = (670, 490)
+G1_PRODUCTION_PRIMARY_BLOCK = "A6"
+G1_PRODUCTION_PRIMARY_INDEX = 0
+G1_PRODUCTION_PRIMARY_ACTION = 1
+G1_PRODUCTION_WORKER_TYPE = 7
+G1_PRODUCTION_COMMAND = 15
+G1_PRODUCTION_RESERVED_COST = 10
+G1_PRODUCTION_STAGE_BUDGET = 5.0
 G1_COMMAND_CELL_GROUPS = (2, 3, 4, 5)
 G1_COMMAND_CELL_DIAGNOSTIC_ATTEMPTS = 16
 G1_COMMAND_CELL_ACTIVE_OFFSET = 0x00
@@ -1921,15 +1929,102 @@ def _g1_primary_command_table_values(snapshot: Mapping[str, Any]) -> tuple[Any, 
 
 
 def _g1_production_click_if_authorized(
-    _production_cell: Mapping[str, Any], _click: Callable[[], None]
+    production_cell: Mapping[str, Any], click: Callable[[], None]
 ) -> dict[str, str]:
-    """Keep the unresolved primary/action mapping from authorizing a mouse click."""
+    """Authorize only the observed raw primary action.
 
-    del _production_cell, _click
+    The action's worker/command/cost meaning must come from the post-click
+    game state.  Synthesizing those fields here would make the effect check
+    circular, especially when the random scene selected a non-HQ unit.
+    """
+
+    primary = production_cell.get("raw_primary_action")
+    if not isinstance(primary, Mapping):
+        return {
+            "status": "BLOCKED",
+            "reason": "production click blocked: raw primary action is unavailable",
+        }
+    if (
+        primary.get("block") != G1_PRODUCTION_PRIMARY_BLOCK
+        or primary.get("index") != G1_PRODUCTION_PRIMARY_INDEX
+        or primary.get("raw_value") != G1_PRODUCTION_PRIMARY_ACTION
+    ):
+        return {
+            "status": "BLOCKED",
+            "reason": "production click blocked: raw primary action mismatch",
+        }
+    click()
     return {
-        "status": "BLOCKED",
-        "reason": "production click blocked: primary field/action and worker mapping are not approved",
+        "status": "AUTHORIZED",
+        "action": "primary_A6[0]",
     }
+
+
+def _g1_read_production_cell_provenance(
+    read_memory: Callable[[int, int], bytes], executable_sha256: str,
+) -> dict[str, Any]:
+    """Read the primary action without assigning its semantic effect."""
+
+    if executable_sha256 != ORIGINAL_SHA256:
+        raise RuntimeSafetyError("production-cell reader refused unexpected executable SHA-256")
+    identity = _read_g1_command_selection_identity(read_memory, selection_count=1)
+    primary_before = _read_g1_primary_command_table(read_memory)
+    primary_after = _read_g1_primary_command_table(read_memory)
+    if _g1_primary_command_table_values(primary_before) != _g1_primary_command_table_values(primary_after):
+        raise RuntimeSafetyError("primary production table changed during provenance read")
+    block = primary_before["blocks"][G1_PRODUCTION_PRIMARY_BLOCK]
+    raw_value = block["values"][G1_PRODUCTION_PRIMARY_INDEX]["raw_value"]
+    if raw_value != G1_PRODUCTION_PRIMARY_ACTION:
+        raise RuntimeSafetyError(
+            f"primary production action mismatch: expected {G1_PRODUCTION_PRIMARY_ACTION}, got {raw_value}"
+        )
+    return {
+        "selection": identity["selection"],
+        "unit": identity["unit"],
+        "primary_command_table": {"before": primary_before, "after": primary_after, "stable": True},
+        "raw_primary_action": {
+            "block": G1_PRODUCTION_PRIMARY_BLOCK,
+            "index": G1_PRODUCTION_PRIMARY_INDEX,
+            "raw_value": raw_value,
+        },
+        "executable_sha256": executable_sha256,
+    }
+
+
+def _g1_production_effect(
+    before: Mapping[str, Any], after: Mapping[str, Any], *, selected_slot: int,
+) -> bool:
+    """Require the native HQ queue witness, not a ledger-only or synthetic change."""
+
+    before_players = {
+        item.get("owner"): item for item in before.get("players", [])
+        if isinstance(item, Mapping)
+    }
+    after_players = {
+        item.get("owner"): item for item in after.get("players", [])
+        if isinstance(item, Mapping)
+    }
+    before_unit = next(
+        (item for item in before.get("units", [])
+         if isinstance(item, Mapping) and item.get("slot") == selected_slot), None,
+    )
+    after_unit = next(
+        (item for item in after.get("units", [])
+         if isinstance(item, Mapping) and item.get("slot") == selected_slot), None,
+    )
+    if not isinstance(before_unit, Mapping) or not isinstance(after_unit, Mapping):
+        return False
+    owner = after_unit.get("owner")
+    before_player = before_players.get(owner)
+    after_player = after_players.get(owner)
+    return (
+        after_unit.get("type") == before_unit.get("type")
+        and after_unit.get("command") == G1_PRODUCTION_COMMAND
+        and after_unit.get("production_type") == G1_PRODUCTION_WORKER_TYPE
+        and isinstance(before_player, Mapping)
+        and isinstance(after_player, Mapping)
+        and after_player.get("reserved") == before_player.get("reserved", 0) + G1_PRODUCTION_RESERVED_COST
+    )
 
 
 def _read_g1_selection_count(read_memory: Callable[[int, int], bytes]) -> int:
@@ -2328,13 +2423,14 @@ def _g1_record_selector_input(
     inputs: list[dict[str, Any]], *, tag: str, x: int, y: int,
     content_crop: tuple[int, int, int, int], scale: tuple[float, float],
     before: object, expected: str, after: object, actual: str, result: str,
-    flush: Callable[[], None],
+    flush: Callable[[], None], extra: Mapping[str, object] | None = None,
 ) -> dict[str, Any]:
     """Record one selector-flow input through the shared schema and flush it."""
 
     entry = _g1_record_input(
         inputs, tag=tag, x=x, y=y, content_crop=content_crop, scale=scale,
         before=before, expected=expected, after=after, actual=actual, result=result,
+        extra=extra,
     )
     flush()
     return entry
@@ -2766,6 +2862,38 @@ def _g1_scene_snapshot(
     }
 
 
+def _g1_type49_fixture_contract(
+    scene_state: Mapping[str, Any], scene_snapshot: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Validate the explicit type49/nation1 fixture without universalizing type49.
+
+    Type 49 is fixture-specific, not an HQ discriminator.  This contract is
+    therefore opt-in and records the observed scene facts; it never changes
+    the ordinary scene snapshot or production semantics.
+    """
+
+    owners = scene_snapshot.get("owners")
+    owner0 = owners.get("0") if isinstance(owners, Mapping) else None
+    owner0_nation = owner0.get("nation") if isinstance(owner0, Mapping) else None
+    hq_type = scene_snapshot.get("owner0_hq_type")
+    observed_types = hq_type.get("observed_owner0_types") if isinstance(hq_type, Mapping) else None
+    contract = {
+        "name": "type49_hq_nation1_fixture",
+        "expected_owner0_nation": 1,
+        "expected_selected_type": 49,
+        "observed_owner0_nation": owner0_nation,
+        "observed_owner0_types": list(observed_types) if isinstance(observed_types, list) else None,
+        "scene_tick": scene_state.get("tick"),
+        "status": "PASS",
+        "reason": None,
+    }
+    if owner0_nation != 1:
+        contract.update({"status": "BLOCKED", "reason": "owner0 nation is not fixture nation1"})
+    elif not isinstance(observed_types, list) or 49 not in observed_types:
+        contract.update({"status": "BLOCKED", "reason": "owner0 observed unit types do not include fixture type49"})
+    return contract
+
+
 def _g1_flush_input_stage(directory: Path, evidence: dict[str, Any], inputs: list[dict[str, Any]]) -> None:
     """Persist each stage before any later input or teardown can block the run."""
 
@@ -2806,10 +2934,14 @@ def _g1_run_input_sequence(
     read_selection: Callable[[], dict[str, Any]],
     read_camera: Callable[[], list[int]],
     wait: Callable[..., dict[str, Any]],
-    click: Callable[[int, int], None], drag: Callable[[int, int, int, int], None],
+    click: Callable[[int, int], Mapping[str, Any] | None],
+    drag: Callable[[int, int, int, int], Mapping[str, Any] | None],
     read_production_cell: Callable[[], Mapping[str, Any]],
     flush: Callable[[], None], started: float, timeout: float,
     phase_metrics: dict[str, Any] | None = None,
+    minimap_point: tuple[int, int] = (150, 520),
+    require_tick_boundary: bool = False,
+    required_selected_type: int | None = None,
 ) -> dict[str, Any]:
     """Run the shared PS3 input stages for baseline and opt-in candidate runs."""
 
@@ -2916,7 +3048,7 @@ def _g1_run_input_sequence(
         )
         raise
     selection_png_before = capture("selection_before")
-    click(410, 270)
+    selection_delivery = click(410, 270)
     try:
         selected_after = stage_wait(
             selection_stage, selection_stage_started, lambda _detailed: read_selection(),
@@ -2936,19 +3068,30 @@ def _g1_run_input_sequence(
     selected_after_camera = read_camera()
     selection_png_after = phase_capture("selection_after")
     selected_pass = selected_before.get("count") == 0 and selected_after.get("count", 0) >= 1
+    if required_selected_type is not None:
+        selected_pass = selected_pass and selected_after.get("selected_type") == required_selected_type
+    selection_expected = "selection count 0->>=1; owner0 HQ visible"
+    if required_selected_type is not None:
+        selection_expected += f"; fixture selected_type={required_selected_type}"
     record(
         selection_stage, "unit_select", 410, 270,
         {"ps": selection_before_runtime.get("ps"), "tick": selection_before_runtime.get("tick"),
          "selection": selected_before, "selection_count": selected_before.get("count"),
          "camera": selection_before_camera, "screenshot": selection_png_before},
-        "selection count 0->>=1; owner0 HQ visible",
+        selection_expected,
         {"ps": selected_after_runtime.get("ps"), "tick": selected_after_runtime.get("tick"),
          "selection": selected_after, "selection_count": selected_after.get("count"),
          "camera": selected_after_camera, "screenshot": selection_png_after},
         f"count {selected_before.get('count')}->{selected_after.get('count')}; first={selected_after.get('first_slot')}",
         "PASS" if selected_pass else "FAIL",
+        {"input_delivery": selection_delivery} if selection_delivery is not None else None,
     )
     if not selected_pass:
+        if required_selected_type is not None and selected_after.get("selected_type") != required_selected_type:
+            raise RuntimeSafetyError(
+                "unit selection did not meet the type49 fixture contract: "
+                f"observed selected_type={selected_after.get('selected_type')!r}"
+            )
         raise RuntimeSafetyError("unit selection did not meet the fixed 0->>=1 expectation")
 
     production_before_state = game_state()
@@ -2981,7 +3124,7 @@ def _g1_run_input_sequence(
             production_cell = _g1_measure_phase_item(
                 phase_metrics, "production_provenance", read_production_cell,
             )
-    except _CommandCellSnapshotError as exc:
+    except (OSError, RuntimeSafetyError, ValueError, struct.error) as exc:
         # Provenance is diagnostic only. Keep production fail-closed, but do not
         # let an expected/incomplete command-cell branch suppress later inputs.
         diagnostic_evidence: dict[str, Any] = {}
@@ -2994,26 +3137,106 @@ def _g1_run_input_sequence(
             "primary_command_table": diagnostic_evidence.get("primary_command_table"),
         }
         production_cell = {"status": "UNAVAILABLE", **production_provenance_fields}
-    blocked = _g1_production_click_if_authorized(production_cell, lambda: None)
-    reason = blocked["reason"]
-    record(
-        None, "production", 670, 490,
-        {"ps": production_before_state.get("ps"), "tick": production_before_state.get("tick"),
-         "state": production_before_state, "selection": production_before_selection,
-         "selection_count": production_before_selection.get("count"),
-         "camera": production_before_camera, "screenshot": production_before_png},
-        "production click remains fail-closed; no effect wait is entered",
-        {"ps": production_before_state.get("ps"), "tick": production_before_state.get("tick"),
-         "state": production_before_state, "selection": production_before_selection,
-         "selection_count": production_before_selection.get("count"),
-         "camera": production_before_camera, "status": "BLOCKED", "waited": False},
-        reason, "BLOCKED", {
-            "waited": False, "blocked_reason": reason,
-            **production_provenance_fields,
-            **({"selection_read_failure": production_selection_read_failure}
-               if production_selection_read_failure is not None else {}),
-        },
+    selected_slot = production_before_selection.get("selected_slot")
+    production_observation: dict[str, Any] = {}
+    production_delivery: Mapping[str, Any] | None = None
+
+    def deliver_production_click() -> None:
+        nonlocal production_delivery
+        production_delivery = click(*G1_COMMAND_CELL_TARGET)
+
+    production_click = _g1_production_click_if_authorized(
+        production_cell, deliver_production_click
     )
+    if production_click["status"] == "AUTHORIZED" and isinstance(selected_slot, int):
+        production_stage_started = time.monotonic()
+        try:
+            production_after_state = wait(  # type: ignore[call-arg]
+                lambda _detailed: game_state(),
+                lambda item: _g1_production_effect(
+                    production_before_state, item, selected_slot=selected_slot,
+                ),
+                "HQ production click did not queue worker type 7",
+                stage="production", stage_budget=G1_PRODUCTION_STAGE_BUDGET,
+                stage_started=production_stage_started,
+                wait_observation=production_observation,
+            )
+        except _G1WaitTimeout as exc:
+            record(
+                None, "production", *G1_COMMAND_CELL_TARGET,
+                {"ps": production_before_state.get("ps"), "tick": production_before_state.get("tick"),
+                 "state": production_before_state, "selection": production_before_selection,
+                 "selection_count": production_before_selection.get("count"),
+                 "camera": production_before_camera, "screenshot": production_before_png},
+                "selected HQ queues native worker type 7",
+                {"ps": production_before_state.get("ps"), "tick": exc.last.get("tick")
+                 if isinstance(exc.last, Mapping) else None,
+                 "state": exc.last, "selection": production_before_selection,
+                 "selection_count": production_before_selection.get("count"),
+                 "camera": production_before_camera, "status": "UNKNOWN", "waited": True},
+                f"wait timeout: {exc.classification}", "UNKNOWN", {
+                    "input_delivery": {"authorization": production_click, "delivery": production_delivery},
+                    "wait_observation": exc.observation,
+                    "raw_primary_action": production_cell.get("raw_primary_action"),
+                    "primary_command_table": production_cell.get("primary_command_table"),
+                    "timeout_cause": exc.classification,
+                },
+            )
+            production_after_state = None
+        if production_after_state is None:
+            pass
+        else:
+            production_after_selection = _g1_read_selection_stage(
+                read_selection, stage="production", read_point="after_production",
+                started=started, timeout=timeout,
+            )
+            production_after_camera = read_camera()
+            production_after_png = phase_capture("production_after")
+            production_pass = _g1_production_effect(
+                production_before_state, production_after_state, selected_slot=selected_slot,
+            )
+            record(
+                None, "production", *G1_COMMAND_CELL_TARGET,
+                {"ps": production_before_state.get("ps"), "tick": production_before_state.get("tick"),
+                 "state": production_before_state, "selection": production_before_selection,
+                 "selection_count": production_before_selection.get("count"),
+                 "camera": production_before_camera, "screenshot": production_before_png},
+                "selected HQ queues native worker type 7",
+                {"ps": production_after_state.get("ps"), "tick": production_after_state.get("tick"),
+                 "state": production_after_state, "selection": production_after_selection,
+                 "selection_count": production_after_selection.get("count"),
+                 "camera": production_after_camera, "screenshot": production_after_png,
+                 "status": "PASS" if production_pass else "FAIL", "waited": True},
+                f"worker type {G1_PRODUCTION_WORKER_TYPE}, command {G1_PRODUCTION_COMMAND}, "
+                f"reserved +{G1_PRODUCTION_RESERVED_COST}",
+                "PASS" if production_pass else "FAIL",
+                {"input_delivery": {"authorization": production_click, "delivery": production_delivery},
+                 "wait_observation": production_observation,
+                 "raw_primary_action": production_cell.get("raw_primary_action"),
+                 "primary_command_table": production_cell.get("primary_command_table"),
+                 **({"selection_read_failure": production_selection_read_failure}
+                    if production_selection_read_failure is not None else {})},
+            )
+    else:
+        blocked_reason = production_click["reason"]
+        record(
+            None, "production", *G1_COMMAND_CELL_TARGET,
+            {"ps": production_before_state.get("ps"), "tick": production_before_state.get("tick"),
+             "state": production_before_state, "selection": production_before_selection,
+             "selection_count": production_before_selection.get("count"),
+             "camera": production_before_camera, "screenshot": production_before_png},
+            "selected HQ queues native worker type 7",
+            {"ps": production_before_state.get("ps"), "tick": production_before_state.get("tick"),
+             "state": production_before_state, "selection": production_before_selection,
+             "selection_count": production_before_selection.get("count"),
+             "camera": production_before_camera, "status": "BLOCKED", "waited": False},
+            blocked_reason, "BLOCKED", {
+                "waited": False, "blocked_reason": blocked_reason,
+                **production_provenance_fields,
+                **({"selection_read_failure": production_selection_read_failure}
+                   if production_selection_read_failure is not None else {}),
+            },
+        )
 
     drag_stage, drag_stage_started, drag_before_runtime = begin_stage("drag_select")
     drag_before_camera = read_camera()
@@ -3034,7 +3257,7 @@ def _g1_run_input_sequence(
         )
         raise
     drag_png_before = capture("drag_before")
-    drag(350, 180, 550, 350)
+    drag_delivery = drag(350, 180, 550, 350)
     drag_wait_observation: dict[str, Any] = {}
     try:
         drag_after = stage_wait(
@@ -3090,11 +3313,13 @@ def _g1_run_input_sequence(
         f"identity {drag_before.get('selected_slot')}/{drag_before.get('selected_type')}->"
         f"{drag_after.get('selected_slot')}/{drag_after.get('selected_type')}",
         "PASS" if drag_pass else "FAIL",
+        {"input_delivery": drag_delivery} if drag_delivery is not None else None,
     )
     if not drag_pass:
         raise RuntimeSafetyError("drag selection did not respond to input")
 
     minimap_stage, minimap_stage_started, minimap_before_runtime = begin_stage("minimap")
+    minimap_x, minimap_y = minimap_point
     camera_before = read_camera()
     minimap_before_selection: dict[str, Any] = {"status": "UNAVAILABLE", "count": None}
     try:
@@ -3104,7 +3329,7 @@ def _g1_run_input_sequence(
         )
     except _G1WaitTimeout as exc:
         record_timeout(
-            minimap_stage, "minimap", 150, 520,
+            minimap_stage, "minimap", minimap_x, minimap_y,
             {"ps": minimap_before_runtime.get("ps"), "tick": minimap_before_runtime.get("tick"),
              "camera": camera_before, "selection": minimap_before_selection,
              "selection_count": minimap_before_selection.get("count"),
@@ -3113,7 +3338,7 @@ def _g1_run_input_sequence(
         )
         raise
     minimap_png_before = capture("minimap_before")
-    click(150, 520)
+    minimap_delivery = click(minimap_x, minimap_y)
     try:
         camera_after = stage_wait(
             minimap_stage, minimap_stage_started,
@@ -3123,7 +3348,7 @@ def _g1_run_input_sequence(
         )
     except _G1WaitTimeout as exc:
         record_timeout(
-            minimap_stage, "minimap", 150, 520,
+            minimap_stage, "minimap", minimap_x, minimap_y,
             {"ps": minimap_before_runtime.get("ps"), "tick": minimap_before_runtime.get("tick"),
              "camera": camera_before, "selection": minimap_before_selection,
              "selection_count": minimap_before_selection.get("count"),
@@ -3139,7 +3364,7 @@ def _g1_run_input_sequence(
         )
     except _G1WaitTimeout as exc:
         record_timeout(
-            minimap_stage, "minimap", 150, 520,
+            minimap_stage, "minimap", minimap_x, minimap_y,
             {"ps": minimap_before_runtime.get("ps"), "tick": minimap_before_runtime.get("tick"),
              "camera": camera_before, "selection": minimap_before_selection,
              "selection_count": minimap_before_selection.get("count"),
@@ -3150,7 +3375,7 @@ def _g1_run_input_sequence(
     minimap_png_after = phase_capture("minimap_after")
     minimap_pass = camera_after.get("camera") != camera_before
     record(
-        minimap_stage, "minimap", 150, 520,
+        minimap_stage, "minimap", minimap_x, minimap_y,
         {"ps": minimap_before_runtime.get("ps"), "tick": minimap_before_runtime.get("tick"),
          "camera": camera_before, "selection": minimap_before_selection,
          "selection_count": minimap_before_selection.get("count"), "screenshot": minimap_png_before},
@@ -3160,10 +3385,34 @@ def _g1_run_input_sequence(
          "selection_count": minimap_after_selection.get("count"), "screenshot": minimap_png_after},
         f"camera {camera_before}->{camera_after.get('camera')}",
         "PASS" if minimap_pass else "FAIL",
+        {"input_delivery": minimap_delivery} if minimap_delivery is not None else None,
     )
     if not minimap_pass:
         raise RuntimeSafetyError("minimap input effect was not observed")
-    return {"camera_after_minimap": camera_after.get("camera")}
+    tick_wait_started = time.monotonic()
+    tick_polls = 0
+    tick_after_input: dict[str, Any] = dict(runtime_state())
+    if require_tick_boundary:
+        tick_wait_deadline = min(started + timeout, tick_wait_started + 20.0)
+        while time.monotonic() < tick_wait_deadline:
+            tick_polls += 1
+            tick_after_input = dict(runtime_state())
+            if (tick_after_input.get("ps") == 3
+                    and isinstance(tick_after_input.get("tick"), int)
+                    and int(tick_after_input["tick"]) >= 300):
+                break
+            time.sleep(min(0.25, max(0.0, tick_wait_deadline - time.monotonic())))
+        else:
+            raise RuntimeSafetyError(
+                "FAIL_NO_EFFECT: PS3 tick did not reach the fixed 300 observation boundary; "
+                f"polls={tick_polls}; last={tick_after_input}"
+            )
+    return {
+        "camera_after_minimap": camera_after.get("camera"),
+        "tick_after_input": tick_after_input.get("tick"),
+        "tick_wait": {"required": require_tick_boundary, "polls": tick_polls,
+                       "elapsed_seconds": round(time.monotonic() - tick_wait_started, 3)},
+    }
 
 
 def _read_lobby_mode(read_memory: Callable[[int, int], bytes]) -> int:
@@ -3233,7 +3482,7 @@ def _g1_selector_pass(
 def _g1_selector_flow(
     read_state: Callable[[], Mapping[str, Any]],
     wait_for: Callable[[Callable[[Mapping[str, Any]], bool], str], Mapping[str, Any]],
-    click: Callable[[str, tuple[int, int]], None],
+    click: Callable[[str, tuple[int, int]], Mapping[str, Any] | None],
     capture_neutral: Callable[[str], Mapping[str, Any]],
     record: Callable[..., object],
 ) -> tuple[dict[str, Any], Mapping[str, Any], str]:
@@ -3246,7 +3495,7 @@ def _g1_selector_flow(
     selector_baseline_name = initial_selector
     multiplayer_point = G1_SETUP_POINTS["multiplayer_mode"]
     if initial_selector == "solo":
-        click("multiplayer_mode", multiplayer_point)
+        _delivery = click("multiplayer_mode", multiplayer_point)
         normalized_state = dict(wait_for(
             lambda item: item.get("ps") == 7 and _selector_name(item) == "multiplayer",
             "visible multiplayer selector did not become the active one-hot control",
@@ -3281,7 +3530,7 @@ def _g1_selector_flow(
     solo_point = G1_SETUP_POINTS["solo_mode"]
     solo_before = {"ps": state7.get("ps"), "selector": selector_baseline_state,
                    "screenshot": selector_baseline}
-    click("solo_mode", solo_point)
+    _delivery = click("solo_mode", solo_point)
     solo_state = dict(wait_for(
         lambda item: item.get("ps") == 7 and _selector_name(item) == "solo",
         "visible solo selector did not become the active one-hot control",
@@ -7702,21 +7951,23 @@ def g1_baseline(
             _g1_flush_input_stage(g1_dir, evidence, inputs)
 
         def input_click(tag: str, x: int, y: int, before: object, expected: str,
-                        after: object, actual: str, passed: bool) -> dict[str, Any]:
+                        after: object, actual: str, passed: bool,
+                        extra: Mapping[str, object] | None = None) -> dict[str, Any]:
             entry = _g1_record_input(
                 inputs, tag=tag, x=x, y=y, content_crop=content_crop, scale=input_scale,
                 before=before, expected=expected, after=after, actual=actual,
-                result="PASS" if passed else "FAIL",
+                result="PASS" if passed else "FAIL", extra=extra,
             )
             flush_input_stage()
             return entry
 
         def input_record(tag: str, x: int, y: int, before: object, expected: str,
-                         after: object, actual: str, result: str) -> dict[str, Any]:
+                         after: object, actual: str, result: str,
+                         extra: Mapping[str, object] | None = None) -> dict[str, Any]:
             return _g1_record_selector_input(
                 inputs, tag=tag, x=x, y=y, content_crop=content_crop, scale=input_scale,
                 before=before, expected=expected, after=after, actual=actual, result=result,
-                flush=flush_input_stage,
+                flush=flush_input_stage, extra=extra,
             )
 
         def capture_neutral(tag: str) -> dict[str, Any]:
@@ -8253,6 +8504,11 @@ def g1_presentation_trace(
     manifest_path: Path, *, screen: str = "1600x1200x24", timeout: float = 90,
     close_helper: Path | None = None, dxwrapper_2x: bool = False,
     native_2x_blit: bool = False, native_2x_stretch: bool = False,
+    g1_mirror2x: bool = False,
+    g1_census: bool = False,
+    g1_s3_pattern: bool = False,
+    g1_minimap_gate: bool = False,
+    g1_type49_fixture: bool = False,
     ps3_dwell_seconds: float = 0.0,
     g1_input_sequence: bool = False,
 ) -> dict[str, Any]:
@@ -8269,6 +8525,14 @@ def g1_presentation_trace(
         raise RuntimeSafetyError("--native-2x-stretch requires --native-2x-blit")
     if native_2x_stretch and dxwrapper_2x:
         raise RuntimeSafetyError("--native-2x-stretch and --dxwrapper-2x are mutually exclusive")
+    if g1_mirror2x and not native_2x_blit:
+        raise RuntimeSafetyError("--g1-mirror2x requires --native-2x-blit")
+    if g1_s3_pattern and not g1_mirror2x:
+        raise RuntimeSafetyError("--g1-s3-pattern requires --g1-mirror2x")
+    if (g1_minimap_gate or g1_type49_fixture) and not g1_input_sequence:
+        raise RuntimeSafetyError(
+            "--g1-minimap-gate and --g1-type49-fixture require --g1-input-sequence"
+        )
     if screen != "1600x1200x24":
         raise RuntimeSafetyError("g1-presentation-trace requires the fixed 1600x1200x24 screen")
     if close_helper is None:
@@ -8303,13 +8567,20 @@ def g1_presentation_trace(
         env["SYW2_G1_NATIVE_2X_BLIT"] = "1"
     if native_2x_stretch:
         env["SYW2_G1_NATIVE_2X_STRETCH"] = "1"
+    if g1_mirror2x:
+        env["SYW2_G1_MIRROR2X"] = "1"
+    if g1_census:
+        env["SYW2_G1_CENSUS"] = "1"
+    if g1_s3_pattern:
+        env["SYW2_G1_S3_PATTERN"] = "1"
     children: list[subprocess.Popen[Any]] = []
     screenshots: list[dict[str, Any]] = []
     inputs: list[dict[str, Any]] = []
     evidence: dict[str, Any] = {
         "manifest": checked, "screen": screen, "timeout_seconds": timeout,
         "fixture": {"kind": "new private copy; default two-player random game",
-                     "synthetic": False, "memory_writes": False,
+                     "synthetic": False, "memory_writes": g1_minimap_gate,
+                     "type49_contract": g1_type49_fixture,
                      "control_bridge": False, "resource_grant": False,
                      "diagnostic_bridge": True},
         "screenshots": screenshots, "inputs": inputs,
@@ -8318,11 +8589,22 @@ def g1_presentation_trace(
                             "environment": "SYW2_G1_NATIVE_2X_BLIT=1" if native_2x_blit else None},
         "native_2x_stretch": {"enabled": native_2x_stretch,
                                "environment": "SYW2_G1_NATIVE_2X_STRETCH=1" if native_2x_stretch else None},
+        "g1_mirror2x": {"enabled": g1_mirror2x,
+                            "environment": "SYW2_G1_MIRROR2X=1" if g1_mirror2x else None},
+        "g1_census": {"enabled": g1_census,
+                      "environment": "SYW2_G1_CENSUS=1" if g1_census else None},
+        "g1_s3_pattern": {"enabled": g1_s3_pattern,
+                           "environment": "SYW2_G1_S3_PATTERN=1" if g1_s3_pattern else None,
+                           "sprite": {"id": 0x24, "frame": 0,
+                                      "logical_origin": [10, 3],
+                                      "dimensions": [20, 24]}},
     }
     error: str | None = None
     cleanup: dict[str, Any] = {}
     display = ""
     proc: subprocess.Popen[Any] | None = None
+    minimap_gate_original: bytes | None = None
+    minimap_gate_restored = False
     xvfb: subprocess.Popen[Any] | None = None
     dxwrapper_install: dict[str, object] | None = None
     dxwrapper_uninstall: dict[str, object] | None = None
@@ -8330,8 +8612,10 @@ def g1_presentation_trace(
     input_phase_metrics: dict[str, Any] = {"items": {}}
     input_phase_started: float | None = None
     trace_path = prefix / "drive_c" / "inmm_g1_present_trace.jsonl"
+    input_trace_path = prefix / "drive_c" / "inmm_g1_input_trace.jsonl"
     install_trace_copy = trace_dir / "trace_install.jsonl"
     raw_trace_copy = trace_dir / "trace_raw.jsonl"
+    input_trace_copy = trace_dir / "input_raw.jsonl"
     try:
         if dxwrapper_2x:
             from patches.resolution import dxwrapper_config
@@ -8350,6 +8634,7 @@ def g1_presentation_trace(
         if str(REPO_ROOT) not in sys.path:
             sys.path.insert(0, str(REPO_ROOT))
         from patches.population.runtime_driver import read as read_memory
+        from patches.population.runtime_driver import write as write_memory
         from patches.population.runtime_driver import state as read_game_state
 
         def state(detailed: bool = True) -> dict[str, Any]:
@@ -8384,6 +8669,7 @@ def g1_presentation_trace(
                                "scale": scale, "scaled_2x": scale == [2.0, 2.0],
                                "tree_sha256": hashlib.sha256(tree.encode()).hexdigest()}
         input_scale = (float(scale[0]), float(scale[1]))
+        physical_input_scale = 2 if g1_mirror2x else 1
         evidence["modules"] = _module_evidence(proc.pid)
         loaded_ddraw = [item["path"] for item in evidence["modules"]["modules"]  # type: ignore[index]
                         if isinstance(item, dict) and "ddraw" in str(item.get("path", "")).lower()]
@@ -8395,6 +8681,20 @@ def g1_presentation_trace(
 
         def read_for_process(address: int, size: int) -> bytes:
             return read_memory(proc.pid, address, size)
+
+        def restore_minimap_gate() -> None:
+            nonlocal minimap_gate_restored
+            if minimap_gate_original is None or minimap_gate_restored:
+                return
+            write_memory(proc.pid, G1_MINIMAP_INPUT_GATE_ADDRESS, minimap_gate_original)
+            observed = read_for_process(G1_MINIMAP_INPUT_GATE_ADDRESS, len(minimap_gate_original))
+            minimap_gate_restored = observed == minimap_gate_original
+            evidence["minimap_gate"]["restored"] = minimap_gate_restored
+            if not minimap_gate_restored:
+                raise RuntimeSafetyError("diagnostic minimap gate did not restore exact old bytes")
+
+        evidence["minimap_gate"] = {"enabled": g1_minimap_gate,
+                                     "apply_point": "after_new_game_before_input_sequence"}
 
         def capture(tag: str) -> dict[str, Any]:
             _path, record = _capture_screenshot(display, run_id, proc.pid, tag,
@@ -8415,17 +8715,74 @@ def g1_presentation_trace(
         def wait_selector(predicate: Callable[[Mapping[str, Any]], bool], message: str) -> Mapping[str, Any]:
             return _wait_state(lambda _detailed: selector_state(), predicate, started, timeout, message)
 
-        def click_selector(_tag: str, point: tuple[int, int]) -> None:
-            x, y = point
-            subprocess.run([sys.executable, str(REPO_ROOT / "tools/x11_mouse_click.py"),
-                            "--display", display, str(content_crop[0] + x), str(content_crop[1] + y)],
-                           env=env, stdout=log, stderr=log,
-                           timeout=min(10, _remaining(started, timeout)), check=True)
+        def inject_input(tag: str, x: int, y: int,
+                         *, drag_to: tuple[int, int] | None = None) -> dict[str, Any]:
+            """Inject one physical click/drag and retain delivery provenance."""
+            physical_x = x * physical_input_scale
+            physical_y = y * physical_input_scale
+            root = [content_crop[0] + physical_x, content_crop[1] + physical_y]
+            focus = subprocess.run(
+                ["xdotool", "windowfocus", outer_id], env=env,
+                stdout=log, stderr=log,
+                timeout=min(10, _remaining(started, timeout)), check=False,
+            )
+            active = subprocess.run(
+                ["xdotool", "getactivewindow"], env=env,
+                stdout=subprocess.PIPE, stderr=log, text=True,
+                timeout=min(10, _remaining(started, timeout)), check=False,
+            )
+            if focus.returncode:
+                raise RuntimeSafetyError(
+                    f"{tag} focus failed: focus={focus.returncode}; active={active.returncode}"
+                )
+            pointer = _move_pointer_exact(
+                env, (root[0], root[1]), timeout=_remaining(started, timeout), log=log,
+            )
+            argv = [sys.executable, str(REPO_ROOT / "tools/x11_mouse_click.py"),
+                    "--display", display, str(root[0]), str(root[1]),
+                    "--hold-ms", "120", "--evidence"]
+            if drag_to is not None:
+                to_x = drag_to[0] * physical_input_scale
+                to_y = drag_to[1] * physical_input_scale
+                argv.extend(["--drag-to", str(content_crop[0] + to_x),
+                             str(content_crop[1] + to_y), "--hold-ms", "150"])
+            result = subprocess.run(
+                argv, env=env, stdout=subprocess.PIPE, stderr=log,
+                text=True, timeout=min(10, _remaining(started, timeout)), check=False,
+            )
+            if result.returncode:
+                raise RuntimeSafetyError(f"{tag} XTest injection failed: {result.returncode}")
+            deliveries: list[dict[str, Any]] = []
+            for line in (result.stdout or "").splitlines():
+                try:
+                    value = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(value, dict):
+                    deliveries.append(value)
+            if not deliveries:
+                raise RuntimeSafetyError(f"{tag} XTest injection emitted no delivery evidence")
+            delivery = deliveries[-1]
+            delivery.update({
+                "tag": tag, "logical": [x, y], "target_root": root,
+                "focus_returncode": focus.returncode,
+                "active_window": (active.stdout or "").strip(),
+                "active_window_returncode": active.returncode,
+                "pointer": pointer,
+            })
+            if drag_to is not None:
+                delivery["logical_to"] = list(drag_to)
+            evidence.setdefault("input_delivery", []).append(delivery)
+            return delivery
+
+        def click_selector(_tag: str, point: tuple[int, int]) -> Mapping[str, Any]:
+            return inject_input(_tag, *point)
 
         def capture_neutral(tag: str) -> dict[str, Any]:
             x, y = G1_NEUTRAL_POINT
             pointer = _move_pointer_exact(
-                env, (content_crop[0] + x, content_crop[1] + y),  # type: ignore[index]
+                env, (content_crop[0] + x * physical_input_scale,
+                      content_crop[1] + y * physical_input_scale),  # type: ignore[index]
                 timeout=_remaining(started, timeout), log=log,
             )
             time.sleep(min(0.15, _remaining(started, timeout)))
@@ -8435,11 +8792,12 @@ def g1_presentation_trace(
             return record
 
         def record_input(tag: str, x: int, y: int, before: object, expected: str,
-                         after: object, actual: str, result: str) -> dict[str, Any]:
+                         after: object, actual: str, result: str,
+                         extra: Mapping[str, object] | None = None) -> dict[str, Any]:
             return _g1_record_selector_input(
                 inputs, tag=tag, x=x, y=y, content_crop=content_crop, scale=input_scale,
                 before=before, expected=expected, after=after, actual=actual, result=result,
-                flush=flush_input_stage,
+                flush=flush_input_stage, extra=extra,
             )
 
         def flush_input_stage() -> None:
@@ -8449,11 +8807,7 @@ def g1_presentation_trace(
         evidence["owned_win32_process"] = _read_owned_win32_pid(install_trace_copy, run_id)
         title_before = capture("ps9_before_menu")
         title_before_state = {"ps": state9.get("ps"), "screenshot": title_before}
-        subprocess.run([sys.executable, str(REPO_ROOT / "tools/x11_mouse_click.py"),
-                        "--display", display, str(content_crop[0] + 184),
-                        str(content_crop[1] + 560)],
-                       env=env, stdout=log, stderr=log,
-                       timeout=min(10, _remaining(started, timeout)), check=True)
+        menu_delivery = inject_input("menu", 184, 560)
         state7 = _wait_state(state, lambda item: item.get("ps") == 7,
                              started, timeout, "presentation trace menu click did not reach PS=7")
         title_after = capture_neutral("ps7_lobby")
@@ -8463,6 +8817,7 @@ def g1_presentation_trace(
             before=title_before_state, expected="PS9->PS7 and screenshot changes",
             after=title_after_state, actual=f"PS{state9.get('ps')}->PS{state7.get('ps')}",
             result="PASS" if _g1_menu_input_pass(title_before_state, title_after_state) else "FAIL",
+            extra={"input_delivery": menu_delivery},
         )
         flush_input_stage()
         if inputs[-1]["result"] != "PASS":
@@ -8499,6 +8854,13 @@ def g1_presentation_trace(
             "world_bounds": scene_snapshot["world_bounds"], "camera": scene_snapshot["camera"],
             "synthetic": False,
         }
+        if g1_type49_fixture:
+            fixture_contract = _g1_type49_fixture_contract(scene, scene_snapshot)
+            evidence["fixture_contract"] = fixture_contract
+            if fixture_contract["status"] != "PASS":
+                raise RuntimeSafetyError(
+                    "type49 fixture contract failed: " + str(fixture_contract["reason"])
+                )
         flush_input_stage()
         evidence["capture"] = {"run_id": run_id, "ps_before": state9.get("ps"),
                                 "ps_after": scene.get("ps"), "tick_after": scene.get("tick"),
@@ -8508,43 +8870,63 @@ def g1_presentation_trace(
                                 "lobby_ps": lobby.get("ps"), "ready": ready}
 
         if g1_input_sequence:
-            def candidate_click(x: int, y: int) -> None:
-                subprocess.run([sys.executable, str(REPO_ROOT / "tools/x11_mouse_click.py"),
-                                "--display", display, str(content_crop[0] + x),
-                                str(content_crop[1] + y)], env=env, stdout=log, stderr=log,
-                               timeout=min(10, _remaining(started, timeout)), check=True)
+            def candidate_click(x: int, y: int) -> Mapping[str, Any]:
+                return inject_input("candidate_click", x, y)
 
-            def candidate_drag(x: int, y: int, to_x: int, to_y: int) -> None:
-                subprocess.run([sys.executable, str(REPO_ROOT / "tools/x11_mouse_click.py"),
-                                "--display", display, str(content_crop[0] + x),
-                                str(content_crop[1] + y), "--drag-to",
-                                str(content_crop[0] + to_x), str(content_crop[1] + to_y)],
-                               env=env, stdout=log, stderr=log,
-                               timeout=min(10, _remaining(started, timeout)), check=True)
+            def candidate_drag(x: int, y: int, to_x: int, to_y: int) -> Mapping[str, Any]:
+                return inject_input("candidate_drag", x, y, drag_to=(to_x, to_y))
 
             def candidate_wait(reader, predicate, message, **kwargs):
                 return _wait_state(reader, predicate, started, timeout, message, **kwargs)
 
             def read_production_cell() -> Mapping[str, Any]:
                 if "production_cell" not in evidence:
-                    evidence["production_cell"] = _read_g1_command_cell_provenance(
-                        read_for_process, _sha256(game / ORIGINAL_EXE), started=started, timeout=timeout,
+                    evidence["production_cell"] = _g1_read_production_cell_provenance(
+                        read_for_process, _sha256(game / ORIGINAL_EXE),
                     )
                 return evidence["production_cell"]
 
             input_phase_started = time.monotonic()
-            input_result = _g1_run_input_sequence(
-                inputs=inputs, content_crop=content_crop, scale=input_scale, capture=capture,
-                runtime_state=lambda: state(False), game_state=state,
-                read_selection=lambda: _read_g1_selection_evidence(read_for_process),
-                read_camera=lambda: _read_camera(read_for_process), wait=candidate_wait,
-                click=candidate_click, drag=candidate_drag,
-                read_production_cell=read_production_cell, flush=flush_input_stage,
-                started=started, timeout=timeout, phase_metrics=input_phase_metrics,
-            )
+            if g1_minimap_gate:
+                minimap_gate_original = read_for_process(G1_MINIMAP_INPUT_GATE_ADDRESS, 4)
+                written_gate = (1).to_bytes(4, "little")
+                write_memory(proc.pid, G1_MINIMAP_INPUT_GATE_ADDRESS, written_gate)
+                gate_after = read_for_process(G1_MINIMAP_INPUT_GATE_ADDRESS, 4)
+                if gate_after != written_gate:
+                    raise RuntimeSafetyError("diagnostic minimap gate write did not take")
+                evidence["minimap_gate"].update({
+                    "address": hex(G1_MINIMAP_INPUT_GATE_ADDRESS),
+                    "old_bytes": minimap_gate_original.hex(),
+                    "written_bytes": gate_after.hex(), "restored": False,
+                })
+            input_result: dict[str, Any] | None = None
+            try:
+                input_result = _g1_run_input_sequence(
+                    inputs=inputs, content_crop=content_crop, scale=input_scale, capture=capture,
+                    runtime_state=lambda: state(False), game_state=state,
+                    read_selection=lambda: _read_g1_selection_evidence(read_for_process),
+                    read_camera=lambda: _read_camera(read_for_process), wait=candidate_wait,
+                    click=candidate_click, drag=candidate_drag,
+                    read_production_cell=read_production_cell, flush=flush_input_stage,
+                    started=started, timeout=timeout, phase_metrics=input_phase_metrics,
+                    minimap_point=(90, 553) if g1_minimap_gate else (150, 520),
+                    require_tick_boundary=True,
+                    required_selected_type=49 if g1_type49_fixture else None,
+                )
+            except (OSError, subprocess.SubprocessError, RuntimeSafetyError,
+                    ValueError, struct.error) as exc:
+                error = str(exc)
+                evidence["input_sequence_error"] = error
+                _record_g1_command_cell_error(evidence, exc)
+            finally:
+                restore_minimap_gate()
             _g1_finalize_input_phase(input_phase_metrics, input_phase_started)
+            input_phase_started = None
             evidence["input_phase"] = input_phase_metrics
-            evidence["scene"]["camera_after_minimap"] = input_result["camera_after_minimap"]
+            if input_result is not None:
+                evidence["scene"]["camera_after_minimap"] = input_result["camera_after_minimap"]
+                evidence["scene"]["tick_after_input"] = input_result["tick_after_input"]
+                evidence["scene"]["tick_wait"] = input_result["tick_wait"]
 
         if ps3_dwell_seconds > 0 and not g1_input_sequence:
             dwell = _observe_ps3_dwell(ps3_dwell_seconds, lambda: state(False), capture_neutral)
@@ -8564,6 +8946,23 @@ def g1_presentation_trace(
         )
         if native_2x_stretch:
             evidence["native_split_contract"] = evidence["validator"]
+        elif g1_mirror2x:
+            evidence["legacy_validator"] = evidence["validator"]
+            if g1_s3_pattern:
+                from tools.g1_s3_probe import validate_s3_trace
+
+                evidence["g1_s3_probe"] = validate_s3_trace(trace_copy)
+                evidence["g1_mirror2x_probe"] = evidence["g1_s3_probe"]
+            else:
+                from tools.g1_mirror2x_probe import validate_trace as validate_mirror2x_trace
+
+                evidence["g1_mirror2x_probe"] = validate_mirror2x_trace(trace_copy)
+            evidence["validator"] = evidence["g1_mirror2x_probe"]
+        elif native_2x_blit:
+            from tools.g1_mirror2x_probe import validate_native2x_control
+
+            evidence["native2x_control"] = validate_native2x_control(trace_copy)
+            evidence["validator"] = evidence["native2x_control"]
         else:
             evidence["logical_surface_contract"] = _presentation_logical_surface_contract(trace_copy)
         if evidence["validator"].get("status") != "PASS":
@@ -8637,6 +9036,19 @@ def g1_presentation_trace(
             _preserve_raw_presentation_trace(trace_path, raw_trace_copy)
         except OSError as exc:
             evidence["trace_copy_error"] = str(exc)
+        try:
+            if input_trace_path.is_file():
+                shutil.copy2(input_trace_path, input_trace_copy)
+                evidence["input_trace"] = {
+                    "path": str(input_trace_copy),
+                    "sha256": _sha256(input_trace_copy),
+                    "events": len(input_trace_copy.read_text(encoding="utf-8").splitlines()),
+                }
+            else:
+                evidence["input_trace"] = {"status": "MISSING", "path": str(input_trace_copy)}
+        except (OSError, UnicodeDecodeError) as exc:
+            evidence["input_trace"] = {"status": "ERROR", "path": str(input_trace_copy),
+                                        "error": str(exc)}
         evidence["elapsed_seconds"] = round(time.monotonic() - started, 3)
         evidence.setdefault("validator", {"status": "BLOCKED", "errors": [error or "trace did not complete"]})
         command = f"runtime_env.py g1-presentation-trace --manifest {manifest_path} --screen {screen} --timeout {timeout}"
@@ -8650,22 +9062,36 @@ def g1_presentation_trace(
             command += " --native-2x-blit"
         if native_2x_stretch:
             command += " --native-2x-stretch"
+        if g1_mirror2x:
+            command += " --g1-mirror2x"
+        if g1_census:
+            command += " --g1-census"
+        if g1_s3_pattern:
+            command += " --g1-s3-pattern"
+        if g1_minimap_gate:
+            command += " --g1-minimap-gate"
+        if g1_type49_fixture:
+            command += " --g1-type49-fixture"
         provenance = {"manifest_sha256": _sha256(_real(manifest_path)),
                       "original_exe_sha256": _sha256(game / ORIGINAL_EXE),
                       "expected_original_exe_sha256": ORIGINAL_SHA256,
                       "command": command,
-                      "environment": {key: env.get(key) for key in ("DISPLAY", "WINEPREFIX", "WINEARCH", "LANG", "LC_ALL", "WINEDLOVERRIDES", "SYW2_G1_PRESENT_TRACE", "SYW2_G1_TRACE_RUN_ID", "SYW2_G1_NATIVE_2X_BLIT", "SYW2_G1_NATIVE_2X_STRETCH")},
+                      "environment": {key: env.get(key) for key in ("DISPLAY", "WINEPREFIX", "WINEARCH", "LANG", "LC_ALL", "WINEDLOVERRIDES", "SYW2_G1_PRESENT_TRACE", "SYW2_G1_TRACE_RUN_ID", "SYW2_G1_NATIVE_2X_BLIT", "SYW2_G1_NATIVE_2X_STRETCH", "SYW2_G1_MIRROR2X", "SYW2_G1_CENSUS", "SYW2_G1_S3_PATTERN")},
                       "display": display, "prefix": str(prefix), "game_root": str(game),
                       "harness_sha256": {"tools/runtime_env.py": _sha256(Path(__file__))},
                       "diagnostic_bridge_sha256": game_data.get("diagnostic_bridge_sha256"),
                       "dxwrapper_config": evidence["dxwrapper_config"],
-                      "observational_only": not (native_2x_blit or native_2x_stretch),
+                      "observational_only": not (native_2x_blit or native_2x_stretch or g1_mirror2x),
                       "intervention_scope": ([
                           "set_display_mode_exact_800x600x8_to_1600x1200x8",
                           "ps3_present_bltfast_to_blt_2x",
                       ] if native_2x_stretch else ([] if not native_2x_blit else [
                           "set_display_mode_exact_800x600x8_to_1600x1200x8"
-                      ]))}
+                      ] + (["content_keyed_primary_present_and_primitive_mirror"] if g1_mirror2x else [])
+                      + (["diagnostic_gate_0x0097597c=1_then_restore"] if g1_minimap_gate else [])))}
+        if g1_minimap_gate and not native_2x_stretch and not native_2x_blit:
+            provenance["intervention_scope"] = ["diagnostic_gate_0x0097597c=1_then_restore"]
+        provenance["fixture_contract"] = evidence.get("fixture_contract")
         _write_json(trace_dir / "provenance.json", provenance)
         _write_json(trace_dir / "evidence.json", evidence)
         verdict = _g1_presentation_verdict(
@@ -8911,6 +9337,11 @@ def runtime_main(argv: Sequence[str] | None = None) -> int:
     t.add_argument("--dxwrapper-2x", action="store_true")
     t.add_argument("--native-2x-blit", action="store_true")
     t.add_argument("--native-2x-stretch", action="store_true")
+    t.add_argument("--g1-mirror2x", action="store_true")
+    t.add_argument("--g1-census", action="store_true")
+    t.add_argument("--g1-s3-pattern", action="store_true")
+    t.add_argument("--g1-minimap-gate", action="store_true")
+    t.add_argument("--g1-type49-fixture", action="store_true")
     t.add_argument("--ps3-dwell-seconds", type=float, default=0.0)
     t.add_argument("--g1-input-sequence", action="store_true")
     r = sub.add_parser("g1-r1-load-origin")
@@ -9049,6 +9480,11 @@ def runtime_main(argv: Sequence[str] | None = None) -> int:
                 dxwrapper_2x=args.dxwrapper_2x,
                 native_2x_blit=args.native_2x_blit,
                 native_2x_stretch=args.native_2x_stretch,
+                g1_mirror2x=args.g1_mirror2x,
+                g1_census=args.g1_census,
+                g1_s3_pattern=args.g1_s3_pattern,
+                g1_minimap_gate=args.g1_minimap_gate,
+                g1_type49_fixture=args.g1_type49_fixture,
                 ps3_dwell_seconds=args.ps3_dwell_seconds,
                 g1_input_sequence=args.g1_input_sequence,
             )

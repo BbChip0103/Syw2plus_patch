@@ -1,0 +1,14 @@
+# 2026-10-05 | lap 972 | G1 — H-M minimap 관측 settle 하네스 수리
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-sonnet-5-5`, high, Fast OFF / 실무(work).
+- 가설 / 사용자 관찰: lap966 r1·lap969 r1·r2 minimap `same_unit_before_after` HOLD 3회는 baseline lane 폴링이 "명령 소비 전 중간 상태(command=1·pending_xy만 변경)"에서 멈춘 하네스 문제(lap971 §3). 종료 조건에 선택 유닛 전원 `command` 전이(소비)를 추가하면 lane이 같은 상태를 기록한다.
+- 예상 PASS / FAIL 조건: lap971 §4 — M-1 두 run minimap parity PASS·4 lane 소비 상태(command≠1), M-2 교집합 3,689(±0)·HUD 상자 0·안전0·present≥854·p95≤28ms·V1/V2/V2q/input PASS. FAIL: (i) 두 lane 소비인데 unit_after 상이 (ii) wait UNKNOWN (iii) M-2 회귀(교집합 증가·안전>0).
+- 변경 파일 / source fingerprint / 커밋: uncommitted. `tools/g1_saved_scene_probe.py`(`_minimap_command_settled` 신규 순수 함수, 우클릭·fallback 대기 predicate 2곳이 사용; timeout 3.0s·`right_pass`·`minimap_result`·`_compare_minimap_diagnostic_parity` 불변) SHA256 `883ee52c9882fc87…`, `tests/test_g1_saved_scene_probe.py`(`test_minimap_command_settled_requires_every_unit_to_consume_the_order` 신규, RED→GREEN) `aff0aad59793f163…`. 제품 source·validator·비교식 변경 0.
+- 원본 SHA / 후보 SHA / 환경 / fixture: 제품 후보는 lap969와 동일(g1_overlay_blt.h 등 불변). fresh save006(비합성) scale2x pair, 활성8인 부하증명 아님.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `PYTHONPATH=. .venv/bin/python -u tools/g1_saved_scene_probe.py --runtime-root local/runtime/lap972_settle_r{1,2} --artifact-root <공유temp>/20261005_lap972_work_minimap_settle/r{1,2} --hd-source scale2x --stale-mask 6-12,30-34,300-301,585-620,880` 둘 다 exit 2(=pair HOLD, V2s raw production FAIL 기존 gate). 로그 `logs/gates/lap972_settle_r1.log` `f90fdb6dd0eff1c6…`·`r2.log` `77c21a6372635073…`; pair-result r1 `1b62c562d3bdebad…`·r2 `8cae2674733541da…`; 분석 `analyze_lap972.py` `8103c8f554121c26…`→`analysis_lap972.json` `c19cf5eb43d3c895…`(공유 temp 같은 폴더, lap969 분석 스크립트 입력 경로만 교체). red 테스트는 시스템 python3 Pillow 차이(`get_flattened_data`)로 4개가 별도 실패하나 `.venv/bin/python` 176 passed.
+- 측정값 / 판정:
+  - **M-1 PASS**: r1·r2 모두 `minimap_diagnostic_parity` PASS(same_result/camera/unit/gate_restore 전부 True), 4 lane wait PASS samples=2·elapsed 0.157~0.161s, 4 lane unit_after 전원 command 3·pending 16777217·pending_xy 5767258/59/5832794/5963864·x,y 불변.
+  - M-2 r1: 교집합 **3,689**(lap969 동일)·HUD 상자 0·유닛 961·HP 423·가장자리 813·로고 2,102·PS3 present 897·p95 9ms·cov p50 98.50%·안전 최대 0. **M-2 r2: 교집합 3,713(+24)·HUD 상자 12px·덤프 50/steady 38**(r1 51/39) — 사전등록 ±0 미충족, present 876·p95 9ms·안전 0은 충족. lap969에서는 r1=r2 픽셀 동일이었는데 이번 r2만 다르다(덤프 1개 적음, 하네스 변경은 minimap 대기 종료만 건드리므로 시점 차이 가능성, 증거로 확인하지 못함).
+  - V2s raw production 기존 gate FAIL(production tag만) → pair HOLD 유지(M과 별개, 기존 사용자 판단 큐).
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 하네스 변경은 minimap 관측만. r2 +24는 반증 (iii) "교집합 증가"에 문자 그대로 해당하므로 work가 임의로 수용/기각하지 않고 middle 독립 판정으로 넘긴다(ESCALATE_SOL). 사용자 마일스톤 승인 아님. 게임 사본은 runner가 정리(확인), 디스크 여유 18GiB.
+- 다음 한 가지: middle 독립 검수 — r1/r2 raw를 제품 helper 없이 재계산해 M-1 수용, r2 +24(HUD 상자 12px·덤프 50개)가 시점 변동인지 H-T 회귀인지 판정(필요하면 같은 명령 r3 1회 지시) 후 다음 후보 (b) 유닛 덩어리 961px / (c) HP 바 423px 정의.

@@ -121,3 +121,11 @@
 - 인게임 로드는 원본계에서 로비 표 `0x632C9C`를 건드리지 않는다(port_x3: 로드 전후 표 byte 동일, local 유지 → 저장 자리와 다르면 ps 27→29 패배).
 - 타이틀 복귀 직후 local 0·표 ids 유지 → 직접 쓰기 `0x41CA85`(`0x41CA80`) 경로로 본다(호출자 UNKNOWN).
 - R4b cave(66 B): 솔로 로드 뒤 local = 스냅샷 표의 own id 첫 일치, 없으면 0. 근거·사전등록: `docs/work/active/G7_MIDDLE_LAP987_HG7X_R4B_ACCEPTANCE_G6_REMEASURE_HANDOFF.md`, 스크립트·출력 `temp/Syw2plus_patch/20261005_lap987_middle_review/`.
+
+### lap1090 middle: 사용자 G7 FAIL 뒤 R5 지점 (2026-10-07, 원본 `b56986e0…a8ac`·이식판 `0e28ef57…`/`703deaf4…` capstone, 실행 0)
+
+- 사용자 실경로(대기실 ↑/↓)에서 R4b는 타이틀·인게임 로드 둘 다 seat 0 귀결 → R4b 철회.
+- `[0xB63FC4]` 쓰기 전수: 직접 `0x41CA85` + `push 0xB63FC4; call 0x43AF40` 5곳뿐(원본 `.text` 전체, 그 외 참조는 읽기·비교).
+- 대기실 ↑/↓ 처리기 미발견: `LISTBOX`/`COMBOBOX` 문자열 0. `0x439520`(local 행 → `0x6376B4..` 메시지 → `0x439BA0`)은 `0x4B7F70`의 `[0x4ED848]==0`(비솔로) 분기에서만 호출.
+- G5SC 저장 `0x18A7800`: 태그 4 B(`0x18A7540` = `G5SC`)+`0x18A6000` 0xCC B fwrite 후 `0x18A7832 jmp 0x4DA97C`(fclose, `E9 45 31 C3 FE`). 로드 `0x18A7880`: 태그 → `0x18A68D0`, 일치 시 0xCC B, 선택 수 >0x32면 0x32로 자름, `0x18A78D6 jmp 0x4DA97C`(`E9 A1 30 C3 FE`). 호출 체인: 저장 `0x440F3B call 0x1091060` → `0x10910C1 call 0x18A7800`; 로드 `0x44130B call 0x10910D0` → `0x109118C call 0x18A7880`.
+- `.g5code` 마지막 비0 = +0x8DA(두 이식판), G6 cave +0xC00(23 B). R5 설계·사전등록: `docs/work/active/G7_MIDDLE_LAP1090_USER_FAIL_R5_SAVE_TRAILER_HANDOFF.md`, 스크립트·출력 `temp/Syw2plus_patch/20261007_lap1090_middle_review/`.

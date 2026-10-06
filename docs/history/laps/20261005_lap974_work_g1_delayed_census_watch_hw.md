@@ -1,0 +1,16 @@
+# 2026-10-05 | lap 974 | G1 — H-W 지연 census watch (유닛 덩어리·선택 HP 바 writer 확정)
+
+- 실제 provider/model/effort / 지정 역할: Claude Code `claude-sonnet-5-5`, high, Fast OFF / 실무(work). 카드 `docs/work/active/G1_MIDDLE_W70_HM_ACCEPTANCE_DELAYED_WATCH_HANDOFF_LAP973.md` §4 수행.
+- 가설 / 사용자 관찰: 남은 stale 유닛 덩어리 961px·선택 HP 바 423px는 서수 300 이후 생기므로 census 64 창(서수 1~64) 밖이라 writer가 미확인이었다. 창을 서수 301~364로 미루면 hook 밖 EIP를 잡을 수 있다.
+- 예상 PASS / FAIL 조건(사전등록, 카드 §4): 두 run 모두 `watch_armed` present ≥301·selftest PASS, 각 픽셀 hit ≥1이고 hook 밖(`in_hook`=0) EIP가 같은 EIP로 ≥50% → EIP·함수 entry 기록. FAIL: (i) arm 뒤 hit 0, (ii) hit 전부 mirror 대상 writer 안, (iii) census lane에 HQ 선택 action 없음/실패.
+- 변경 파일 / source fingerprint / 커밋: uncommitted. `tools/inmm_stub/g1_census.c`(opt-in `SYW2_G1_CENSUS_SKIP_PRESENTS`, 건너뛴 present는 PS3 서수만 올리고 `g_present_count`·map·residual·watch 미기록, 끝에 `present_skip` 1행) `341a16c3…71b4`, `g1_census_contract.h`(`g1_census_parse_skip_presents`, 1~4자리 십진수 외 0) `acbdd310…5b94`, `tools/g1_saved_scene_probe.py`(`--census-skip-presents N`, `--census-only` 필수·0~9999) `e9093262…0fa5`, `tests/test_g1_census.py`(4개 추가) `fb585037…4846`. 제품 mirror/validator/gate/기본 동작 불변(env 없음 = skip 0 = 기존 경로).
+- 원본 SHA / 후보 SHA / 환경 / fixture: 원본 EXE `b56986e0…8ac`·save006은 probe가 실행 전 검증(MATCH, read-only), 후보 없음(census 전용), 새 사본·prefix·Xvfb, 활성 8인 증명 아님.
+- 회귀(RED→GREEN): 테스트 먼저 작성 → 3 FAILED 확인 → 구현 후 `tests/test_g1_census.py` 27 passed(host gcc 파서 + 정적 순서 계약[한도 게이트 < skip < `++g_present_count`] + probe 옵션·parser error). `make lint`·`make typecheck` PASS. DLL `make -C tools/inmm_stub` 빌드 PASS.
+- 실행 명령 / 로그 / 캡처 경로 및 해시: `PYTHONPATH=. .venv/bin/python -u tools/g1_saved_scene_probe.py --runtime-root local/runtime/lap974_{hp,unit} --artifact-root <공유temp>/20261005_lap974_work_delayed_watch/{hp,unit} --census-only --census-residual --census-skip-presents 300 --census-watch {442,155|701,237}` 둘 다 exit0·census gate PASS(present 64, install 9). 로그 `logs/gates/lap974_hp.log` `7bc20154…a5db`·`lap974_unit.log` `99ed25ef…e8a1`; raw hp `61bb4a1d…c36a1`·unit `70c29c80…e701f`. 각 run 약 1분 35초, game 사본 runner 정리(`game_removed` true), prefix 약 710MB×2는 provenance 규칙에 따라 보존, 디스크 여유 21GiB.
+- 측정값 / 판정:
+  - 두 run `present_skip skipped=300 next_present=301`, `watch_armed present=301`, selftest hits=1, 창 끝 `window_end`, 126 hit(=63 present×2), distinct EIP 2, overflow 0.
+  - HP 바 (442,155): `0x4662DE`(block_copy hook 안 63) + **`0x466114`**(hook 밖 63) → 함수 **`0x466070`**(클립 rect fill, `ret 0x14`).
+  - 유닛 (701,237): `0x4662DE`(hook 안 63) + **`0x466BB3`**(hook 밖 63) → 함수 **`0x466B50`**(좌우반전 리맵 RLE, `ret 0x1c`).
+  - **판정 H-W: PASS(partial)** — 두 픽셀 모두 사전등록 "다음 수리 대상 확정"(hook 밖 단일 EIP가 hit의 50%, mirror 미대상 writer). FAIL (i)(ii)(iii) 해당 없음(hit 있음, hook 밖 writer가 mirror 대상 아님, 선택/이동 뒤 픽셀에서 hit). 한계: 픽셀 1개씩의 표본, 덩어리 전체 설명은 미확인. 근거 `analysis/memory_maps/g1_unhooked_writers_466070_466b50_lap974.md`.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인: 독립 검수 전(다음 middle). 제품 mirror/게임 동작 변경 0이라 G1 수치 변화 없음, pair HOLD(V2s raw)·사용자 마일스톤 승인은 그대로. 유닛은 애니메이션이라 다른 변형 함수가 더 있을 수 있다.
+- 다음 한 가지: middle(Opus)이 두 raw를 제품 helper 없이 재계산(EIP·hit 수·hook 밖 비율)하고 EXE disassembly로 두 함수 경계(`0x466070`·`0x466B50`)를 독립 확인한 뒤, H-T와 같은 "호출 전후 대상 사각형 비교 → 바뀐 픽셀만 Scale2x 미러" 방식의 work 가설(0x466070 우선: 5인자·단색이라 단순)과 사전등록 PASS/FAIL을 정한다.

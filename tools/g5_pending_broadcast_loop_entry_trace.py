@@ -49,15 +49,15 @@ state = {"entries": 0, "post_marker_samples": 0, "dispatch_entries": 0,
          "dispatch_post_marker_samples": 0, "fatal": None}
 
 
-def read_u32(address):
+def read_u32(address: int) -> int:
     return struct.unpack("<I", bytes(gdb.selected_inferior().read_memory(address, 4)))[0]
 
 
-def read_u16(address):
+def read_u16(address: int) -> int:
     return struct.unpack("<H", bytes(gdb.selected_inferior().read_memory(address, 2)))[0]
 
 
-def read_u8(address):
+def read_u8(address: int) -> int:
     return bytes(gdb.selected_inferior().read_memory(address, 1))[0]
 
 
