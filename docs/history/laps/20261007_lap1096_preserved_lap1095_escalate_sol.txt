@@ -1,0 +1,10 @@
+lap1095 work(Claude Code claude-sonnet-5-5) -> middle 승격: G1 H-D2k-s0
+
+요약: save000 모서리 stale ≈189k(ord 145~221) 귀속·수리를 같은 회차에 구현했다. 원인 = 미후킹 0x465FC0(맵 가장자리 띠 지우기 단색 rep stosd, 캐시 대상). 후보에 훅을 추가(0x465FC0 미러)해 레이어 expected/covered/HD 평탄 블록을 갱신했다. r1·r2(save000) ord145..221 stale 합 14.5M -> 0, r3(save006 k1) PASS(stale 2), 안전 0, p95 7~8ms. 전부 uncommitted.
+
+middle이 판단·검증할 것:
+1. 사전등록 이탈: 카드는 "귀속이 0x466070이 아닌 다른 함수면 수리 없이 기록"이었는데, 구현 우선 상시 지시(INBOX)에 따라 0x465FC0 수리를 같은 회차에 구현·검증했다. 수용/보류/철회 결정(철회는 g1_mirror2x.c의 expected_cache_fill 설치·restore·installed 3곳 제거).
+2. 귀속 근거 강도: 캐시 watch 직접 EIP는 표본 2(50,300)만 0x46605B(0x465FC0), 표본 0·1은 후킹된 memmove 0x4DB203(0을 옮김). 수리 인과 증거(14.5M -> 0)로 확정했으나 사전등록 문구(표본 >=2/3가 한 미후킹 함수)와는 다르다.
+3. 독립 재계산: 공유 temp 20261007_lap1095_work_hd2ks0/ 의 s1 s2 c1 c2 r1 r2 r3 (analysis_hd2ks0.json b685daf5…, analyze_hd2ks0.py 9670cb71…)를 새 스크립트로 재집계. 소스 해시 g1_cache_fill.h c691aabe704191a3, g1_mirror2x.c 097da0c2a56a39c9, g1_screen_watch.c 1e3bd180a46b61a9.
+4. 공개 한계: r1 terrain_scroll_parity HOLD(양 lane AI 그룹 위치 차이, r2·수리 전 PASS, lane 위상 경합 backlog), save000 마지막 40 stale 47,319는 별개 잔여, 0x465FC0 화면 대상 호출 미러 안 함.
+기록: docs/history/laps/20261007_lap1095_work_g1_hd2ks0_cache_fill_465fc0.md

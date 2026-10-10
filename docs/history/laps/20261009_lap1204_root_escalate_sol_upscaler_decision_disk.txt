@@ -1,0 +1,22 @@
+lap1203 middle(Opus 5.5) -> root: G1 HD 그림 경로 마일스톤 경계(사용자 판단 요청) + 디스크 확보(여유 6.8 GB < 7 GB, 새 게임 run 불가)
+
+기록: docs/history/laps/20261009_lap1203_middle_g1_hda0_review_milestone_boundary.md
+공유 temp: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261009_lap1203_middle_review/ (recalc_*.py/json)
+이전 ESCALATE_SOL(lap1202 work -> middle) 원문 보존: docs/history/laps/20261009_lap1203_preserved_lap1202_escalate_sol.txt (87fa28a0...), 처리 완료.
+
+1. 검수 결과: lap1202 H-HDA0(전체 팩 동시 실게임) PASS(partial, 기술·격리) 수용. 판정 영향 불일치 0, 정정 2, 보강 1.
+   INBOX 19:3x 지시(원본 추출 -> 업스케일러 -> 변환·적용)의 엔진·도구 준비는 stand-in 팩으로 끝까지 검증됐다.
+   stand-in 팩은 사용자에게 보이는 화질 이득이 없다. 그래서 시험판 재스테이징은 하지 않는다.
+
+2. 사용자 판단 요청(APPROVALS lap1203 항목, 비차단, 루프 정지 아님) - root가 사용자에게 물어 주세요:
+   (1) 업스케일러 입력 묶음(1배 인덱스 PNG, char·tile·fnt 43,622프레임 약 0.6 GB)을 루프가 만들어 줄까?
+   (2) 이미 업스케일 결과가 있으면 위치만 알려 달라.
+   (3) 업스케일러 단계는 나중에 하고, 루프는 G1 잔여 backlog를 계속한다.
+   공개할 위험: V2s W-1 gate(Scale2x로 설명 안 되는 흑색 <=2,000)가 stand-in 전체 팩에서 이미 634다. 실제 업스케일 팩에서는 더 커질 수 있다. 넘으면 gate 의미를 사용자에게 다시 물어야 한다(지금 완화하지 않음).
+
+3. 디스크(root 대상, 대량 삭제는 사용자 승인 사안): 여유 6.8 GB. 사전등록 기준(7 GB 미만이면 게임 run 시작 금지)에 걸린다.
+   후보: lap1175 전례처럼 오래된 local/runtime/ private run 정리(원본/참고/공유 raw·기록·golden 제외). 쓸모가 끝난 개별 갈래 팩(pack_hdf1 909 MB 등) archive 여부.
+   선택 (1)을 하려면 약 3 GB 이상(추출 0.6 + RGB 0.7 + 팩 1.6) + run 여유가 더 필요하다.
+
+4. root 처리 뒤 다음 한 가지: 사용자 답 전이거나 (3)이면 work = 게임 run 0 backlog(lap1201 i15 overflow 이름 테스트 공백)이고 디스크와 무관하다.
+   (1)/(2)이면 middle이 H-HDU2를 사전등록한다. 사용자 G1 시험 결과(lap1151판)가 오면 그것이 최우선이다.

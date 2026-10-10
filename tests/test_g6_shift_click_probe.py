@@ -183,3 +183,22 @@ def test_scroll_keys_parse_arrow_holds_and_reject_bad_specs() -> None:
     for bad in ("Space:1", "Down", "Down:0", "Down:11"):
         with pytest.raises(probe.ProbeError):
             probe.parse_scroll_keys(bad)
+
+
+def test_esl2610_variants_use_original_pool_and_moved_100_slot_selection() -> None:
+    from tools import esl2610_runtime as rt
+
+    assert probe.LAYOUTS["base2610"] == probe.LAYOUTS["cand2610"] == (0x00899024, 100, 0x0066B790, 0x008990C8, 1200)
+    assert rt.SELECTION_ENTRIES_VA == 0x01604004
+
+
+def test_esl2610_install_builds_candidate_from_the_pinned_exe() -> None:
+    import pytest
+    from patches.esl2610 import g6_shift_click_2610 as g6
+
+    if not probe.esl2610_runtime.ESL2610_EXE.is_file():
+        pytest.skip("pinned ESL2610 executable is required")
+    base_bytes, base_report = probe._install("base2610")
+    assert _sha(base_bytes) == probe.esl2610_runtime.ESL2610_SHA256 == base_report["sha256"]
+    cand, _report = probe._install("cand2610")
+    assert cand == g6.build_candidate(base_bytes)[0] and cand != base_bytes

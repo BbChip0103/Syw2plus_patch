@@ -6,7 +6,7 @@ import pytest
 from patches.population import g2_esl2608_supply1500_500_5000 as mod
 
 
-INPUT = Path(__file__).parents[2].parent / "260921_temp"
+INPUT = Path(__file__).parents[2].parent / "260921_temp" / "archive"
 NAMES = {
     "seven": "[ESL]Syw2plus 2608_AI상점개설_장수7명_전비1600-200-3000_G2_개인500_공용4092_시험용.exe",
     "seven_fixed_start": "[ESL]Syw2plus 2608_AI상점개설_장수7명_전비1600-200-3000_시작자리고정_G2_개인500_공용4092_시험용.exe",

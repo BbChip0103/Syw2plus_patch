@@ -1,0 +1,13 @@
+lap1167 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 검수 요청. 사유: 마일스톤 경계(④-2 완료 → ④-3 선택 필요), 상시 규칙에 따른 독립 검수.
+기록: docs/history/laps/20261008_lap1167_work_g1_hdt1_terrain_ytl_pack.md
+H-HDT1 PASS(partial, 기술·격리): T-0 FEASIBLE(lap1165 run 지형 aux0 키 88개 중 81 대응 92.0%·충돌 7·미대응 0). NG5 팩 run: T1·T3(투명 경계 그대로)·T4(가장자리 복제)
+  지형 aux0 matched hit 55/55·55/55·60/60, rejects 0·안전 7종 0·fallback 0·dropped 0·scale2x 바깥 diff 0·PS3 HD min 100·p95 6/7/7. T2(같은 팩)는 p95 15.4로 FAIL = 마지막 ~500 present 시스템 부하(load 5), T3 재실행 PASS(실패 run 보존·공개).
+  변경은 도구·테스트만(C·하네스 0): tools/g1_hd_convert.py(pack이 .ytl 이름 부여, ytl_stream_offsets·ytl_widest, ytl_frames·ytl_narrow 보고), tests/test_g1_hd_convert.py(+2, RED→GREEN)·test_g1_hd_pack.py(+1 writer 무관). 전부 uncommitted.
+검증해 줄 것(새 스크립트로 재계산):
+ 1) T-0: 원본 .ytl 스트림 시작(0xBF4+0x4C0 표)의 128 B FNV-1a와 키 로그 지형 aux0 88키 대응·충돌 7 재계산, ytl_narrow 828(5.0%) 정의(0x468C30은 rle_dimensions=행 skip+count 최댓값, 0x468F00은 width_word)가 맞는지.
+ 2) run_T1~T4·C1 .keys.jsonl·trace_raw.jsonl로 hit/reject·PS3 p95·안전 재계산, T2 환경 부하 판정(앞 1000 present over9 0, 뒤 500에서 195) 수용 여부.
+ 3) 사전등록 §4 "lookup_blocks > 30.8M" 정정: 30.8M은 lap1165 P1(패널 파일 없는 run) 값, P3~P5 최대는 29.64M. 정정 수용 여부(문면대로면 T1 29.95M만 미달).
+ 4) crops/ 직접 열람: ground_C1_top_T1_bottom(T1 밝은 마름모 격자선) vs same_map_*_C1_top_T4_bottom(C1·T4는 같은 맵·카메라, 격자선 없음) — 원인 = 바이큐빅이 투명 키 색을 가장자리로 번지게 한 stand-in 산물(엔진 문제 아님)이라는 결론의 타당성.
+ 5) 공개 한계: 화질 평가 아님·normal 테마 장면 미관측(관측 이름은 volcano 64개)·ytl_narrow·충돌 이름·지형 draws 적음(캐시)·기본 켬/전달 아님.
+다음 후보(middle 판단): ④-3 tinted 색 치환표(C: aux 256 B 표를 팩 인덱스에 재적용·실루엣 검증 동일, draws 56%) → ④-4 음영 지형. 팩 제작 규칙 추가: 투명 화소 색이 가장자리로 번지지 않게(가장자리 복제) 업스케일.
+공유 temp: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261008_lap1167_work_hdt1/

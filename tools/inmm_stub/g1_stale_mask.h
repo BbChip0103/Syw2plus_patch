@@ -91,6 +91,26 @@ static inline int g1_stale_mask_selected(const G1StaleMaskSpec *spec, unsigned o
     return 0;
 }
 
+/* lap1127 H-RS1 RS1-0: SYW2_G1_STALE_MASK_STATE picks the program state whose presents the dump
+ * counts and follows (ordinals then count that state only).  Only the exact values "23", "27" and
+ * "29" select them (lap1147 H-SC1 SC1-0: and "20" = the scenario briefing; lap1212 H-PS5W0 W0-0:
+ * and "5" = the solo lobby, "7" = the title protocol screen); absent or anything else
+ * keeps PS3 (current behaviour). */
+static inline unsigned long g1_stale_mask_state_parse(const char *value, unsigned long length)
+{
+    if (length == 1ul) {
+        if (value[0] == '5') return 5ul;
+        if (value[0] == '7') return 7ul;
+    }
+    if (length == 2ul && value[0] == '2') {
+        if (value[1] == '0') return 20ul;
+        if (value[1] == '3') return 23ul;
+        if (value[1] == '7') return 27ul;
+        if (value[1] == '9') return 29ul;
+    }
+    return 3ul;
+}
+
 /* Map value for one logical pixel: 0 uncovered, 1 covered and snapshot-equal
  * (HD), 2 covered but the screen no longer matches the snapshot (stale). */
 static inline unsigned char g1_stale_mask_value(int covered, int snapshot_equal)

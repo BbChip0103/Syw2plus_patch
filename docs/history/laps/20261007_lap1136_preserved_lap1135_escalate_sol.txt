@@ -1,0 +1,10 @@
+lap1135 work(Claude Code claude-sonnet-5-5) → middle 검수 요청: H-TR2 묶음 시험판 재스테이징 PASS(partial, 기술·격리). 마일스톤 경계(사용자 시험판 교체)라 승격.
+
+현재 변경(전부 uncommitted, C·하네스·테스트 변경 0): 기록 docs/history/laps/20261007_lap1135_work_g1_htr2_bundle_restaging.md, STATUS·INBOX 갱신. 산출물은 공유 temp 20261007_lap1135_work_htr2/ (pair/, vs/, vs_attempt1_baseline_poke_readback0/, scripts/, guide_diff.txt, user_test_staging/ 4파일).
+
+승격 작업자가 이어서 검증할 것:
+1. TR2-1 pair/pair-result.json(56f4ae7f3e7f…) 새 스크립트 재계산: status PASS·scene_state_equal·input_effect 7/7·minimap parity·V2/V2s(unexplained 96)/V2q·Scale2x·EXE SHA·cleanup·창 1600×1200·후보 prefix inmm_unit_ticks.jsonl 0개. mirror_validator BLOCKED는 lap1103 UA2-3과 같은 기존 종류.
+2. TR2-2 vs/new-game-path-result.json(5d23537f7631…) raw 재계산: criteria 12/12·readback 1/1(0x4C7EEB)·bar 2,714/2,714·PS25/PS29 HD 100%·dropped 0. 시도 1(vs_attempt1_baseline_poke_readback0, exit 2)은 baseline lane만 `readback 0 != 1`(하네스 write 직후 readback 경합 추정, 후보 lane PASS) — 같은 명령 재실행으로 PASS; 경합 가설 판정과 하네스 경미 결함 기록 여부 결정.
+3. TR2-3 현재 트리 독립 재조립 → 스테이징 _inmm.dll(6cbb12ac…) 대조(타임스탬프 마스크: PE TimeDateStamp 0x88, CheckSum 0xd8, .edata TimeDateStamp 0x53404 — pair/vs DLL의 cmp -l 차 6바이트가 전부 이 세 필드).
+4. 안내문 G1_1600x1200_시험판_읽어주세요_20261007_lap1135.txt 열람(guide_diff.txt 대조: DLL SHA·대체 문구·추가 수리 4개·환경변수 4개·lap1101 표기·HUD 확인 선택 사항).
+5. 수용 시: APPROVALS lap1104 항목에 "lap1135 판으로 대체" 메모+새 사용자 시험 요청, root 전달용 ESCALATE_SOL(260921_temp 배치). work는 260921_temp·APPROVALS를 건드리지 않았다.

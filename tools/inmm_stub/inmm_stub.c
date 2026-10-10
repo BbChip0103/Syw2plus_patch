@@ -338,8 +338,16 @@ static void dump_units_at_tick(DWORD logic_tick)
     static char    line[256];
     static DWORD   g_dump_seq = 0;
     static DWORD   g_prev_tick = 0xFFFFFFFFu;
+    static int     g_no_unit_ticks = -1;
     /* sequential unit_id per snapshot (reset each tick) */
     int seq_uid = 0;
+    /* user trial opt-out: no file, no writes (the dump grows ~4.6 GB/h) */
+    if (g_no_unit_ticks < 0) {
+        char v[8];
+        g_no_unit_ticks =
+            (GetEnvironmentVariableA("INMM_STUB_NO_UNIT_TICKS", v, sizeof(v)) > 0);
+    }
+    if (g_no_unit_ticks) return;
     if (g_unit_tick_log == INVALID_HANDLE_VALUE) {
         g_unit_tick_log = CreateFileA("C:\\inmm_unit_ticks.jsonl",
             GENERIC_WRITE, FILE_SHARE_READ, NULL,
@@ -375,6 +383,16 @@ static void dump_units_at_tick(DWORD logic_tick)
 
 /* S2 polling worker                                                   */
 /* ------------------------------------------------------------------ */
+#ifdef SYW2_G1_DEFAULT_ON
+/* INMM_STUB_SFX_PROBE=1 (any value but "0") turns the live-unit SFX probe on. */
+static BOOL sfx_probe_opted_in(void)
+{
+    char v[8];
+    DWORD n = GetEnvironmentVariableA("INMM_STUB_SFX_PROBE", v, sizeof(v));
+    return n > 0 && !(n == 1 && v[0] == '0');
+}
+#endif
+
 static DWORD WINAPI worker_proc(LPVOID param)
 {
     (void)param;
@@ -458,6 +476,11 @@ static DWORD WINAPI worker_proc(LPVOID param)
          * real types to capture the authentic unit_type->YAV dispatch mapping
          * (synthetic trigger, authentic dispatch; logged with "trigger":"probe"). */
         if (ps_ok && ps == 3) {
+#ifdef SYW2_G1_DEFAULT_ON
+            /* Shipped G1 build: the probe calls engine functions and reads
+             * pre-G2 unit addresses, so it runs only on explicit opt-in. */
+            if (sfx_probe_opted_in())
+#endif
             sfx_probe_live_units();
         }
 
@@ -498,6 +521,24 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved)
     (void)reserved;
 
     if (reason == DLL_PROCESS_ATTACH) {
+#ifdef SYW2_G1_DEFAULT_ON
+        /* G1 default-on build: set the four trial switches before any install
+         * reads them, only when the caller left them unset (explicit values,
+         * including an empty-but-defined override, are kept). */
+        {
+            static const char *const names[4] = {
+                "SYW2_G1_NATIVE_2X_BLIT", "SYW2_G1_MIRROR2X",
+                "SYW2_G1_HD_SOURCE", "INMM_STUB_NO_UNIT_TICKS"};
+            static const char *const values[4] = {"1", "1", "scale2x", "1"};
+            char probe[2];
+            unsigned i;
+            for (i = 0; i < 4u; ++i) {
+                if (GetEnvironmentVariableA(names[i], probe, sizeof(probe)) == 0 &&
+                    GetLastError() == ERROR_ENVVAR_NOT_FOUND)
+                    SetEnvironmentVariableA(names[i], values[i]);
+            }
+        }
+#endif
         DisableThreadLibraryCalls(hInst);
 
         /* Inline hook: MessageBoxA 함수 시작 5바이트를 JMP _nop_msgbox로 패치.

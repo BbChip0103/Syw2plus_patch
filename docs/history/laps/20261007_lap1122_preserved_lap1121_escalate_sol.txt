@@ -1,0 +1,12 @@
+lap1121 work → middle 검수 요청 (H-PM2 PS23 정지 화면 스냅샷 복원 R-a: 구현·격리 2회 + 대조 1회, 핵심 수치 PASS·사전등록 이탈 2건 공개)
+
+실제 모델: Claude Code claude-sonnet-5-5 / high / work. 기록: docs/history/laps/20261007_lap1121_work_g1_hpm2_ps23_snapshot_restore.md.
+경계 사유: 사전등록 PASS 항목 중 `pause_restore_pixels` 닫힘 present 40k~46k가 관측 96,162/96,160으로 범위 밖, 거짓 복원 합계 0 기대가 save_window 51,703/51,704로 불일치, 띠 2×2 균일 ≤10% 기준은 달성 불가(pause 기준선 자체 76.7%). 이 판정·기준 재정의는 middle 역할이다.
+
+middle이 이어서 검증할 것:
+1. raw 독립 재계산: 공유 temp 20261007_lap1121_work_hpm2/pm2_{a,b}/candidate/trace_raw.jsonl + new-game-path-result.json (대조 pm2_off = SYW2_G1_PAUSE_SNAPSHOT=0).
+   닫힘 present(restore 96,162 = 띠 약 44.4k + 메뉴 패널 영역 약 51.7k로 추정, 열림 present 복원 51,703과 크기 일치)의 복원 위치를 캡처·픽셀 차이로 확정(work는 위치 미확인).
+2. 핵심 수치: 닫힘 present HD 80.0%→99.876%, 정착 PS23 min 99.876, 저장 창 열림 present 89.11%→99.876%, PS3(act·resume) 100%, 안전·V1·fallback·dropped 0, p95 증가 0ms, 수리 끔 대조 run이 PM0 결함 재현.
+3. 공통 기준선: 진입 present stale 291 px는 수리 끔 run에도 있는 별건(lap1117 PM0 b는 100%) — 원인 미조사, backlog 판정 필요.
+4. 결정 요청: 이탈 1·2 수용 여부(예측 범위 산정 누락으로 보임), 띠 균일 기준 폐기·대체(pause.png↔pause_return.png 띠 픽셀 일치율 켬 99.109% vs 끔 93.305%), 수용 시 다음 HD coverage(승패 화면·타이틀·혼자하기 대기실·옵션 하위 창·PS2 로딩) 사전등록.
+5. 변경: tools/inmm_stub/g1_pause_snapshot.h(신규)·g1_mirror2x.c/.h·direct_draw_trace.c·Makefile, tests/test_g1_pause_snapshot.py(신규). 하네스 변경 0. 모두 uncommitted. 원본 SHA 프로브 검증 통과·source_unchanged true. 사용자 G1 시험 결과(APPROVALS lap1104)는 아직 없음.

@@ -1,0 +1,8 @@
+lap1254 work H-HDU3 — footage/pair evidence complete, attack-input basis unresolved
+
+Promoted work needed:
+1. Independently verify `docs/history/laps/20261010_lap1254_work_g1_hdu3_runtime_footage.md`, its source/output hashes, 2613/save006 pair PASS, the two videos, comparison PNGs, and completed make check. Preserve the first failed comparator attempt and prior lap1252/1253 HOLD as history; do not retroactively relabel them.
+2. Resolve the remaining latest-INBOX recording criterion: it requests several actual selection/move/attack actions in the explored save006 scene. The current runner proves selection, empty click, drag, minimap right-click, and production only; no attack target/key/command is established in the active card. Determine the smallest justified in-game attack action/target from repository evidence, or explicitly route for a narrowed criterion. Do not infer minimap right-click is an attack.
+3. If the attack procedure becomes concrete, return implementation/execution to a hands-on work role. Keep current H-HDU3 pair results and G1 user/Windows/DxWnd acceptance separate. No milestone close, staging, delivery, or commit is authorized here.
+
+Preserved artifacts: shared temp `20261010_lap1254_hdu3/`; work record above; source/test changes are uncommitted. Current pair/video and 60-second new-game outputs are recorded there. All owned game copies are removed; prefixes/manifests/raw/output remain. `make check` completed with exit 0. Counter1254 was read only.

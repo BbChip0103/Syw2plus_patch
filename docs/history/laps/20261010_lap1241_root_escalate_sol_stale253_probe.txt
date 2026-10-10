@@ -1,0 +1,45 @@
+# lap1241 middle — stale253 repair basis UNKNOWN; immediate work probe handoff
+
+Independent raw review confirms lap1240 stale253 but does not establish a safe
+repair. Preserve evidence and assign the next actual product probe to work tier.
+No additional planning-only middle session is needed before that probe.
+
+Evidence/executable contract:
+`docs/history/laps/20261010_lap1241_middle_g1_stale253_review_work_handoff.md`.
+Exact2613 bytes/measurement boundaries:
+`analysis/memory_maps/g1_stale253_2613_primitive_a_lap1241.md`.
+Shared review JSON SHA256:
+`446d63196accd02719f41f268d8217736f891e1691890837a1750ba6ef5cc9f4`.
+Previous handoff byte-exact copy:
+`docs/history/laps/20261010_lap1241_preserved_lap1240_escalate_sol.txt`, SHA256
+`82dc7ce6ebe0d7116f37b7de7338180c28a42c0b6f13a2f612a490f85febe06f`.
+
+Confirmed: both pair/raw SHA, 72 masks/counts/same-tick trace, four lanes owned
+close/summary/drop0/flush; ordinal62 alone stale253 at bbox435–466/180–199.
+All three later watch samples belong to the stale mask. Separate watch run masks
+are stale0; 0x466E67 is post-write EIP for 0x466E64 inside hooked primitive0x466D50.
+Relevant current/copied sources and exact2613 old bytes match; focused7 tests PASS.
+
+Correction: lap1240 +9ms is the p66 present tick minus mouse-down, not writer time.
+Hit raw has no timestamp; exact hit ordering is UNKNOWN. Filtered stack scan is
+not a confirmed call chain; guard1 also occurs normally in the outer wrapper.
+Moved sample points do not move fixed t:r rectangles/cache-overlap event geometry.
+These records do not justify a new hook, replay change or gate weakening.
+
+Work next: unchanged official2613/save006 pair with --stale-mask 55-90,
+--stale-mask-state 3 --layer-drift --drift-samples '438,182;450,185;462,197'.
+Omit hardware watch for the first measurement. Correlate same-present t:s
+screen/snapshot/coverage/cache/layer expected (carry forward unchanged sample
+rows) to partition screen-only change from cache drift. Then use existing
+screen/cache watch only as justified. Success requires a stale mask sample and
+relevant diagnostics in the SAME run/present. A different stale-free write is
+not attribution. See lap1241 contract for exact command and PASS/FAIL conditions.
+Initial source changes0; no unrelated G2 edits. Traceable harness/input defects
+are repaired and rerun by work under PROMPT③. One work lap/60min or two failed
+hypotheses ends feasibility investigation with concrete BLOCKED/NOT_REPRODUCED
+if needed; do not add a tool/review/card chain to extend it.
+
+This session changed documentation only; fullFast/fresh game skipped within that
+scope. Old source-mismatched full-test exit0 was not promoted. No milestone close,
+user trial, commit or deployment. Keep raw/PNG/prefix/output/manifests unchanged.
+User G1/upscale evidence takes priority if it arrives.

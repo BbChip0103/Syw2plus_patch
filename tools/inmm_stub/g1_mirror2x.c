@@ -10,8 +10,16 @@
 #include "g1_scale2x_core.h"
 #include "g1_scratch_bounds.h"
 #include "g1_mirror_frame.h"
+#include "g1_hd_pack.h"
+#include "g1_blend_key.h"
 #include "g1_panel_layer.h"
 #include "g1_overlay_blt.h"
+#include "g1_frame_copy.h"
+#include "g1_pause_snapshot.h"
+#include "g1_primary_readback.h"
+#include "g1_bar_copy.h"
+#include "g1_briefing_compose.h"
+#include "g1_scratch_bltfast.h"
 #include "g1_rect_fill.h"
 #include "g1_cache_fill.h"
 #include "g1_stale_mask.h"
@@ -20,7 +28,15 @@
 
 #define G1_MIRROR_ENV "SYW2_G1_MIRROR2X"
 #define G1_S3_PATTERN_ENV "SYW2_G1_S3_PATTERN"
+#define G1_PAUSE_SNAPSHOT_ENV "SYW2_G1_PAUSE_SNAPSHOT"
+#define G1_PRIMARY_READBACK_ENV "SYW2_G1_PRIMARY_READBACK"
+#define G1_BAR_COPY_ENV "SYW2_G1_BAR_COPY"
+#define G1_RECT_SOLID_WIDE_ENV "SYW2_G1_RECT_SOLID_WIDE"
+#define G1_TEXTOUT_SCREEN_DC_ENV "SYW2_G1_TEXTOUT_SCREEN_DC"
+#define G1_BRIEFING_COMPOSE_ENV "SYW2_G1_BRIEFING_COMPOSE"
+#define G1_SCRATCH_BLTFAST_ENV "SYW2_G1_SCRATCH_BLTFAST_MIRROR"
 #define G1_STALE_MASK_ENV "SYW2_G1_STALE_MASK"
+#define G1_STALE_MASK_STATE_ENV "SYW2_G1_STALE_MASK_STATE"
 #define G1_STALE_MASK_PATH "C:\\inmm_g1_stale_mask.bin"
 #define G1_LAYER_DRIFT_ENV "SYW2_G1_LAYER_DRIFT"
 #define G1_DRIFT_SAMPLES_ENV "SYW2_G1_DRIFT_SAMPLES"
@@ -67,6 +83,24 @@
 #define G1_PANEL_HD_PACK_ENV "SYW2_G1_HD_PACK"
 #define G1_CACHE_MOVE 0x004DB1D0u
 #define G1_CACHE_COPY 0x00466280u
+/* H-RS2: PS26 banner prepare 0x4C7D00 calls the renderer blit wrapper 0x469300
+ * (selector 1 = BltFast on renderer+0x1520) with the primary surface [0xE5D434]
+ * as source.  The destination is the flip-chain back buffer, which the game got
+ * from GetAttachedSurface, so the DirectDraw surface hooks never see the call. */
+#define G1_RENDERER_BLIT 0x00469300u
+#define G1_PRIMARY_READBACK_SITE 0x004C7EE6u
+#define G1_PRIMARY_SURFACE_VA 0x00E5D434u
+#define G1_RENDERER_BACK_BUFFER 0x1520u
+/* H-RS3: the PS29 result table draws its gradient bars with 0x468BB0 (thiscall,
+ * ret 0x28, ten stack arguments), called from one site, 0x4B5493. */
+#define G1_BAR_COPY_FUNC 0x00468BB0u
+#define G1_BAR_COPY_SITE 0x004B5493u
+/* H-SC2: the PS20 briefing frame 0x4B2320 calls 0x4D4620 (thiscall, one stack argument,
+ * ret 4) from 0x4B23B5 with the flip-chain back buffer [0xE5D438] as destination; it
+ * colorkey-copies the body layer, portraits and buttons there. */
+#define G1_BRIEFING_COMPOSE_FUNC 0x004D4620u
+#define G1_BRIEFING_COMPOSE_SITE 0x004B23B5u
+#define G1_BACK_BUFFER_VA 0x00E5D438u
 #define G1_CACHE_FILL 0x00465FC0u
 #define G1_CACHE_FILL_LEN 5u
 #define G1_RENDERER_BPP 0x0Cu
@@ -116,6 +150,18 @@
 #define G1_USER32_NAME "USER32.dll"
 #define G1_HD_NEGATIVE_ENV "SYW2_G1_HD_NEGATIVE_MISMATCH"
 #define G1_BLEND_SIZE_REJECT_DIAG_ENV "SYW2_G1_BLEND_SIZE_REJECT_DIAG"
+/* H-E2611G1-1 (diagnostic only, default off): counts primitive B (0x4664D0) and TextOutA calls
+ * whose return address lies in the official 2610/2611 `.kills` / `.idle` sections. */
+#define G1_RET_RANGE_DIAG_ENV "SYW2_G1_RET_RANGE_DIAG"
+#define G1_RET_RANGE_KILLS_BASE 0x0115B000u
+#define G1_RET_RANGE_IDLE_BASE 0x01157000u
+#define G1_RET_RANGE_SIZE 0x1000u
+/* lap1141 H-TM1: 0x466480 (thiscall, ret 0x14; x y w h src) copies an 8-bit 0xFE-colorkey
+ * rectangle into the screen buffer; the title menu's user-registration popup panel is drawn
+ * with it.  SYW2_G1_KEYED_COPY=0 turns the mirror off (default on). */
+#define G1_KEYED_COPY 0x00466480u
+#define G1_KEYED_COPY_LEN 6u
+#define G1_KEYED_COPY_ENV "SYW2_G1_KEYED_COPY"
 
 typedef DWORD (__attribute__((thiscall)) *G1PrimitiveFn)(void *, DWORD, DWORD,
                                                          DWORD, DWORD, DWORD);
@@ -168,6 +214,63 @@ static BYTE *g_scratch_b = NULL;
 static BYTE *g_mirror = NULL;
 static BYTE *g_covered = NULL;
 static BYTE *g_expected_snapshot = NULL;
+/* H-PM2: PS23 entry-present HD snapshot (optional; NULL keeps the old behaviour). */
+static BYTE *g_pause_valid = NULL;
+static BYTE *g_pause_expected = NULL;
+static BYTE *g_pause_hd = NULL;
+static DWORD g_pause_state_prev = 0u;
+static DWORD g_pause_snapshot_pixels = 0u;
+static DWORD g_pause_restore_total = 0u;
+static BOOL g_pause_snapshot_enabled = TRUE;
+/* H-RS2: last presented logical 800x600 frame handed back to primary readbacks. */
+static BYTE *g_last_frame = NULL;
+static BOOL g_last_frame_valid = FALSE;
+static DWORD g_last_frame_source_hash = 0u;
+static BOOL g_primary_readback_enabled = TRUE;
+static DWORD g_primary_readback_calls = 0u;
+static DWORD g_primary_readback_converted = 0u;
+static DWORD g_primary_readback_rejects = 0u;
+static DWORD g_primary_readback_dest_hash = 0u;
+static DWORD g_primary_readback_source_hash = 0u;
+static DWORD g_primary_readback_return = 0u;
+static BOOL g_bar_copy_enabled = TRUE;
+static BOOL g_rect_solid_wide_enabled = TRUE;
+static BOOL g_textout_screen_dc_enabled = TRUE;
+static DWORD g_textout_screen_dc_calls = 0u;
+static DWORD g_bar_copy_calls = 0u;
+static DWORD g_bar_copy_mirrored = 0u;
+static DWORD g_bar_copy_rejects = 0u;
+static DWORD g_bar_copy_pixels = 0u;
+static BOOL g_briefing_compose_enabled = TRUE;
+static BYTE g_briefing_compose_before[G1_BRIEFING_MIN_WIDTH * G1_BRIEFING_HEIGHT];
+static BYTE g_briefing_compose_tile[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];
+static DWORD g_briefing_compose_calls = 0u;
+static DWORD g_briefing_compose_mirrored = 0u;
+static DWORD g_briefing_compose_changed_pixels = 0u;
+static DWORD g_briefing_compose_rejects = 0u;
+static DWORD g_briefing_compose_reject_gate = 0u;
+static DWORD g_briefing_compose_reject_lock = 0u;
+static DWORD g_briefing_compose_reject_surface = 0u;
+static DWORD g_briefing_compose_last_dest = 0u;
+static DWORD g_briefing_compose_last_geometry[4];
+static BOOL g_scratch_bltfast_enabled = TRUE;
+typedef HRESULT (WINAPI *G1ScratchBltFastFn)(LPDIRECTDRAWSURFACE7 self, DWORD x, DWORD y,
+                                             LPDIRECTDRAWSURFACE7 source, LPRECT src,
+                                             DWORD flags);
+static G1ScratchBltFastFn g_scratch_original_blt_fast = NULL;
+static IDirectDrawSurface7Vtbl *g_scratch_clone = NULL;
+static LPDIRECTDRAWSURFACE7 g_scratch_surface = NULL;
+static G1ScratchQueue g_scratch_queue;
+static BYTE g_scratch_before[G1_OVERLAY_SCREEN_WIDTH * G1_OVERLAY_SCREEN_HEIGHT];
+static BYTE g_scratch_tile[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];
+static DWORD g_scratch_calls = 0u;
+static DWORD g_scratch_recorded = 0u;
+static DWORD g_scratch_rejects = 0u;
+static DWORD g_scratch_site_calls[G1_SCRATCH_BLTFAST_SITE_COUNT + 1u];
+static DWORD g_scratch_adopts = 0u;
+static DWORD g_scratch_adopt_skipped_record = 0u;
+static DWORD g_scratch_flush_applied = 0u;
+static DWORD g_scratch_flush_pixels = 0u;
 static BYTE *g_layer_mirror = NULL;
 static BYTE *g_layer_covered = NULL;
 static BYTE *g_layer_expected = NULL;
@@ -258,7 +361,9 @@ static DWORD g_line_mirrored_pixels = 0u;
 static DWORD g_line_reject_target = 0u;
 static DWORD g_line_reject_size = 0u;
 static DWORD g_line_reject_guard = 0u;
-static BYTE g_rect_solid_before[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];
+static BYTE g_rect_solid_before[G1_OVERLAY_SCREEN_WIDTH * G1_OVERLAY_SCREEN_HEIGHT];
+static BYTE g_rect_solid_tile[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];
+static DWORD g_rect_solid_wide_calls = 0u;
 static DWORD g_rect_solid_invocations = 0u;
 static DWORD g_rect_solid_mirrored_calls = 0u;
 static DWORD g_rect_solid_mirrored_pixels = 0u;
@@ -277,6 +382,25 @@ static DWORD g_flip_rle_reject_guard = 0u;
 static DWORD g_flip_rle_reject_bounds = 0u;
 static DWORD g_flip_rle_clipped_calls = 0u;
 static DWORD g_flip_rle_wrap_calls = 0u;
+static DWORD g_flip_rle_keyed_calls = 0u;
+static DWORD g_flip_rle_key_fallbacks = 0u;
+/* Set by mirror_reinvoke: the asset key was ready when the composition ran (a flip call then needs no diff). */
+static BOOL g_reinvoke_composed = FALSE;
+/* H-TM1: 0x466480 unclipped colorkey rectangle copy; diffed in tiles from a screen-sized
+ * before copy (the popup panel is taller than G1_OVERLAY_MAX_HEIGHT). */
+static G1PrimitiveFn g_original_keyed_copy = NULL;
+static BOOL g_keyed_copy_enabled = TRUE;
+static BYTE g_keyed_copy_before[G1_OVERLAY_SCREEN_WIDTH * G1_OVERLAY_SCREEN_HEIGHT];
+static BYTE g_keyed_copy_tile[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];
+static DWORD g_keyed_copy_invocations = 0u;
+static DWORD g_keyed_copy_mirrored_calls = 0u;
+static DWORD g_keyed_copy_mirrored_pixels = 0u;
+static DWORD g_keyed_copy_changed_calls = 0u;
+static DWORD g_keyed_copy_clipped_calls = 0u;
+static DWORD g_keyed_copy_reject_target = 0u;
+static DWORD g_keyed_copy_reject_bounds = 0u;
+static DWORD g_keyed_copy_reject_size = 0u;
+static DWORD g_keyed_copy_reject_guard = 0u;
 static BYTE g_flip_clip_before[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];
 static DWORD g_flip_clip_invocations = 0u;
 static DWORD g_flip_clip_mirrored_calls = 0u;
@@ -288,6 +412,8 @@ static DWORD g_flip_clip_reject_bounds = 0u;
 static DWORD g_flip_clip_changed_calls = 0u;
 static DWORD g_flip_clip_clipped_calls = 0u;
 static DWORD g_flip_clip_wrap_calls = 0u;
+static DWORD g_flip_clip_keyed_calls = 0u;
+static DWORD g_flip_clip_key_fallbacks = 0u;
 static BYTE g_shade_rle_before[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];
 static DWORD g_shade_rle_invocations = 0u;
 static DWORD g_shade_rle_mirrored_calls = 0u;
@@ -330,6 +456,40 @@ static DWORD g_blend_rle_reject_target = 0u;
 static DWORD g_blend_rle_reject_bounds = 0u;
 static DWORD g_blend_rle_reject_size = 0u;
 static DWORD g_blend_rle_reject_guard = 0u;
+/* H-HDB0/H-HDB1: HD key path of the translucent RLE writers 0x4672E0 and 0x467580 (decode, self check, pack blend).
+ * The planes cover a whole stream rectangle (at most the screen); covered/hd_before/v* only its screen window. */
+#define G1_BLEND_KEY_MAX_PIXELS (G1_OVERLAY_SCREEN_WIDTH * G1_OVERLAY_SCREEN_HEIGHT)
+typedef struct {
+    DWORD keyed_calls;
+    DWORD keyed_pixels;
+    DWORD key_fallbacks;
+    DWORD selfcheck_mismatches;
+    DWORD selfcheck_pixels;
+    DWORD key_clip_cut;       /* H-HDB2: keyed calls whose renderer clip was narrower than the screen intersection */
+    DWORD key_clip_empty;     /* H-HDB2: calls whose renderer clip left nothing of the screen intersection (no key try) */
+    DWORD key_wrap_mismatches; /* H-HDB3: self-check mismatches of a 0x467FD0 call whose rectangle wraps past the stride/screen */
+    DWORD key_level_rejects;  /* H-HDB4: 7-arg calls refused before any decode (level outside the 10 table slices, entry beyond int16, no remap) */
+} G1BlendKeyStats;
+static G1BlendKeyStats g_blend_rle_key;
+static G1BlendKeyStats g_blend_wrle_key;
+static G1BlendKeyStats g_blend_clip_key;
+static G1BlendKeyStats g_flip_blend_key;   /* H-HDB3: 0x467FD0 */
+static G1BlendKeyStats g_blend_skip_key;   /* H-HDB3: 0x4685C0 */
+static G1BlendKeyStats g_blend_clip7_key;  /* H-HDB4: 0x4678C0 */
+static G1BlendKeyStats g_blend_flip7_key;  /* H-HDB4: 0x468360 */
+static BYTE g_blend_clip_key_before[G1_BLEND_KEY_MAX_PIXELS];
+static BYTE g_blend_key_idx[G1_BLEND_KEY_MAX_PIXELS];
+static BYTE g_blend_key_mask[G1_BLEND_KEY_MAX_PIXELS];
+static BYTE g_blend_key_vidx[G1_BLEND_KEY_MAX_PIXELS];
+static BYTE g_blend_key_vmask[G1_BLEND_KEY_MAX_PIXELS];
+/* H-HDB4: the 7-arg writers hand their remap table and level to blend_key_apply through these (set right before the call). */
+static const BYTE *g_blend_key_remap = NULL;
+static DWORD g_blend_key_remap_digest = 0u;
+static int32_t g_blend_key_level = 0;
+static BYTE g_blend_key_vsrc[G1_BLEND_KEY_MAX_PIXELS];
+static int16_t g_blend_key_level_weights[G1_BLEND_WEIGHT_ENTRIES];
+static BYTE g_blend_key_covered[G1_BLEND_KEY_MAX_PIXELS];
+static BYTE g_blend_key_hd_before[G1_BLEND_KEY_MAX_PIXELS * 4u];
 /* H-W330: 0x467580 and 0x467B00 mirror up to the whole screen (lap1083 330x200 was
  * reject_size) in <=320x160 tiles from a screen-sized before copy. */
 static BYTE g_blend_wrle_before[G1_OVERLAY_SCREEN_WIDTH * G1_OVERLAY_SCREEN_HEIGHT];
@@ -415,6 +575,15 @@ static DWORD g_textout_mirrored_calls = 0u;
 static DWORD g_textout_mirrored_pixels = 0u;
 static DWORD g_textout_changed_calls = 0u;
 static DWORD g_textout_reject_target = 0u;
+static DWORD g_textout_reject_target_ps5 = 0u;
+static DWORD g_textout_reject_target_ps7 = 0u;
+static DWORD g_textout_reject_target_other = 0u;
+static DWORD g_textout_reject_target_dc_screen = 0u;
+static DWORD g_textout_reject_target_dc_buffer = 0u;
+static DWORD g_textout_reject_target_dc_other = 0u;
+static DWORD g_textout_reject_logged_ps5 = 0u;
+static DWORD g_textout_reject_logged_ps7 = 0u;
+static DWORD g_last_present_screen = 0u;
 static DWORD g_textout_reject_size = 0u;
 static DWORD g_textout_reject_guard = 0u;
 static DWORD g_textout_reject_align = 0u;
@@ -427,7 +596,8 @@ static DWORD g_stale_pixels = 0;
 static DWORD g_present_count = 0;
 static G1StaleMaskSpec g_stale_mask_spec;
 static BYTE *g_stale_mask_buffer = NULL;
-static DWORD g_stale_mask_ps3_ordinal = 0u;
+static DWORD g_stale_mask_state = 3u;
+static DWORD g_stale_mask_ordinal = 0u;
 static DWORD g_stale_mask_dumps = 0u;
 static DWORD g_primitive_reinvoke_elapsed_ms_total = 0;
 static DWORD g_primitive_reinvoke_elapsed_ms_max = 0;
@@ -446,6 +616,11 @@ static DWORD g_menu_copy_pixels = 0u;
 static DWORD g_menu_copy_hash_first = 0u;
 static DWORD g_menu_copy_hash_last = 0u;
 static DWORD g_menu_copy_hash_changes = 0u;
+static DWORD g_partial_copy_calls = 0u;
+static DWORD g_partial_copy_pixels = 0u;
+static DWORD g_frame_copy_calls = 0u;
+static DWORD g_frame_copy_pixels = 0u;
+static DWORD g_frame_copy_rejects = 0u;
 static DWORD g_writer_clip_mismatch_counts[7];
 static DWORD g_last_clip_mismatch_writer = 0u;
 static DWORD g_last_clip_mismatch_origin_x = 0u;
@@ -499,6 +674,7 @@ static G1HookState g_hook_rect_border7;
 static G1HookState g_hook_line;
 static G1HookState g_hook_rect_solid;
 static G1HookState g_hook_flip_rle;
+static G1HookState g_hook_keyed_copy;
 static G1HookState g_hook_flip_clip;
 static G1HookState g_hook_shade_rle;
 static G1HookState g_hook_shade_flip;
@@ -523,6 +699,9 @@ static G1TextAlign g_textout_align = NULL;
 static G1GdiFlush g_textout_flush = NULL;
 static BOOL g_textout_slot_active = FALSE;
 static G1HookState g_hook_cache_copy;
+static G1HookState g_hook_primary_readback;
+static G1HookState g_hook_bar_copy;
+static G1HookState g_hook_briefing_compose;
 static G1HookState g_hook_cache_moves[8];
 static G1PrimitiveFn g_original_cache_copy = NULL;
 typedef void *(__cdecl *G1MemmoveFn)(void *, const void *, DWORD);
@@ -562,6 +741,14 @@ static char g_drift_last_rect[G1_LAYER_DRIFT_RECTS][320];
 static DWORD g_drift_w_records = 0u;
 static DWORD g_blend_410_invocations = 0u;
 static DWORD g_blend_410_changed_calls = 0u;
+/* H-D2k-s1: 0x467410 diff mirror (production). */
+static BYTE g_blend_410_before[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];
+static DWORD g_blend_410_mirrored_calls = 0u;
+static DWORD g_blend_410_mirrored_pixels = 0u;
+static DWORD g_blend_410_reject_target = 0u;
+static DWORD g_blend_410_reject_bounds = 0u;
+static DWORD g_blend_410_reject_size = 0u;
+static DWORD g_blend_410_reject_guard = 0u;
 static DWORD g_blend_6d0_invocations = 0u;
 static DWORD g_blend_6d0_changed_calls = 0u;
 static DWORD g_drift_unattributed[G1_LAYER_DRIFT_RECTS];
@@ -571,6 +758,11 @@ static BOOL g_drift_w_hit[G1_LAYER_DRIFT_RECTS];
 static BOOL g_hd_negative_probe_enabled = FALSE;
 static BOOL g_s3_pattern_enabled = FALSE;
 static BOOL g_blend_size_reject_diag = FALSE;
+static BOOL g_ret_range_diag = FALSE;
+static DWORD g_ret_diag_b_kills = 0u;
+static DWORD g_ret_diag_b_idle = 0u;
+static DWORD g_ret_diag_textout_kills = 0u;
+static DWORD g_ret_diag_textout_idle = 0u;
 static char g_panel_hd_pack_dir[MAX_PATH];
 
 static DWORD elapsed_ms(DWORD started)
@@ -598,6 +790,9 @@ static void initialize_environment(void)
         g_stale_mask_spec.count = 0u;
         if (size > 0u && size < sizeof(stale_mask))
             g1_stale_mask_parse(stale_mask, size, &g_stale_mask_spec);
+        size = GetEnvironmentVariableA(G1_STALE_MASK_STATE_ENV, value, sizeof(value));
+        if (size > 0u && size < sizeof(value))
+            g_stale_mask_state = (DWORD)g1_stale_mask_state_parse(value, size);
         size = GetEnvironmentVariableA(G1_LAYER_DRIFT_ENV, value, sizeof(value));
         g_layer_drift_enabled = size == 1u && value[0] == '1';
         size = GetEnvironmentVariableA(G1_DRIFT_SAMPLES_ENV, drift_samples, sizeof(drift_samples));
@@ -611,6 +806,24 @@ static void initialize_environment(void)
         g_s3_pattern_enabled = size == 1u && value[0] == '1';
         size = GetEnvironmentVariableA(G1_BLEND_SIZE_REJECT_DIAG_ENV, value, sizeof(value));
         g_blend_size_reject_diag = size == 1u && value[0] == '1';
+        size = GetEnvironmentVariableA(G1_RET_RANGE_DIAG_ENV, value, sizeof(value));
+        g_ret_range_diag = size == 1u && value[0] == '1';
+        size = GetEnvironmentVariableA(G1_PAUSE_SNAPSHOT_ENV, value, sizeof(value));
+        g_pause_snapshot_enabled = !(size == 1u && value[0] == '0');
+        size = GetEnvironmentVariableA(G1_PRIMARY_READBACK_ENV, value, sizeof(value));
+        g_primary_readback_enabled = !(size == 1u && value[0] == '0');
+        size = GetEnvironmentVariableA(G1_BAR_COPY_ENV, value, sizeof(value));
+        g_bar_copy_enabled = !(size == 1u && value[0] == '0');
+        size = GetEnvironmentVariableA(G1_RECT_SOLID_WIDE_ENV, value, sizeof(value));
+        g_rect_solid_wide_enabled = !(size == 1u && value[0] == '0');
+        size = GetEnvironmentVariableA(G1_TEXTOUT_SCREEN_DC_ENV, value, sizeof(value));
+        g_textout_screen_dc_enabled = !(size == 1u && value[0] == '0');
+        size = GetEnvironmentVariableA(G1_BRIEFING_COMPOSE_ENV, value, sizeof(value));
+        g_briefing_compose_enabled = !(size == 1u && value[0] == '0');
+        size = GetEnvironmentVariableA(G1_SCRATCH_BLTFAST_ENV, value, sizeof(value));
+        g_scratch_bltfast_enabled = !(size == 1u && value[0] == '0');
+        size = GetEnvironmentVariableA(G1_KEYED_COPY_ENV, value, sizeof(value));
+        g_keyed_copy_enabled = !(size == 1u && value[0] == '0');
         size = GetEnvironmentVariableA(G1_PANEL_HD_PACK_ENV,
                                        g_panel_hd_pack_dir,
                                        sizeof(g_panel_hd_pack_dir));
@@ -649,6 +862,17 @@ static BOOL blend_size_reject_diag(int width, int height, BOOL check_height)
     if (!g_blend_size_reject_diag) return FALSE;
     return (DWORD)width > G1_OVERLAY_MAX_WIDTH ||
            (check_height && (DWORD)height > G1_OVERLAY_MAX_HEIGHT);
+}
+
+static void ret_range_diag_count(DWORD return_address, DWORD *kills, DWORD *idle)
+{
+    if (return_address >= G1_RET_RANGE_KILLS_BASE &&
+        return_address - G1_RET_RANGE_KILLS_BASE < G1_RET_RANGE_SIZE) {
+        ++*kills;
+    } else if (return_address >= G1_RET_RANGE_IDLE_BASE &&
+               return_address - G1_RET_RANGE_IDLE_BASE < G1_RET_RANGE_SIZE) {
+        ++*idle;
+    }
 }
 
 static __attribute__((noinline, optimize("no-tree-loop-distribute-patterns")))
@@ -1379,10 +1603,12 @@ static void transfer_cache_to_screen(DWORD x, DWORD y, DWORD width, DWORD height
 
 static BOOL readable_bytes(const BYTE *source, DWORD bytes);
 
-/* Menu/full-screen block copy (0x466280 with a packed, non-cache source):
- * the source is an 800x600 packed frame, so Scale2x it directly instead of
- * leaving the whole screen on the nearest fallback.  Pixels later overwritten
- * by another writer fail the expected-snapshot check at present (stale). */
+/* Menu/panel block copy (0x466280 with a packed, non-cache source): the
+ * source is a packed width x height block, so Scale2x it directly instead of
+ * leaving the rectangle on the nearest fallback.  The PS9 menu is the
+ * full-screen (0,0,800,600) case; H-P35 adds the load-slot panel's partial
+ * rectangles.  Pixels later overwritten by another writer fail the
+ * expected-snapshot check at present (stale). */
 static void transfer_block_copy_to_screen(void *renderer, DWORD x, DWORD y,
                                           DWORD width, DWORD height, DWORD source)
 {
@@ -1390,23 +1616,15 @@ static void transfer_block_copy_to_screen(void *renderer, DWORD x, DWORD y,
     BYTE *target = *(BYTE **)((BYTE *)renderer + G1_RENDERER_BUFFER);
     DWORD stride = *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_STRIDE);
     DWORD surface_height = *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_HEIGHT);
-    DWORD logical, row, col, hash = 2166136261u;
+    DWORD logical, hash = 2166136261u;
     BYTE *mask = NULL, *hd = NULL;
     BOOL scale2x;
-    if (x != 0u || y != 0u || width != 800u || height != 600u ||
+    if (!g1_frame_copy_accepts(x, y, width, height) ||
         !g_mirror || !g_covered || !g_expected_snapshot || !src ||
         (DWORD)(ULONG_PTR)target == G1_CACHE_BASE ||
         (target && target == g_panel_bound_buffer) ||
         stride < 800u || surface_height < 600u ||
         !readable_bytes(src, width * height)) return;
-    for (logical = 0u; logical < width * height; ++logical) {
-        hash ^= src[logical];
-        hash *= 16777619u;
-    }
-    ++g_menu_copy_calls;
-    if (g_menu_copy_calls == 1u) g_menu_copy_hash_first = hash;
-    else if (hash != g_menu_copy_hash_last) ++g_menu_copy_hash_changes;
-    g_menu_copy_hash_last = hash;
     scale2x = lstrcmpA(g1_hd_asset_source_name(), "scale2x") == 0;
     if (scale2x) {
         mask = (BYTE *)HeapAlloc(GetProcessHeap(), 0, width * height);
@@ -1417,31 +1635,275 @@ static void transfer_block_copy_to_screen(void *renderer, DWORD x, DWORD y,
             return;
         }
         fill_bytes(mask, 1u, width * height);
-        if (!g1_scale2x_build_masked(src, width, mask, width, width, height,
-                                     hd, width * 2u)) {
-            HeapFree(GetProcessHeap(), 0, mask);
-            HeapFree(GetProcessHeap(), 0, hd);
-            return;
-        }
     }
-    for (row = 0u; row < height; ++row) {
-        for (col = 0u; col < width; ++col) {
-            BYTE *out = g_mirror + (row * 2u) * 1600u + col * 2u;
-            logical = row * 800u + col;
-            if (scale2x) {
-                const BYTE *in = hd + (row * 2u) * (width * 2u) + col * 2u;
-                out[0] = in[0]; out[1] = in[1];
-                out[1600u] = in[width * 2u]; out[1601u] = in[width * 2u + 1u];
-            } else {
-                out[0] = out[1] = out[1600u] = out[1601u] = src[row * width + col];
+    if (!g1_frame_copy_apply(src, x, y, width, height, scale2x, mask, hd,
+                             g_expected_snapshot, g_covered, g_mirror, 1600u)) {
+        if (mask) HeapFree(GetProcessHeap(), 0, mask);
+        if (hd) HeapFree(GetProcessHeap(), 0, hd);
+        return;
+    }
+    if (width == 800u && height == 600u) {
+        for (logical = 0u; logical < width * height; ++logical) {
+            hash ^= src[logical];
+            hash *= 16777619u;
+        }
+        if (scale2x) {
+            /* H-HDF0: a whole-screen raw picture (the PS9 title is yfnt/title.spr, FNV-1a 1777000796) takes its
+             * pack frame; the Scale2x copy above stays under it for the coverage maps and for the next frame. */
+            const BYTE *pack = g1_hd_asset_fullscreen_frame(hash, width, height);
+            if (pack) {
+                DWORD row;
+                for (row = 0u; row < height * 2u; ++row)
+                    mirror_move_bytes(g_mirror + row * 1600u, pack + row * width * 2u, width * 2u);
             }
-            g_covered[logical] = 1u;
-            g_expected_snapshot[logical] = src[row * width + col];
         }
+        ++g_menu_copy_calls;
+        if (g_menu_copy_calls == 1u) g_menu_copy_hash_first = hash;
+        else if (hash != g_menu_copy_hash_last) ++g_menu_copy_hash_changes;
+        g_menu_copy_hash_last = hash;
+        g_menu_copy_pixels += width * height;
+    } else {
+        ++g_partial_copy_calls;
+        g_partial_copy_pixels += width * height;
     }
-    g_menu_copy_pixels += width * height;
     if (mask) HeapFree(GetProcessHeap(), 0, mask);
     if (hd) HeapFree(GetProcessHeap(), 0, hd);
+}
+
+/* H-P35: the load-slot screen's per-frame offscreen BltFast (0x00493CCB) copies
+ * a whole 800x600 frame into the present source after the original call.  Its
+ * source surface is locked read-only (pitch must be the packed 800) and mirrored
+ * as a full-frame copy, so the black backdrop that the call rewrites unchanged
+ * is still covered.  Rejects (lock failure, pitch, bounds) are counted. */
+BOOL g1_mirror2x_frame_blt_copy(LPDIRECTDRAWSURFACE7 destination,
+                                LPDIRECTDRAWSURFACE7 source)
+{
+    DDSURFACEDESC2 desc;
+    BYTE *mask = NULL, *hd = NULL;
+    BOOL scale2x, applied = FALSE;
+    (void)destination;
+    if (!source || !g_mirror || !g_covered || !g_expected_snapshot ||
+        !g1_frame_copy_accepts(0u, 0u, 800u, 600u)) {
+        ++g_frame_copy_rejects;
+        return FALSE;
+    }
+    zero_bytes(&desc, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    if (FAILED(source->lpVtbl->Lock(source, NULL, &desc,
+                                    DDLOCK_WAIT | DDLOCK_READONLY, NULL))) {
+        ++g_frame_copy_rejects;
+        return FALSE;
+    }
+    scale2x = lstrcmpA(g1_hd_asset_source_name(), "scale2x") == 0;
+    if (desc.lpSurface && desc.lPitch == 800 && desc.dwWidth == 800u &&
+        desc.dwHeight == 600u) {
+        if (scale2x) {
+            mask = (BYTE *)HeapAlloc(GetProcessHeap(), 0, 800u * 600u);
+            hd = (BYTE *)HeapAlloc(GetProcessHeap(), 0, 1600u * 1200u);
+            if (mask) fill_bytes(mask, 1u, 800u * 600u);
+        }
+        if (!scale2x || (mask && hd))
+            applied = g1_frame_copy_apply((const BYTE *)desc.lpSurface, 0u, 0u, 800u, 600u,
+                                          scale2x, mask, hd, g_expected_snapshot,
+                                          g_covered, g_mirror, 1600u) != 0;
+        if (mask) HeapFree(GetProcessHeap(), 0, mask);
+        if (hd) HeapFree(GetProcessHeap(), 0, hd);
+    }
+    source->lpVtbl->Unlock(source, desc.lpSurface);
+    if (applied) {
+        ++g_frame_copy_calls;
+        g_frame_copy_pixels += 800u * 600u;
+    } else {
+        ++g_frame_copy_rejects;
+    }
+    return applied;
+}
+
+/* H-RS2: a game readback of the primary surface (BltFast/Blt, primary source,
+ * offscreen destination).  The primary holds the HD frame, so hand the game the
+ * last presented logical frame instead.  Returns TRUE when the readback was
+ * performed here and the original call must be skipped.  Calls are counted even
+ * with the repair off (SYW2_G1_PRIMARY_READBACK=0) so the defect run is visible. */
+BOOL g1_mirror2x_primary_readback(LPDIRECTDRAWSURFACE7 destination, DWORD return_address,
+                                  DWORD x, DWORD y, const RECT *src, BOOL color_keyed)
+{
+    DDSURFACEDESC2 desc;
+    size_t sx, sy, w, h;
+    BOOL converted = FALSE;
+    ++g_primary_readback_calls;
+    g_primary_readback_return = return_address;
+    if (!g_primary_readback_enabled) return FALSE;
+    if (!destination || !g_last_frame || !g_last_frame_valid || color_keyed) {
+        ++g_primary_readback_rejects;
+        return FALSE;
+    }
+    zero_bytes(&desc, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    if (FAILED(destination->lpVtbl->Lock(destination, NULL, &desc, DDLOCK_WAIT, NULL))) {
+        ++g_primary_readback_rejects;
+        return FALSE;
+    }
+    if (desc.lpSurface && desc.lPitch > 0 && desc.ddpfPixelFormat.dwRGBBitCount == 8u &&
+        g1_primary_readback_rect((const int32_t *)src, x, y, desc.dwWidth, desc.dwHeight,
+                                 &sx, &sy, &w, &h) &&
+        g1_primary_readback_copy(g_last_frame, (const int32_t *)src, x, y,
+                                 (uint8_t *)desc.lpSurface, (size_t)desc.lPitch,
+                                 desc.dwWidth, desc.dwHeight) != 0u) {
+        g_primary_readback_dest_hash = hash_visible_rows(
+            (const BYTE *)desc.lpSurface + y * (DWORD)desc.lPitch + x,
+            (DWORD)desc.lPitch, (DWORD)w, (DWORD)h);
+        g_primary_readback_source_hash = g_last_frame_source_hash;
+        converted = TRUE;
+    }
+    destination->lpVtbl->Unlock(destination, desc.lpSurface);
+    if (converted) ++g_primary_readback_converted;
+    else ++g_primary_readback_rejects;
+    return converted;
+}
+
+typedef DWORD (__attribute__((thiscall)) *G1RendererBlitFn)(
+    void *renderer, DWORD selector, DWORD x, DWORD y, DWORD source, DWORD rect,
+    DWORD flags);
+
+/* Call-site wrapper for `call 0x469300` at 0x4C7EE6 (same thiscall, six stack
+ * arguments).  Everything except a selector-1 blit whose source is the primary
+ * surface goes straight to the original function. */
+static DWORD __attribute__((thiscall)) mirror_primary_readback_site(
+    void *renderer, DWORD selector, DWORD x, DWORD y, DWORD source, DWORD rect,
+    DWORD flags)
+{
+    G1RendererBlitFn blit = (G1RendererBlitFn)(ULONG_PTR)G1_RENDERER_BLIT;
+    const BYTE *field = (const BYTE *)renderer + G1_RENDERER_BACK_BUFFER;
+    LPDIRECTDRAWSURFACE7 back = NULL;
+    if (selector == 1u && source != 0u && source == read_game_dword(G1_PRIMARY_SURFACE_VA) &&
+        readable_bytes(field, sizeof(DWORD)))
+        back = *(LPDIRECTDRAWSURFACE7 const *)field;
+    if (back && g1_mirror2x_primary_readback(back, G1_PRIMARY_READBACK_SITE + 5u, x, y,
+                                             (const RECT *)(ULONG_PTR)rect,
+                                             (flags & 1u) != 0u))
+        return 0u;
+    return blit(renderer, selector, x, y, source, rect, flags);
+}
+
+typedef DWORD (__attribute__((thiscall)) *G1RendererBarCopyFn)(
+    void *renderer, DWORD dst, DWORD dst_pitch, DWORD src, DWORD src_pitch,
+    DWORD sx0, DWORD sy0, DWORD sx1, DWORD sy1, DWORD dx, DWORD dy);
+
+/* Call-site wrapper for `call 0x468BB0` at 0x4B5493 (same thiscall, ten stack
+ * arguments).  The original runs first; the same rectangle is then mirrored when
+ * it landed in the renderer's screen buffer.  Rejects (other destination, bad
+ * rectangle, unreadable source, no memory) leave the original result alone. */
+static DWORD __attribute__((thiscall)) mirror_bar_copy_site(
+    void *renderer, DWORD dst, DWORD dst_pitch, DWORD src, DWORD src_pitch,
+    DWORD sx0, DWORD sy0, DWORD sx1, DWORD sy1, DWORD dx, DWORD dy)
+{
+    G1RendererBarCopyFn original = (G1RendererBarCopyFn)(ULONG_PTR)G1_BAR_COPY_FUNC;
+    DWORD result = original(renderer, dst, dst_pitch, src, src_pitch, sx0, sy0, sx1, sy1,
+                            dx, dy);
+    size_t width, height, offset, span;
+    BYTE *packed;
+    ++g_bar_copy_calls;
+    if (!g_bar_copy_enabled) return result;
+    if ((DWORD)(ULONG_PTR)renderer != G1_RENDERER_VA ||
+        dst != *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_BUFFER) ||
+        dst_pitch != *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_STRIDE) ||
+        !g1_bar_copy_rect((int32_t)sx0, (int32_t)sy0, (int32_t)sx1, (int32_t)sy1,
+                          (int32_t)dx, (int32_t)dy, &width, &height) ||
+        !g1_bar_copy_source_span(sx0, sy0, src_pitch, width, height, &offset, &span) ||
+        !src || !readable_bytes((const BYTE *)(ULONG_PTR)src + offset, (DWORD)span)) {
+        ++g_bar_copy_rejects;
+        return result;
+    }
+    packed = (BYTE *)HeapAlloc(GetProcessHeap(), 0, width * height);
+    if (!packed) {
+        ++g_bar_copy_rejects;
+        return result;
+    }
+    g1_bar_copy_pack((const BYTE *)(ULONG_PTR)src, src_pitch, sx0, sy0, width, height, packed);
+    transfer_block_copy_to_screen(renderer, dx, dy, (DWORD)width, (DWORD)height,
+                                  (DWORD)(ULONG_PTR)packed);
+    HeapFree(GetProcessHeap(), 0, packed);
+    ++g_bar_copy_mirrored;
+    g_bar_copy_pixels += (DWORD)(width * height);
+    return result;
+}
+
+typedef DWORD (__attribute__((thiscall)) *G1BriefingComposeFn)(void *self, DWORD dest);
+
+/* Call-site wrapper for `call 0x4D4620` at 0x4B23B5 (same thiscall, one stack argument).
+ * The back buffer is copied before the original runs and diffed after it, so only the
+ * pixels the composition changed reach the HD mirror.  A rejected surface (state, size,
+ * format, lock failure) leaves the original result alone. */
+static DWORD __attribute__((thiscall)) mirror_briefing_compose_site(void *self, DWORD dest)
+{
+    G1BriefingComposeFn original = (G1BriefingComposeFn)(ULONG_PTR)G1_BRIEFING_COMPOSE_FUNC;
+    LPDIRECTDRAWSURFACE7 surface = (LPDIRECTDRAWSURFACE7)(ULONG_PTR)dest;
+    DDSURFACEDESC2 desc;
+    G1OverlayStats stats;
+    size_t tiles = 0u;
+    BOOL active = FALSE;
+    DWORD result;
+    ++g_briefing_compose_calls;
+    g_briefing_compose_last_dest = dest;
+    if (g_briefing_compose_enabled && !g_primitive_guard && g_mirror && g_covered &&
+        g_expected_snapshot && dest != 0u &&
+        dest == read_game_dword(G1_BACK_BUFFER_VA) &&
+        read_game_dword(G1_PROGRAM_STATE_VA) == G1_BRIEFING_PROGRAM_STATE) {
+        zero_bytes(&desc, sizeof(desc));
+        desc.dwSize = sizeof(desc);
+        if (SUCCEEDED(surface->lpVtbl->Lock(surface, NULL, &desc, DDLOCK_WAIT, NULL))) {
+            g_briefing_compose_last_geometry[0] = desc.dwWidth;
+            g_briefing_compose_last_geometry[1] = desc.dwHeight;
+            g_briefing_compose_last_geometry[2] = (DWORD)desc.lPitch;
+            g_briefing_compose_last_geometry[3] = desc.ddpfPixelFormat.dwRGBBitCount;
+            if (desc.lpSurface && desc.lPitch > 0 &&
+                g1_briefing_compose_accepts(G1_BRIEFING_PROGRAM_STATE, dest, dest,
+                                            desc.dwWidth, desc.dwHeight,
+                                            (DWORD)desc.lPitch,
+                                            desc.ddpfPixelFormat.dwRGBBitCount)) {
+                g1_bar_copy_pack((const BYTE *)desc.lpSurface, (size_t)desc.lPitch, 0u, 0u,
+                                 G1_BRIEFING_MIN_WIDTH, G1_BRIEFING_HEIGHT,
+                                 g_briefing_compose_before);
+                active = TRUE;
+            } else {
+                ++g_briefing_compose_reject_surface;
+            }
+            surface->lpVtbl->Unlock(surface, desc.lpSurface);
+        } else {
+            ++g_briefing_compose_reject_lock;
+        }
+        if (!active) ++g_briefing_compose_rejects;
+    } else {
+        ++g_briefing_compose_reject_gate;
+        ++g_briefing_compose_rejects;
+    }
+    result = original(self, dest);
+    if (active) {
+        BOOL applied = FALSE;
+        zero_bytes(&desc, sizeof(desc));
+        desc.dwSize = sizeof(desc);
+        if (SUCCEEDED(surface->lpVtbl->Lock(surface, NULL, &desc, DDLOCK_WAIT, NULL))) {
+            if (desc.lpSurface && desc.lPitch > 0 &&
+                g1_briefing_compose_accepts(G1_BRIEFING_PROGRAM_STATE, dest, dest,
+                                            desc.dwWidth, desc.dwHeight,
+                                            (DWORD)desc.lPitch,
+                                            desc.ddpfPixelFormat.dwRGBBitCount))
+                applied = g1_overlay_blt_apply_tiled(
+                    g_briefing_compose_before, (const BYTE *)desc.lpSurface,
+                    (size_t)desc.lPitch, 0u, 0u, G1_BRIEFING_MIN_WIDTH, G1_BRIEFING_HEIGHT,
+                    lstrcmpA(g1_hd_asset_source_name(), "scale2x") == 0,
+                    g_overlay_scratch, g_briefing_compose_tile, g_expected_snapshot,
+                    g_covered, g_mirror, 1600u, &stats, &tiles) != 0;
+            surface->lpVtbl->Unlock(surface, desc.lpSurface);
+        }
+        if (applied) {
+            ++g_briefing_compose_mirrored;
+            g_briefing_compose_changed_pixels += (DWORD)stats.changed;
+        } else {
+            ++g_briefing_compose_rejects;
+        }
+    }
+    return result;
 }
 
 static DWORD __attribute__((thiscall)) mirror_cache_copy(
@@ -1634,6 +2096,95 @@ static void rect_blt_heal2_at_present(const BYTE *screen, DWORD pitch, DWORD ins
     }
 }
 
+/* H-PS5W1: BltFast wrapper for the flip-chain back buffer's own (uncloned) vtable.  It does
+ * not touch the surface: the destination rectangle is queued and diffed against the expected
+ * frame at the next present, when the source is already locked and wined3d has finished the
+ * blits.  The original always runs exactly once. */
+static HRESULT WINAPI mirror_scratch_blt_fast(LPDIRECTDRAWSURFACE7 self, DWORD x, DWORD y,
+                                              LPDIRECTDRAWSURFACE7 source, LPRECT src,
+                                              DWORD flags)
+{
+    DWORD return_address = (DWORD)(ULONG_PTR)__builtin_return_address(0);
+    G1ScratchRect rect;
+    ++g_scratch_calls;
+    ++g_scratch_site_calls[g1_scratch_bltfast_site_index(return_address)];
+    if (g_scratch_bltfast_enabled && !g_primitive_guard && g_mirror && g_covered &&
+        g_expected_snapshot &&
+        g1_scratch_bltfast_state_accepts(read_game_dword(G1_PROGRAM_STATE_VA)) &&
+        g1_scratch_bltfast_rect(x, y, src != NULL, src ? src->left : 0, src ? src->top : 0,
+                                src ? src->right : 0, src ? src->bottom : 0, &rect) &&
+        g1_scratch_queue_push(&g_scratch_queue, &rect))
+        ++g_scratch_recorded;
+    else
+        ++g_scratch_rejects;
+    return g_scratch_original_blt_fast(self, x, y, source, src, flags);
+}
+
+/* Called from the primary present with its source.  A back buffer the DirectDraw trace
+ * already cloned (has_record) keeps the trace hook; any other back buffer gets its own
+ * vtable clone whose BltFast is the wrapper above.  Re-adopts when the object (or its
+ * vtable) changed. */
+void g1_mirror2x_scratch_bltfast_adopt(LPDIRECTDRAWSURFACE7 back, BOOL has_record)
+{
+    IDirectDrawSurface7Vtbl *original;
+    if (!g_scratch_bltfast_enabled || !back || back != (LPDIRECTDRAWSURFACE7)(ULONG_PTR)
+            read_game_dword(G1_BACK_BUFFER_VA))
+        return;
+    if (has_record) {
+        ++g_scratch_adopt_skipped_record;
+        return;
+    }
+    if (back == g_scratch_surface && back->lpVtbl == g_scratch_clone) return;
+    original = back->lpVtbl;
+    g_scratch_clone = (IDirectDrawSurface7Vtbl *)HeapAlloc(
+        GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectDrawSurface7Vtbl));
+    if (!g_scratch_clone) return;
+    *g_scratch_clone = *original;
+    g_scratch_original_blt_fast = (G1ScratchBltFastFn)original->BltFast;
+    g_scratch_clone->BltFast = mirror_scratch_blt_fast;
+    g_scratch_surface = back;
+    back->lpVtbl = g_scratch_clone;
+    g1_scratch_queue_reset(&g_scratch_queue);
+    ++g_scratch_adopts;
+}
+
+/* Present-time half of the wrapper: the queued rectangles are the "after" regions, the
+ * expected snapshot the "before"; only pixels that differ reach the HD mirror (the same
+ * contract as rect_blt_heal_at_present).  screen is the locked back buffer (stride pitch). */
+static void scratch_bltfast_at_present(const BYTE *screen, DWORD pitch)
+{
+    DWORD index;
+    BOOL state_ok = g1_scratch_bltfast_state_accepts(read_game_dword(G1_PROGRAM_STATE_VA));
+    if (!g_scratch_queue.count) return;
+    if (!state_ok || !g_mirror || !g_covered || !g_expected_snapshot || !screen ||
+        pitch < G1_OVERLAY_SCREEN_WIDTH) {
+        g1_scratch_queue_reset(&g_scratch_queue);
+        return;
+    }
+    for (index = 0u; index < g_scratch_queue.count; ++index) {
+        const G1ScratchRect *rect = &g_scratch_queue.rects[index];
+        G1OverlayStats stats;
+        size_t tiles = 0u;
+        DWORD row, col;
+        for (row = 0u; row < (DWORD)rect->h; ++row)
+            for (col = 0u; col < (DWORD)rect->w; ++col)
+                g_scratch_before[row * (DWORD)rect->w + col] = g_expected_snapshot[
+                    ((DWORD)rect->y + row) * G1_OVERLAY_SCREEN_WIDTH + (DWORD)rect->x + col];
+        if (g1_overlay_blt_apply_tiled(
+                g_scratch_before, screen, pitch, (size_t)rect->x, (size_t)rect->y,
+                (size_t)rect->w, (size_t)rect->h,
+                lstrcmpA(g1_hd_asset_source_name(), "scale2x") == 0, g_overlay_scratch,
+                g_scratch_tile, g_expected_snapshot, g_covered, g_mirror, 1600u, &stats,
+                &tiles)) {
+            ++g_scratch_flush_applied;
+            g_scratch_flush_pixels += (DWORD)stats.changed;
+        } else {
+            ++g_scratch_rejects;
+        }
+    }
+    g1_scratch_queue_reset(&g_scratch_queue);
+}
+
 /* H-A2: wined3d re-syncs the Blt'd region of the back buffer from its texture
  * on every present while the popup is shown (EIP in wined3d.dll, once per
  * present), after the game's own cache copy.  The cache-copy hook has already
@@ -1687,12 +2238,15 @@ HRESULT g1_mirror2x_copy_present(LPDIRECTDRAWSURFACE7 primary,
     DWORD started;
     HRESULT final_hr;
     DWORD program_state = 0u, mask_ordinal = 0u;
+    DWORD pause_state = 0u, pause_restore_now = 0u;
+    int pause_action = G1_PAUSE_ACTION_NONE;
+    BOOL pause_restore_on = FALSE;
     BYTE *mask_dump = NULL;
     started = GetTickCount();
     if (g_stale_mask_spec.count != 0u) {
         program_state = read_game_dword(G1_PROGRAM_STATE_VA);
-        if (program_state == 3u) {
-            mask_ordinal = g_stale_mask_ps3_ordinal++;
+        if (program_state == g_stale_mask_state) {
+            mask_ordinal = g_stale_mask_ordinal++;
             if (g1_stale_mask_selected(&g_stale_mask_spec, mask_ordinal) &&
                 g_stale_mask_dumps < G1_STALE_MASK_DUMP_LIMIT) {
                 if (!g_stale_mask_buffer)
@@ -1735,8 +2289,11 @@ HRESULT g1_mirror2x_copy_present(LPDIRECTDRAWSURFACE7 primary,
         source->lpVtbl->Unlock(source, source_desc.lpSurface);
         return DDERR_INVALIDPARAMS;
     }
+    g_last_present_screen = (DWORD)(ULONG_PTR)source_desc.lpSurface;
     rect_blt_heal_at_present((const BYTE *)source_desc.lpSurface,
                              (DWORD)source_desc.lPitch);
+    scratch_bltfast_at_present((const BYTE *)source_desc.lpSurface,
+                               (DWORD)source_desc.lPitch);
     layer_drift_present((const BYTE *)source_desc.lpSurface,
                         (DWORD)source_desc.lPitch);
     g1_screen_watch_on_present((const BYTE *)source_desc.lpSurface,
@@ -1745,11 +2302,25 @@ HRESULT g1_mirror2x_copy_present(LPDIRECTDRAWSURFACE7 primary,
                           (DWORD)source_desc.lPitch);
     g_last_present.source_stride = (DWORD)source_desc.lPitch;
     g_last_present.destination_stride = (DWORD)destination_desc.lPitch;
+    if (g_pause_snapshot_enabled) {
+        pause_state = read_game_dword(G1_PROGRAM_STATE_VA);
+        pause_action = g1_pause_snapshot_action(g_pause_state_prev, pause_state);
+        g_pause_state_prev = pause_state;
+        if (pause_action != G1_PAUSE_ACTION_NONE) {
+            zero_bytes(g_pause_valid, 800u * 600u);
+            g_pause_snapshot_pixels = 0u;
+        }
+        pause_restore_on = g1_pause_restore_active(pause_state,
+                                                   g_pause_snapshot_pixels != 0u);
+    }
+    g_last_frame_valid = FALSE;
     for (y = 0; y < height; ++y) {
         const BYTE *source_row = (const BYTE *)source_desc.lpSurface +
                                  y * source_desc.lPitch;
         BYTE *destination_row = (BYTE *)destination_desc.lpSurface +
                                 y * 2u * destination_desc.lPitch;
+        if (g_primary_readback_enabled && g_last_frame)
+            panel_copy_bytes(g_last_frame + y * 800u, source_row, 800u);
         for (x = 0; x < width; ++x) {
             DWORD p = y * 800u + x;
             BYTE pixel = source_row[x];
@@ -1759,6 +2330,21 @@ HRESULT g1_mirror2x_copy_present(LPDIRECTDRAWSURFACE7 primary,
             if (mask_dump)
                 mask_dump[p] = g1_stale_mask_value(g_covered[p] != 0u,
                                                    g_expected_snapshot[p] == pixel);
+            if (pause_restore_on && !hd_asset &&
+                g1_pause_restore_pick(g_covered[p] != 0u, g_expected_snapshot[p], pixel,
+                                      g_pause_valid[p] != 0u, g_pause_expected[p]) ==
+                    G1_PAUSE_PICK_RESTORE) {
+                BYTE *mirror_pixel = g_mirror + y * 2u * 1600u + x * 2u;
+                const BYTE *snapshot_pixel = g_pause_hd + y * 2u * 1600u + x * 2u;
+                g_covered[p] = 1u;
+                g_expected_snapshot[p] = pixel;
+                mirror_pixel[0] = snapshot_pixel[0];
+                mirror_pixel[1] = snapshot_pixel[1];
+                mirror_pixel[1600u] = snapshot_pixel[1600u];
+                mirror_pixel[1601u] = snapshot_pixel[1601u];
+                hd_asset = TRUE;
+                ++pause_restore_now;
+            }
             if (g_covered[p]) {
                 ++covered_now;
                 if (g_expected_snapshot[p] == pixel) {
@@ -1767,6 +2353,15 @@ HRESULT g1_mirror2x_copy_present(LPDIRECTDRAWSURFACE7 primary,
                     top_right = mirror_pixel[1];
                     bottom_left = mirror_pixel[1600u];
                     bottom_right = mirror_pixel[1601u];
+                    if (pause_action == G1_PAUSE_ACTION_CAPTURE) {
+                        g_pause_valid[p] = 1u;
+                        g_pause_expected[p] = pixel;
+                        g_pause_hd[y * 2u * 1600u + x * 2u] = top_left;
+                        g_pause_hd[y * 2u * 1600u + x * 2u + 1u] = top_right;
+                        g_pause_hd[(y * 2u + 1u) * 1600u + x * 2u] = bottom_left;
+                        g_pause_hd[(y * 2u + 1u) * 1600u + x * 2u + 1u] = bottom_right;
+                        ++g_pause_snapshot_pixels;
+                    }
                 } else {
                     ++stale_now;
                     ++g_stale_pixels;
@@ -1802,6 +2397,8 @@ HRESULT g1_mirror2x_copy_present(LPDIRECTDRAWSURFACE7 primary,
     g_last_present.destination_hash = hash_visible_rows(destination_desc.lpSurface,
                                                         (DWORD)destination_desc.lPitch,
                                                         width * 2u, height * 2u);
+    g_last_frame_source_hash = g_last_present.source_hash;
+    g_last_frame_valid = g_primary_readback_enabled && g_last_frame != NULL;
     dump_first_row(source_desc.lpSurface, (DWORD)source_desc.lPitch, width,
                    g_last_present.source_dump);
     dump_first_row(destination_desc.lpSurface, (DWORD)destination_desc.lPitch,
@@ -1826,6 +2423,9 @@ HRESULT g1_mirror2x_copy_present(LPDIRECTDRAWSURFACE7 primary,
     final_hr = unlock_hr;
     g_last_present.covered_pixels = covered_now;
     g_last_present.stale_pixels = stale_now;
+    g_last_present.pause_snapshot_pixels = g_pause_snapshot_pixels;
+    g_last_present.pause_restore_pixels = pause_restore_now;
+    g_pause_restore_total += pause_restore_now;
     if (mask_dump) {
         DWORD mask_header[8];
         g1_stale_mask_header(mask_header, mask_ordinal, program_state,
@@ -2193,6 +2793,7 @@ DWORD g1_mirror2x_rect_solid_invocations(void) { return g_rect_solid_invocations
 DWORD g1_mirror2x_rect_solid_mirrored_calls(void) { return g_rect_solid_mirrored_calls; }
 DWORD g1_mirror2x_rect_solid_mirrored_pixels(void) { return g_rect_solid_mirrored_pixels; }
 DWORD g1_mirror2x_rect_solid_reject_target(void) { return g_rect_solid_reject_target; }
+DWORD g1_mirror2x_rect_solid_wide_calls(void) { return g_rect_solid_wide_calls; }
 DWORD g1_mirror2x_rect_solid_reject_bounds(void) { return g_rect_solid_reject_bounds; }
 DWORD g1_mirror2x_rect_solid_reject_size(void) { return g_rect_solid_reject_size; }
 DWORD g1_mirror2x_rect_solid_reject_guard(void) { return g_rect_solid_reject_guard; }
@@ -2206,6 +2807,17 @@ DWORD g1_mirror2x_flip_rle_reject_guard(void) { return g_flip_rle_reject_guard; 
 DWORD g1_mirror2x_flip_rle_reject_bounds(void) { return g_flip_rle_reject_bounds; }
 DWORD g1_mirror2x_flip_rle_clipped_calls(void) { return g_flip_rle_clipped_calls; }
 DWORD g1_mirror2x_flip_rle_wrap_calls(void) { return g_flip_rle_wrap_calls; }
+DWORD g1_mirror2x_flip_rle_keyed_calls(void) { return g_flip_rle_keyed_calls; }
+DWORD g1_mirror2x_flip_rle_key_fallbacks(void) { return g_flip_rle_key_fallbacks; }
+DWORD g1_mirror2x_keyed_copy_invocations(void) { return g_keyed_copy_invocations; }
+DWORD g1_mirror2x_keyed_copy_mirrored_calls(void) { return g_keyed_copy_mirrored_calls; }
+DWORD g1_mirror2x_keyed_copy_mirrored_pixels(void) { return g_keyed_copy_mirrored_pixels; }
+DWORD g1_mirror2x_keyed_copy_changed_calls(void) { return g_keyed_copy_changed_calls; }
+DWORD g1_mirror2x_keyed_copy_clipped_calls(void) { return g_keyed_copy_clipped_calls; }
+DWORD g1_mirror2x_keyed_copy_reject_target(void) { return g_keyed_copy_reject_target; }
+DWORD g1_mirror2x_keyed_copy_reject_bounds(void) { return g_keyed_copy_reject_bounds; }
+DWORD g1_mirror2x_keyed_copy_reject_size(void) { return g_keyed_copy_reject_size; }
+DWORD g1_mirror2x_keyed_copy_reject_guard(void) { return g_keyed_copy_reject_guard; }
 DWORD g1_mirror2x_flip_clip_invocations(void) { return g_flip_clip_invocations; }
 DWORD g1_mirror2x_flip_clip_mirrored_calls(void) { return g_flip_clip_mirrored_calls; }
 DWORD g1_mirror2x_flip_clip_mirrored_pixels(void) { return g_flip_clip_mirrored_pixels; }
@@ -2216,6 +2828,8 @@ DWORD g1_mirror2x_flip_clip_reject_bounds(void) { return g_flip_clip_reject_boun
 DWORD g1_mirror2x_flip_clip_changed_calls(void) { return g_flip_clip_changed_calls; }
 DWORD g1_mirror2x_flip_clip_clipped_calls(void) { return g_flip_clip_clipped_calls; }
 DWORD g1_mirror2x_flip_clip_wrap_calls(void) { return g_flip_clip_wrap_calls; }
+DWORD g1_mirror2x_flip_clip_keyed_calls(void) { return g_flip_clip_keyed_calls; }
+DWORD g1_mirror2x_flip_clip_key_fallbacks(void) { return g_flip_clip_key_fallbacks; }
 DWORD g1_mirror2x_shade_rle_invocations(void) { return g_shade_rle_invocations; }
 DWORD g1_mirror2x_shade_rle_mirrored_calls(void) { return g_shade_rle_mirrored_calls; }
 DWORD g1_mirror2x_shade_rle_mirrored_pixels(void) { return g_shade_rle_mirrored_pixels; }
@@ -2254,6 +2868,52 @@ DWORD g1_mirror2x_blend_rle_reject_target(void) { return g_blend_rle_reject_targ
 DWORD g1_mirror2x_blend_rle_reject_bounds(void) { return g_blend_rle_reject_bounds; }
 DWORD g1_mirror2x_blend_rle_reject_size(void) { return g_blend_rle_reject_size; }
 DWORD g1_mirror2x_blend_rle_reject_guard(void) { return g_blend_rle_reject_guard; }
+DWORD g1_mirror2x_blend_rle_keyed_calls(void) { return g_blend_rle_key.keyed_calls; }
+DWORD g1_mirror2x_blend_rle_keyed_pixels(void) { return g_blend_rle_key.keyed_pixels; }
+DWORD g1_mirror2x_blend_rle_key_fallbacks(void) { return g_blend_rle_key.key_fallbacks; }
+DWORD g1_mirror2x_blend_rle_selfcheck_mismatches(void) { return g_blend_rle_key.selfcheck_mismatches; }
+DWORD g1_mirror2x_blend_rle_selfcheck_pixels(void) { return g_blend_rle_key.selfcheck_pixels; }
+DWORD g1_mirror2x_blend_wrle_keyed_calls(void) { return g_blend_wrle_key.keyed_calls; }
+DWORD g1_mirror2x_blend_wrle_keyed_pixels(void) { return g_blend_wrle_key.keyed_pixels; }
+DWORD g1_mirror2x_blend_wrle_key_fallbacks(void) { return g_blend_wrle_key.key_fallbacks; }
+DWORD g1_mirror2x_blend_wrle_selfcheck_mismatches(void) { return g_blend_wrle_key.selfcheck_mismatches; }
+DWORD g1_mirror2x_blend_wrle_selfcheck_pixels(void) { return g_blend_wrle_key.selfcheck_pixels; }
+DWORD g1_mirror2x_blend_clip_keyed_calls(void) { return g_blend_clip_key.keyed_calls; }
+DWORD g1_mirror2x_blend_clip_keyed_pixels(void) { return g_blend_clip_key.keyed_pixels; }
+DWORD g1_mirror2x_blend_clip_key_fallbacks(void) { return g_blend_clip_key.key_fallbacks; }
+DWORD g1_mirror2x_blend_clip_selfcheck_mismatches(void) { return g_blend_clip_key.selfcheck_mismatches; }
+DWORD g1_mirror2x_blend_clip_selfcheck_pixels(void) { return g_blend_clip_key.selfcheck_pixels; }
+DWORD g1_mirror2x_blend_clip_key_clip_cut(void) { return g_blend_clip_key.key_clip_cut; }
+DWORD g1_mirror2x_blend_clip_key_clip_empty(void) { return g_blend_clip_key.key_clip_empty; }
+DWORD g1_mirror2x_flip_blend_keyed_calls(void) { return g_flip_blend_key.keyed_calls; }
+DWORD g1_mirror2x_flip_blend_keyed_pixels(void) { return g_flip_blend_key.keyed_pixels; }
+DWORD g1_mirror2x_flip_blend_key_fallbacks(void) { return g_flip_blend_key.key_fallbacks; }
+DWORD g1_mirror2x_flip_blend_selfcheck_mismatches(void) { return g_flip_blend_key.selfcheck_mismatches; }
+DWORD g1_mirror2x_flip_blend_selfcheck_pixels(void) { return g_flip_blend_key.selfcheck_pixels; }
+DWORD g1_mirror2x_flip_blend_key_wrap_mismatches(void) { return g_flip_blend_key.key_wrap_mismatches; }
+DWORD g1_mirror2x_blend_skip_keyed_calls(void) { return g_blend_skip_key.keyed_calls; }
+DWORD g1_mirror2x_blend_skip_keyed_pixels(void) { return g_blend_skip_key.keyed_pixels; }
+DWORD g1_mirror2x_blend_skip_key_fallbacks(void) { return g_blend_skip_key.key_fallbacks; }
+DWORD g1_mirror2x_blend_skip_selfcheck_mismatches(void) { return g_blend_skip_key.selfcheck_mismatches; }
+DWORD g1_mirror2x_blend_skip_selfcheck_pixels(void) { return g_blend_skip_key.selfcheck_pixels; }
+DWORD g1_mirror2x_blend_skip_key_clip_cut(void) { return g_blend_skip_key.key_clip_cut; }
+DWORD g1_mirror2x_blend_skip_key_clip_empty(void) { return g_blend_skip_key.key_clip_empty; }
+DWORD g1_mirror2x_blend_clip7_keyed_calls(void) { return g_blend_clip7_key.keyed_calls; }
+DWORD g1_mirror2x_blend_clip7_keyed_pixels(void) { return g_blend_clip7_key.keyed_pixels; }
+DWORD g1_mirror2x_blend_clip7_key_fallbacks(void) { return g_blend_clip7_key.key_fallbacks; }
+DWORD g1_mirror2x_blend_clip7_selfcheck_mismatches(void) { return g_blend_clip7_key.selfcheck_mismatches; }
+DWORD g1_mirror2x_blend_clip7_selfcheck_pixels(void) { return g_blend_clip7_key.selfcheck_pixels; }
+DWORD g1_mirror2x_blend_clip7_key_clip_cut(void) { return g_blend_clip7_key.key_clip_cut; }
+DWORD g1_mirror2x_blend_clip7_key_clip_empty(void) { return g_blend_clip7_key.key_clip_empty; }
+DWORD g1_mirror2x_blend_clip7_key_level_rejects(void) { return g_blend_clip7_key.key_level_rejects; }
+DWORD g1_mirror2x_blend_flip7_keyed_calls(void) { return g_blend_flip7_key.keyed_calls; }
+DWORD g1_mirror2x_blend_flip7_keyed_pixels(void) { return g_blend_flip7_key.keyed_pixels; }
+DWORD g1_mirror2x_blend_flip7_key_fallbacks(void) { return g_blend_flip7_key.key_fallbacks; }
+DWORD g1_mirror2x_blend_flip7_selfcheck_mismatches(void) { return g_blend_flip7_key.selfcheck_mismatches; }
+DWORD g1_mirror2x_blend_flip7_selfcheck_pixels(void) { return g_blend_flip7_key.selfcheck_pixels; }
+DWORD g1_mirror2x_blend_flip7_key_clip_cut(void) { return g_blend_flip7_key.key_clip_cut; }
+DWORD g1_mirror2x_blend_flip7_key_clip_empty(void) { return g_blend_flip7_key.key_clip_empty; }
+DWORD g1_mirror2x_blend_flip7_key_level_rejects(void) { return g_blend_flip7_key.key_level_rejects; }
 DWORD g1_mirror2x_blend_wrle_invocations(void) { return g_blend_wrle_invocations; }
 DWORD g1_mirror2x_blend_wrle_mirrored_calls(void) { return g_blend_wrle_mirrored_calls; }
 DWORD g1_mirror2x_blend_wrle_mirrored_pixels(void) { return g_blend_wrle_mirrored_pixels; }
@@ -2321,6 +2981,12 @@ DWORD g1_mirror2x_flip_blend7_reject_size(void) { return g_flip_blend7_reject_si
 DWORD g1_mirror2x_flip_blend7_reject_guard(void) { return g_flip_blend7_reject_guard; }
 DWORD g1_mirror2x_blend_410_invocations(void) { return g_blend_410_invocations; }
 DWORD g1_mirror2x_blend_410_changed_calls(void) { return g_blend_410_changed_calls; }
+DWORD g1_mirror2x_blend_410_mirrored_calls(void) { return g_blend_410_mirrored_calls; }
+DWORD g1_mirror2x_blend_410_mirrored_pixels(void) { return g_blend_410_mirrored_pixels; }
+DWORD g1_mirror2x_blend_410_reject_target(void) { return g_blend_410_reject_target; }
+DWORD g1_mirror2x_blend_410_reject_bounds(void) { return g_blend_410_reject_bounds; }
+DWORD g1_mirror2x_blend_410_reject_size(void) { return g_blend_410_reject_size; }
+DWORD g1_mirror2x_blend_410_reject_guard(void) { return g_blend_410_reject_guard; }
 DWORD g1_mirror2x_blend_6d0_invocations(void) { return g_blend_6d0_invocations; }
 DWORD g1_mirror2x_blend_6d0_changed_calls(void) { return g_blend_6d0_changed_calls; }
 DWORD g1_mirror2x_drift_w_records(void) { return g_drift_w_records; }
@@ -2332,11 +2998,23 @@ DWORD g1_mirror2x_drift_unattributed(DWORD index)
     return index < G1_LAYER_DRIFT_RECTS ? g_drift_unattributed[index] : 0u;
 }
 DWORD g1_mirror2x_textout_invocations(void) { return g_textout_invocations; }
+BOOL g1_mirror2x_ret_range_diag_enabled(void) { return g_ret_range_diag; }
+DWORD g1_mirror2x_ret_diag_b_kills(void) { return g_ret_diag_b_kills; }
+DWORD g1_mirror2x_ret_diag_b_idle(void) { return g_ret_diag_b_idle; }
+DWORD g1_mirror2x_ret_diag_textout_kills(void) { return g_ret_diag_textout_kills; }
+DWORD g1_mirror2x_ret_diag_textout_idle(void) { return g_ret_diag_textout_idle; }
 DWORD g1_mirror2x_textout_mirrored_calls(void) { return g_textout_mirrored_calls; }
 DWORD g1_mirror2x_textout_mirrored_pixels(void) { return g_textout_mirrored_pixels; }
 DWORD g1_mirror2x_textout_changed_calls(void) { return g_textout_changed_calls; }
 DWORD g1_mirror2x_textout_reject_target(void) { return g_textout_reject_target; }
 DWORD g1_mirror2x_textout_reject_size(void) { return g_textout_reject_size; }
+DWORD g1_mirror2x_textout_screen_dc_calls(void) { return g_textout_screen_dc_calls; }
+DWORD g1_mirror2x_textout_reject_target_ps5(void) { return g_textout_reject_target_ps5; }
+DWORD g1_mirror2x_textout_reject_target_ps7(void) { return g_textout_reject_target_ps7; }
+DWORD g1_mirror2x_textout_reject_target_other(void) { return g_textout_reject_target_other; }
+DWORD g1_mirror2x_textout_reject_target_dc_screen(void) { return g_textout_reject_target_dc_screen; }
+DWORD g1_mirror2x_textout_reject_target_dc_buffer(void) { return g_textout_reject_target_dc_buffer; }
+DWORD g1_mirror2x_textout_reject_target_dc_other(void) { return g_textout_reject_target_dc_other; }
 DWORD g1_mirror2x_textout_reject_guard(void) { return g_textout_reject_guard; }
 DWORD g1_mirror2x_textout_reject_align(void) { return g_textout_reject_align; }
 DWORD g1_mirror2x_textout_install_mismatch(void) { return g_textout_install_mismatch; }
@@ -2515,6 +3193,14 @@ static void invoke_original(DWORD writer, void *renderer,
         if (g_original_tinted_clip_rle)
             g_original_tinted_clip_rle(renderer, x, y, args[2], args[3], args[4], args[5]);
         break;
+    case G1_FLIP_RLE:
+        if (g_original_flip_rle)
+            g_original_flip_rle(renderer, x, y, args[2], args[3], args[4], args[5]);
+        break;
+    case G1_FLIP_CLIP:
+        if (g_original_flip_clip)
+            g_original_flip_clip(renderer, x, y, args[2], args[3], args[4], args[5]);
+        break;
     default:
         break;
     }
@@ -2599,6 +3285,7 @@ static void mirror_reinvoke(void *renderer, const DWORD args[6],
     BOOL scratch_bounds_valid;
     LONG origin_x = (LONG)(SHORT)args[0];
     LONG origin_y = (LONG)(SHORT)args[1];
+    g_reinvoke_composed = FALSE;
     if (!renderer || !g_scratch_a || !g_scratch_b || !g_mirror ||
         argument_count == 0u || argument_count > 6u || width == 0u ||
         height == 0u || width > G1_CACHE_WIDTH || height > 600u || !source) {
@@ -2849,6 +3536,7 @@ static void mirror_reinvoke(void *renderer, const DWORD args[6],
         layer_drift_call(writer, g1_hd_asset_current_ready() ? G1_DRIFT_COMPOSE_RAN
                                                               : G1_DRIFT_NOT_READY,
                          origin_x, origin_y, width, height);
+    g_reinvoke_composed = g1_hd_asset_current_ready();
     if (g1_hd_asset_current_ready() && cache_target) {
         perf_started = g1_perf_sections_start();
         covered = compose_cache_layer(expected, g_scratch_a, g_scratch_b,
@@ -2970,7 +3658,7 @@ static BOOL s3_resource_frame0_target(DWORD x, DWORD y, DWORD width, DWORD heigh
 static BOOL panel_load_hd_pack(const BYTE *source, DWORD height,
                                const BYTE *panel_frame)
 {
-    char key[64], path[MAX_PATH];
+    char key[64], path[MAX_PATH], pal8[9];
     DWORD directory_length, digest, expected_bytes, file_high = 0u;
     HANDLE file;
     DWORD file_bytes, bytes_read = 0u;
@@ -2980,14 +3668,18 @@ static BOOL panel_load_hd_pack(const BYTE *source, DWORD height,
         !readable_bytes(source, 128u)) return FALSE;
     digest = g1_panel_source_digest(source, 128u);
     if (!g1_panel_asset_key(key, sizeof(key), G1_PANEL_RLE,
-                            (DWORD)(ULONG_PTR)source,
                             831u, height, digest)) return FALSE;
-    if (directory_length + 1u + lstrlenA(key) >= sizeof(path)) return FALSE;
+    /* H-HDPAL: <pack>\<pal8>\<key>, pal8 = the screen palette the panel picture was quantised to */
+    if (!g1_hd_pack_format_pal(pal8, sizeof(pal8), g1_hd_asset_palette_digest())) return FALSE;
+    if (directory_length + 1u + 8u + 1u + lstrlenA(key) >= sizeof(path)) return FALSE;
     panel_copy_bytes((BYTE *)path, (const BYTE *)g_panel_hd_pack_dir,
                      directory_length);
     if (g_panel_hd_pack_dir[directory_length - 1u] != '\\' &&
         g_panel_hd_pack_dir[directory_length - 1u] != '/')
         path[directory_length++] = '\\';
+    panel_copy_bytes((BYTE *)path + directory_length, (const BYTE *)pal8, 8u);
+    directory_length += 8u;
+    path[directory_length++] = '\\';
     panel_copy_bytes((BYTE *)path + directory_length, (const BYTE *)key,
                      lstrlenA(key) + 1u);
     file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL,
@@ -3028,8 +3720,8 @@ static BOOL panel_capture_frame(void *renderer, DWORD width, DWORD height,
     if (readable_bytes(source, 128u)) {
         DWORD digest = g1_panel_source_digest(source, 128u);
         char key[64];
-        if (g1_panel_asset_key(key, sizeof(key), G1_PANEL_RLE,
-                               (DWORD)(ULONG_PTR)source, 831u, height, digest))
+        if (g1_panel_asset_key(key, sizeof(key), G1_PANEL_RLE, 831u, height,
+                               digest))
             panel_copy_bytes((BYTE *)g_panel_asset_key_name, (const BYTE *)key,
                              lstrlenA(key) + 1u);
     }
@@ -3119,8 +3811,10 @@ static DWORD __attribute__((thiscall)) mirror_primitive_b(void *renderer,
 {
     DWORD result;
     const DWORD args[6] = {a, b, c, d, e, 0u};
+    DWORD return_address = (DWORD)(ULONG_PTR)__builtin_return_address(0);
     BOOL s3_target = s3_resource_frame0_target(a, b, c, d);
     if (!g_original_b) return 0u;
+    if (g_ret_range_diag) ret_range_diag_count(return_address, &g_ret_diag_b_kills, &g_ret_diag_b_idle);
     if (InterlockedExchange(&g_primitive_guard, 1) != 0) {
         layer_drift_guard_bypass(renderer);
         result = g_original_b(renderer, a, b, c, d, e);
@@ -3724,7 +4418,12 @@ static DWORD __attribute__((thiscall)) mirror_rect_solid(void *renderer, DWORD x
             } else if (!g1_overlay_blt_accepts(0, 0, 1, 1, G1_OVERLAY_SCREEN_WIDTH,
                                                G1_OVERLAY_SCREEN_HEIGHT,
                                                (size_t)rect.x, (size_t)rect.y,
-                                               rect.width, rect.height)) {
+                                               g_rect_solid_wide_enabled &&
+                                                   rect.width > G1_OVERLAY_MAX_WIDTH
+                                                   ? G1_OVERLAY_MAX_WIDTH : rect.width,
+                                               g_rect_solid_wide_enabled &&
+                                                   rect.height > G1_OVERLAY_MAX_HEIGHT
+                                                   ? G1_OVERLAY_MAX_HEIGHT : rect.height)) {
                 ++g_rect_solid_reject_size;
                 rect_solid_reject_log("size", x0, y0, x1, y1, color, stride, buffer);
             } else {
@@ -3738,12 +4437,22 @@ static DWORD __attribute__((thiscall)) mirror_rect_solid(void *renderer, DWORD x
     }
     result = g_original_rect_solid(renderer, x0, y0, x1, y1, color);
     if (active) {
-        if (g1_overlay_blt_apply(g_rect_solid_before, buffer, stride,
-                                 (size_t)rect.x, (size_t)rect.y, rect.width,
-                                 rect.height,
-                                 lstrcmpA(g1_hd_asset_source_name(), "scale2x") == 0,
-                                 g_overlay_scratch, g_expected_snapshot, g_covered,
-                                 g_mirror, 1600u, &stats)) {
+        size_t tiles = 0u;
+        BOOL wide = rect.width > G1_OVERLAY_MAX_WIDTH || rect.height > G1_OVERLAY_MAX_HEIGHT;
+        if (wide ? g1_overlay_blt_apply_tiled(g_rect_solid_before, buffer, stride,
+                                              (size_t)rect.x, (size_t)rect.y, rect.width,
+                                              rect.height,
+                                              lstrcmpA(g1_hd_asset_source_name(), "scale2x") == 0,
+                                              g_overlay_scratch, g_rect_solid_tile,
+                                              g_expected_snapshot, g_covered, g_mirror,
+                                              1600u, &stats, &tiles)
+                 : g1_overlay_blt_apply(g_rect_solid_before, buffer, stride,
+                                        (size_t)rect.x, (size_t)rect.y, rect.width,
+                                        rect.height,
+                                        lstrcmpA(g1_hd_asset_source_name(), "scale2x") == 0,
+                                        g_overlay_scratch, g_expected_snapshot, g_covered,
+                                        g_mirror, 1600u, &stats)) {
+            if (wide) ++g_rect_solid_wide_calls;
             ++g_rect_solid_mirrored_calls;
             g_rect_solid_mirrored_pixels += (DWORD)stats.changed;
         } else {
@@ -3820,6 +4529,24 @@ static DWORD __attribute__((thiscall)) mirror_flip_rle(void *renderer, DWORD a_x
         }
     }
     result = g_original_flip_rle(renderer, a_x, a_y, a_w, a_h, rle, lut);
+    if (active && !region.clipped && !region.wrap && g1_hd_asset_flip_key_path()) {
+        /* H-HDU0: a rectangle fully on screen takes the tinted key path (source, remap table and
+         * size are the identity; the pack frame is flipped by the loader).  When the key does not
+         * become ready the diff mirror below still covers the call. */
+        const DWORD key_args[6] = {a_x, a_y, a_w, a_h, rle, lut};
+        InterlockedExchange(&g_primitive_guard, 1);
+        mirror_reinvoke(renderer, key_args, 6u, region.width, region.height,
+                        (const BYTE *)(ULONG_PTR)rle, (const BYTE *)(ULONG_PTR)lut,
+                        256u, G1_FLIP_RLE, FALSE);
+        InterlockedExchange(&g_primitive_guard, 0);
+        if (g_reinvoke_composed) {
+            ++g_flip_rle_keyed_calls;
+            active = FALSE;
+            why = "keyed";
+        } else {
+            ++g_flip_rle_key_fallbacks;
+        }
+    }
     if (active) {
         if (g1_overlay_blt_apply(g_flip_rle_before, buffer, stride,
                                  (size_t)region.x, (size_t)region.y, region.width,
@@ -3835,6 +4562,84 @@ static DWORD __attribute__((thiscall)) mirror_flip_rle(void *renderer, DWORD a_x
         }
     }
     layer_drift_write_end(&drift, G1_FLIP_RLE, why, x, y, width, height);
+    return result;
+}
+
+/* Original returns: 0x466480 ret 0x14 (thiscall, 5 stack args: x y width height src).
+ * Unclipped colorkey copy: dest = [renderer+0x1514] + y*[renderer+0x10] + x, `height` rows
+ * of `width` bytes read contiguously from `src`, bytes equal to 0xFE are skipped, all four
+ * rectangle arguments are signed 32-bit and nothing is clipped.  H-TM1: the wrapper diffs the
+ * screen intersection of the rectangle in tiles (screen-sized before copy) and forwards the
+ * five original arguments unchanged exactly once.  The prologue (8B 51 10 / 53 / 8B C2) is
+ * six relocatable bytes. */
+static DWORD __attribute__((thiscall)) mirror_keyed_copy(void *renderer, DWORD a_x,
+                                                        DWORD a_y, DWORD a_w,
+                                                        DWORD a_h, DWORD src)
+{
+    G1OverlayStats stats;
+    G1FlipRleRegion region;
+    BYTE *buffer = NULL;
+    int32_t x = (int32_t)a_x, y = (int32_t)a_y, width = (int32_t)a_w,
+            height = (int32_t)a_h;
+    DWORD stride = 0u, result, row, col;
+    size_t tiles = 0u;
+    BOOL active = FALSE;
+    G1DriftWrite drift;
+    const char *why = "not_ready";
+    if (!g_original_keyed_copy) return 0u;
+    ++g_keyed_copy_invocations;
+    layer_drift_write_begin(&drift, renderer);
+    if (!g_keyed_copy_enabled) {
+        why = "off";
+    } else if (g_primitive_guard) {
+        why = "guard";
+        ++g_keyed_copy_reject_guard;
+    } else if (renderer && g_mirror && g_covered && g_expected_snapshot) {
+        stride = *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_STRIDE);
+        buffer = *(BYTE **)((BYTE *)renderer + G1_RENDERER_BUFFER);
+        if (!buffer || (DWORD)(ULONG_PTR)buffer == G1_CACHE_BASE ||
+            buffer == g_panel_bound_buffer || stride < G1_OVERLAY_SCREEN_WIDTH ||
+            stride > G1_MAX_STRIDE ||
+            *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_HEIGHT) !=
+                G1_OVERLAY_SCREEN_HEIGHT) {
+            why = "reject_target";
+            ++g_keyed_copy_reject_target;
+        } else if (!g1_flip_rle_region(x, y, width, height, (int32_t)stride,
+                                       (int32_t)G1_OVERLAY_SCREEN_WIDTH,
+                                       (int32_t)G1_OVERLAY_SCREEN_HEIGHT, &region)) {
+            why = "reject_bounds";
+            ++g_keyed_copy_reject_bounds;
+        } else {
+            why = "mirrored";
+            if (region.clipped) {
+                why = "clipped";
+                ++g_keyed_copy_clipped_calls;
+            }
+            for (row = 0u; row < region.height; ++row)
+                for (col = 0u; col < region.width; ++col)
+                    g_keyed_copy_before[row * region.width + col] =
+                        buffer[((DWORD)region.y + row) * stride + (DWORD)region.x + col];
+            active = TRUE;
+        }
+    }
+    result = g_original_keyed_copy(renderer, a_x, a_y, a_w, a_h, src);
+    if (active) {
+        if (g1_overlay_blt_apply_tiled(g_keyed_copy_before, buffer, stride,
+                                       (size_t)region.x, (size_t)region.y, region.width,
+                                       region.height,
+                                       lstrcmpA(g1_hd_asset_source_name(), "scale2x") == 0,
+                                       g_overlay_scratch, g_keyed_copy_tile,
+                                       g_expected_snapshot, g_covered, g_mirror, 1600u,
+                                       &stats, &tiles)) {
+            ++g_keyed_copy_mirrored_calls;
+            g_keyed_copy_mirrored_pixels += (DWORD)stats.changed;
+            if (stats.changed) ++g_keyed_copy_changed_calls;
+        } else {
+            why = "reject_size";
+            ++g_keyed_copy_reject_size;
+        }
+    }
+    layer_drift_write_end(&drift, G1_KEYED_COPY, why, x, y, width, height);
     return result;
 }
 
@@ -3905,6 +4710,27 @@ static DWORD __attribute__((thiscall)) mirror_flip_clip(void *renderer, DWORD a_
         }
     }
     result = g_original_flip_clip(renderer, a_x, a_y, a_w, a_h, rle, lut);
+    if (active && g1_hd_asset_flip_key_path() &&
+        x >= -32768 && x <= 32767 && y >= -32768 && y <= 32767 &&
+        width > 0 && width <= 800 && height > 0 && height <= 600) {
+        /* H-HDU1: the clip-box flip draw takes the same key path as 0x466540 (whole sprite rectangle,
+         * viewport replay for the written mask).  `region.wrap` does not apply: this writer clips to the
+         * viewport instead of wrapping, so an edge sprite is exactly the case the replay is for.  A key
+         * that does not become ready leaves the call to the diff mirror below. */
+        const DWORD key_args[6] = {a_x, a_y, a_w, a_h, rle, lut};
+        InterlockedExchange(&g_primitive_guard, 1);
+        mirror_reinvoke(renderer, key_args, 6u, (DWORD)width, (DWORD)height,
+                        (const BYTE *)(ULONG_PTR)rle, (const BYTE *)(ULONG_PTR)lut,
+                        256u, G1_FLIP_CLIP, TRUE);
+        InterlockedExchange(&g_primitive_guard, 0);
+        if (g_reinvoke_composed) {
+            ++g_flip_clip_keyed_calls;
+            active = FALSE;
+            why = "keyed";
+        } else {
+            ++g_flip_clip_key_fallbacks;
+        }
+    }
     if (active) {
         if (g1_overlay_blt_apply(g_flip_clip_before, buffer, stride,
                                  (size_t)region.x, (size_t)region.y, region.width,
@@ -4184,6 +5010,104 @@ static DWORD __attribute__((thiscall)) mirror_shade_clip(void *renderer, DWORD a
     return result;
 }
 
+/* H-HDB0/H-HDB1: copy the covered flags and the HD destination of the screen window (visible_width x visible_height
+ * at x0, y0) ahead of the original draw; the key overlay needs the destination the original blended with. */
+static void blend_key_snapshot(int x0, int y0, int visible_width, int visible_height)
+{
+    int row, col;
+    for (row = 0; row < visible_height; ++row) {
+        for (col = 0; col < visible_width; ++col)
+            g_blend_key_covered[row * visible_width + col] =
+                g_covered[(DWORD)(y0 + row) * G1_OVERLAY_SCREEN_WIDTH + (DWORD)(x0 + col)];
+        for (col = 0; col < 2; ++col)
+            mirror_move_bytes(g_blend_key_hd_before + (size_t)(row * 2 + col) * (size_t)visible_width * 2u,
+                              g_mirror + ((size_t)(y0 + row) * 2u + (size_t)col) * 1600u + (size_t)x0 * 2u,
+                              (DWORD)visible_width * 2u);
+    }
+}
+
+/* After the diff mirror, blend the HD pack frame of this translucent stream with the HD destination the way the
+ * original blends the 1x pixels: 0x4672E0 averages through the renderer palette and inverse LUT, 0x467580
+ * (`weighted`) goes through the weight table at renderer + 0x41CA0.  The stream is decoded here (its rows end by
+ * width, not by a marker), the original's 1x output over the screen window is checked against the same formula, and
+ * only a call that passes and hits a pack file overwrites the diff mirror's Scale2x blocks; any other outcome keeps
+ * them.  The identity key covers the whole stream rectangle (x, y, width, height); the window (x0, y0,
+ * visible_width, visible_height) is the part on the screen and the only part checked and drawn.  `before` is the
+ * window's 1x pre-draw copy; `covered`/`hd_before` were copied by blend_key_snapshot before the diff mirror ran. */
+static BOOL blend_key_apply(const void *renderer, DWORD writer, BOOL weighted, DWORD rle, int x, int y, int width,
+                            int height, int x0, int y0, int visible_width, int visible_height,
+                            const BYTE *buffer, DWORD stride, const BYTE *before, G1BlendKeyStats *stats)
+{
+    /* H-HDB3: 0x467FD0 and 0x4685C0 draw the stream right to left; the planes below are turned into screen direction
+     * right after the decode, so the crop offsets, the self check and the identity bind need no flip of their own. */
+    const BOOL remapped = writer == G1_BLEND_CLIP7 || writer == G1_BLEND_FLIP7;
+    const BOOL flip = writer == G1_FLIP_BLEND || writer == G1_BLEND_SKIP || writer == G1_BLEND_FLIP7;
+    const BYTE *palette = (const BYTE *)renderer + 0x419A0u;
+    const BYTE *inverse = (const BYTE *)renderer + 0x19A0u;
+    const int16_t *weights = weighted ? (const int16_t *)((const BYTE *)renderer + 0x41CA0u) : NULL;
+    const BYTE *source_plane = g_blend_key_vidx;
+    size_t checked = 0u, pixels = (size_t)width * (size_t)height, written;
+    size_t offset_x = (size_t)(x0 - x), offset_y = (size_t)(y0 - y);
+    const BYTE *frame;
+    DWORD hd_width = 0u, hd_height = 0u;
+    BOOL keyed = FALSE;
+    /* H-HDB4: 0x4678C0 / 0x468360 index the DWORD table renderer + 0x43CA0 by level; the slice becomes the int16
+     * weights above, and the source colour of a token is remap[token].  Anything the table or the remap cannot
+     * express is refused before the stream is decoded. */
+    if (remapped) {
+        if (!g_blend_key_remap ||
+            !g1_blend_level_weights((const uint32_t *)((const BYTE *)renderer + 0x43CA0u), g_blend_key_level,
+                                    g_blend_key_level_weights)) {
+            ++stats->key_level_rejects;
+            return FALSE;
+        }
+        weights = g_blend_key_level_weights;
+    }
+    fill_bytes(g_blend_key_idx, 0u, (DWORD)pixels);
+    fill_bytes(g_blend_key_mask, 0u, (DWORD)pixels);
+    if (!g1_blend_decode_rle((const BYTE *)(ULONG_PTR)rle, pixels * 2u + (size_t)height * 2u, (size_t)width,
+                             (size_t)height, g_blend_key_idx, g_blend_key_mask))
+        return FALSE;
+    if (flip) {
+        g1_blend_flip_rows(g_blend_key_idx, (size_t)width, (size_t)height);
+        g1_blend_flip_rows(g_blend_key_mask, (size_t)width, (size_t)height);
+    }
+    g1_blend_crop(g_blend_key_idx, (size_t)width, offset_x, offset_y, (size_t)visible_width,
+                  (size_t)visible_height, g_blend_key_vidx);
+    g1_blend_crop(g_blend_key_mask, (size_t)width, offset_x, offset_y, (size_t)visible_width,
+                  (size_t)visible_height, g_blend_key_vmask);
+    if (remapped) {
+        g1_blend_remap_plane(g_blend_key_remap, g_blend_key_vidx, g_blend_key_vmask,
+                             (size_t)visible_width * (size_t)visible_height, g_blend_key_vsrc);
+        source_plane = g_blend_key_vsrc;
+    }
+    if (!g1_blend_selfcheck(palette, inverse, weights, before, source_plane, g_blend_key_vmask,
+                            (size_t)visible_width, (size_t)visible_height,
+                            buffer + (DWORD)y0 * stride + (DWORD)x0, stride, &checked)) {
+        ++stats->selfcheck_mismatches;
+        return FALSE;
+    }
+    stats->selfcheck_pixels += (DWORD)checked;
+    if (remapped ? !g1_hd_asset_begin_with_aux((const BYTE *)(ULONG_PTR)rle, writer, g_blend_key_remap,
+                                               g_blend_key_remap_digest, (DWORD)width, (DWORD)height, x, y)
+                 : !g1_hd_asset_begin((const BYTE *)(ULONG_PTR)rle, writer, (DWORD)width, (DWORD)height, x, y))
+        return FALSE;
+    if (g1_hd_asset_needs_identity_frame())
+        (void)g1_hd_asset_bind_identity_frame(g_blend_key_idx, (DWORD)width, g_blend_key_mask,
+                                              (DWORD)width, (DWORD)width, (DWORD)height);
+    frame = g1_hd_asset_current_ready() ? g1_hd_asset_current_pack_frame(&hd_width, &hd_height) : NULL;
+    if (frame && hd_width == (DWORD)width * 2u && hd_height == (DWORD)height * 2u) {
+        written = g1_blend_apply_hd(palette, inverse, weights, g_blend_key_vmask, g_blend_key_covered,
+                                    (size_t)visible_width, (size_t)visible_height, g_blend_key_hd_before,
+                                    frame + offset_y * 2u * hd_width + offset_x * 2u, hd_width, g_mirror, 1600u,
+                                    (size_t)x0, (size_t)y0, G1_HD_PACK_KEY);
+        stats->keyed_pixels += (DWORD)written;
+        keyed = TRUE;
+    }
+    g1_hd_asset_end();
+    return keyed;
+}
+
 /* Original returns: 0x4672E0 ret 0x14 (5 stack args: x y width height rle).
  * Translucent logo RLE.  The original sign-extends only the low 16 bits of each
  * argument (callers leave garbage in the upper words) and never clips, so the
@@ -4198,7 +5122,7 @@ static DWORD __attribute__((thiscall)) mirror_blend_rle(void *renderer, DWORD a_
         height = (int16_t)a_h;
     DWORD stride = 0u, result;
     int row, col;
-    BOOL active = FALSE;
+    BOOL active = FALSE, key_try = FALSE;
     if (!g_original_blend_rle) return 0u;
     ++g_blend_rle_invocations;
     if (g_primitive_guard) {
@@ -4227,6 +5151,8 @@ static DWORD __attribute__((thiscall)) mirror_blend_rle(void *renderer, DWORD a_
                     g_blend_rle_before[row * width + col] =
                         buffer[(DWORD)(y + row) * stride + (DWORD)(x + col)];
             active = TRUE;
+            key_try = g1_hd_asset_blend_key_path();
+            if (key_try) blend_key_snapshot(x, y, width, height);
         }
     }
     result = g_original_blend_rle(renderer, a_x, a_y, a_w, a_h, rle);
@@ -4239,6 +5165,13 @@ static DWORD __attribute__((thiscall)) mirror_blend_rle(void *renderer, DWORD a_
             ++g_blend_rle_mirrored_calls;
             g_blend_rle_mirrored_pixels += (DWORD)stats.changed;
             if (stats.changed) ++g_blend_rle_changed_calls;
+            if (key_try) {
+                if (blend_key_apply(renderer, G1_BLEND_RLE, FALSE, rle, x, y, width, height, x, y, width, height,
+                                    buffer, stride, g_blend_rle_before, &g_blend_rle_key))
+                    ++g_blend_rle_key.keyed_calls;
+                else
+                    ++g_blend_rle_key.key_fallbacks;
+            }
         } else {
             ++g_blend_rle_reject_size;
         }
@@ -4254,7 +5187,8 @@ static DWORD __attribute__((thiscall)) mirror_blend_rle(void *renderer, DWORD a_
  * over the screen edge (save000: ~26% of calls), so unlike 0x4672E0 a partially
  * off-screen rectangle is mirrored over its screen intersection only; the
  * original still runs with the full rectangle and the wrapper reads nothing
- * outside the intersection (wrapped writes beyond it stay untracked). */
+ * outside the intersection (wrapped writes beyond it stay untracked).
+ * H-HDB1: with a Scale2x pack run the same HD key path as 0x4672E0 follows the diff mirror, over the intersection. */
 static DWORD __attribute__((thiscall)) mirror_blend_wrle(void *renderer, DWORD a_x,
                                                        DWORD a_y, DWORD a_w,
                                                        DWORD a_h, DWORD rle)
@@ -4267,7 +5201,7 @@ static DWORD __attribute__((thiscall)) mirror_blend_wrle(void *renderer, DWORD a
     DWORD stride = 0u, result;
     size_t tiles = 0u;
     int row, col;
-    BOOL active = FALSE;
+    BOOL active = FALSE, key_try = FALSE;
     G1DriftWrite drift;
     const char *why = "not_ready";
     if (!g_original_blend_wrle) return 0u;
@@ -4312,6 +5246,12 @@ static DWORD __attribute__((thiscall)) mirror_blend_wrle(void *renderer, DWORD a
                     g_blend_wrle_before[row * (x1 - x0) + col] =
                         buffer[(DWORD)(y0 + row) * stride + (DWORD)(x0 + col)];
             active = TRUE;
+            key_try = g1_hd_asset_blend_key_path();
+            if (key_try && (size_t)width * (size_t)height > G1_BLEND_KEY_MAX_PIXELS) {
+                ++g_blend_wrle_key.key_fallbacks;
+                key_try = FALSE;
+            }
+            if (key_try) blend_key_snapshot(x0, y0, x1 - x0, y1 - y0);
         }
     }
     result = g_original_blend_wrle(renderer, a_x, a_y, a_w, a_h, rle);
@@ -4325,6 +5265,13 @@ static DWORD __attribute__((thiscall)) mirror_blend_wrle(void *renderer, DWORD a
             ++g_blend_wrle_mirrored_calls;
             g_blend_wrle_mirrored_pixels += (DWORD)stats.changed;
             if (stats.changed) ++g_blend_wrle_changed_calls;
+            if (key_try) {
+                if (blend_key_apply(renderer, G1_BLEND_WRLE, TRUE, rle, x, y, width, height, x0, y0, x1 - x0,
+                                    y1 - y0, buffer, stride, g_blend_wrle_before, &g_blend_wrle_key))
+                    ++g_blend_wrle_key.keyed_calls;
+                else
+                    ++g_blend_wrle_key.key_fallbacks;
+            }
         } else {
             why = "reject_size";
             ++g_blend_wrle_reject_size;
@@ -4344,7 +5291,9 @@ static DWORD __attribute__((thiscall)) mirror_blend_wrle(void *renderer, DWORD a
  * the nearest palette index back.  The original sign-extends only the low 16
  * bits of each argument and clips itself to the renderer clip rectangle
  * (+0x4D0..+0x4DC); the wrapper mirrors the screen intersection of the passed
- * rectangle only, which is a superset of what the original can touch. */
+ * rectangle only, which is a superset of what the original can touch.
+ * H-HDB2: with a Scale2x pack run the HD key path of 0x467580 follows the diff mirror over the screen intersection
+ * cut by the renderer clip rectangle (the original does not write outside it). */
 static DWORD __attribute__((thiscall)) mirror_blend_clip(void *renderer, DWORD a_x,
                                                        DWORD a_y, DWORD a_w,
                                                        DWORD a_h, DWORD rle)
@@ -4355,9 +5304,10 @@ static DWORD __attribute__((thiscall)) mirror_blend_clip(void *renderer, DWORD a
     int x = (int16_t)a_x, y = (int16_t)a_y, width = (int16_t)a_w,
         height = (int16_t)a_h;
     int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+    int kx0 = 0, ky0 = 0, kx1 = 0, ky1 = 0;
     DWORD stride = 0u, result;
     int row, col;
-    BOOL active = FALSE;
+    BOOL active = FALSE, key_try = FALSE, key_cut = FALSE;
     G1DriftWrite drift;
     const char *why = "not_ready";
     if (!g_original_blend_clip) return 0u;
@@ -4402,6 +5352,29 @@ static DWORD __attribute__((thiscall)) mirror_blend_clip(void *renderer, DWORD a
                     g_blend_clip_before[row * (x1 - x0) + col] =
                         buffer[(DWORD)(y0 + row) * stride + (DWORD)(x0 + col)];
             active = TRUE;
+            /* H-HDB2: the key checks and draws the screen intersection cut by the renderer clip, which is read
+             * before the original runs (inclusive right and bottom); a clip with nothing left skips the key. */
+            key_try = g1_hd_asset_blend_key_path();
+            if (key_try && (size_t)width * (size_t)height > G1_BLEND_KEY_MAX_PIXELS) {
+                ++g_blend_clip_key.key_fallbacks;
+                key_try = FALSE;
+            }
+            if (key_try &&
+                !g1_blend_clip_window(x0, y0, x1, y1,
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 4u),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 8u),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 12u),
+                                      &kx0, &ky0, &kx1, &ky1)) {
+                ++g_blend_clip_key.key_clip_empty;
+                key_try = FALSE;
+            }
+            if (key_try) {
+                key_cut = kx0 != x0 || ky0 != y0 || kx1 != x1 || ky1 != y1;
+                blend_key_snapshot(kx0, ky0, kx1 - kx0, ky1 - ky0);
+                g1_blend_crop(g_blend_clip_before, (size_t)(x1 - x0), (size_t)(kx0 - x0), (size_t)(ky0 - y0),
+                              (size_t)(kx1 - kx0), (size_t)(ky1 - ky0), g_blend_clip_key_before);
+            }
         }
     }
     result = g_original_blend_clip(renderer, a_x, a_y, a_w, a_h, rle);
@@ -4417,6 +5390,15 @@ static DWORD __attribute__((thiscall)) mirror_blend_clip(void *renderer, DWORD a
             ++g_blend_clip_mirrored_calls;
             g_blend_clip_mirrored_pixels += (DWORD)stats.changed;
             if (stats.changed) ++g_blend_clip_changed_calls;
+            if (key_try) {
+                if (blend_key_apply(renderer, G1_BLEND_CLIP, TRUE, rle, x, y, width, height, kx0, ky0, kx1 - kx0,
+                                    ky1 - ky0, buffer, stride, g_blend_clip_key_before, &g_blend_clip_key)) {
+                    ++g_blend_clip_key.keyed_calls;
+                    if (key_cut) ++g_blend_clip_key.key_clip_cut;
+                } else {
+                    ++g_blend_clip_key.key_fallbacks;
+                }
+            }
         } else {
             why = "reject_size";
             ++g_blend_clip_reject_size;
@@ -4443,9 +5425,10 @@ static DWORD __attribute__((thiscall)) mirror_blend_skip(void *renderer, DWORD a
     int x = (int16_t)a_x, y = (int16_t)a_y, width = (int16_t)a_w,
         height = (int16_t)a_h;
     int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+    int kx0 = 0, ky0 = 0, kx1 = 0, ky1 = 0;
     DWORD stride = 0u, result;
     int row, col;
-    BOOL active = FALSE;
+    BOOL active = FALSE, key_try = FALSE, key_cut = FALSE;
     G1DriftWrite drift;
     const char *why = "not_ready";
     if (!g_original_blend_skip) return 0u;
@@ -4490,6 +5473,29 @@ static DWORD __attribute__((thiscall)) mirror_blend_skip(void *renderer, DWORD a
                     g_blend_skip_before[row * (x1 - x0) + col] =
                         buffer[(DWORD)(y0 + row) * stride + (DWORD)(x0 + col)];
             active = TRUE;
+            /* H-HDB3: the key checks and draws the screen intersection cut by the renderer clip (read before the
+             * original runs, inclusive right and bottom), exactly like 0x467B00; the stream is mirrored left to right. */
+            key_try = g1_hd_asset_blend_flip_key_path();
+            if (key_try && (size_t)width * (size_t)height > G1_BLEND_KEY_MAX_PIXELS) {
+                ++g_blend_skip_key.key_fallbacks;
+                key_try = FALSE;
+            }
+            if (key_try &&
+                !g1_blend_clip_window(x0, y0, x1, y1,
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 4u),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 8u),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 12u),
+                                      &kx0, &ky0, &kx1, &ky1)) {
+                ++g_blend_skip_key.key_clip_empty;
+                key_try = FALSE;
+            }
+            if (key_try) {
+                key_cut = kx0 != x0 || ky0 != y0 || kx1 != x1 || ky1 != y1;
+                blend_key_snapshot(kx0, ky0, kx1 - kx0, ky1 - ky0);
+                g1_blend_crop(g_blend_skip_before, (size_t)(x1 - x0), (size_t)(kx0 - x0), (size_t)(ky0 - y0),
+                              (size_t)(kx1 - kx0), (size_t)(ky1 - ky0), g_blend_clip_key_before);
+            }
         }
     }
     result = g_original_blend_skip(renderer, a_x, a_y, a_w, a_h, rle);
@@ -4504,6 +5510,15 @@ static DWORD __attribute__((thiscall)) mirror_blend_skip(void *renderer, DWORD a
             ++g_blend_skip_mirrored_calls;
             g_blend_skip_mirrored_pixels += (DWORD)stats.changed;
             if (stats.changed) ++g_blend_skip_changed_calls;
+            if (key_try) {
+                if (blend_key_apply(renderer, G1_BLEND_SKIP, TRUE, rle, x, y, width, height, kx0, ky0, kx1 - kx0,
+                                    ky1 - ky0, buffer, stride, g_blend_clip_key_before, &g_blend_skip_key)) {
+                    ++g_blend_skip_key.keyed_calls;
+                    if (key_cut) ++g_blend_skip_key.key_clip_cut;
+                } else {
+                    ++g_blend_skip_key.key_fallbacks;
+                }
+            }
         } else {
             why = "reject_size";
             ++g_blend_skip_reject_size;
@@ -4511,6 +5526,16 @@ static DWORD __attribute__((thiscall)) mirror_blend_skip(void *renderer, DWORD a
     }
     layer_drift_write_end(&drift, G1_BLEND_SKIP, why, x, y, width, height);
     return result;
+}
+
+/* H-HDB4: the 7-arg writers' remap table (256 B) and 16-bit level for the next blend_key_apply.  An unreadable table
+ * leaves the remap NULL, which blend_key_apply refuses. */
+static void blend_key_set_remap(DWORD remap, DWORD level)
+{
+    BOOL valid = FALSE;
+    g_blend_key_remap_digest = auxiliary_digest((const BYTE *)(ULONG_PTR)remap, 256u, &valid);
+    g_blend_key_remap = valid && remap != 0u ? (const BYTE *)(ULONG_PTR)remap : NULL;
+    g_blend_key_level = (int16_t)level;
 }
 
 /* H-P: 0x4678C0 ret 0x1c (7 stack args: x y width height rle remap level),
@@ -4529,9 +5554,10 @@ static DWORD __attribute__((thiscall)) mirror_blend_clip7(void *renderer, DWORD 
     int x = (int16_t)a_x, y = (int16_t)a_y, width = (int16_t)a_w,
         height = (int16_t)a_h;
     int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+    int kx0 = 0, ky0 = 0, kx1 = 0, ky1 = 0;
     DWORD stride = 0u, result;
     int row, col;
-    BOOL active = FALSE;
+    BOOL active = FALSE, key_try = FALSE, key_cut = FALSE;
     G1DriftWrite drift;
     const char *why = "not_ready";
     if (!g_original_blend_clip7) return 0u;
@@ -4577,6 +5603,29 @@ static DWORD __attribute__((thiscall)) mirror_blend_clip7(void *renderer, DWORD 
                     g_blend_clip7_before[row * (x1 - x0) + col] =
                         buffer[(DWORD)(y0 + row) * stride + (DWORD)(x0 + col)];
             active = TRUE;
+            /* H-HDB4: like 0x467B00, the key checks and draws the screen intersection cut by the renderer clip (read before the
+             * original runs, inclusive right and bottom); the remap table and level are the extra inputs of the blend. */
+            key_try = g1_hd_asset_blend_key_path();
+            if (key_try && (size_t)width * (size_t)height > G1_BLEND_KEY_MAX_PIXELS) {
+                ++g_blend_clip7_key.key_fallbacks;
+                key_try = FALSE;
+            }
+            if (key_try &&
+                !g1_blend_clip_window(x0, y0, x1, y1,
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 4u),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 8u),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 12u),
+                                      &kx0, &ky0, &kx1, &ky1)) {
+                ++g_blend_clip7_key.key_clip_empty;
+                key_try = FALSE;
+            }
+            if (key_try) {
+                key_cut = kx0 != x0 || ky0 != y0 || kx1 != x1 || ky1 != y1;
+                blend_key_snapshot(kx0, ky0, kx1 - kx0, ky1 - ky0);
+                g1_blend_crop(g_blend_clip7_before, (size_t)(x1 - x0), (size_t)(kx0 - x0), (size_t)(ky0 - y0),
+                              (size_t)(kx1 - kx0), (size_t)(ky1 - ky0), g_blend_clip_key_before);
+            }
         }
     }
     result = g_original_blend_clip7(renderer, a_x, a_y, a_w, a_h, rle, remap, level);
@@ -4589,6 +5638,17 @@ static DWORD __attribute__((thiscall)) mirror_blend_clip7(void *renderer, DWORD 
             ++g_blend_clip7_mirrored_calls;
             g_blend_clip7_mirrored_pixels += (DWORD)stats.changed;
             if (stats.changed) ++g_blend_clip7_changed_calls;
+            if (key_try) {
+                blend_key_set_remap(remap, level);
+                if (blend_key_apply(renderer, G1_BLEND_CLIP7, TRUE, rle, x, y, width, height, kx0, ky0, kx1 - kx0,
+                                    ky1 - ky0, buffer, stride, g_blend_clip_key_before, &g_blend_clip7_key)) {
+                    ++g_blend_clip7_key.keyed_calls;
+                    if (key_cut) ++g_blend_clip7_key.key_clip_cut;
+                } else {
+                    ++g_blend_clip7_key.key_fallbacks;
+                }
+                g_blend_key_remap = NULL;
+            }
         } else {
             why = "reject_size";
             ++g_blend_clip7_reject_size;
@@ -4614,9 +5674,10 @@ static DWORD __attribute__((thiscall)) mirror_blend_flip7(void *renderer, DWORD 
     int x = (int16_t)a_x, y = (int16_t)a_y, width = (int16_t)a_w,
         height = (int16_t)a_h;
     int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+    int kx0 = 0, ky0 = 0, kx1 = 0, ky1 = 0;
     DWORD stride = 0u, result;
     int row, col;
-    BOOL active = FALSE;
+    BOOL active = FALSE, key_try = FALSE, key_cut = FALSE;
     G1DriftWrite drift;
     const char *why = "not_ready";
     if (!g_original_blend_flip7) return 0u;
@@ -4662,6 +5723,29 @@ static DWORD __attribute__((thiscall)) mirror_blend_flip7(void *renderer, DWORD 
                     g_blend_flip7_before[row * (x1 - x0) + col] =
                         buffer[(DWORD)(y0 + row) * stride + (DWORD)(x0 + col)];
             active = TRUE;
+            /* H-HDB4: like 0x4685C0, the key checks and draws the screen intersection cut by the renderer clip (read before the
+             * original runs, inclusive right and bottom); the remap table and level are the extra inputs of the blend. */
+            key_try = g1_hd_asset_blend_flip_key_path();
+            if (key_try && (size_t)width * (size_t)height > G1_BLEND_KEY_MAX_PIXELS) {
+                ++g_blend_flip7_key.key_fallbacks;
+                key_try = FALSE;
+            }
+            if (key_try &&
+                !g1_blend_clip_window(x0, y0, x1, y1,
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 4u),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 8u),
+                                      *(const volatile int32_t *)((BYTE *)renderer + G1_RENDERER_VIEWPORT + 12u),
+                                      &kx0, &ky0, &kx1, &ky1)) {
+                ++g_blend_flip7_key.key_clip_empty;
+                key_try = FALSE;
+            }
+            if (key_try) {
+                key_cut = kx0 != x0 || ky0 != y0 || kx1 != x1 || ky1 != y1;
+                blend_key_snapshot(kx0, ky0, kx1 - kx0, ky1 - ky0);
+                g1_blend_crop(g_blend_flip7_before, (size_t)(x1 - x0), (size_t)(kx0 - x0), (size_t)(ky0 - y0),
+                              (size_t)(kx1 - kx0), (size_t)(ky1 - ky0), g_blend_clip_key_before);
+            }
         }
     }
     result = g_original_blend_flip7(renderer, a_x, a_y, a_w, a_h, rle, remap, level);
@@ -4674,6 +5758,17 @@ static DWORD __attribute__((thiscall)) mirror_blend_flip7(void *renderer, DWORD 
             ++g_blend_flip7_mirrored_calls;
             g_blend_flip7_mirrored_pixels += (DWORD)stats.changed;
             if (stats.changed) ++g_blend_flip7_changed_calls;
+            if (key_try) {
+                blend_key_set_remap(remap, level);
+                if (blend_key_apply(renderer, G1_BLEND_FLIP7, TRUE, rle, x, y, width, height, kx0, ky0, kx1 - kx0,
+                                    ky1 - ky0, buffer, stride, g_blend_clip_key_before, &g_blend_flip7_key)) {
+                    ++g_blend_flip7_key.keyed_calls;
+                    if (key_cut) ++g_blend_flip7_key.key_clip_cut;
+                } else {
+                    ++g_blend_flip7_key.key_fallbacks;
+                }
+                g_blend_key_remap = NULL;
+            }
         } else {
             why = "reject_size";
             ++g_blend_flip7_reject_size;
@@ -4702,7 +5797,7 @@ static DWORD __attribute__((thiscall)) mirror_flip_blend(void *renderer, DWORD a
     int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
     DWORD stride = 0u, result;
     int row, col;
-    BOOL active = FALSE;
+    BOOL active = FALSE, key_try = FALSE, wrapped = FALSE;
     G1DriftWrite drift;
     const char *why = "not_ready";
     if (!g_original_flip_blend) return 0u;
@@ -4743,14 +5838,21 @@ static DWORD __attribute__((thiscall)) mirror_flip_blend(void *renderer, DWORD a
                 why = "clipped";
                 ++g_flip_blend_clipped_calls;
             }
-            if (x < 0 || x + width > (int)stride || y < 0 ||
-                y + height > (int)G1_OVERLAY_SCREEN_HEIGHT)
-                ++g_flip_blend_wrap_calls;
+            wrapped = x < 0 || x + width > (int)stride || y < 0 || y + height > (int)G1_OVERLAY_SCREEN_HEIGHT;
+            if (wrapped) ++g_flip_blend_wrap_calls;
             for (row = 0; row < y1 - y0; ++row)
                 for (col = 0; col < x1 - x0; ++col)
                     g_flip_blend_before[row * (x1 - x0) + col] =
                         buffer[(DWORD)(y0 + row) * stride + (DWORD)(x0 + col)];
             active = TRUE;
+            /* H-HDB3: the key checks and draws the screen intersection (the original has no clip); a wrapped write
+             * that lands in the window fails the self check and keeps the diff mirror. */
+            key_try = g1_hd_asset_blend_flip_key_path();
+            if (key_try && (size_t)width * (size_t)height > G1_BLEND_KEY_MAX_PIXELS) {
+                ++g_flip_blend_key.key_fallbacks;
+                key_try = FALSE;
+            }
+            if (key_try) blend_key_snapshot(x0, y0, x1 - x0, y1 - y0);
         }
     }
     result = g_original_flip_blend(renderer, a_x, a_y, a_w, a_h, rle);
@@ -4763,6 +5865,17 @@ static DWORD __attribute__((thiscall)) mirror_flip_blend(void *renderer, DWORD a
             ++g_flip_blend_mirrored_calls;
             g_flip_blend_mirrored_pixels += (DWORD)stats.changed;
             if (stats.changed) ++g_flip_blend_changed_calls;
+            if (key_try) {
+                DWORD mismatches = g_flip_blend_key.selfcheck_mismatches;
+                if (blend_key_apply(renderer, G1_FLIP_BLEND, TRUE, rle, x, y, width, height, x0, y0, x1 - x0,
+                                    y1 - y0, buffer, stride, g_flip_blend_before, &g_flip_blend_key)) {
+                    ++g_flip_blend_key.keyed_calls;
+                } else {
+                    ++g_flip_blend_key.key_fallbacks;
+                    if (wrapped && g_flip_blend_key.selfcheck_mismatches != mismatches)
+                        ++g_flip_blend_key.key_wrap_mismatches;
+                }
+            }
         } else {
             why = "reject_size";
             ++g_flip_blend_reject_size;
@@ -4848,24 +5961,84 @@ static DWORD __attribute__((thiscall)) mirror_flip_blend7(void *renderer, DWORD 
     return result;
 }
 
-/* H-B2 observation only (installed when SYW2_G1_LAYER_DRIFT=1): the sibling
- * translucent writers 0x467410 (ret 0x1C, 7 stack args: x y w h rle remap
- * weight) and 0x4676D0 (ret 0x14, 5 stack args) are passed through untouched;
- * only the sample points are read around the call.  Arguments are low-16-bit
- * sign-extended like the original. */
-static DWORD __attribute__((thiscall)) observe_blend_410(void *renderer, DWORD a_x,
-                                                        DWORD a_y, DWORD a_w,
-                                                        DWORD a_h, DWORD rle,
-                                                        DWORD remap, DWORD weight)
+/* H-D2k-s1: 0x467410 is the unclipped weighted translucent RLE writer (ret 0x1C,
+ * 7 stack args: x y w h rle remap weight; objdump: dest = buffer + y*stride + x,
+ * h rows of w pixels, 0xFE RLE skip codes, dest-dependent blend).  It writes the
+ * passed rectangle only, so the diff mirror snapshots the screen-clipped
+ * intersection of that rectangle (a superset of what the original touches) and
+ * forwards all 7 original arguments unchanged.  Arguments are low-16-bit
+ * sign-extended like the original.  0x4676D0 (5 args) stays observe-only below. */
+static DWORD __attribute__((thiscall)) mirror_blend_410(void *renderer, DWORD a_x,
+                                                       DWORD a_y, DWORD a_w,
+                                                       DWORD a_h, DWORD rle,
+                                                       DWORD remap, DWORD weight)
 {
+    G1OverlayStats stats;
+    BYTE *buffer = NULL;
+    int x = (int16_t)a_x, y = (int16_t)a_y, width = (int16_t)a_w,
+        height = (int16_t)a_h;
+    int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+    DWORD stride = 0u, result;
+    int row, col;
+    BOOL active = FALSE;
     G1DriftWrite drift;
-    DWORD result;
+    const char *why = "not_ready";
     if (!g_original_blend_410) return 0u;
     ++g_blend_410_invocations;
     layer_drift_write_begin(&drift, renderer);
+    if (g_primitive_guard) {
+        why = "guard";
+        ++g_blend_410_reject_guard;
+    } else if ((DWORD)(ULONG_PTR)renderer == G1_RENDERER_VA && g_mirror &&
+               g_covered && g_expected_snapshot) {
+        stride = *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_STRIDE);
+        buffer = *(BYTE **)((BYTE *)renderer + G1_RENDERER_BUFFER);
+        if (!buffer ||
+            (DWORD)(ULONG_PTR)buffer == G1_CACHE_BASE ||
+            buffer == g_panel_bound_buffer || stride < G1_OVERLAY_SCREEN_WIDTH ||
+            stride > G1_MAX_STRIDE ||
+            *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_HEIGHT) !=
+                G1_OVERLAY_SCREEN_HEIGHT) {
+            why = "reject_target";
+            ++g_blend_410_reject_target;
+        } else if (width <= 0 || height <= 0 ||
+                   (x0 = x < 0 ? 0 : x,
+                    y0 = y < 0 ? 0 : y,
+                    x1 = x + width > (int)G1_OVERLAY_SCREEN_WIDTH
+                             ? (int)G1_OVERLAY_SCREEN_WIDTH : x + width,
+                    y1 = y + height > (int)G1_OVERLAY_SCREEN_HEIGHT
+                             ? (int)G1_OVERLAY_SCREEN_HEIGHT : y + height,
+                    x0 >= x1 || y0 >= y1)) {
+            why = "reject_bounds";
+            ++g_blend_410_reject_bounds;
+        } else if ((DWORD)(x1 - x0) > G1_OVERLAY_MAX_WIDTH ||
+                   (DWORD)(y1 - y0) > G1_OVERLAY_MAX_HEIGHT) {
+            why = "reject_size";
+            ++g_blend_410_reject_size;
+        } else {
+            why = "mirrored";
+            for (row = 0; row < y1 - y0; ++row)
+                for (col = 0; col < x1 - x0; ++col)
+                    g_blend_410_before[row * (x1 - x0) + col] =
+                        buffer[(DWORD)(y0 + row) * stride + (DWORD)(x0 + col)];
+            active = TRUE;
+        }
+    }
     result = g_original_blend_410(renderer, a_x, a_y, a_w, a_h, rle, remap, weight);
-    layer_drift_write_end(&drift, G1_BLEND_410, "observe", (int16_t)a_x, (int16_t)a_y,
-                          (int16_t)a_w, (int16_t)a_h);
+    if (active) {
+        if (g1_overlay_blt_apply(g_blend_410_before, buffer, stride, (size_t)x0,
+                                 (size_t)y0, (size_t)(x1 - x0), (size_t)(y1 - y0),
+                                 lstrcmpA(g1_hd_asset_source_name(), "scale2x") == 0,
+                                 g_overlay_scratch, g_expected_snapshot, g_covered,
+                                 g_mirror, 1600u, &stats)) {
+            ++g_blend_410_mirrored_calls;
+            g_blend_410_mirrored_pixels += (DWORD)stats.changed;
+        } else {
+            why = "reject_size";
+            ++g_blend_410_reject_size;
+        }
+    }
+    layer_drift_write_end(&drift, G1_BLEND_410, why, x, y, width, height);
     return result;
 }
 
@@ -4884,6 +6057,88 @@ static DWORD __attribute__((thiscall)) observe_blend_6d0(void *renderer, DWORD a
     return result;
 }
 
+/* H-OS2 OS2-0: why does a menu-screen TextOutA fail the renderer target check?
+ * Counts rejects per program state and, under layer_drift only, logs up to 4096
+ * calls per state (5, 7) with the renderer binding and the DC's selected bitmap (bits pointer,
+ * size, stride) next to the last present's screen pointer.  Diagnostic only. */
+#define G1_TEXTOUT_REJECT_LOG_LIMIT 4096u
+typedef HGDIOBJ (WINAPI *G1GetCurrentObject)(HDC, UINT);
+typedef int (WINAPI *G1GetObjectA)(HGDIOBJ, int, LPVOID);
+
+/* The bitmap selected into the TextOutA DC (zeroed when it has none). */
+static void textout_dc_bitmap(HDC hdc, BITMAP *bitmap)
+{
+    static G1GetCurrentObject current_object = NULL;
+    static G1GetObjectA get_object = NULL;
+    HGDIOBJ handle;
+    ZeroMemory(bitmap, sizeof(*bitmap));
+    if (!current_object || !get_object) {
+        HMODULE gdi = GetModuleHandleA("gdi32.dll");
+        if (!gdi) return;
+        current_object = (G1GetCurrentObject)(ULONG_PTR)GetProcAddress(gdi, "GetCurrentObject");
+        get_object = (G1GetObjectA)(ULONG_PTR)GetProcAddress(gdi, "GetObjectA");
+        if (!current_object || !get_object) return;
+    }
+    handle = current_object(hdc, OBJ_BITMAP);
+    if (!handle || get_object(handle, (int)sizeof(*bitmap), bitmap) <= 0)
+        ZeroMemory(bitmap, sizeof(*bitmap));
+}
+
+/* H-OS2 OS2-2 (i): menu text is drawn straight onto the back buffer while the
+ * renderer is still bound to an off-screen panel, so the binding check rejects
+ * it.  The DC's own bitmap bits being exactly the last present's screen is the
+ * stronger proof, so use that buffer and stride instead. */
+static BOOL textout_screen_dc_target(HDC hdc, BYTE **buffer, DWORD *stride)
+{
+    BITMAP bitmap;
+    if (!g_textout_screen_dc_enabled || !g_last_present_screen) return FALSE;
+    textout_dc_bitmap(hdc, &bitmap);
+    if (!bitmap.bmBits || (DWORD)(ULONG_PTR)bitmap.bmBits != g_last_present_screen ||
+        bitmap.bmWidthBytes < (LONG)G1_OVERLAY_SCREEN_WIDTH ||
+        bitmap.bmWidthBytes > (LONG)G1_MAX_STRIDE ||
+        bitmap.bmHeight < (LONG)G1_OVERLAY_SCREEN_HEIGHT) return FALSE;
+    *buffer = (BYTE *)bitmap.bmBits;
+    *stride = (DWORD)bitmap.bmWidthBytes;
+    ++g_textout_screen_dc_calls;
+    return TRUE;
+}
+
+static void textout_reject_target_note(HDC hdc, int x, int y, LPCSTR text, int length)
+{
+    void *renderer = (void *)(ULONG_PTR)G1_RENDERER_VA;
+    DWORD state = read_game_dword(G1_PROGRAM_STATE_VA);
+    DWORD *logged = state == 5u ? &g_textout_reject_logged_ps5 : &g_textout_reject_logged_ps7;
+    BITMAP bitmap;
+    SIZE extent;
+    char line[384];
+    if (state == 5u) ++g_textout_reject_target_ps5;
+    else if (state == 7u) ++g_textout_reject_target_ps7;
+    else ++g_textout_reject_target_other;
+    textout_dc_bitmap(hdc, &bitmap);
+    if (bitmap.bmBits && (DWORD)(ULONG_PTR)bitmap.bmBits == g_last_present_screen)
+        ++g_textout_reject_target_dc_screen;
+    else if (bitmap.bmBits && bitmap.bmBits ==
+             *(BYTE **)((BYTE *)renderer + G1_RENDERER_BUFFER))
+        ++g_textout_reject_target_dc_buffer;
+    else
+        ++g_textout_reject_target_dc_other;
+    if (!layer_drift_on() || (state != 5u && state != 7u) ||
+        *logged >= G1_TEXTOUT_REJECT_LOG_LIMIT) return;
+    ++*logged;
+    extent.cx = 0;
+    extent.cy = 0;
+    if (g_textout_extent) g_textout_extent(hdc, text, length, &extent);
+    layer_drift_emit(line, wsprintfA(line,
+        "{\"t\":\"tx\",\"p\":%u,\"state\":%u,\"x\":%d,\"y\":%d,\"len\":%d,\"cx\":%d,\"cy\":%d,\"rbuf\":%u,\"rstride\":%u,\"rh\":%u,\"dcbits\":%u,\"dcw\":%d,\"dch\":%d,\"dcstride\":%d,\"scr\":%u}\n",
+        (unsigned)g_drift_present, (unsigned)state, x, y, length, (int)extent.cx,
+        (int)extent.cy,
+        (unsigned)(ULONG_PTR)*(BYTE **)((BYTE *)renderer + G1_RENDERER_BUFFER),
+        (unsigned)*(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_STRIDE),
+        (unsigned)*(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_HEIGHT),
+        (unsigned)(ULONG_PTR)bitmap.bmBits, (int)bitmap.bmWidth, (int)bitmap.bmHeight,
+        (int)bitmap.bmWidthBytes, (unsigned)g_last_present_screen));
+}
+
 /* GDI text: the game calls gdi32!TextOutA through IAT slot 0x4E502C (59 call
  * sites, many draw a +1,+1 shadow first).  Only TA_LEFT|TA_TOP calls are
  * handled; the rectangle is the measured text extent plus a 1 px margin, so the
@@ -4898,8 +6153,10 @@ static BOOL WINAPI mirror_textout(HDC hdc, int x, int y, LPCSTR text, int length
     LONG x0 = 0, y0 = 0, x1 = 0, y1 = 0;
     SIZE extent;
     BOOL active = FALSE, result;
+    DWORD return_address = (DWORD)(ULONG_PTR)__builtin_return_address(0);
     if (!g_real_textout) return FALSE;
     ++g_textout_invocations;
+    if (g_ret_range_diag) ret_range_diag_count(return_address, &g_ret_diag_textout_kills, &g_ret_diag_textout_idle);
     extent.cx = 0;
     extent.cy = 0;
     if (g_primitive_guard) {
@@ -4907,12 +6164,14 @@ static BOOL WINAPI mirror_textout(HDC hdc, int x, int y, LPCSTR text, int length
     } else if (g_mirror && g_covered && g_expected_snapshot && text && length > 0) {
         stride = *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_STRIDE);
         buffer = *(BYTE **)((BYTE *)renderer + G1_RENDERER_BUFFER);
-        if (!buffer || (DWORD)(ULONG_PTR)buffer == G1_CACHE_BASE ||
-            buffer == g_panel_bound_buffer || stride < G1_OVERLAY_SCREEN_WIDTH ||
-            stride > G1_MAX_STRIDE ||
-            *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_HEIGHT) !=
-                G1_OVERLAY_SCREEN_HEIGHT) {
+        if ((!buffer || (DWORD)(ULONG_PTR)buffer == G1_CACHE_BASE ||
+             buffer == g_panel_bound_buffer || stride < G1_OVERLAY_SCREEN_WIDTH ||
+             stride > G1_MAX_STRIDE ||
+             *(volatile DWORD *)((BYTE *)renderer + G1_RENDERER_HEIGHT) !=
+                 G1_OVERLAY_SCREEN_HEIGHT) &&
+            !textout_screen_dc_target(hdc, &buffer, &stride)) {
             ++g_textout_reject_target;
+            textout_reject_target_note(hdc, x, y, text, length);
         } else if (g_textout_align(hdc) != 0u) {
             ++g_textout_reject_align;
         } else if (!g_textout_extent(hdc, text, length, &extent) || extent.cx <= 0 ||
@@ -5019,6 +6278,9 @@ BOOL g1_mirror2x_primitives_install(void)
     };
     static const BYTE expected_cache_move[8] =
         {0x55,0x8B,0xEC,0x57,0x56,0x8B,0x75,0x0C};
+    static const BYTE expected_primary_readback_site[5] = {0xE8, 0x15, 0x14, 0xFA, 0xFF};
+    static const BYTE expected_bar_copy_site[5] = {0xE8, 0x18, 0x37, 0xFB, 0xFF};
+    static const BYTE expected_briefing_compose_site[5] = {0xE8, 0x66, 0x22, 0x02, 0x00};
     static const BYTE expected_cache_copy[8] =
         {0x8B,0x41,0x0C,0x53,0x99,0x83,0xE2,0x07};
     static const BYTE expected_a[G1_TARGET_A_LEN] =
@@ -5055,6 +6317,8 @@ BOOL g1_mirror2x_primitives_install(void)
         {0x8B, 0x41, 0x10, 0x53, 0x55};
     static const BYTE expected_flip_rle[G1_FLIP_RLE_LEN] =
         {0x51, 0x53, 0x56, 0x57, 0x8B, 0x7C, 0x24, 0x18};
+    static const BYTE expected_keyed_copy[G1_KEYED_COPY_LEN] =
+        {0x8B, 0x51, 0x10, 0x53, 0x8B, 0xC2};
     static const BYTE expected_flip_clip[G1_FLIP_CLIP_LEN] =
         {0x83, 0xEC, 0x18, 0x33, 0xC0};
     static const BYTE expected_shade_rle[G1_SHADE_RLE_LEN] =
@@ -5104,6 +6368,13 @@ BOOL g1_mirror2x_primitives_install(void)
                                        G1_PANEL_HD_STRIDE * G1_PANEL_MAX_HEIGHT * 2u);
     g_panel_pack = (BYTE *)HeapAlloc(GetProcessHeap(), 0,
                                      G1_PANEL_HD_STRIDE * G1_PANEL_MAX_HEIGHT * 2u);
+    g_pause_valid = (BYTE *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 800u * 600u);
+    g_pause_expected = (BYTE *)HeapAlloc(GetProcessHeap(), 0, 800u * 600u);
+    g_pause_hd = (BYTE *)HeapAlloc(GetProcessHeap(), 0, 1600u * 1200u);
+    if (!g_pause_valid || !g_pause_expected || !g_pause_hd)
+        g_pause_snapshot_enabled = FALSE;
+    g_last_frame = (BYTE *)HeapAlloc(GetProcessHeap(), 0, 800u * 600u);
+    if (!g_last_frame) g_primary_readback_enabled = FALSE;
     if (!g_scratch_a || !g_scratch_b || !g_mirror || !g_covered ||
         !g_expected_snapshot || !g_s3_mask || !g_layer_mirror ||
         !g_layer_covered || !g_layer_expected || !g_panel_expected ||
@@ -5158,6 +6429,9 @@ BOOL g1_mirror2x_primitives_install(void)
         !install_one(G1_FLIP_RLE, expected_flip_rle, G1_FLIP_RLE_LEN,
                      (void *)mirror_flip_rle, &g_hook_flip_rle,
                      (G1PrimitiveFn *)&g_original_flip_rle) ||
+        !install_one(G1_KEYED_COPY, expected_keyed_copy, G1_KEYED_COPY_LEN,
+                     (void *)mirror_keyed_copy, &g_hook_keyed_copy,
+                     &g_original_keyed_copy) ||
         !install_one(G1_FLIP_CLIP, expected_flip_clip, G1_FLIP_CLIP_LEN,
                      (void *)mirror_flip_clip, &g_hook_flip_clip,
                      (G1PrimitiveFn *)&g_original_flip_clip) ||
@@ -5194,9 +6468,9 @@ BOOL g1_mirror2x_primitives_install(void)
         !install_one(G1_FLIP_BLEND7, expected_flip_blend7, G1_FLIP_BLEND7_LEN,
                      (void *)mirror_flip_blend7, &g_hook_flip_blend7,
                      (G1PrimitiveFn *)&g_original_flip_blend7) ||
-        (layer_drift_on() && !install_one(G1_BLEND_410, expected_blend_410,
-                     G1_BLEND_410_LEN, (void *)observe_blend_410, &g_hook_blend_410,
-                     (G1PrimitiveFn *)&g_original_blend_410)) ||
+        !install_one(G1_BLEND_410, expected_blend_410,
+                     G1_BLEND_410_LEN, (void *)mirror_blend_410, &g_hook_blend_410,
+                     (G1PrimitiveFn *)&g_original_blend_410) ||
         (layer_drift_on() && !install_one(G1_BLEND_6D0, expected_blend_6d0,
                      G1_BLEND_6D0_LEN, (void *)observe_blend_6d0, &g_hook_blend_6d0,
                      &g_original_blend_6d0)) ||
@@ -5218,6 +6492,21 @@ BOOL g1_mirror2x_primitives_install(void)
             g1_mirror2x_primitives_detach();
             return FALSE;
         }
+    }
+    if (!install_callsite(G1_PRIMARY_READBACK_SITE, expected_primary_readback_site,
+                          (void *)mirror_primary_readback_site, &g_hook_primary_readback)) {
+        g1_mirror2x_primitives_detach();
+        return FALSE;
+    }
+    if (!install_callsite(G1_BAR_COPY_SITE, expected_bar_copy_site,
+                          (void *)mirror_bar_copy_site, &g_hook_bar_copy)) {
+        g1_mirror2x_primitives_detach();
+        return FALSE;
+    }
+    if (!install_callsite(G1_BRIEFING_COMPOSE_SITE, expected_briefing_compose_site,
+                          (void *)mirror_briefing_compose_site, &g_hook_briefing_compose)) {
+        g1_mirror2x_primitives_detach();
+        return FALSE;
     }
     zero_bytes(g_covered, 800u * 600u);
     zero_bytes(g_expected_snapshot, 800u * 600u);
@@ -5281,6 +6570,7 @@ BOOL g1_mirror2x_primitives_install(void)
     g_rect_solid_mirrored_calls = 0u;
     g_rect_solid_mirrored_pixels = 0u;
     g_rect_solid_reject_target = 0u;
+    g_rect_solid_wide_calls = 0u;
     g_rect_solid_reject_bounds = 0u;
     g_rect_solid_reject_size = 0u;
     g_rect_solid_reject_guard = 0u;
@@ -5294,6 +6584,17 @@ BOOL g1_mirror2x_primitives_install(void)
     g_flip_rle_reject_bounds = 0u;
     g_flip_rle_clipped_calls = 0u;
     g_flip_rle_wrap_calls = 0u;
+    g_flip_rle_keyed_calls = 0u;
+    g_flip_rle_key_fallbacks = 0u;
+    g_keyed_copy_invocations = 0u;
+    g_keyed_copy_mirrored_calls = 0u;
+    g_keyed_copy_mirrored_pixels = 0u;
+    g_keyed_copy_changed_calls = 0u;
+    g_keyed_copy_clipped_calls = 0u;
+    g_keyed_copy_reject_target = 0u;
+    g_keyed_copy_reject_bounds = 0u;
+    g_keyed_copy_reject_size = 0u;
+    g_keyed_copy_reject_guard = 0u;
     g_flip_clip_invocations = 0u;
     g_flip_clip_mirrored_calls = 0u;
     g_flip_clip_mirrored_pixels = 0u;
@@ -5342,6 +6643,52 @@ BOOL g1_mirror2x_primitives_install(void)
     g_blend_rle_reject_bounds = 0u;
     g_blend_rle_reject_size = 0u;
     g_blend_rle_reject_guard = 0u;
+    g_blend_rle_key.keyed_calls = 0u;
+    g_blend_rle_key.keyed_pixels = 0u;
+    g_blend_rle_key.key_fallbacks = 0u;
+    g_blend_rle_key.selfcheck_mismatches = 0u;
+    g_blend_rle_key.selfcheck_pixels = 0u;
+    g_blend_wrle_key.keyed_calls = 0u;
+    g_blend_wrle_key.keyed_pixels = 0u;
+    g_blend_wrle_key.key_fallbacks = 0u;
+    g_blend_wrle_key.selfcheck_mismatches = 0u;
+    g_blend_wrle_key.selfcheck_pixels = 0u;
+    g_blend_clip_key.keyed_calls = 0u;
+    g_blend_clip_key.keyed_pixels = 0u;
+    g_blend_clip_key.key_fallbacks = 0u;
+    g_blend_clip_key.selfcheck_mismatches = 0u;
+    g_blend_clip_key.selfcheck_pixels = 0u;
+    g_blend_clip_key.key_clip_cut = 0u;
+    g_blend_clip_key.key_clip_empty = 0u;
+    g_flip_blend_key.keyed_calls = 0u;
+    g_flip_blend_key.keyed_pixels = 0u;
+    g_flip_blend_key.key_fallbacks = 0u;
+    g_flip_blend_key.selfcheck_mismatches = 0u;
+    g_flip_blend_key.selfcheck_pixels = 0u;
+    g_flip_blend_key.key_wrap_mismatches = 0u;
+    g_blend_skip_key.keyed_calls = 0u;
+    g_blend_skip_key.keyed_pixels = 0u;
+    g_blend_skip_key.key_fallbacks = 0u;
+    g_blend_skip_key.selfcheck_mismatches = 0u;
+    g_blend_skip_key.selfcheck_pixels = 0u;
+    g_blend_skip_key.key_clip_cut = 0u;
+    g_blend_skip_key.key_clip_empty = 0u;
+    g_blend_clip7_key.keyed_calls = 0u;
+    g_blend_clip7_key.keyed_pixels = 0u;
+    g_blend_clip7_key.key_fallbacks = 0u;
+    g_blend_clip7_key.selfcheck_mismatches = 0u;
+    g_blend_clip7_key.selfcheck_pixels = 0u;
+    g_blend_clip7_key.key_clip_cut = 0u;
+    g_blend_clip7_key.key_clip_empty = 0u;
+    g_blend_clip7_key.key_level_rejects = 0u;
+    g_blend_flip7_key.keyed_calls = 0u;
+    g_blend_flip7_key.keyed_pixels = 0u;
+    g_blend_flip7_key.key_fallbacks = 0u;
+    g_blend_flip7_key.selfcheck_mismatches = 0u;
+    g_blend_flip7_key.selfcheck_pixels = 0u;
+    g_blend_flip7_key.key_clip_cut = 0u;
+    g_blend_flip7_key.key_clip_empty = 0u;
+    g_blend_flip7_key.key_level_rejects = 0u;
     g_blend_wrle_invocations = 0u;
     g_blend_wrle_mirrored_calls = 0u;
     g_blend_wrle_mirrored_pixels = 0u;
@@ -5431,16 +6778,35 @@ BOOL g1_mirror2x_primitives_install(void)
     g_drift_w_records = 0u;
     g_blend_410_invocations = 0u;
     g_blend_410_changed_calls = 0u;
+    g_blend_410_mirrored_calls = 0u;
+    g_blend_410_mirrored_pixels = 0u;
+    g_blend_410_reject_target = 0u;
+    g_blend_410_reject_bounds = 0u;
+    g_blend_410_reject_size = 0u;
+    g_blend_410_reject_guard = 0u;
     g_blend_6d0_invocations = 0u;
     g_blend_6d0_changed_calls = 0u;
     ZeroMemory(g_drift_unattributed, sizeof(g_drift_unattributed));
     ZeroMemory(g_drift_w_hit, sizeof(g_drift_w_hit));
     g_drift_prev_valid = FALSE;
     g_textout_invocations = 0u;
+    g_ret_diag_b_kills = 0u;
+    g_ret_diag_b_idle = 0u;
+    g_ret_diag_textout_kills = 0u;
+    g_ret_diag_textout_idle = 0u;
     g_textout_mirrored_calls = 0u;
     g_textout_mirrored_pixels = 0u;
     g_textout_changed_calls = 0u;
     g_textout_reject_target = 0u;
+    g_textout_reject_target_ps5 = 0u;
+    g_textout_reject_target_ps7 = 0u;
+    g_textout_reject_target_other = 0u;
+    g_textout_screen_dc_calls = 0u;
+    g_textout_reject_target_dc_screen = 0u;
+    g_textout_reject_target_dc_buffer = 0u;
+    g_textout_reject_target_dc_other = 0u;
+    g_textout_reject_logged_ps5 = 0u;
+    g_textout_reject_logged_ps7 = 0u;
     g_textout_reject_size = 0u;
     g_textout_reject_guard = 0u;
     g_textout_reject_align = 0u;
@@ -5495,6 +6861,7 @@ void g1_mirror2x_primitives_detach(void)
     BOOL restored_line = restore_hook(&g_hook_line);
     BOOL restored_rect_solid = restore_hook(&g_hook_rect_solid);
     BOOL restored_flip_rle = restore_hook(&g_hook_flip_rle);
+    BOOL restored_keyed_copy = restore_hook(&g_hook_keyed_copy);
     BOOL restored_flip_clip = restore_hook(&g_hook_flip_clip);
     BOOL restored_shade_rle = restore_hook(&g_hook_shade_rle);
     BOOL restored_shade_flip = restore_hook(&g_hook_shade_flip);
@@ -5510,6 +6877,9 @@ void g1_mirror2x_primitives_detach(void)
     BOOL restored_blend_410 = restore_hook(&g_hook_blend_410);
     BOOL restored_blend_6d0 = restore_hook(&g_hook_blend_6d0);
     BOOL restored_cache_copy = restore_hook(&g_hook_cache_copy);
+    BOOL restored_primary_readback = restore_hook(&g_hook_primary_readback);
+    BOOL restored_bar_copy = restore_hook(&g_hook_bar_copy);
+    BOOL restored_briefing_compose = restore_hook(&g_hook_briefing_compose);
     BOOL restored_moves = TRUE;
     DWORD move_index;
     for (move_index = 0u; move_index < 8u; ++move_index)
@@ -5521,6 +6891,7 @@ void g1_mirror2x_primitives_detach(void)
         !restored_line ||
         !restored_rect_solid ||
         !restored_flip_rle ||
+        !restored_keyed_copy ||
         !restored_flip_clip ||
         !restored_shade_rle ||
         !restored_shade_flip ||
@@ -5530,7 +6901,8 @@ void g1_mirror2x_primitives_detach(void)
         !restored_blend_clip7 || !restored_flip_blend || !restored_blend_flip7 ||
         !restored_flip_blend7 ||
         !restored_blend_410 ||
-        !restored_blend_6d0 || !restored_cache_copy || !restored_moves) return;
+        !restored_blend_6d0 || !restored_cache_copy || !restored_primary_readback ||
+        !restored_bar_copy || !restored_briefing_compose || !restored_moves) return;
     g_original_a = NULL;
     g_original_b = NULL;
     g_original_terrain_rle = NULL;
@@ -5548,6 +6920,7 @@ void g1_mirror2x_primitives_detach(void)
     g_original_line = NULL;
     g_original_rect_solid = NULL;
     g_original_flip_rle = NULL;
+    g_original_keyed_copy = NULL;
     g_original_flip_clip = NULL;
     g_original_shade_rle = NULL;
     g_original_shade_flip = NULL;
@@ -5625,6 +6998,50 @@ DWORD g1_mirror2x_menu_copy_pixels(void) { return g_menu_copy_pixels; }
 DWORD g1_mirror2x_menu_copy_hash_first(void) { return g_menu_copy_hash_first; }
 DWORD g1_mirror2x_menu_copy_hash_last(void) { return g_menu_copy_hash_last; }
 DWORD g1_mirror2x_menu_copy_hash_changes(void) { return g_menu_copy_hash_changes; }
+DWORD g1_mirror2x_partial_copy_calls(void) { return g_partial_copy_calls; }
+DWORD g1_mirror2x_partial_copy_pixels(void) { return g_partial_copy_pixels; }
+DWORD g1_mirror2x_frame_copy_calls(void) { return g_frame_copy_calls; }
+DWORD g1_mirror2x_frame_copy_pixels(void) { return g_frame_copy_pixels; }
+DWORD g1_mirror2x_frame_copy_rejects(void) { return g_frame_copy_rejects; }
+DWORD g1_mirror2x_pause_restore_total(void) { return g_pause_restore_total; }
+DWORD g1_mirror2x_primary_readback_calls(void) { return g_primary_readback_calls; }
+DWORD g1_mirror2x_primary_readback_converted(void) { return g_primary_readback_converted; }
+DWORD g1_mirror2x_primary_readback_rejects(void) { return g_primary_readback_rejects; }
+DWORD g1_mirror2x_primary_readback_dest_hash(void) { return g_primary_readback_dest_hash; }
+DWORD g1_mirror2x_primary_readback_source_hash(void) { return g_primary_readback_source_hash; }
+DWORD g1_mirror2x_primary_readback_return_address(void) { return g_primary_readback_return; }
+DWORD g1_mirror2x_bar_copy_calls(void) { return g_bar_copy_calls; }
+DWORD g1_mirror2x_bar_copy_mirrored(void) { return g_bar_copy_mirrored; }
+DWORD g1_mirror2x_bar_copy_rejects(void) { return g_bar_copy_rejects; }
+DWORD g1_mirror2x_bar_copy_pixels(void) { return g_bar_copy_pixels; }
+DWORD g1_mirror2x_scratch_bltfast_calls(void) { return g_scratch_calls; }
+DWORD g1_mirror2x_scratch_bltfast_recorded(void) { return g_scratch_recorded; }
+DWORD g1_mirror2x_scratch_bltfast_rejects(void) { return g_scratch_rejects; }
+DWORD g1_mirror2x_scratch_bltfast_flush_applied(void) { return g_scratch_flush_applied; }
+DWORD g1_mirror2x_scratch_bltfast_flush_pixels(void) { return g_scratch_flush_pixels; }
+DWORD g1_mirror2x_scratch_bltfast_adopts(void) { return g_scratch_adopts; }
+DWORD g1_mirror2x_scratch_bltfast_adopt_skipped_record(void) { return g_scratch_adopt_skipped_record; }
+DWORD g1_mirror2x_scratch_bltfast_overflow(void) { return g_scratch_queue.overflow; }
+DWORD g1_mirror2x_scratch_bltfast_other_site_calls(void)
+{
+    return g_scratch_site_calls[G1_SCRATCH_BLTFAST_SITE_COUNT];
+}
+DWORD g1_mirror2x_scratch_bltfast_site_calls(DWORD index)
+{
+    return index < G1_SCRATCH_BLTFAST_SITE_COUNT ? g_scratch_site_calls[index] : 0u;
+}
+DWORD g1_mirror2x_briefing_compose_calls(void) { return g_briefing_compose_calls; }
+DWORD g1_mirror2x_briefing_compose_mirrored(void) { return g_briefing_compose_mirrored; }
+DWORD g1_mirror2x_briefing_compose_pixels(void) { return g_briefing_compose_changed_pixels; }
+DWORD g1_mirror2x_briefing_compose_rejects(void) { return g_briefing_compose_rejects; }
+DWORD g1_mirror2x_briefing_compose_reject_gate(void) { return g_briefing_compose_reject_gate; }
+DWORD g1_mirror2x_briefing_compose_reject_lock(void) { return g_briefing_compose_reject_lock; }
+DWORD g1_mirror2x_briefing_compose_reject_surface(void) { return g_briefing_compose_reject_surface; }
+DWORD g1_mirror2x_briefing_compose_last_dest(void) { return g_briefing_compose_last_dest; }
+DWORD g1_mirror2x_briefing_compose_last_geometry(DWORD index)
+{
+    return index < 4u ? g_briefing_compose_last_geometry[index] : 0u;
+}
 BOOL g1_mirror2x_s3_pattern_applied(void) { return g_s3_pattern_applied; }
 DWORD g1_mirror2x_s3_pattern_pixel_count(void) { return g_s3_pattern_pixels; }
 BOOL g1_mirror2x_primitives_installed(void)
@@ -5640,6 +7057,7 @@ BOOL g1_mirror2x_primitives_installed(void)
            g_hook_line.installed &&
            g_hook_rect_solid.installed &&
            g_hook_flip_rle.installed &&
+           g_hook_keyed_copy.installed &&
            g_hook_flip_clip.installed &&
            g_hook_shade_rle.installed &&
            g_hook_shade_flip.installed &&
@@ -5650,9 +7068,12 @@ BOOL g1_mirror2x_primitives_installed(void)
            g_hook_flip_blend.installed && g_hook_blend_flip7.installed &&
            g_hook_flip_blend7.installed &&
            (!layer_drift_on() ||
-            (g_hook_blend_410.installed && g_hook_blend_6d0.installed)) &&
+            (g_hook_blend_6d0.installed)) &&
+           g_hook_blend_410.installed &&
            g_hook_cache_moves[0].installed && g_hook_cache_moves[1].installed &&
            g_hook_cache_moves[2].installed && g_hook_cache_moves[3].installed &&
            g_hook_cache_moves[4].installed && g_hook_cache_moves[5].installed &&
-           g_hook_cache_moves[6].installed && g_hook_cache_moves[7].installed;
+           g_hook_cache_moves[6].installed && g_hook_cache_moves[7].installed &&
+           g_hook_primary_readback.installed && g_hook_bar_copy.installed &&
+           g_hook_briefing_compose.installed;
 }

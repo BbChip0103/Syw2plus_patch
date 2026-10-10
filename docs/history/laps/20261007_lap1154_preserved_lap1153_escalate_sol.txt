@@ -1,0 +1,5 @@
+lap1153 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청: H-OS1.
+결과: PS7 partial(0x465E80 폭>320 reject_size 수리, 정착 HD min 98.166→99.627 켬 2/2·끔 재현, nearest 블록 799→798 미달), PS5 무변화(98.801), 비회귀 NG5 PS3 HD 100·save006 pair PASS.
+검증할 것(승격 작업자): (1) 공유 temp 20261007_lap1153_work_hos1/ 의 on1·on2·off1·ng5·pair raw를 새 스크립트로 재계산(os1_measure.py·os1_nr.py는 work 스크립트이므로 재사용 말 것), (2) layer_drift.jsonl 의 size 거부 사각형 (200,210)-(564,230) 귀속과 "정착 stale 8,793의 87%" 주장 대조, (3) 현재 트리 DLL 독립 재조립, (4) PS5 stale 귀속 방침(다음 work H-OS2: 상태별·대상 buffer별 reject_target 계수, stride 360 비화면 버퍼가 나중에 화면으로 복사되는 경로) 결정.
+공개: OS1-1 "표본 3개 중 2개 동일 writer" 기준 미충족(마지막 writer 셋 다 다름), 슬롯1·2 stale 원인 UNKNOWN(슬롯2는 wined3d tid 288 후행 쓰기), 첫 watch run은 PS5 barrier 타임아웃 FAIL(watch 켜면 PS7→PS5 전환 불가).
+기록: docs/history/laps/20261007_lap1153_work_g1_hos1_ps7_wide_rect_solid.md

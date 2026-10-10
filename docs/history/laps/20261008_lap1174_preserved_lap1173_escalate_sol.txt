@@ -1,0 +1,5 @@
+lap1173 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 검수 요청: H-HDF0 PASS(partial, 기술·격리).
+기록: docs/history/laps/20261008_lap1173_work_g1_hdf0_fullscreen_title_pack.md  산출물: 공유 temp 20261008_lap1173_work_hdf0/
+요지: PS9 타이틀 그림 = 0x466280 block copy 800x600 블록, 전 바이트 FNV-1a 1777000796 = yfnt/title.spr(정정: launchscreen_plus.spr는 로딩 화면). 팩 f<hash8>_800x600.idx8 + 로더/미러 연결(끔 env SYW2_G1_HD_PACK_FULLSCREEN=0). F1·G1 hits=호출 수·loads 1·misses/rejects 0, 끔 대조 카운터 0, F1 크롭 구도 동일·질감만 부드러움, NG5 PS3 비회귀(HD min 99.948·안전 0).
+검수 요청: (a) hash 1777000796 = yfnt/title.spr·팩 이름·trace·PS9 HD/p95·크롭을 새 스크립트로 재계산 (b) transfer_block_copy_to_screen 덮어쓰기 코드·로더(키 검사·캐시·miss 슬롯 8) (c) 합본 팩(G1) PS9 버튼 변색 귀속: TitelMainButton_plus 프레임이 imjin2 팔레트로 양자화됐으나 타이틀은 title_plus.PAL → H-HDPAL(화면 팔레트별 팩) 사전등록 여부 (d) 다음 work 후보: H-HDPAL, PS5(titlelobby)·PS7(titleprotocol) 전면 그림, 브리핑.
+주의: 디스크 여유 4.2 GB(<5 GB). 다음 run work는 root가 여유를 확보하기 전에는 시작 불가(BLOCKED(디스크)). 커밋 0, 원본 SHA 전후 MATCH, game 사본 삭제.

@@ -1,0 +1,17 @@
+# lap1228 middle — G1 2612 pair raw 충돌 / work 수리 후 fresh 재검수
+
+승격 사유: 이번 세션 사용자 지시의 “과거 기록과 raw 실질 충돌” 조건. G1 milestone/2612 사용자 trial 경계도 도달했으나 마감·전달·승인하지 않았다. 현재 변경·이전 근거 보존, 게임/하네스 구현0.
+
+- 상세 진단·수리 측정식: docs/history/laps/20261010_lap1228_middle_g1_esl2612_pair_close_conflict_handoff.md
+- 이전 ESCALATE 원문 byte-exact: docs/history/laps/20261010_lap1228_preserved_lap1227_escalate_sol.txt (SHA256 df58239df7defdd1f6ca4c95e5eecb4e4b86e9f05328f72062752655e6e79be7)
+- 독립 확인 JSON: ../temp/Syw2plus_patch/20261010_lap1228_middle_review/review-result.json (SHA256 7c42669c1c14c4c3dbf3589584257a42d7bdf413b85d7e76850c8745a6215be0)
+
+확정: pair 후보 probe-result.trace_close FAIL(mismatched run_id), raw run_id unknown·summary0; owned PID reader로 같은 실패 재현. no_present_trace가 TRACE_RUN_ID까지 제거하지만 close는 g1-saved-candidate를 요구한다. _pair_status는 close/완전 raw를 무시해 PASS 재현. 하네스 결함으로 귀속하며 게임 크래시/OOM으로 쓰지 않는다. 5 tag 픽셀수치 불일치0·raw/input/캡처/DLL SHA MATCH, 새 게임 양 lane 정상 close·후보 summary1/drop0은 보존. 기술 전체 수용 HOLD, .kills/.idle 호출0 INCONCLUSIVE.
+
+승격자가 이어서 할 일:
+1. 진단과 FEASIBLE work handoff를 확인하고 work tier에 tools/g1_saved_scene_probe.py 및 해당 회귀 테스트 소유권을 지정한다. middle이 게임 구현을 대신하지 않는다.
+2. work는 trace opt-in은 꺼 둔 채 run ID만 보존하고, close FAIL/summary 누락의 aggregate PASS를 차단하는 RED→GREEN 회귀를 추가한다. 소유권 검사 완화·raw 덮어쓰기·pin 갱신 금지.
+3. 같은2612/save006·--candidate-no-present-trace --candidate-no-unit-ticks로 fresh pair를 실행·수리·재실행. run ID/PID binding·owned close PASS·summary1/drop0·입력7/7·5 tag/W-1/Scale2x·보호원본/cleanup을 확인한다.
+4. repaired source의 전체 Fast + fresh runtime를 새 middle이 독립 검수한다. 수리 전 정상 종료 실패 pair로 trial 준비/재전달/마일스톤 승인 금지. 기존 2611판의 배치 파일은 2611을 실행하므로 2612판 요청/전달은 그 이후 root 경계다.
+
+현재 검사는 종료 전 STATUS에만 결과를 남긴다. make check exit0도 이 raw 충돌을 해소하지 않는다. 새로운 사용자 시험/업스케일 결과가 오면 최신 지시로 처리하되 기존 실패를 PASS로 바꾸지 않는다. 별도 세션/원본/reference/golden 불변, commit/push/deploy0.

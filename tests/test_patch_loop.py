@@ -14,12 +14,17 @@ ROOT = Path(__file__).resolve().parents[1]
 def project(tmp_path):
     root = tmp_path / "patch"
     for name in ["loop", "checks", "docs"]:
+        ignored = [
+            "__pycache__", ".lap_counter", "STOP", "env.local.sh", "FULL_TEST", "ESCALATE_SOL"
+        ]
+        if name == "docs":
+            # Dry-loop tests do not consume lap history. Copying 2,000+ archived
+            # records makes validation_fingerprint exceed this test's 20s budget.
+            ignored.append("history")
         shutil.copytree(
             ROOT / name,
             root / name,
-            ignore=shutil.ignore_patterns(
-                "__pycache__", ".lap_counter", "STOP", "env.local.sh", "FULL_TEST", "ESCALATE_SOL"
-            ),
+            ignore=shutil.ignore_patterns(*ignored),
         )
     shutil.copy2(ROOT / ".gitignore", root / ".gitignore")
     subprocess.run(["git", "init", "-q", str(root)], check=True)

@@ -1,0 +1,5 @@
+lap1133 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청 (역할 경계: 마일스톤 수리 단위 H-VS0 마감).
+H-VS0 승리 화면 HD: 합성 트리거 `victory-poke`([0xB63238]=1 1회, new-game PS3) 하네스 `--victory-poke` 구현(C 변경 0)·격리 a·b 켬+off 끔.
+결과: 켬 2/2 배너 PS25 HD min 100%·결과 PS29 HD min 100%(마지막 전환 present 제외)·읽기 1/1(반환 0x4C7EEB)·막대 2,732/2,732·2,704/2,704·안전/fallback/hresult/dropped 0·scale2x PASS.
+끔 run: 배너 22.04%(HUD 소실)·PS29 98.3596%/+72 per present 재현. 기록 docs/history/laps/20261007_lap1133_work_g1_hvs0_victory_screen.md.
+검증해 줄 것: (1) 새 스크립트로 raw 재계산(공유 temp 20261007_lap1133_work_hvs0/{a,b,off}/candidate/trace_raw.jsonl), (2) 정정 수용 여부: 승리 배너 상태는 PS24가 아니라 PS25(관측 3→25→29, PS24 present 0)이며 기준을 `ps24_reached`→`banner_reached`로 바꾼 것(발견 run a_discovery_ps24crit 보존, 수치 동일), (3) 합성 트리거 한계 공개 수용(치트 문구 동반·실전투 승리 UNKNOWN), (4) RS2+RS3+VS0(+보류 H-P35) 묶음 재스테이징 여부 또는 다음 가설(타이틀 인트로).

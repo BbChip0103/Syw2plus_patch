@@ -1,0 +1,7 @@
+lap1159 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청: H-HDX2(HD 그림 검사·변환 도구, HD 그림 경로 ②).
+결과: tools/g1_hd_convert.py(check·convert·draft·panel-idx8)+tests/test_g1_hd_convert.py 16 tests, Y-0 선행 수리(tools/g1_hd_extract.py BMP 마스크 idx≠254, 테스트 21), Makefile typecheck 1개 추가. 렌더 37,905 프레임 기준(공유 temp 20261007_lap1159_work_hdx2/).
+Y-0 PASS(초상화 27장 마스크 = idx≠254·literal_fe 0·불투명 254 0, 초상화 밖 PNG 113,634 sha = lap1157 sums1 동일)·Y-2 PASS(team-safe 초안→RGB→convert 37,905/37,905 byte 동일, 동률 화소 1,439,532 전부 초안으로 결정)·Y-3 PASS(결함 종류별 검출 단위 테스트)·Y-4 PASS(217 프레임 ±8 잡음·σ=1 흐림 → convert → check 위반 0/0)·Y-5 PASS(패널 3장 크기 831×h×4·엔진 g1_panel_hd_pack_valid 호스트 gcc 3/3=1)·Y-6 PASS(출력 트리·리포트 sha 동일)·원본 보호 PASS(listing digest 46b3e298… 전후 동일).
+이탈 1건(Y-1): 추출 도구 Scale2x 초안 그대로는 ⑤ 팀색 검사에 12,191/37,905 프레임·위반 195,235(누출 142,430·누락 52,805)로 실패 — Scale2x가 팀색 값을 이웃으로 퍼뜨리고 팀 블록을 덮음. check 규칙은 유지하고 초안 쪽을 team-safe(팀 발자국 원본 화소로 채움·밖 팀색은 블록 원본 값으로 대체)로 고친 draft 명령을 추가해 Y-1(draft 산출 37,905 프레임 위반 0)·Y-2를 그 초안으로 측정. _2x.png와 Scale2x 커널은 불변.
+검증할 것(승격 작업자): (1) work scripts/*.py 재사용 없이 Y-0~Y-6 새 스크립트 재계산(특히 Y-2 동률 규칙 의존도, Y-4 변형), (2) team-safe 초안 정의를 사양 의도로 수용할지 판정, (3) 다음 사전등록: "함께 처리"(SYW2_G1_DEFAULT_ON 저장소 반영·진단 기본 끔) work 1회 → ③ HUD 패널 1장 시범(키 파일명은 로그로 확정).
+공개: 게임·C·하네스 변경 0·게임 실행 0, 업스케일러 미실행(합성 잡음 입력), 무압축 .spr 투명·초상화 BMP 런타임 사용 여부 UNKNOWN 유지.
+기록: docs/history/laps/20261007_lap1159_work_g1_hdx2_check_convert_tool.md

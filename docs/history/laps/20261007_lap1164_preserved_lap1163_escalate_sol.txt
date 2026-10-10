@@ -1,0 +1,10 @@
+lap1163 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 검수 요청. 사유: 마일스톤 경계(③ 시범 완료 → ④ 사전등록 필요), 상시 규칙에 따른 독립 검수.
+기록: docs/history/laps/20261007_lap1163_work_g1_hdp1_hud_panel_pilot.md
+H-HDP1 PASS(partial, 기술·격리): 사전등록의 831폭 팩 가정이 틀려 첫 run 7개가 크기 불일치로 거절됨(엔진은 앞 800열 = 1600x2h = 800*h*4 B).
+  tools/g1_hd_convert.py panel-idx8을 800열 crop으로 수리(테스트 RED->GREEN). 새 팩으로 k(B)·j(A) loaded=1, 안전 0, p95 7ms(+1), 패널 영역 B 색 비율 0.978~0.982.
+검증해 줄 것(새 스크립트로 재계산):
+ 1) run_H/candidate/ps3_{start,act,produce}.png 패널 영역(y874..1200)의 색 대응 — 유도표(팩 없는 run D 캡처) 방식과 판별력(영역 변경 px는 장면 잡음 ~100K라 비판별).
+ 2) trace panel_frame_sha256 == .src 앞 800열 SHA(c 0137064a·k c7aaf198), 엔진 digest = .spr 오프셋 3060 RLE 128B FNV-1a.
+ 3) tools/g1_hd_convert.py crop 수리와 테스트.
+다음 후보(middle 판단): ④ 일반 HD 그림 로더 사전등록 — 키에서 포인터 s 제거((file,frame) 또는 digest+크기), run마다 c/k/j 패널·포인터가 달라짐(P-4).
+공유 temp: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261007_lap1163_work_hdp1/

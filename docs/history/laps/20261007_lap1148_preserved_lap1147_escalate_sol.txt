@@ -1,0 +1,7 @@
+lap1147 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청: H-SC1 BLOCKED(귀속 불가) + 수리 시도 반증·되돌림. 경계: 사전등록 판정표의 BLOCKED 분기(위치·후보만 남기고 수리 없음).
+
+검증할 것(기록 docs/history/laps/20261007_lap1147_work_g1_hsc1_ps20_locate_writer_blocked.md, 공유 temp 20261007_lap1147_work_hsc1/):
+1. SC1-1 위치: m1/candidate/stale_mask.bin 5 dump 재계산 — stale 7,784/8,861/1,286/18,087/50,735, 90초 stale의 약 94%가 초상화 3칸(상자 x29..193·y49..174 / x630..797·y57..173 / x29..193·y211..334) + 본문 글자 소성분. PS20 정착 HD min 89.43·p50 98.217·<90 7.3%(lap1145 r1 동일 = 결정적).
+2. SC1-2 귀속: w2(`--screen-watch-call-from 2800`, overflow 0) 호출 표 5행 — BltFast 목적지 `[0x104F824]`(호출처 0x4D41E6 초상화·0x4D3BFA 패널, 소스 사각형 NULL, flags 0x11)·w1/w2 screen_watch의 표본 쓰기 EIP = 게임 스레드 `0x4662DE`(배경 249) + `wined3d.dll` `0x741B99CF`(tid 288, 매 present 초상화 화소) 확인. w4: 그 목적지 잠금 포인터 0x03028F40(pitch 800) ≠ 렌더러 버퍼 0x04470030(pitch 1600). w3: 캐시 쓰기 PS20 0.
+3. SC1-3 반증: on1에서 PS20 BltFast overlay 미러가 5 call·48,032 px 미러했는데 stale 50,735 불변(min 89.43) → 되돌림. 최종 트리의 되돌린 파일 해시가 lap1141 기록과 일치(direct_draw_trace.c 0de218aa84d6, g1_mirror2x.c 1b056280f662, g1_mirror2x.h 0fc9cc4b1edf, test_g1_rect_fill.py d8e4430db905).
+4. 결정 요청: (A) PS20 stale을 명시 잔여(화질, 내용 정상)로 두고 다른 G1 장면으로 / (B) work 1회차로 IDirectDrawSurface7 GetDC(+0x44)·ReleaseDC(+0x68)·GDI BitBlt 계열 호출 계측해 wined3d 쓰기의 게임 쪽 유발 호출을 특정(브리핑 그리기 구간 0x4D3A00..0x4D4C00이 GetDC/ReleaseDC 사용). work 권고: B를 한 회차만, 실패 시 A.

@@ -1,0 +1,8 @@
+lap1216 work(H-E2610G1-0) 완료 — middle 독립 검수 + 2610 전환 범위 결정 요청 (제품 C 변경 0, 하네스·테스트만, 판정 FEASIBLE).
+- 기록: docs/history/laps/20261009_lap1216_work_g1_e2610g1_0_boot_ng5_feasible.md
+- raw: 공유 temp 20261009_lap1216_work_e2610g1/ (run_B0 부팅, run_N0 인게임 FAIL(하네스 결함+2610 AI 패배), run_N1 인게임 PASS, scripts/run.sh·ana.py)
+- 결과 요약: 현재 G1 DLL이 수정 없이 2610 EXE(c5530cf4…)에서 켜짐 — MessageBox 없음, PS9→PS7→PS5→PS3, set_display_mode 1600×1200, primitive_install_success 1·훅 실패 0, 안전 7종 0, PS3 stale 0(N1 4,305 present), 입력 효과 두 lane 같음, p95 PS3 N0 6/N1 9(부하 변동 의심)·HQ2002 6. 하네스 수리 = `--esl2610` 플래그 + 선택 배열 리다이렉트(`0x899028`→`0x1604004`).
+- 검증 요청: (1) trace mirror2x_present를 program_state로 나눠 B0·N1 stale·안전·p95 재계산(N1 PS3 p95 9/max 83이 호스트 부하인지) (2) N0의 일시 stale 114 px·2 px(PS3 4,990 중 2 present, N1에서 재현 0)를 미귀속으로 둘지 판정 (3) 2610 AI가 방치 플레이어를 ~250 s에 이기는 동작(두 lane 공통, PS27/29 결과 화면)과 trace 8,192 이벤트 상한이 긴 장면 probe에 주는 영향 (4) 시작 국가 무작위로 lane마다 유닛 구성이 달라 produce wood가 다른 점이 입력 효과 동일성 판정에 영향 없는지.
+- 결정 요청: 2610 전환 범위 — (a) 사용자 시험판을 2610용으로 묶을지 (b) save006 pair 기준선을 2610 EXE로 재구성(세이브 로드·`Data`→`ESLData`) 가능성 probe (c) `.kills`/`.idle` 오버레이·전투 장면 probe 중 무엇을 다음 work로 할지.
+- 열린 점: partial(격리 Wine·새 게임 ~84 s 구간만), 세이브 로드·팩 켬·전투 중 오버레이 미검증. 별도 2610 세션 파일은 읽기·import만.
+- 주의: 작성 뒤 별도 2610 세션이 tools/esl2610_runtime.py를 2611 핫픽스 EXE(d9d6bb3d…)로 바꿨다. 이번 판정(run B0·N0·N1)은 2610 EXE(c5530cf4…) 기준이고 2611은 미검증 — 2611에서 B0 재확인이 필요하다.

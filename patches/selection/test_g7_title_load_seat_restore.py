@@ -12,7 +12,7 @@ from patches.selection import g6_shift_click_count_bound as g6
 from patches.selection import g7_title_load_seat_restore as mod
 
 ROOT = Path(__file__).resolve().parents[2]
-INPUT = ROOT.parent / "260921_temp"
+INPUT = ROOT.parent / "260921_temp" / "archive"
 PORT = {
     "normal": INPUT / "[ESL]Syw2plus 2608_AI상점개설_장수7명_전비1500-500-5000_G2_개인500_공용4092_G5_선택50_시험용.exe",
     "fixed_start": INPUT

@@ -410,6 +410,8 @@ validation_fingerprint() {
   # or updating live status must not require another full GUI run. Everything
   # nonignored is included except these narrative files; baseline/reference/history,
   # loop scripts, .gitignore, staged and new source files remain validation inputs.
+  # Separate user-session files outside the loop (Makefile FOREIGN_PATHS, 2026-10-10 user
+  # decision) are excluded so their concurrent edits do not invalidate loop evidence.
   local path
   {
     while IFS= read -r -d '' path; do
@@ -425,7 +427,10 @@ validation_fingerprint() {
     done < <(git ls-files --cached --others --exclude-standard -z -- . \
       ':(exclude)README.md' ':(exclude)loop/PROMPT.md' \
       ':(exclude)docs/STATUS.md' ':(exclude)docs/feedback/APPROVALS.md' \
-      ':(exclude)docs/feedback/INBOX.md' "$@" | LC_ALL=C sort -zu)
+      ':(exclude)docs/feedback/INBOX.md' \
+      ':(exclude)patches/esl2610/**' ':(exclude)analysis/esl2610/**' ':(exclude)tools/g2_esl261*' \
+      ':(exclude)tests/test_g2_esl261*' ':(exclude)docs/history/*esl2613_goal_contract*' \
+      "$@" | LC_ALL=C sort -zu)
   } | git hash-object --stdin
 }
 

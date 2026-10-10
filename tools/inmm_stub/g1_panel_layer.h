@@ -6,8 +6,8 @@
 
 #define G1_PANEL_KEY 0xFEu
 
-/* Panel pack keys deliberately mirror g1_hd_asset's source identity tuple,
- * while keeping the 831-wide panel out of its width<=800 ledger. */
+/* Panel pack keys carry no runtime pointer (it varies per run): writer, source
+ * digest and size name the file, like g1_hd_pack_name for the general ledger. */
 static inline uint32_t g1_panel_source_digest(const uint8_t *source,
                                               size_t source_bytes)
 {
@@ -22,22 +22,20 @@ static inline uint32_t g1_panel_source_digest(const uint8_t *source,
 }
 
 static inline int g1_panel_asset_key(char *output, size_t output_size,
-                                    uint32_t writer, uint32_t source_address,
-                                    uint32_t width, uint32_t height,
-                                    uint32_t source_digest)
+                                    uint32_t writer, uint32_t width,
+                                    uint32_t height, uint32_t source_digest)
 {
     static const char hex[] = "0123456789abcdef";
-    uint32_t fields[3] = {writer, source_address, source_digest};
+    uint32_t fields[2] = {writer, source_digest};
     size_t cursor = 0u, field, nibble;
     if (!output || output_size < 48u || width != 831u ||
         !height || height > 203u) return 0;
     /* Emit fixed-width lowercase fields without depending on CRT formatting. */
     output[cursor++] = 'w';
-    for (field = 0u; field < 3u; ++field) {
+    for (field = 0u; field < 2u; ++field) {
         uint32_t number = fields[field];
         if (field) output[cursor++] = '_';
-        if (field == 1u) output[cursor++] = 's';
-        if (field == 2u) output[cursor++] = 'h';
+        if (field == 1u) output[cursor++] = 'h';
         for (nibble = 0u; nibble < 8u; ++nibble)
             output[cursor++] = hex[(number >> (28u - (unsigned)nibble * 4u)) & 15u];
     }

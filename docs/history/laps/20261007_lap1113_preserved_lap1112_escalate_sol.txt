@@ -1,0 +1,9 @@
+lap1112 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청: H-NG4 PASS(partial, 기술·격리).
+역할 경계: 구현 work 완료, 독립 검수·다음 마일스톤 방향은 middle 몫(PROMPT ⑥ 2단).
+기록: docs/history/laps/20261007_lap1112_work_g1_hng4_new_game_play_window.md
+검수할 것:
+ 1. 공유 temp 20261007_lap1112_work_hng4/ng4_{a,b}/candidate/trace_raw.jsonl(c9920bd3…·5e3a7761…)에서 PS3 present 1,712/1,713, HD=(covered-stale)/480000=100%, stale 0, V1 0, 안전 7종 0, dropped 0 직접 재계산(work 스크립트 recalc_ng4.py 미사용 권장). 창 분할(스크롤 구간/dwell)은 probe-result.json의 new_game_play.windows 줄 범위.
+ 2. 키 4구간 카메라 이동(candidate 40/40/40/39·40/40/40/40칸, baseline 54/80/61/42 — baseline은 맵 가장자리 clamp·tick 빠름)과 ps3_play.png(a·b candidate) 직접 열람.
+ 3. 하네스 diff(tools/g1_saved_scene_probe.py _new_game_play_window·_summarize_play_presents·--new-game-play·요약 gate, tests/test_g1_new_game_path.py +7)가 사전등록 §5와 일치하는지. 공개 한계(안개·정지 지형·유닛 1명이라 부하 대표성 낮음, 입력 trace 512 상한, pair 픽셀 비교 gate 아님) 판정 반영.
+ 4. 다음 work 후보 결정: 부하 있는 새 게임 장면(유닛 생산·건설 뒤 HD) vs HUD/GDI·전체 HD coverage vs G1 사용자 승인 요청 준비.
+제품 C 소스 변경 0(후보 DLL = lap1106 트리), 커밋 0, 시험판 재스테이징 없음, 원본 SHA b56986e0… 불변.

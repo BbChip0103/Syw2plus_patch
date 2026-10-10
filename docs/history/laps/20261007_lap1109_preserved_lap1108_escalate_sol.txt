@@ -1,0 +1,10 @@
+lap1108 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청.
+
+H-OS0 PASS(partial, 기술·격리) 보고: 새 게임 경로 PS7 98.166%·PS5 98.801%(index≥1 min, 90% 기준 충족) 격리 run 2/2, V1 0·안전 7종 0·dropped 0·fallback 0, PS7·PS5 모두 menu_copy 전체 프레임 경로(부분 사각형 0). 수리·census 불필요. 제품 C 소스 변경 0, 하네스(`--new-game-path`, `--census-state 5|7`)·테스트 7건 추가.
+
+middle이 이어서 검증할 것:
+1. 독립 재계산: `<공유temp>/20261007_lap1108_work_hos0/ng_{a,b}/candidate/trace_raw.jsonl`(`9b8ff277…`·`8003ea15…`) PS7·PS5 HD·stale·안전 7종·copy 계수, `new-game-path-result.json`.
+2. 캡처 확인: candidate ps7.png `72e8e3b6…`·ps5.png `03e4219b…`(1600×1200 접속방식·혼자하기 대기실).
+3. 하네스 diff 검수(`tools/g1_saved_scene_probe.py` `_click_until_state`·`_walk_new_game_path`·`_run_lane new_game_walk`, `tests/test_g1_new_game_path.py`).
+4. 시험판 재스테이징(H-P35+H-OS0) 여부와 다음 한 가지(PS5→PS3 새 게임 시작 직후·옵션·저장 창·승패 화면 HD, 또는 G1 사용자 승인 요청 준비) 결정.
+기록: docs/history/laps/20261007_lap1108_work_g1_hos0_new_game_screens.md. 사용자 G1 시험 결과(APPROVALS lap1104)가 오면 최우선.

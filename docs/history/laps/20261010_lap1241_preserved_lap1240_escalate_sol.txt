@@ -1,0 +1,19 @@
+# lap1240 — stale240 writer attribution requires middle-tier review
+
+The worker reproduced a new stale event on an isolated official ESL 2613/save006 pair but did not establish a safe source repair. Preserve this handoff and all raw artifacts.
+
+## Evidence
+
+- Reproduction pair: `../temp/Syw2plus_patch/20261010_lap1240_stale240/pair-result.json` SHA256 `5b592353dd400bd37207c14315c925e7457721bfded2f676ad4cfe068bd527f8`.
+- Candidate mask: `../temp/Syw2plus_patch/20261010_lap1240_stale240/candidate/stale_mask.bin` SHA256 `e978b2101fb379f729a1e3823a944f694cad3fe9cc70cef6d58504aba853b6f6`. Of PS3 ordinals55–90, ordinal62 alone has 253 stale pixels in logical bbox `(435,180)–(466,199)`, `game_tick=312079905`.
+- Candidate input trace: in the same artifact root, logical mouse move `(450,195)` at `312079906`, WM_LBUTTONDOWN at `312079955` (+50ms after the stale present). Adjacent mask ordinals61/63 are stale0.
+- Writer run pair: `../temp/Syw2plus_patch/20261010_lap1240_stale240_watch/pair-result.json` SHA256 `17a85d7dd5f4a4856cfe44f1a758887f839f42e1ae099f4a9090821078932a4c`; screen watch SHA256 `18d6dbd43b89d5dd252bb23af372e78b0445e5394c3f8e947b7c818ce7746935`; layer drift SHA256 `0c63dfba90586f8da137f0e1aefd395eccd530772b2c08b439706c9159f2ccb3`. This second run had stale0. At sample `(462,197)`, PS3 p66/tick312315094, EIP `0x466E67` wrote value228 around +9ms after WM_LBUTTONDOWN at `312315085`.
+- `0x466E67` is the post-write EIP for `mov [edx+eax],bl` at `0x466E64` inside `0x466D50`. `tools/inmm_stub/g1_mirror2x.c` already installs `G1_TARGET_A 0x466D50` as `mirror_primitive_a`; the captured hit is inside its original trampoline. It is not the same stale present, so source attribution remains UNKNOWN.
+- Both runs exit0 with pair status PASS, scene/input/Scale2x PASS, official 2613 EXE pin MATCH, lane-owned close and summary PASS, one run ID each, drop0, flush/detach complete. No source/test/pin/golden edits. Full Fast and G1/multiplayer milestone checks were not run.
+- Full lap notes and commands: `docs/history/laps/20261010_lap1240_work_g1_stale240_reproduced_writer_handoff.md`; STATUS updated. Prior lap1238/1239 raw remains preserved at their original paths.
+
+## Required middle decision
+
+Independently correlate the ordinal62 mask and input trace with the watch run's p66 writer hit. Review the existing `mirror_primitive_a` / `mirror_reinvoke` clipping and cache-layer replay contract against the exact 2613 bytes. Decide whether a minimal targeted work probe can test a concrete cause; if not, record the exact missing evidence and next smallest probe. Do not assume `0x466E67` caused ordinal62 and do not add a hook or weaken gates without that link.
+
+This is a technical handoff, not G1 completion, user approval, or permission to deliver a trial build. Runtime provenance remains under `local/runtime/lap1240_stale240*` and `../temp/Syw2plus_patch/20261010_lap1240_stale240*`; do not delete those directories. The runtime `game` subdirectories for this lap were removed after exit; outputs, manifests, prefixes, captures, and logs are preserved.

@@ -1,0 +1,16 @@
+lap1129 work(Sonnet) → middle(Opus) 검수 요청: H-RS2 PS26 primary 역읽기 수리 PASS(partial, 기술·격리) 수용 판정 (G1 마일스톤 경계 아님, 독립 재계산·수용 필요)
+
+기록: docs/history/laps/20261007_lap1129_work_g1_hrs2_primary_readback_repair.md
+raw(공유 temp 20261007_lap1129_work_hrs2/): a·b(수리 켬)·off(SYW2_G1_PRIMARY_READBACK=0)·ng(new-game 비회귀) 각 result-screen/new-game-path-result.json, candidate/trace_raw.jsonl, ps27.png, recalc_lap1129.py·json, attempt1_*(1차 실패 가설 raw)
+
+독립 확인이 필요한 것
+1. 구조 정정: lap1128 사전등록의 서피스 훅(hook_blt_fast) 가정은 틀렸다(1차 구현 readback calls 0, attempt1_*). PS27 소스 0x01E71780은 GetAttachedSurface 플립 체인 후면 버퍼라 vtable 미복제 → 호출 지점 훅 mirror_primary_readback_site(call 0x469300 @0x4C7EE6, 바이트 E8 15 14 FA FF, selector 1·source==[0xE5D434]만 가로챔, 나머지 원본)로 교체. 정적 해석(호출 지점·인자)은 맞았다.
+2. 수치(a·b 동일): readback calls/converted/rejects 1/1/0, 반환 주소 0x004C7EEB, dest hash == readback source hash == 마지막 PS3 present 소스 해시 0xA0DFD3A9(RB-a). PS27 1,095·1,116 present, 첫 stale 0(끔 92,383), HD min 100%(끔 80.754%). 2× 짝수 표본 vs baseline ≤8 일치(배너 상자 제외) 99.0968%(끔 81.9865%), 하단 비검정 72,188 vs 72,277(0.9988, 끔 36). PS9 100%, p95 6/6/6ms, 안전 7종·fallback·dropped 0, scale2x PASS. off ps27.png 해시 c658e289fdc1 = lap1127 결함 캡처와 동일.
+3. 비회귀 new-game(--new-game-start --new-game-act --new-game-menu): PASS, PS3 min 100%·PS23 min 99.936%(lap1123 99.939%와 0.003%p 차), readback calls 0.
+4. 공개 한계: 승리 화면 UNKNOWN(같은 호출 지점 예상, fixture 없음), 0x41C7E5(PS22 역읽기) 미커버, flip 분기 0x4C7EC7 Blt 미실행·코드 없음, PS29 막대 7,874 px(98.36%) 불변(H-RS3 대상), mirror_validator BLOCKED는 lap1127과 같은 기존 오류 집합, 커서 32×32 제외 미적용(보수적).
+
+결정 요청
+- H-RS2 PASS(partial, 기술·격리) 수용 여부와 서피스 훅 가정 오류 정정 확인.
+- 수용 시 work H-RS3(PS29 0x468BB0 미러, 호출처 0x4B5493 1곳) 사전등록. 시험판 재스테이징 여부 결정(PS27 HUD 소실은 사용자 시험 판본에도 있는 실제 가시 결함 수리).
+
+상태: 변경 파일 6개 uncommitted(g1_primary_readback.h 신규, g1_mirror2x.c/.h, direct_draw_trace.c, Makefile, tests/test_g1_primary_readback.py), 커밋 0, make check 결과는 STATUS 참고.

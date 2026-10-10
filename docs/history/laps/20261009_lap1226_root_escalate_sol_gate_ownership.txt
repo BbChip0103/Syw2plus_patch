@@ -1,0 +1,13 @@
+# 승격 handoff — lap1226 middle / 2026-10-09
+
+일반 middle(진단·계획·확인) 세션은 H-TR2611 최종 기술 수용/마일스톤 경계를 마감하지 않고 종료한다. G1 미완료·최종 수용 HOLD.
+- 상세: docs/history/laps/20261009_lap1226_middle_g1_gate_ownership_diagnosis_handoff.md
+- lap1225 원문은 docs/history/laps/20261009_lap1226_preserved_lap1225_escalate_sol.txt에 byte-exact 보존(SHA256 7075243acf9aefcb8a49facafd4f007ed7fa539f766943881d929e6c2b36678c).
+- fresh lint FAIL45(exit2, lap1225와 로그 SHA 동일), typecheck PASS12. make check는 lint 선행조건 실패로 SKIP(BLOCKED). 전체 PASS 아님.
+- root 과거 full pytest 실패4건을 현행 4 target로 재실행했다. 최종 결과·SHA는 STATUS 및 logs/gates/lap1226-middle-root-failures-focused.log를 확인한다. 역사 실패·pin 변경 근거를 현재 focused 통과로 삭제/승인하지 않는다.
+- 별도 G2 소유 work에게: patches/esl2610/g2_persist_2610.py E70242 + g2_scan.py struct·g2_state_2610.py capstone.x86·tools/g2_esl2610_spike_probe.py Callable F4013을 의미 보존 수리. pin 변경 원인·승인 기록 보존. 루프/middle 대신 수정 금지. fresh lint/typecheck·4 targets 뒤 source를 고정하고 전체 make check 끝까지 실행하여 before/after fingerprint·로그 SHA·수치를 남긴다.
+- 승격 middle/root에게: 위 전체 Fast와 기존 TR raw를 검수한 뒤 H-TR2611 기술 수용을 판정. 전달된 2611 3파일은 staging과 fresh SHA MATCH(txt0); 재전달 불필요. 성능 호스트 부하 귀속 UNKNOWN, 사용자 플레이/업스케일 결과 미도착. 사용자 확인 없이 G1 마감/다음 마일스톤 전환 금지.
+- 제품 증거 없는 연속 세 번째 회차: strategy/middle가 재개 또는 중단을 구체 판정하고, 동일 lint 재확인 문서 회차를 반복하지 않는다. 현재 큐는 STATUS만 따른다.
+- 이 회차 게임/하네스/테스트/핀/원본/전달/커밋 변경0, 기존 uncommitted·raw 보존. 최종 safety/context/diff 결과는 STATUS 참조.
+
+종료 시 추가 blocker: focused 완주 후 별도 G2 소유 test_g2_combo_2610.py·test_g2_full_2610.py·test_g2_pool4093_2610.py 및 tools/g2_esl2611_saveload_replication.py 변경(mtime 관측)으로 fingerprint drift. 4 passed는 실행 당시 snapshot만 증명하며 변경 후 source 미검증. 승격자는 소유 세션 변경 사유/pin 근거를 확인하고 source 변경 완료 후 동일 source 검사를 수행한다. 세부 시각·SHA는 lap 기록/STATUS/최종 evidence JSON.

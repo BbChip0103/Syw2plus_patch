@@ -1,0 +1,11 @@
+# 2026-10-09 | lap 1210 | G1 work — H-SIG0(기존 서명 stale 쌍봉 위치·writer 귀속) 실게임 6 run
+
+- 실제 provider/model/effort / 지정 역할: Claude Code sonnet(Sonnet 5.5)/high, 실무(work). 계획·컨펌 아님.
+- 가설 / 사용자 관찰: lap1209 §5 — PS3 약 13.1 s·14.9~15.5 s의 240~277 px 쌍봉이 `--new-game-act` 시점 미러 미추종 writer의 일시 stale이다(약 1/3 run).
+- 예상 PASS / FAIL 조건: 최대 6 run, 서명 run(12.5~16 s에 `stale_pixels` ≥150 present) 2개면 중단. 6 run 서명 0이면 `NOT_REPRODUCED`(추가 run 금지, backlog 유지).
+- 변경 파일 / source fingerprint / 커밋: 제품 C·도구·테스트 변경 0. 문서만(이 기록·STATUS·INBOX 메모). 커밋 없음(uncommitted).
+- 원본 SHA / 후보 SHA / 환경 / fixture: 현재 트리 `tools/inmm_stub/_inmm.dll` 하네스가 run마다 재빌드(최종 SHA256 `7b1c2203ca2854732667c3e83276066e84c9f5f826b956d5b3769d0794932448`, 시작 시 확인값과 동일). 팩 끔·기본 env, 격리 game 사본·prefix·빈 Xvfb, 활성 플레이어 1(new-game F0), 지도·군대는 lap1194 F0 기본 새 게임.
+- 실행 명령 / 로그: `scripts/run.sh S<n> --new-game-path --new-game-start --new-game-act --new-game-play --new-game-play-keys RIGHT,DOWN,LEFT,UP,RIGHT,DOWN,LEFT,UP --new-game-play-hold 20 --new-game-play-dwell 56 --stale-mask 250-313`(`--hd-source scale2x`는 run.sh가 붙임), 6 run(S1~S6)을 `seq.sh`·`seq2.sh`로 순차. 산출물 `/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261009_lap1210_work_hsig0/`(run_S1..S6, scripts/ana.py). run마다 `game` 사본만 삭제.
+- 측정값 / 판정: 6 run 전부 exit 0. PS3 `mirror2x_present` 6,009~6,104개, ordinal 262 시각 13.06~13.09 s(Y3 13.08 s와 일치 → 창 250-313 대응 유효). 창 250-313 안 `stale_pixels` 최대 6 run 모두 **0**. 전체 최대: S1 0·S2 90(ord 1529)·S3 15(ord 1612)·S4 0·S5 2·S6 0, ≥150 present 0개. 서명 0/6 → **`NOT_REPRODUCED`**(PASS 아님·FAIL 아님: 원 서명 빈도 약 1/3이면 6 run 서명 0 확률 ≈ (2/3)^6 ≈ 8.8%라서 우연히 빠졌을 가능성이 완전히 배제되지는 않음; 기록상 빈도 상한 미확정). SIG-0 위치·SIG-1 귀속은 표본 없어 미실행(UNKNOWN 유지). 안전 7종 6 run 모두 0.
+- 회귀 / 남은 위험 / 검수: 이 DLL(`7b1c2203…`)이 lap1194 Y3 때와 같은 소스인지는 비교하지 않았다(lap1195~1208 중 C 변경 가능성 — 쌍봉이 그 사이 사라졌을 수 있음, 추정). `checks/safety.sh check` SAFETY_PASS(`logs/gates/lap1210-work-safety.log` `4ae1cfe7…`). 전체 `make check` SKIP(제품·테스트 변경 0, source는 lap1208 full PASS 그대로). 독립 검수 전(다음 middle).
+- 다음 한 가지: middle이 lap1210 raw(`run_S*/candidate/trace_raw.jsonl` PS3 `stale_pixels`)를 독립 재계산해 `NOT_REPRODUCED`를 수용하고 쌍봉 backlog(lap1195)를 "6 run 0/6, 추가 run 금지"로 닫을지, G1 다른 잔여(사용자 업스케일/시험 결과 최우선, 없으면 backlog 중 새 게임 증거를 낼 한 가지)를 정한다.

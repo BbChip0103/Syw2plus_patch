@@ -16,6 +16,8 @@
 
 #define G1_SCREEN_WATCH_ENV "SYW2_G1_SCREEN_WATCH"
 #define G1_SCREEN_WATCH_CACHE_ENV "SYW2_G1_SCREEN_WATCH_CACHE"
+#define G1_SCREEN_WATCH_STATE_ENV "SYW2_G1_SCREEN_WATCH_STATE"
+#define G1_SCREEN_WATCH_CALL_FROM_ENV "SYW2_G1_SCREEN_WATCH_CALL_FROM"
 #define G1_DRIFT_SAMPLES_ENV "SYW2_G1_DRIFT_SAMPLES"
 #define G1_SCREEN_WATCH_PATH "C:\\inmm_g1_screen_watch.jsonl"
 #define SW_PROGRAM_STATE_VA 0x004ED818u
@@ -29,10 +31,17 @@
 #define SW_STACK_KEEP 4u
 #define SW_REARM_INTERVAL 8u
 #define SW_HEARTBEAT 50u
+#define SW_CALL_TABLE 48u
 
 typedef struct {
     DWORD slot, eip, base, hits, first_present, last_present, present_thread_hits;
 } SwEipEntry;
+
+typedef struct {
+    DWORD kind, caller, dest, dest_primary, source, x, y, flags, count, first_present, last_present;
+    LONG dst[4], src[4];
+    BYTE has_dst, has_src;
+} SwCallEntry;
 
 static volatile LONG g_sw_state = 0;
 static BOOL g_sw_enabled = FALSE;
@@ -41,6 +50,7 @@ static PVOID g_sw_veh = NULL;
 static volatile LONG g_sw_lock = 0;
 static volatile LONG g_sw_armed = 0;
 static BOOL g_sw_cache = FALSE;
+static DWORD g_sw_watch_state = (DWORD)G1_SCREEN_WATCH_STATE_PS3;
 static volatile LONG g_sw_selftest_active = 0;
 static volatile BYTE g_sw_selftest_byte = 0u;
 static volatile DWORD g_sw_selftest_hits = 0u;
@@ -56,6 +66,9 @@ static DWORD g_sw_hits = 0u, g_sw_raw = 0u, g_sw_raw_dropped = 0u;
 static DWORD g_sw_hits_slot[G1_SCREEN_WATCH_SAMPLES + 1u];
 static DWORD g_sw_eip_distinct = 0u, g_sw_eip_overflow = 0u;
 static SwEipEntry g_sw_eip[SW_EIP_TABLE];
+static SwCallEntry g_sw_call[SW_CALL_TABLE];
+static DWORD g_sw_call_distinct = 0u, g_sw_call_overflow = 0u;
+static DWORD g_sw_call_from = 0u;
 
 static BOOL screen_watch_on(void)
 {
@@ -68,6 +81,12 @@ static BOOL screen_watch_on(void)
         g_sw_enabled = size == 1u && value[0] == '1';
         size = GetEnvironmentVariableA(G1_SCREEN_WATCH_CACHE_ENV, value, sizeof(value));
         g_sw_cache = size == 1u && value[0] == '1';
+        size = GetEnvironmentVariableA(G1_SCREEN_WATCH_STATE_ENV, value, sizeof(value));
+        if (size > 0u && size < sizeof(value))
+            g_sw_watch_state = (DWORD)g1_screen_watch_state_parse(value, size);
+        size = GetEnvironmentVariableA(G1_SCREEN_WATCH_CALL_FROM_ENV, value, sizeof(value));
+        if (size > 0u && size < sizeof(value))
+            g_sw_call_from = (DWORD)g1_screen_watch_call_from_parse(value, size);
         size = GetEnvironmentVariableA(G1_DRIFT_SAMPLES_ENV, drift_samples, sizeof(drift_samples));
         if (size > 0u && size < sizeof(drift_samples))
             g1_layer_drift_samples_parse(drift_samples, size);
@@ -196,6 +215,61 @@ static void sw_note_eip(DWORD slot, DWORD eip, DWORD base, DWORD present, BOOL p
     } else {
         ++g_sw_eip_overflow;
     }
+}
+
+void g1_screen_watch_on_surface_call(unsigned long kind, unsigned long caller,
+                                     unsigned long dest_this, unsigned long dest_primary,
+                                     unsigned long source, const long *dst_rect,
+                                     const long *src_rect, unsigned long x, unsigned long y,
+                                     unsigned long flags)
+{
+    DWORD i, j, present;
+    if (g_sw_state != 2 || !g_sw_enabled ||
+        g_sw_watch_state == G1_SCREEN_WATCH_STATE_PS3) return;
+    if (*(const volatile DWORD *)(ULONG_PTR)SW_PROGRAM_STATE_VA != g_sw_watch_state)
+        return;
+    present = g_sw_next_present;
+    if (present < g_sw_call_from) return;
+    sw_lock();
+    for (i = 0u; i < g_sw_call_distinct; ++i) {
+        SwCallEntry *entry = &g_sw_call[i];
+        BOOL same = entry->kind == kind && entry->caller == caller &&
+            entry->dest == dest_this && entry->source == source && entry->x == x &&
+            entry->y == y && entry->flags == flags &&
+            entry->has_dst == (dst_rect != NULL) && entry->has_src == (src_rect != NULL);
+        for (j = 0u; same && j < 4u; ++j) {
+            if (dst_rect && entry->dst[j] != dst_rect[j]) same = FALSE;
+            if (src_rect && entry->src[j] != src_rect[j]) same = FALSE;
+        }
+        if (same) {
+            ++entry->count;
+            entry->last_present = present;
+            sw_unlock();
+            return;
+        }
+    }
+    if (g_sw_call_distinct < SW_CALL_TABLE) {
+        SwCallEntry *entry = &g_sw_call[g_sw_call_distinct++];
+        entry->kind = kind;
+        entry->caller = caller;
+        entry->dest = dest_this;
+        entry->dest_primary = dest_primary;
+        entry->source = source;
+        entry->x = x;
+        entry->y = y;
+        entry->flags = flags;
+        entry->count = 1u;
+        entry->first_present = entry->last_present = present;
+        entry->has_dst = dst_rect != NULL;
+        entry->has_src = src_rect != NULL;
+        for (j = 0u; j < 4u; ++j) {
+            entry->dst[j] = dst_rect ? dst_rect[j] : 0;
+            entry->src[j] = src_rect ? src_rect[j] : 0;
+        }
+    } else {
+        ++g_sw_call_overflow;
+    }
+    sw_unlock();
 }
 
 static LONG CALLBACK sw_veh(EXCEPTION_POINTERS *info)
@@ -341,6 +415,22 @@ static void sw_summary(DWORD present)
         sw_emit(line, length);
         sw_unlock();
     }
+    sw_lock();
+    for (i = 0u; i < g_sw_call_distinct; ++i) {
+        const SwCallEntry *entry = &g_sw_call[i];
+        sw_emit(line, wsprintfA(line,
+            "{\"t\":\"q\",\"p\":%u,\"i\":%u,\"kind\":%u,\"caller\":\"0x%08X\",\"dest\":\"0x%08X\","
+            "\"dest_primary\":%u,\"source\":\"0x%08X\",\"x\":%u,\"y\":%u,\"flags\":%u,"
+            "\"dst\":[%d,%d,%d,%d],\"src\":[%d,%d,%d,%d],\"has\":[%u,%u],\"count\":%u,"
+            "\"first\":%u,\"last\":%u,\"distinct\":%u,\"overflow\":%u}\n",
+            present, i, entry->kind, entry->caller, entry->dest, entry->dest_primary,
+            entry->source, entry->x, entry->y, entry->flags, (int)entry->dst[0],
+            (int)entry->dst[1], (int)entry->dst[2], (int)entry->dst[3], (int)entry->src[0],
+            (int)entry->src[1], (int)entry->src[2], (int)entry->src[3],
+            (unsigned)entry->has_dst, (unsigned)entry->has_src, entry->count,
+            entry->first_present, entry->last_present, g_sw_call_distinct, g_sw_call_overflow));
+    }
+    sw_unlock();
 }
 
 static BOOL sw_buffer_valid(DWORD *buffer, DWORD *stride)
@@ -361,7 +451,9 @@ void g1_screen_watch_on_present(const unsigned char *surface, unsigned long pitc
     unsigned px, py;
     char line[300];
     if (!screen_watch_on()) return;
-    if (*(const volatile DWORD *)(ULONG_PTR)SW_PROGRAM_STATE_VA != 3u) return;
+    if (*(const volatile DWORD *)(ULONG_PTR)SW_PROGRAM_STATE_VA != g_sw_watch_state) return;
+    next_present = g1_screen_watch_present_ordinal(g_sw_watch_state, next_present,
+                                                   g_sw_presents_seen);
     g_sw_next_present = (DWORD)next_present;
     g_sw_present_tid = GetCurrentThreadId();
     if (!sw_buffer_valid(&buffer, &stride)) return;

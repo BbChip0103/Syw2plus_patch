@@ -43,17 +43,38 @@ FIXTURE_SOURCE = REPO.parent / "Syw2plus_re" / "Syw2plus"
 SAVE_NAME = "save006.dat"
 SAVE_SHA256 = "616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064"
 SAVE_INDEX = 7
+SAVE006_INITIAL_SCENE_TICK = 24600
 # Second in-game scene (H-S2).  Pin and 1-based list index come from the S1
 # load-evidence fixture table (lap354/363), not from a guess.
 SAVE000_NAME = "save000.dat"
 SAVE000_SHA256 = "1c703551888f5c85a1fa2fb7b43d28309eb0b88e4bbf6e859f1a98b629e719da"
 SAVE000_INDEX = 1
+# H-RS0 result-screen fixture: the lap982 original-EXE save made from a non-first seat.  Loaded from a fresh
+# title it reproduces the G7 defect (local player 0 -> ps 3, 27, 29 "패배했습니다.").  The file is not in the
+# read-only reference repository; it is read from the shared temp copy (or the env override) and only ever
+# copied into the private game copy.
+G7DEFEAT_NAME = "save001.dat"
+G7DEFEAT_SHA256 = "57872666b436a4620c21cc99ef7c22413809e49de80b401ae5f27aa2e14210b8"
+G7DEFEAT_INDEX = 2
+G7DEFEAT_FIXTURE_ENV = "SYW2_G7DEFEAT_FIXTURE"
+G7DEFEAT_DEFAULT_FILE = (REPO.parent / "temp" / "Syw2plus_patch" / "20261005_lap982_g7_hg7o" / "orig"
+                         / G7DEFEAT_NAME)
 SAVE_FIXTURES = {
     "save006": (SAVE_NAME, SAVE_SHA256, SAVE_INDEX),
     "save000": (SAVE000_NAME, SAVE000_SHA256, SAVE000_INDEX),
+    "g7defeat": (G7DEFEAT_NAME, G7DEFEAT_SHA256, G7DEFEAT_INDEX),
 }
 LOAD_MENU = (296, 505)
 LOAD_CONFIRM = (316, 372)
+# New-game path (H-OS0): same logical 800x600 clicks as tools/g6_shift_click_probe.py
+# (PS9 menu -> PS7 map/settings -> PS5 solo lobby); no keys are sent.
+NEW_GAME_MENU = (184, 560)
+NEW_GAME_CONFIRM = (608, 564)
+# Pause menu / save window points in logical 800x600 (same values as tools/g5_candidate_drag_probe.py).
+PAUSE_SAVE_POINT = (400, 238)
+SAVE_ACTION_POINT = (316, 372)  # never clicked by --new-game-menu: that would write a save file
+SAVE_MENU_RETURN_POINT = (464, 372)
+RESUME_POINT = (400, 132)
 SELECTION_POINT = (270, 48)
 DRAG_FROM = (100, 40)
 DRAG_TO = (400, 220)
@@ -84,6 +105,8 @@ PERFORMANCE_WINDOW_SECONDS = 20.0
 PERFORMANCE_WINDOW_FILE = "inmm_g1_perf_window.active"
 SELECTION_ARRAY_ADDRESS = 0x00899028
 SELECTION_ARRAY_CAPACITY = 20
+# --esl2613: run lanes on the official 2612 data bundle with the pinned 2613 executable.
+ESL2613 = False
 MINIMAP_GATE_ADDRESS = 0x0097597C
 MINIMAP_WIDGET_ADDRESS = 0x00639350
 MINIMAP_LUT_A_OFFSET = 0x13EEA
@@ -545,6 +568,28 @@ def _wait_for_exact_tick(pid: int, target_tick: int, *, timeout: float = 12.0) -
         time.sleep(0.001)
     return {"status": "INVALID", "target_tick": target_tick,
             "observed_tick": last_tick, "reason": "target tick timeout"}
+
+
+def _read_scene_at_exact_tick(
+    pid: int, target_tick: int, read_memory: Callable[[int, int], bytes],
+) -> dict[str, Any]:
+    """Read a live scene only when its complete bulk snapshot brackets one target tick."""
+    barrier = _wait_for_exact_tick(pid, target_tick)
+    if barrier.get("status") != "PASS":
+        return {"status": "INVALID", "source": "live_common_tick",
+                "target_tick": target_tick, "barrier": barrier}
+    snapshot = _read_batched_scene(pid, read_memory)
+    coherent = (
+        snapshot.get("status") == "PASS"
+        and snapshot.get("program_state_before") == snapshot.get("program_state_after") == 3
+        and snapshot.get("sim_tick_before") == snapshot.get("sim_tick_after") == target_tick
+    )
+    if not coherent:
+        return {"status": "INVALID", "source": "live_common_tick",
+                "target_tick": target_tick, "barrier": barrier,
+                "snapshot": snapshot, "reason": "target tick not coherently bracketed"}
+    return {**snapshot, "status": "PASS", "source": "live_common_tick",
+            "target_tick": target_tick, "barrier": barrier}
 
 
 def _decode_batched_scene(
@@ -2025,6 +2070,24 @@ def _fixture_pin(fixture: str) -> tuple[str, str, int]:
         raise ProbeError(f"unsupported fixture: {fixture}") from None
 
 
+def _fixture_path(fixture: str) -> Path:
+    """Source file of a pinned fixture; never inside the read-only reference repository for g7defeat."""
+    name, _, _ = _fixture_pin(fixture)
+    if fixture != "g7defeat":
+        return FIXTURE_SOURCE / "save" / name
+    path = Path(os.environ.get(G7DEFEAT_FIXTURE_ENV) or G7DEFEAT_DEFAULT_FILE)
+    if FIXTURE_SOURCE.resolve() in path.resolve().parents:
+        raise ProbeError(f"{fixture} fixture must not come from the reference repository: {path}")
+    return path
+
+
+def _verify_fixture_file(fixture: str, path: Path) -> None:
+    """Refuse to start unless ``path`` is the pinned fixture bytes."""
+    _, sha256, _ = _fixture_pin(fixture)
+    if not path.is_file() or _sha256(path) != sha256:
+        raise ProbeError(f"protected save fixture SHA mismatch: {fixture} ({path})")
+
+
 def _scene_option_error(
     *, fixture: str, scene_actions: str, terrain_scroll: bool, terrain_trace: bool,
     census_only: bool, rice_phase: bool, scroll_phase: bool,
@@ -2043,6 +2106,10 @@ class _LoadedOnlyComplete(Exception):
     """Stop after the loaded capture (and optional performance window)."""
 
 
+class _ResultScreenComplete(Exception):
+    """Internal signal: the H-RS0 result-screen walk is done, stop before any scene work."""
+
+
 class _CensusStateComplete(Exception):
     """Internal signal: the selected non-PS3 census window is full, stop before loading."""
 
@@ -2058,6 +2125,1140 @@ def _census_loaded_wait_timeout(skip_presents: int) -> float:
 def _census_watch_wait_timeout(watch_presents: int) -> float:
     """Extra seconds the loaded-only census run keeps the scene alive for a --census-watch-presents window."""
     return 60.0 + watch_presents / 5.0 if watch_presents else 0.0
+
+
+def _click_until_state(
+    pid: int, display: str, origin: tuple[int, int], point: tuple[int, int], scale: int,
+    env: Mapping[str, str], log: Any, *, from_ps: int, to_ps: int,
+) -> dict[str, Any]:
+    """Click ``point`` and wait for ``to_ps``; retry once only while still at ``from_ps``."""
+    clicks = [_inject(display, origin, point, scale, env, log)]
+    time.sleep(1.0)
+    if runtime_driver.state(pid, False).get("ps") == from_ps:
+        clicks.append(_inject(display, origin, point, scale, env, log))
+    state = _wait_state(pid, lambda current: current.get("ps") == to_ps, f"PS{to_ps}")
+    return {"clicks": clicks, "to": state}
+
+
+NEW_GAME_START_PS3_PRESENTS = 256
+# H-E2611G1-2 E2-0: the one confirm click can reach WndProc as a 1-11 ms down->up under load (lap1184
+# K1, lap1219 C1) and the lobby misses it, so keep clicking while still at PS5.
+NEW_GAME_CONFIRM_MAX_CLICKS = 3
+NEW_GAME_CONFIRM_RETRY_GAP = 4.0
+
+
+def _start_new_game(
+    pid: int, display: str, origin: tuple[int, int], scale: int, env: Mapping[str, str], log: Any,
+    *, auto_start_wait: float = 8.0,
+) -> dict[str, Any]:
+    """Start the solo game from the PS5 lobby the way the G6 probe does.
+
+    The solo lobby auto-starts shortly after the confirm click; click once more only if
+    neither PS2 nor PS3 appears within ``auto_start_wait`` seconds, then again every
+    ``NEW_GAME_CONFIRM_RETRY_GAP`` seconds while it is still not started, at most
+    ``NEW_GAME_CONFIRM_MAX_CLICKS`` clicks.
+    """
+    clicks: list[dict[str, Any]] = []
+    wait = auto_start_wait
+    while True:
+        deadline = time.monotonic() + wait
+        while runtime_driver.state(pid, False).get("ps") not in (2, 3) and time.monotonic() < deadline:
+            time.sleep(0.3)
+        if runtime_driver.state(pid, False).get("ps") in (2, 3) or len(clicks) >= NEW_GAME_CONFIRM_MAX_CLICKS:
+            break
+        clicks.append(_inject(display, origin, NEW_GAME_CONFIRM, scale, env, log))
+        wait = NEW_GAME_CONFIRM_RETRY_GAP
+    state = _wait_state(pid, lambda current: current.get("ps") == 3 and current.get("tick", 0) > 0,
+                        "new-game PS3")
+    return {"clicks": clicks, "to": state}
+
+
+NEW_GAME_PLAY_KEYS = ("RIGHT", "DOWN", "LEFT", "UP")
+NEW_GAME_PLAY_HOLD_SECONDS = 2.0
+NEW_GAME_PLAY_GAP_SECONDS = 1.0
+NEW_GAME_PLAY_DWELL_SECONDS = 60.0
+NEW_GAME_PLAY_HD_FLOOR = 90.0  # H-NG4 PASS: every play-window present at or above this HD percent
+NEW_GAME_PLAY_HD_NOTE = 98.6  # below this is disclosed (count + positions) even when the run passes
+_PLAY_SAFETY_FIELDS = (
+    "clip_replay_mismatches", "viewport_field_mutations", "viewport_restore_failures",
+    "scale2x_palette_violations", "hd_mask_outside_diff_subpixels",
+    "cache_clip_verify_failures", "identity_key_mismatches",
+)
+
+
+# H-HDK0 K-1: --new-game-play-keys/-hold/-dwell replace the H-NG4 sequence for a long scroll run.
+NEW_GAME_PLAY_OVERRIDE: dict[str, Any] = {}
+
+
+def _new_game_play_window(
+    *, display: str, env: Mapping[str, str], read_camera: Callable[[], list[int]],
+    trace_path: Path, keys: tuple[str, ...] | None = None,
+    hold: float | None = None, gap: float = NEW_GAME_PLAY_GAP_SECONDS,
+    dwell: float | None = None, capture: Callable[[str], Any] | None = None,
+    dwell_captures: int | None = None,
+) -> dict[str, Any]:
+    """Hold each scroll key for ``hold`` seconds, then idle ``dwell`` seconds (H-NG4).
+
+    Records the camera before/after each hold and the trace line range of every window so the
+    candidate's PS3 presents can be attributed to scroll vs idle.  ``dwell_captures`` > 0 splits the
+    one dwell window into that many equal sleeps and calls ``capture`` after each (H-E2611G1-1).
+    """
+    keys = keys if keys is not None else NEW_GAME_PLAY_OVERRIDE.get("keys", NEW_GAME_PLAY_KEYS)
+    hold = NEW_GAME_PLAY_HOLD_SECONDS if hold is None else hold
+    hold = NEW_GAME_PLAY_OVERRIDE.get("hold", hold)
+    dwell = NEW_GAME_PLAY_OVERRIDE.get("dwell", NEW_GAME_PLAY_DWELL_SECONDS if dwell is None else dwell)
+    segments: list[dict[str, Any]] = []
+    windows: list[dict[str, Any]] = []
+    for key in keys:
+        before = read_camera()
+        line_start = _trace_line_count(trace_path)
+        down_ns = _send_key_edge(display, env, key, down=True)
+        try:
+            time.sleep(hold)
+        finally:
+            up_ns = _send_key_edge(display, env, key, down=False)
+        after = read_camera()
+        line_end = _trace_line_count(trace_path)
+        steps = _scroll_camera_steps(before, after, key)
+        segments.append({"key": key, "before": before, "after": after, "steps": steps,
+                         "moved": steps is not None and steps >= 1,
+                         "down_monotonic_ns": down_ns, "up_monotonic_ns": up_ns})
+        windows.append({"name": f"scroll_{key}", "line_start": line_start, "line_end": line_end})
+        time.sleep(gap)
+    dwell_start = _trace_line_count(trace_path)
+    dwell_captures = NEW_GAME_PLAY_OVERRIDE.get("dwell_captures", 0) if dwell_captures is None else dwell_captures
+    captured: list[str] = []
+    if dwell_captures > 0 and capture is not None:
+        for index in range(1, dwell_captures + 1):
+            time.sleep(dwell / dwell_captures)
+            capture(f"ps3_dwell_{index}")
+            captured.append(f"ps3_dwell_{index}")
+    else:
+        time.sleep(dwell)
+    windows.append({"name": "dwell", "line_start": dwell_start,
+                    "line_end": _trace_line_count(trace_path)})
+    played = {"segments": segments, "windows": windows, "camera_after_dwell": read_camera(),
+              "status": "PASS" if all(seg["moved"] for seg in segments) else "FAIL"}
+    if captured:
+        played["dwell_captures"] = captured
+    return played
+
+
+NEW_GAME_ACT_FARMER = (418, 322)  # logical 800x600; the start camera centres the first building
+NEW_GAME_ACT_FARMER_RETRY = (420, 314)
+NEW_GAME_ACT_BUILDING = (420, 238)
+NEW_GAME_ACT_PRODUCE = ((668, 539), (740, 539))  # building panel row 2: farmer "F" cell, then unit "X" cell
+NEW_GAME_ACT_DRAG = ((360, 285), (480, 350))
+NEW_GAME_ACT_MOVE = (540, 380)
+NEW_GAME_ACT_POLL_SECONDS = 4.0
+NEW_GAME_ACT_DWELL_SECONDS = 60.0
+
+
+def _poll_effect(
+    read: Callable[[], Any], effect: Callable[[Any], bool], timeout: float,
+) -> tuple[bool, Any]:
+    """Poll ``read`` until ``effect`` holds or ``timeout`` runs out; return (hit, last value)."""
+    deadline = time.monotonic() + timeout
+    last = read()
+    while not effect(last) and time.monotonic() < deadline:
+        time.sleep(0.3)
+        last = read()
+    return effect(last), last
+
+
+def _local_player(state: Mapping[str, Any]) -> Mapping[str, Any]:
+    players = [player for player in state.get("players", []) if isinstance(player, Mapping)]
+    return players[0] if players else {}
+
+
+def _new_game_act_window(
+    *, inject: Callable[..., Any], read_state: Callable[[], Mapping[str, Any]],
+    read_selection: Callable[[], Mapping[str, Any]], trace_path: Path,
+    dwell: float = NEW_GAME_ACT_DWELL_SECONDS, poll: float = NEW_GAME_ACT_POLL_SECONDS,
+    capture: Callable[[str], Any] | None = None,
+) -> dict[str, Any]:
+    """Select a farmer, queue production, drag-select and move, then idle (H-NG5).
+
+    Effects are read from game memory: selection count, the local player's rice/wood/used and the
+    selected units' tile positions. Each click retries at most once at a second point.
+    """
+    windows: list[dict[str, Any]] = []
+    actions: dict[str, Any] = {}
+
+    def begin() -> int:
+        return _trace_line_count(trace_path)
+
+    def end(name: str, start: int) -> None:
+        windows.append({"name": name, "line_start": start, "line_end": _trace_line_count(trace_path)})
+
+    def selected() -> int:
+        count = read_selection().get("count")
+        return count if isinstance(count, int) else 0
+
+    start = begin()
+    initial = read_selection()
+    for point in (NEW_GAME_ACT_FARMER, NEW_GAME_ACT_FARMER_RETRY):
+        inject(point)
+        hit, _ = _poll_effect(selected, lambda count: count >= 1, poll)
+        actions["select"] = {"point": list(point), "effect": hit, "count": selected(),
+                             "slot": read_selection().get("selected_slot"),
+                             "before_count": initial.get("count"),
+                             "before_slot": initial.get("selected_slot")}
+        if hit:
+            break
+    end("select", start)
+
+    start = begin()
+    before = _local_player(read_state())
+    farmer_slot = read_selection().get("selected_slot")
+    inject(NEW_GAME_ACT_BUILDING)
+    time.sleep(0.5)
+    building_slot = read_selection().get("selected_slot")
+    if capture is not None:
+        capture("ps3_building")
+    produced = {"building_slot": building_slot, "building_selected": building_slot not in (None, farmer_slot),
+                "effect": False, "clicks": []}
+
+    def spent(state: Mapping[str, Any]) -> bool:
+        player = _local_player(state)
+        return (player.get("rice", 0) < before.get("rice", 0) or player.get("wood", 0) < before.get("wood", 0)
+                or player.get("used", 0) > before.get("used", 0))
+
+    for point in NEW_GAME_ACT_PRODUCE:
+        inject(point)
+        produced["clicks"].append(list(point))
+        hit, last = _poll_effect(read_state, spent, poll)
+        if hit:
+            player = _local_player(last)
+            produced.update(effect=True, rice=[before.get("rice"), player.get("rice")],
+                            wood=[before.get("wood"), player.get("wood")],
+                            used=[before.get("used"), player.get("used")])
+            break
+    actions["produce"] = produced
+    if capture is not None:
+        capture("ps3_produce")
+    end("produce", start)
+
+    start = begin()
+    inject(NEW_GAME_ACT_DRAG[0], drag_to=NEW_GAME_ACT_DRAG[1])
+    hit, _ = _poll_effect(selected, lambda count: count >= 1, poll)
+    drag_slots = list(read_selection().get("selected_slots") or [])
+    positions_before = {unit.get("slot"): (unit.get("x"), unit.get("y"))
+                        for unit in read_state().get("units", []) if unit.get("slot") in drag_slots}
+    inject(NEW_GAME_ACT_MOVE, button=3)
+
+    def moved(state: Mapping[str, Any]) -> bool:
+        return any((unit.get("x"), unit.get("y")) != positions_before.get(unit.get("slot"))
+                   for unit in state.get("units", []) if unit.get("slot") in positions_before)
+
+    moved_hit, _ = _poll_effect(read_state, moved, poll)
+    actions["drag_move"] = {"drag": {"effect": hit, "slots": drag_slots},
+                            "move": {"effect": moved_hit, "units_tracked": len(positions_before)}}
+    end("drag_move", start)
+
+    start = begin()
+    time.sleep(dwell)
+    end("dwell", start)
+    status = ("PASS" if actions["select"]["effect"]
+              and (actions["produce"]["effect"] or actions["drag_move"]["move"]["effect"]) else "FAIL")
+    return {"actions": actions, "windows": windows, "status": status}
+
+
+NEW_GAME_MENU_FOCUS_POINT = (550, 400)  # empty ground; clicked once before an Esc retry
+NEW_GAME_MENU_DWELL_SECONDS = 10.0
+# The game's present trace holds 8,192 events (~125 presents/s): eight 10 s windows would drop events,
+# so a sub-window walk dwells shorter in every window (H-PM3 run a dropped 5,662 events at 10 s).
+NEW_GAME_MENU_SUBS_DWELL_SECONDS = 3.0
+NEW_GAME_MENU_STATE_TIMEOUT = 4.0
+PAUSE_MENU_PS = 23
+# H-PM3 sub windows of the pause menu (logical 800x600, button rows from the lap1121 pause_return capture).
+# The load window mirrors the save window, so its return button is the save window's (464, 372).
+# ``close`` None = close with Esc only: no click lands inside the options window (a click could change a setting).
+# The load/save action buttons (LOAD_CONFIRM / SAVE_ACTION_POINT) are never clicked.
+PAUSE_SUB_WINDOWS: dict[str, dict[str, tuple[int, int] | None]] = {
+    "load": {"open": (400, 273), "close": SAVE_MENU_RETURN_POINT},
+    "options": {"open": (400, 203), "close": None},
+}
+
+
+def parse_menu_subs(value: str) -> tuple[str, ...]:
+    """``--new-game-menu-subs`` value ("load,options") -> validated tuple; ValueError on an unknown name."""
+    subs = tuple(part.strip() for part in value.split(",") if part.strip())
+    unknown = [sub for sub in subs if sub not in PAUSE_SUB_WINDOWS]
+    if unknown:
+        raise ValueError(f"unknown pause sub window(s) {unknown}; choose from {sorted(PAUSE_SUB_WINDOWS)}")
+    return subs
+
+
+def _new_game_menu_window(
+    *, inject: Callable[..., Any], send_key: Callable[[str], Any], read_ps: Callable[[], Any],
+    trace_path: Path, capture: Callable[[str], Any],
+    dwell: float | None = None, timeout: float = NEW_GAME_MENU_STATE_TIMEOUT,
+    subs: Sequence[str] = (),
+) -> dict[str, Any]:
+    """Esc -> pause menu (PS23) -> save window -> back -> resume, dwelling in each screen (H-PM0).
+
+    ``subs`` (H-PM3) adds the load/options sub windows between the save window and resume; each is
+    opened from the menu, dwelt in and closed again, and a sub window that does not return to PS23
+    ends the walk (FAIL). Never clicks the save/load action. ``states`` records the program state seen in each window; the
+    save window may keep PS23, which is disclosed through ``save_state_changed``. BLOCKED when Esc
+    never leaves PS3 (one retry after an empty-ground click).
+    """
+    if dwell is None:
+        dwell = NEW_GAME_MENU_SUBS_DWELL_SECONDS if subs else NEW_GAME_MENU_DWELL_SECONDS
+    windows: list[dict[str, Any]] = []
+    states: dict[str, Any] = {}
+    clicks: list[list[int]] = []
+
+    def stay(name: str, capture_name: str, start: int) -> None:
+        time.sleep(dwell)
+        states[name] = read_ps()
+        capture(capture_name)
+        windows.append({"name": name, "line_start": start, "line_end": _trace_line_count(trace_path)})
+
+    def click(point: tuple[int, int], target: Callable[[Any], bool]) -> None:
+        inject(point)
+        clicks.append(list(point))
+        _poll_effect(read_ps, target, timeout)
+
+    attempts = 0
+    start = _trace_line_count(trace_path)
+    for attempts in (1, 2):
+        if attempts == 2:
+            inject(NEW_GAME_MENU_FOCUS_POINT)
+            time.sleep(0.5)
+        send_key("ESC")
+        hit, _ = _poll_effect(read_ps, lambda ps: ps != 3, timeout)
+        if hit:
+            break
+    states["pause"] = read_ps()
+    if states["pause"] == 3:
+        return {"status": "BLOCKED", "reason": "Esc never left PS3", "escape_attempts": attempts,
+                "states": states, "clicks": clicks, "windows": windows, "save_state_changed": None}
+    stay("pause", "pause", start)
+
+    start = _trace_line_count(trace_path)
+    click(PAUSE_SAVE_POINT, lambda ps: ps != states["pause"])
+    stay("save_window", "save_window", start)
+
+    start = _trace_line_count(trace_path)
+    click(SAVE_MENU_RETURN_POINT, lambda ps: ps == PAUSE_MENU_PS)
+    stay("pause_return", "pause_return", start)
+
+    sub_close: dict[str, str] = {}
+    for sub in subs:
+        if states.get("pause_return") != PAUSE_MENU_PS or any(v == "none" for v in sub_close.values()):
+            break
+        spec = PAUSE_SUB_WINDOWS[sub]
+        start = _trace_line_count(trace_path)
+        click(spec["open"], lambda ps: True)
+        time.sleep(0.5)
+        stay(f"{sub}_window", f"{sub}_window", start)
+        start = _trace_line_count(trace_path)
+        if spec["close"] is not None:
+            click(spec["close"], lambda ps: ps == PAUSE_MENU_PS)
+            sub_close[sub] = "click" if read_ps() == PAUSE_MENU_PS else "none"
+        else:
+            send_key("ESC")
+            hit, _ = _poll_effect(read_ps, lambda ps: ps == PAUSE_MENU_PS, timeout)
+            sub_close[sub] = "esc" if hit else "none"
+        stay(f"pause_return_{sub}", f"pause_return_{sub}", start)
+
+    start = _trace_line_count(trace_path)
+    click(RESUME_POINT, lambda ps: ps == 3)
+    stay("resume", "ps3_resume", start)
+
+    passed = (states["pause"] == PAUSE_MENU_PS and states["pause_return"] == PAUSE_MENU_PS
+              and states["resume"] == 3 and all(v != "none" for v in sub_close.values())
+              and len(sub_close) == len(subs))
+    result = {"status": "PASS" if passed else "FAIL", "escape_attempts": attempts, "states": states,
+              "clicks": clicks, "windows": windows,
+              "save_state_changed": states["save_window"] != states["pause"]}
+    if subs:
+        result["sub_close"] = sub_close
+    return result
+
+
+# H-TM0 title menu buttons: logical 800x600 centres read from the lap1135 PS9 capture (menu.png).  Excluded on
+# purpose: load (measured, PS35), new game (measured, PS7..) and HQNET (external connection).
+TITLE_BUTTONS: dict[str, tuple[int, int]] = {
+    "scenario": (75, 505), "user": (190, 505), "charroom": (410, 505), "prologue": (75, 560),
+    "quit": (410, 560)}
+# H-TM2: quit may ask for a confirmation whose buttons must not be hit, or close the game.  It is clicked
+# once (no lost-click retry) and a vanished game process is a result, not a failure.
+TITLE_BUTTON_SINGLE_CLICK = frozenset({"quit"})
+TITLE_MENU_PS = 9
+TITLE_BUTTON_LEAVE_TIMEOUT = 20.0
+TITLE_BUTTON_CAPTURE_OFFSETS = (3.0, 8.0)
+TITLE_BUTTON_OBSERVE_SECONDS = 15.0
+TITLE_BUTTON_POLL_SECONDS = 0.3
+TITLE_BUTTON_FAST_POLL_SECONDS = 0.05
+TITLE_BUTTON_RETRY_SECONDS = 1.0
+
+
+# End-of-run bookkeeping events carry a stale program_state; they are not screens.
+_TITLE_BUTTON_TAIL_EVENTS = frozenset({"aggregate", "summary", "mirror2x_metrics"})
+
+
+def _trace_program_states(trace_path: Path, line_start: int) -> list[int]:
+    """Program states of the trace events after ``line_start``, consecutive duplicates collapsed.
+
+    Catches states the 0.3 s poll misses (a title-menu movie attempt leaves PS9 for about a second).
+    """
+    try:
+        lines = trace_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return []
+    states: list[int] = []
+    for line in lines[line_start:]:
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(row, dict) or row.get("event") in _TITLE_BUTTON_TAIL_EVENTS:
+            continue
+        ps = row.get("program_state")
+        if isinstance(ps, int) and (not states or states[-1] != ps):
+            states.append(ps)
+    return states
+
+
+def _title_button_window(
+    *, inject: Callable[..., Any], read_ps: Callable[[], Any], trace_path: Path,
+    capture: Callable[[str], Any], button: str,
+    trace_states: Callable[[int], Sequence[int]] | None = None,
+    leave_timeout: float = TITLE_BUTTON_LEAVE_TIMEOUT,
+    observe: float = TITLE_BUTTON_OBSERVE_SECONDS,
+    capture_offsets: Sequence[float] = TITLE_BUTTON_CAPTURE_OFFSETS,
+) -> dict[str, Any]:
+    """Click one title-menu button once, then record the program-state column for ``observe`` seconds (H-TM0).
+
+    A state counts as left when the poll reads a non-PS9 state or the trace (``trace_states``) shows one
+    since the click, polled every 0.05 s for the first second.  The click is repeated only when neither does
+    in that second (a lost XTest click); ``TITLE_BUTTON_SINGLE_CLICK`` buttons are never repeated, and when
+    their game process disappears (state reads fail) the status is EXITED.
+    ``capture`` runs ``capture_offsets`` seconds after the first non-PS9 state.  When PS9 is never left
+    within ``leave_timeout`` the button opened an in-place popup or the click was lost: status IN_PLACE,
+    two captures (``<button>_inplace_a`` and ``_b``), no observation window beyond the wait itself.
+    """
+    point = TITLE_BUTTONS[button]
+    single = button in TITLE_BUTTON_SINGLE_CLICK
+    line_start = _trace_line_count(trace_path)
+    exited = False
+
+    def read() -> Any:
+        nonlocal exited
+        try:
+            ps = read_ps()
+        except OSError:
+            if not single:
+                raise
+            exited = True
+            return None
+        exited = False
+        return ps
+
+    def trace_left() -> list[int]:
+        return [ps for ps in (trace_states(line_start) if trace_states else ()) if ps != TITLE_MENU_PS]
+
+    def current() -> Any:
+        ps = read()
+        if ps in (None, TITLE_MENU_PS) and (extra := trace_left()):
+            return extra[0]
+        return ps
+
+    clicked_at = time.monotonic()
+    clicks = [list(point)]
+    inject(point)
+    # A movie or room attempt can leave PS9 for well under 0.3 s: poll fast for the first second.
+    left, first = False, None
+    deadline = time.monotonic() + TITLE_BUTTON_RETRY_SECONDS
+    while not left and time.monotonic() < deadline:
+        time.sleep(TITLE_BUTTON_FAST_POLL_SECONDS)
+        first = current()
+        left = first not in (None, TITLE_MENU_PS)
+    if not left and not single:
+        inject(point)
+        clicks.append(list(point))
+    if not left and not exited:
+        left, first = _poll_effect(
+            current, lambda ps: exited or ps not in (None, TITLE_MENU_PS), leave_timeout)
+    base = {"button": button, "point": list(point), "clicks": clicks}
+    if exited:
+        return {**base, "status": "EXITED", "reason": "game process gone after the click", "states": [],
+                "left_menu_after_seconds": round(time.monotonic() - clicked_at, 2),
+                "trace_states": list(trace_states(line_start)) if trace_states else [],
+                "window": {"name": button, "line_start": line_start,
+                           "line_end": _trace_line_count(trace_path)}}
+    if not left:
+        capture(f"{button}_inplace_a")
+        time.sleep(TITLE_BUTTON_CAPTURE_OFFSETS[0])
+        capture(f"{button}_inplace_b")
+        return {**base, "status": "IN_PLACE", "reason": f"state stayed PS9 for {leave_timeout:g}s",
+                "states": [], "trace_states": list(trace_states(line_start)) if trace_states else [],
+                "window": {"name": button, "line_start": line_start,
+                           "line_end": _trace_line_count(trace_path)}}
+    started = time.monotonic()
+    states = [{"ps": first, "at": 0.0}]
+    pending = sorted(capture_offsets)
+    last = first
+    while True:
+        elapsed = time.monotonic() - started
+        while pending and elapsed >= pending[0]:
+            capture(f"{button}_{pending.pop(0):g}s")
+        if elapsed >= observe and not pending:
+            break
+        time.sleep(TITLE_BUTTON_POLL_SECONDS)
+        ps = read()
+        if ps is not None and ps != last:
+            states.append({"ps": ps, "at": round(time.monotonic() - started, 2)})
+            last = ps
+    return {**base, "status": "PASS", "left_menu_after_seconds": round(started - clicked_at, 2),
+            "first_state": first, "states": states,
+            "trace_states": list(trace_states(line_start)) if trace_states else [],
+            "observed_seconds": round(time.monotonic() - started, 2),
+            "window": {"name": button, "line_start": line_start,
+                       "line_end": _trace_line_count(trace_path)}}
+
+
+# H-SC0 scenario chapter 1: logical 800x600 centre of 시작하기 on PS15 (lap1139 scenario_8s.png box x557..653
+# y547..579).  The 나가기 button (722,563) is never clicked.
+SCENARIO_START = (605, 563)
+SCENARIO_PS = 15
+SCENARIO_START_OBSERVE_SECONDS = 90.0
+SCENARIO_START_RETRY_SECONDS = 2.0
+SCENARIO_START_PS3_CAPTURES = (10.0, 30.0)
+SCENARIO_START_ESC_SECONDS = 60.0
+SCENARIO_START_POLL_SECONDS = 0.3
+# Briefing PS20 (lap1145 capture: 돌아가기 x300..498, 다시보기 x700..898, 게임하기 x1100..1300 at y1062..1130, 2x).
+SCENARIO_BRIEFING_PS = 20
+SCENARIO_PLAY = (600, 548)
+SCENARIO_BRIEFING_DWELL_SECONDS = 10.0
+SCENARIO_PLAY_OBSERVE_SECONDS = 60.0
+
+
+def _scenario_start_window(
+    *, inject: Callable[..., Any], read_ps: Callable[[], Any], trace_path: Path,
+    capture: Callable[[str], Any], send_key: Callable[[str], Any] | None = None,
+    trace_states: Callable[[int], Sequence[int]] | None = None,
+    observe: float = SCENARIO_START_OBSERVE_SECONDS, esc_after: float = SCENARIO_START_ESC_SECONDS,
+    play: bool = False, briefing_dwell: float = SCENARIO_BRIEFING_DWELL_SECONDS,
+    play_observe: float = SCENARIO_PLAY_OBSERVE_SECONDS,
+) -> dict[str, Any]:
+    """Click 시작하기 on PS15 once and record the briefing/loading/in-game program-state column (H-SC0).
+
+    The click is repeated once when PS15 is still read after ``SCENARIO_START_RETRY_SECONDS`` and never
+    again (IN_PLACE).  Every state change is captured as ``scenario_ps<N>``; the first PS3 is held for
+    ``SCENARIO_START_PS3_CAPTURES`` seconds with a capture at each (no input).  A non-PS3 state that sticks for
+    ``esc_after`` seconds (not the known briefing PS20) gets one Esc.  ``observe`` bounds the wait for PS3; a
+    vanished game is EXITED.  With ``play`` the briefing (PS20) is held ``briefing_dwell`` seconds, then 게임하기
+    is clicked once (retried once after ``SCENARIO_START_RETRY_SECONDS``; 돌아가기/다시보기 are never clicked)
+    and PS3 is awaited ``play_observe`` seconds.
+    """
+    line_start = _trace_line_count(trace_path)
+    base: dict[str, Any] = {"point": list(SCENARIO_START), "clicks": []}
+
+    def window() -> dict[str, Any]:
+        return {"line_start": line_start, "line_end": _trace_line_count(trace_path)}
+
+    def traced() -> list[int]:
+        return list(trace_states(line_start)) if trace_states else []
+
+    if read_ps() != SCENARIO_PS:
+        return {**base, "status": "BLOCKED", "reason": "scenario start needs PS15 before the click",
+                "states": [], "trace_states": [], "window": window()}
+    clicks = base["clicks"]
+    clicks.append(list(SCENARIO_START))
+    inject(SCENARIO_START)
+    clicked_at = time.monotonic()
+    ps: Any = SCENARIO_PS
+    deadline = clicked_at + SCENARIO_START_RETRY_SECONDS
+    while ps == SCENARIO_PS and time.monotonic() < deadline:
+        time.sleep(TITLE_BUTTON_FAST_POLL_SECONDS)
+        ps = read_ps()
+        if ps == SCENARIO_PS and [state for state in traced() if state != SCENARIO_PS]:
+            ps = None  # the trace shows a state the poll missed: the click landed
+    if ps == SCENARIO_PS:
+        clicks.append(list(SCENARIO_START))
+        inject(SCENARIO_START)
+        time.sleep(SCENARIO_START_RETRY_SECONDS)
+        ps = read_ps()
+        if ps == SCENARIO_PS:
+            return {**base, "status": "IN_PLACE", "reason": "PS15 stayed after two clicks",
+                    "states": [], "trace_states": traced(), "window": window()}
+    started = time.monotonic()
+    states: list[dict[str, Any]] = []
+    last: Any = None
+    last_change = started
+    ps3_at: float | None = None
+    pending = sorted(SCENARIO_START_PS3_CAPTURES)
+    escape_at: float | None = None
+    exited = False
+    play_clicks: list[list[int]] = []
+    play_at: float | None = None
+    briefing_held: float | None = None
+    while True:
+        try:
+            ps = read_ps()
+        except OSError:
+            exited = True
+            break
+        now = time.monotonic()
+        if ps is not None and ps != last:
+            states.append({"ps": ps, "at": round(now - started, 2)})
+            capture("scenario_ps%d" % ps)
+            last, last_change = ps, now
+            if ps == 3 and ps3_at is None:
+                ps3_at = now
+        if ps3_at is not None:
+            while pending and now - ps3_at >= pending[0]:
+                capture("scenario_ps3_%gs" % pending.pop(0))
+            if not pending:
+                break
+        elif now - (started if play_at is None else play_at) >= (observe if play_at is None else play_observe):
+            break
+        if play and play_at is None and last == SCENARIO_BRIEFING_PS and now - last_change >= briefing_dwell:
+            capture("scenario_ps20_dwell")
+            briefing_held = now - last_change
+            play_clicks.append(list(SCENARIO_PLAY))
+            inject(SCENARIO_PLAY)
+            play_at = time.monotonic()
+        elif (play_at is not None and len(play_clicks) == 1 and last == SCENARIO_BRIEFING_PS
+              and now - play_at >= SCENARIO_START_RETRY_SECONDS):
+            play_clicks.append(list(SCENARIO_PLAY))
+            inject(SCENARIO_PLAY)
+        if (send_key is not None and escape_at is None
+                and last not in (3, SCENARIO_PS, SCENARIO_BRIEFING_PS, None)
+                and now - last_change >= esc_after):
+            send_key("ESC")
+            escape_at = now - started
+        time.sleep(SCENARIO_START_POLL_SECONDS)
+    ended = time.monotonic()
+    return {**base, "status": "EXITED" if exited else "PASS",
+            "left_scenario_after_seconds": round(started - clicked_at, 2), "states": states,
+            "trace_states": traced(), "ps3_entered_after_seconds": None if ps3_at is None else round(ps3_at - started, 2),
+            "ps3_held_seconds": None if ps3_at is None else round(ended - ps3_at, 2),
+            "escape_sent_at": None if escape_at is None else round(escape_at, 2),
+            "play_clicks": play_clicks,
+            "briefing_dwell_seconds": None if briefing_held is None else round(briefing_held, 2),
+            "observed_seconds": round(ended - started, 2), "window": window()}
+
+
+def _trace_dropped_count(trace_path: Path) -> int | None:
+    """``dropped_count`` of the trace's final ``summary`` event; None when absent."""
+    try:
+        lines = trace_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return None
+    for line in reversed(lines):
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(row, dict) and row.get("event") == "summary":
+            dropped = row.get("dropped_count")
+            return dropped if isinstance(dropped, int) else None
+    return None
+
+
+def _trace_close_summary(trace_path: Path, expected_run_id: str) -> dict[str, Any]:
+    """Require one complete final summary bound to the expected lane."""
+    try:
+        rows = [json.loads(line) for line in trace_path.read_text(encoding="utf-8").splitlines()]
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return {"status": "FAIL", "reason": "trace unreadable or malformed"}
+    summaries = [row for row in rows if isinstance(row, dict) and row.get("event") == "summary"]
+    if len(summaries) != 1:
+        return {"status": "FAIL", "summary_count": len(summaries)}
+    summary = summaries[0]
+    run_ids = {row.get("run_id") for row in rows if isinstance(row, dict)}
+    dropped = summary.get("dropped_count")
+    passed = (
+        run_ids == {expected_run_id}
+        and summary.get("install_status") == "detached"
+        and type(dropped) is int and dropped == 0
+        and summary.get("detach") == "complete"
+        and summary.get("flush") == "complete"
+    )
+    return {
+        "status": "PASS" if passed else "FAIL",
+        "summary_count": 1,
+        "run_ids": sorted(str(value) for value in run_ids),
+        "dropped_count": dropped,
+        "detach": summary.get("detach"),
+        "flush": summary.get("flush"),
+    }
+
+
+_MENU_COPY_COUNTERS = ("menu_copy_calls", "partial_copy_calls", "frame_copy_calls")
+
+
+def _summarize_play_presents(
+    trace_path: Path, windows: list[dict[str, Any]], *, program_state: int | None = 3,
+) -> dict[str, Any]:
+    """Per-window mirror present HD (covered - stale of 480,000) and safety counters.
+
+    ``program_state`` selects one state (PS3 by default) or every state when None (H-PM0 menus).
+    """
+    try:
+        lines = trace_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        lines = []
+    out: dict[str, Any] = {}
+    for window in windows:
+        rows = []
+        for line in lines[window["line_start"]:window["line_end"]]:
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if (isinstance(row, dict) and row.get("event") == "mirror2x_present"
+                    and (program_state is None or row.get("program_state") == program_state)):
+                rows.append(row)
+        by_state: dict[str, int] = {}
+        for row in rows:
+            by_state[str(row.get("program_state"))] = by_state.get(str(row.get("program_state")), 0) + 1
+        counter_span = {
+            key: rows[-1][key] - rows[0][key] for key in rows[0]
+            if (key in _MENU_COPY_COUNTERS or "reject" in key)
+            and isinstance(rows[0][key], int) and isinstance(rows[-1].get(key), int)} if rows else {}
+        hd = [100.0 * (row["covered_pixels"] - row["stale_pixels"]) / 480_000 for row in rows]
+        stale = [row["stale_pixels"] for row in rows]
+        elapsed = sorted(row["elapsed_ms"] for row in rows if isinstance(row.get("elapsed_ms"), int))
+        out[window["name"]] = {
+            "presents": len(rows),
+            "by_state": by_state,
+            "counter_span": counter_span,
+            "hd_first": round(hd[0], 3) if hd else None,
+            "hd_min": round(min(hd), 3) if hd else None,
+            "hd_p50": round(statistics.median(hd), 3) if hd else None,
+            "below_90": sum(1 for value in hd if value < NEW_GAME_PLAY_HD_FLOOR),
+            "below_986": sum(1 for value in hd if value < NEW_GAME_PLAY_HD_NOTE),
+            "below_986_list": [{"seq": row.get("seq"), "hd": round(value, 3)}
+                               for row, value in zip(rows, hd) if value < NEW_GAME_PLAY_HD_NOTE][:20],
+            "stale_max": max(stale) if stale else None,
+            "stale_last40_median": statistics.median(stale[-40:]) if stale else None,
+            "v1_outside_max": max((row.get("hd_mask_outside_diff_subpixels", 0) for row in rows),
+                                  default=None),
+            "safety_max": {field: max((row.get(field, 0) for row in rows), default=None)
+                           for field in _PLAY_SAFETY_FIELDS},
+            "fallback_max": max((row.get("fallback", 0) for row in rows), default=None),
+            "success_min": min((row.get("success", 0) for row in rows), default=None),
+            "elapsed_p95": elapsed[min(len(elapsed) - 1, int(0.95 * len(elapsed)))] if elapsed else None,
+        }
+    clean = bool(out) and all(
+        w["presents"] > 0 and w["below_90"] == 0 and w["fallback_max"] == 0 and w["success_min"] == 1
+        and all(value == 0 for value in w["safety_max"].values())
+        for w in out.values())
+    return {"windows": out, "status": "PASS" if clean else "FAIL"}
+
+
+def _summarize_state_runs(trace_path: Path, line_start: int, line_end: int) -> dict[str, Any]:
+    """Mirror presents of ``[line_start, line_end)`` split into consecutive program-state runs (H-TM0).
+
+    Each run reports its transition (first) present HD separately from the rest, because a new screen's
+    first present is the frame the mirror has not covered yet.  ``modes`` lists the display-mode calls.
+    """
+    try:
+        lines = trace_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        lines = []
+    rows: list[dict[str, Any]] = []
+    modes: list[dict[str, Any]] = []
+    for line in lines[line_start:line_end]:
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(row, dict):
+            continue
+        if row.get("event") == "mirror2x_present":
+            rows.append(row)
+        elif row.get("event") == "set_display_mode":
+            modes.append({"ps": row.get("program_state"),
+                          "request": [row.get("width"), row.get("height"), row.get("bpp")],
+                          "forwarded": [row.get("forwarded_width"), row.get("forwarded_height"),
+                                        row.get("forwarded_bpp")],
+                          "native_2x_applied": row.get("native_2x_applied")})
+    groups: list[list[dict[str, Any]]] = []
+    for row in rows:
+        if groups and groups[-1][0].get("program_state") == row.get("program_state"):
+            groups[-1].append(row)
+        else:
+            groups.append([row])
+    runs = []
+    for group in groups:
+        hd = [100.0 * (row["covered_pixels"] - row["stale_pixels"]) / 480_000 for row in group]
+        rest = hd[1:] or hd
+        stale = [row["stale_pixels"] for row in group]
+        runs.append({
+            "ps": group[0].get("program_state"), "presents": len(group),
+            "hd_first": round(hd[0], 3), "hd_min_after_first": round(min(rest), 3),
+            "hd_p50_after_first": round(statistics.median(rest), 3), "stale_max": max(stale),
+            "v1_outside_max": max((row.get("hd_mask_outside_diff_subpixels", 0) for row in group), default=0)})
+    return {
+        "runs": runs, "modes": modes, "presents": len(rows),
+        "safety_max": {field: max((row.get(field, 0) for row in rows), default=None)
+                       for field in _PLAY_SAFETY_FIELDS},
+        "fallback_max": max((row.get("fallback", 0) for row in rows), default=None),
+        "success_min": min((row.get("success", 0) for row in rows), default=None)}
+
+
+# H-RS0 result screen ("패배했습니다.", PS27 leaving -> PS29).  Logical 800x600 points read from the lap982
+# capture; the tabs only switch what is shown and the confirm button leaves the screen (no save is touched).
+RESULT_SCREEN_PS = 29
+RESULT_SCREEN_TABS: dict[str, tuple[int, int]] = {
+    "soldiers": (500, 57), "buildings": (606, 57), "resources": (713, 57),
+}
+RESULT_SCREEN_CONFIRM = (712, 561)
+RESULT_SCREEN_REACH_TIMEOUT = 60.0
+RESULT_SCREEN_LEAVE_TIMEOUT = 15.0
+# The 8,192-event present trace holds ~65 s of presents, so the dwells stay short (see the pause menu note).
+RESULT_SCREEN_DWELL_SECONDS = 6.0
+RESULT_SCREEN_TAB_DWELL_SECONDS = 3.0
+# H-RS1: PS27 captures (name, seconds after PS27 is first seen); "ps27" is the contract one, the others
+# show whether the HUD/logo/cursor are missing from the start or only later in the ~8 s PS27.
+RESULT_SCREEN_PS27_CAPTURES: tuple[tuple[str, float], ...] = (
+    ("ps27_early", 0.3), ("ps27", 2.0), ("ps27_late", 5.0))
+RESULT_SCREEN_AFTER_HD_FLOOR = 99.9  # next state PS9 (title menu) must stay at its measured 100%
+
+
+def _result_screen_window(
+    *, inject: Callable[..., Any], read_ps: Callable[[], Any], trace_path: Path,
+    capture: Callable[[str], Any], reach_timeout: float = RESULT_SCREEN_REACH_TIMEOUT,
+    dwell: float = RESULT_SCREEN_DWELL_SECONDS, tab_dwell: float = RESULT_SCREEN_TAB_DWELL_SECONDS,
+    leave_timeout: float = RESULT_SCREEN_LEAVE_TIMEOUT,
+    ps27_captures: Sequence[tuple[str, float]] = RESULT_SCREEN_PS27_CAPTURES,
+    track_states: bool = False, state_capture_delay: float = 1.0,
+) -> dict[str, Any]:
+    """Watch the loaded defeat scene reach the result screen, dwell, switch tabs, then confirm (H-RS0).
+
+    With ``track_states`` (H-VS0) every state seen before PS29 other than the starting one gets its own
+    ``ps<N>`` window and one ``vs_ps<N>`` capture ``state_capture_delay`` seconds after it is first seen,
+    instead of the single PS27 window.
+
+    ``states_seen`` is every distinct program state observed while waiting for PS29 (the lap982 order is
+    3 -> 27 -> 29).  FAIL, with the states and a capture kept, when PS29 never shows up or the confirm click
+    does not leave it.  Each ``ps27_captures`` entry is taken once, that many seconds after PS27 is first
+    seen (H-RS1).  ``windows`` carry the trace line range and the program state whose presents they hold.
+    """
+    states_seen: list[Any] = []
+    windows: list[dict[str, Any]] = []
+    clicks: list[list[int]] = []
+    result: dict[str, Any] = {"status": "FAIL", "states_seen": states_seen, "windows": windows,
+                              "clicks": clicks, "after_state": None}
+    start = _trace_line_count(trace_path)
+    deadline = time.monotonic() + reach_timeout
+    ps = read_ps()
+    initial_ps = ps
+    ps27_seen_at: float | None = None
+    ps27_pending = sorted(ps27_captures, key=lambda item: item[1])
+    tracked: dict[str, Any] | None = None
+    tracked_captured = False
+    tracked_seen_at = 0.0
+    while True:
+        if not states_seen or states_seen[-1] != ps:
+            states_seen.append(ps)
+            if track_states:
+                if tracked is not None:
+                    tracked["line_end"] = _trace_line_count(trace_path)
+                    windows.append(tracked)
+                    tracked = None
+                if ps not in (initial_ps, RESULT_SCREEN_PS):
+                    tracked = {"name": f"ps{ps}", "program_state": ps,
+                               "line_start": _trace_line_count(trace_path), "line_end": 0}
+                    tracked_captured = False
+                    tracked_seen_at = time.monotonic()
+        if (tracked is not None and not tracked_captured
+                and time.monotonic() - tracked_seen_at >= state_capture_delay):
+            capture(f"vs_{tracked['name']}")
+            tracked_captured = True
+        if ps == 27 and not track_states:
+            if ps27_seen_at is None:
+                ps27_seen_at = time.monotonic()
+            while ps27_pending and time.monotonic() - ps27_seen_at >= ps27_pending[0][1]:
+                capture(ps27_pending.pop(0)[0])
+        if ps == RESULT_SCREEN_PS or time.monotonic() >= deadline:
+            break
+        time.sleep(0.25)
+        ps = read_ps()
+    if ps != RESULT_SCREEN_PS:
+        capture("result_unreached")
+        result["reason"] = f"PS29 not reached within {reach_timeout:.0f}s (states {states_seen})"
+        return result
+    reached = _trace_line_count(trace_path)
+    if track_states:
+        if tracked is not None:
+            tracked["line_end"] = reached
+            windows.append(tracked)
+    else:
+        windows.append({"name": "ps27", "program_state": 27, "line_start": start, "line_end": reached})
+
+    def stay(name: str, capture_name: str, seconds: float, begin: int, program_state: Any) -> None:
+        time.sleep(seconds)
+        capture(capture_name)
+        windows.append({"name": name, "program_state": program_state, "line_start": begin,
+                        "line_end": _trace_line_count(trace_path)})
+
+    stay("ps29", "ps29", dwell, reached, RESULT_SCREEN_PS)
+    for tab, point in RESULT_SCREEN_TABS.items():
+        begin = _trace_line_count(trace_path)
+        inject(point)
+        clicks.append(list(point))
+        stay(f"tab_{tab}", f"result_tab_{tab}", tab_dwell, begin, RESULT_SCREEN_PS)
+    begin = _trace_line_count(trace_path)
+    inject(RESULT_SCREEN_CONFIRM)
+    clicks.append(list(RESULT_SCREEN_CONFIRM))
+    left, after = _poll_effect(read_ps, lambda value: value != RESULT_SCREEN_PS, leave_timeout)
+    result["after_state"] = after
+    if not left:
+        capture("result_confirm_stuck")
+        result["reason"] = "confirm click did not leave PS29"
+        return result
+    stay("after_confirm", "result_after_confirm", tab_dwell, begin, after)
+    result["status"] = "PASS"
+    return result
+
+
+def _result_screen_below_floor_only_first(window: Mapping[str, Any]) -> bool:
+    """True when the window has presents and every present below the note floor is only its first one."""
+    return (window["presents"] > 0 and window["below_986"] <= 1
+            and (window["below_986"] == 0 or (window["hd_first"] or 100.0) < NEW_GAME_PLAY_HD_NOTE))
+
+
+def _summarize_result_screen(trace_path: Path, walk: Mapping[str, Any]) -> dict[str, Any]:
+    """Per-window HD summary and the H-RS0 PASS criteria for a ``_result_screen_window`` walk.
+
+    PS29 and tab windows need HD min >= 98.6 (their first present may be lower and is disclosed in
+    ``first_present_below_floor``); the window after the confirm click needs 99.9 when it is PS9.  Every window
+    must have V1/safety counters, fallback and non-success at 0.
+    """
+    summaries: dict[str, Any] = {}
+    for window in walk["windows"]:
+        summaries.update(_summarize_play_presents(
+            trace_path, [window], program_state=window["program_state"])["windows"])
+    criteria: dict[str, bool] = {}
+    first_below: list[str] = []
+    for name, window in summaries.items():
+        if name == "ps27":
+            continue
+        if name == "after_confirm":
+            floor = RESULT_SCREEN_AFTER_HD_FLOOR if walk.get("after_state") == 9 else NEW_GAME_PLAY_HD_NOTE
+            criteria[f"{name}_hd"] = window["presents"] > 0 and (window["hd_min"] or 0.0) >= floor
+            continue
+        criteria[f"{name}_hd"] = _result_screen_below_floor_only_first(window)
+        if window["presents"] and window["below_986"] == 1 and (window["hd_first"] or 100.0) < NEW_GAME_PLAY_HD_NOTE:
+            first_below.append(name)
+    criteria["safety_clean"] = bool(summaries) and all(
+        window["fallback_max"] in (0, None) and window["success_min"] in (1, None)
+        and window["v1_outside_max"] in (0, None)
+        and all(value in (0, None) for value in window["safety_max"].values())
+        for window in summaries.values())
+    criteria["ps29_reached"] = "ps29" in summaries and summaries["ps29"]["presents"] > 0
+    return {"windows": summaries, "criteria": criteria, "first_present_below_floor": first_below,
+            "status": "PASS" if criteria and all(criteria.values()) else "FAIL"}
+
+
+# H-VS0 victory screen.  `[0xB63238]` is the cheat-flag dword the original command pump `0x48EC30` turns into
+# command 0x1B7 (-> `[0x8929D2]` = 1 -> `0x4C4040` returns victory -> PS24).  No native input that writes it is
+# known (lap1132 §5), so the fixture `victory-poke` writes 1 once in PS3: a synthetic, declared trigger that
+# forces a victory without the win condition; the game's own path does the rest.
+VICTORY_POKE_VA = 0xB63238
+VICTORY_READBACK_RETURN = 0x4C7EEB
+_VICTORY_COUNTER_FIELDS = (
+    "primary_readback_calls", "primary_readback_converted", "primary_readback_rejects",
+    "primary_readback_return_address", "bar_copy_468bb0_calls", "bar_copy_468bb0_mirrored",
+    "bar_copy_468bb0_rejects")
+
+
+def _victory_poke_window(
+    *, inject: Callable[..., Any], read_ps: Callable[[], Any], read_flag: Callable[[], int],
+    write_flag: Callable[[int], None], trace_path: Path, capture: Callable[[str], Any],
+    reach_timeout: float = RESULT_SCREEN_REACH_TIMEOUT,
+) -> dict[str, Any]:
+    """Poke the victory flag once in PS3, then walk the banner and result screen like the defeat walk (H-VS0).
+
+    ``poke`` records the flag before/after the write and whether the game consumed it (read 0 again).  FAIL
+    without walking when the readback is not 1; otherwise the result is ``_result_screen_window`` with
+    ``track_states`` so every state between PS3 and PS29 (the banner) has its own window.
+    """
+    before = read_flag()
+    write_flag(1)
+    readback = read_flag()
+    poke: dict[str, Any] = {"va": hex(VICTORY_POKE_VA), "before": before, "readback": readback,
+                            "consumed": False, "consumed_at_ps": None}
+    if readback != 1:
+        return {"status": "FAIL", "poke": poke, "states_seen": [], "windows": [], "clicks": [],
+                "after_state": None, "reason": f"victory poke readback {readback} != 1"}
+
+    def observed_ps() -> Any:
+        ps = read_ps()
+        if not poke["consumed"] and read_flag() == 0:
+            poke["consumed"], poke["consumed_at_ps"] = True, ps
+        return ps
+
+    walk = _result_screen_window(
+        inject=inject, read_ps=observed_ps, trace_path=trace_path, capture=capture,
+        reach_timeout=reach_timeout, track_states=True, ps27_captures=())
+    walk["poke"] = poke
+    return walk
+
+
+def _summarize_victory(trace_path: Path, walk: Mapping[str, Any]) -> dict[str, Any]:
+    """``_summarize_result_screen`` plus the H-VS0 criteria: the flag was consumed, a banner state with presents
+    came before PS29 (lap1133 run a: PS25, the victory twin of the defeat banner PS27; PS24 never presents), and both
+    repairs (PS26-style primary readback, PS29 bar copy) were counted as mirrored, from the final present row."""
+    summary = _summarize_result_screen(trace_path, walk)
+    last: dict[str, Any] = {}
+    try:
+        for line in trace_path.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, dict) and row.get("event") == "mirror2x_present":
+                last = row
+    except (OSError, UnicodeDecodeError):
+        pass
+    counters = {key: last.get(key) for key in _VICTORY_COUNTER_FIELDS}
+    calls, converted, rejects = (counters["primary_readback_calls"], counters["primary_readback_converted"],
+                                 counters["primary_readback_rejects"])
+    bar, mirrored, bar_rejects = (counters["bar_copy_468bb0_calls"], counters["bar_copy_468bb0_mirrored"],
+                                  counters["bar_copy_468bb0_rejects"])
+    criteria = summary["criteria"]
+    criteria["poke_consumed"] = bool(walk.get("poke", {}).get("consumed"))
+    banner = {name: window for name, window in summary["windows"].items()
+              if name not in ("ps29", "after_confirm") and not name.startswith("tab_")}
+    criteria["banner_reached"] = any(window["presents"] > 0 for window in banner.values())
+    summary["banner_states"] = {name: window["presents"] for name, window in banner.items()}
+    criteria["readback_mirrored"] = (
+        isinstance(calls, int) and calls >= 1 and converted == calls - (rejects or 0)
+        and counters["primary_readback_return_address"] == VICTORY_READBACK_RETURN)
+    criteria["bar_copy_mirrored"] = (
+        isinstance(bar, int) and bar > 0 and mirrored == bar - (bar_rejects or 0))
+    summary["counters"] = counters
+    summary["status"] = "PASS" if all(criteria.values()) else "FAIL"
+    return summary
+
+
+def _walk_new_game_path(
+    *, pid: int, display: str, origin: tuple[int, int], scale: int, env: Mapping[str, str],
+    log: Any, variant: str, crop: tuple[int, int, int, int], artifact_root: Path,
+    candidate: bool, trace_path: Path, census_path: Path, census: bool, census_state: int,
+    stop_at: int, result: dict[str, Any], start_game: bool = False, play: bool = False,
+    read_camera: Callable[[], list[int]] | None = None, act: bool = False,
+    read_selection: Callable[[], Mapping[str, Any]] | None = None, menu: bool = False,
+    read_ps: Callable[[], Any] | None = None, menu_subs: Sequence[str] = (),
+    victory_poke: bool = False,
+) -> None:
+    """Walk PS9 -> PS7 -> PS5, dwelling a full present window in each screen up to ``stop_at``.
+
+    With ``start_game`` the walk continues from PS5 into the new game's PS3 (H-NG3); with ``play``
+    it then scrolls in four directions and idles (H-NG4).
+    """
+    steps = (
+        (7, 9, NEW_GAME_MENU),
+        (5, 7, NEW_GAME_CONFIRM),
+    )
+    for to_ps, from_ps, point in steps:
+        moved = _click_until_state(pid, display, origin, point, scale, env, log,
+                                   from_ps=from_ps, to_ps=to_ps)
+        result["actions"].append({"tag": f"new_game_ps{to_ps}", "from_ps": from_ps,
+                                  "to": moved["to"], "clicks": moved["clicks"], "result": "PASS"})
+        if census:
+            if to_ps == census_state:
+                result["census_wait"] = _wait_census_presents(census_path, census_state, 120.0)
+                if result["census_wait"]["status"] != "PASS":
+                    raise ProbeError(f"PS{to_ps} census window incomplete: {result['census_wait']}")
+        elif candidate:
+            result.setdefault("dwell", {})[f"ps{to_ps}"] = _wait_for_mirror_present(
+                trace_path, program_state=to_ps, minimum_records=CENSUS_PRESENT_LIMIT, timeout=90.0)
+        else:
+            time.sleep(8.0)
+        result["captures"][f"ps{to_ps}"] = _capture(
+            display, f"g1-saved-{variant}", pid, f"ps{to_ps}", crop, artifact_root, log)
+        if to_ps == stop_at:
+            if start_game:
+                started = _start_new_game(pid, display, origin, scale, env, log)
+                result["actions"].append({"tag": "new_game_start", "from_ps": 5, "to": started["to"],
+                                          "clicks": started["clicks"], "result": "PASS"})
+                time.sleep(6.0)  # the first seconds after the start are black
+                if candidate:
+                    result["new_game_start"] = _wait_for_mirror_present(
+                        trace_path, program_state=3,
+                        minimum_records=NEW_GAME_START_PS3_PRESENTS, timeout=120.0)
+                else:
+                    time.sleep(12.0)
+                    result["new_game_start"] = {"status": "PASS", "program_state": 3}
+                result["new_game_start"]["scene"] = _scene_identity(runtime_driver.state(pid, True))
+                result["captures"]["ps3_start"] = _capture(
+                    display, f"g1-saved-{variant}", pid, "ps3_start", crop, artifact_root, log)
+                if act:
+                    if read_selection is None:
+                        raise ProbeError("--new-game-act needs a selection reader")
+                    acted = _new_game_act_window(
+                        inject=lambda point, **kw: _inject(display, origin, point, scale, env, log, **kw),
+                        read_state=lambda: runtime_driver.state(pid, True),
+                        read_selection=read_selection, trace_path=trace_path,
+                        capture=lambda name: result["captures"].__setitem__(name, _capture(
+                            display, f"g1-saved-{variant}", pid, name, crop, artifact_root, log)))
+                    if candidate:
+                        acted["present_summary"] = _summarize_play_presents(trace_path, acted["windows"])
+                        if acted["present_summary"]["status"] != "PASS":
+                            acted["status"] = "FAIL"
+                    result["new_game_act"] = acted
+                    result["captures"]["ps3_act"] = _capture(
+                        display, f"g1-saved-{variant}", pid, "ps3_act", crop, artifact_root, log)
+                if menu:
+                    if read_ps is None:
+                        raise ProbeError("--new-game-menu needs a program-state reader")
+                    paused = _new_game_menu_window(
+                        inject=lambda point, **kw: _inject(display, origin, point, scale, env, log, **kw),
+                        send_key=lambda key: _send_key(display, env, key, log),
+                        read_ps=read_ps, trace_path=trace_path, subs=menu_subs,
+                        capture=lambda name: result["captures"].__setitem__(name, _capture(
+                            display, f"g1-saved-{variant}", pid, name, crop, artifact_root, log)))
+                    if candidate and paused["status"] != "BLOCKED":
+                        paused["present_summary"] = _summarize_play_presents(
+                            trace_path, paused["windows"], program_state=None)
+                        if paused["present_summary"]["status"] != "PASS":
+                            paused["status"] = "FAIL"
+                    result["new_game_menu"] = paused
+                if play:
+                    if read_camera is None:
+                        raise ProbeError("--new-game-play needs a camera reader")
+                    window = _new_game_play_window(
+                        display=display, env=env, read_camera=read_camera, trace_path=trace_path,
+                        capture=lambda name: result["captures"].__setitem__(name, _capture(
+                            display, f"g1-saved-{variant}", pid, name, crop, artifact_root, log)))
+                    if candidate:
+                        window["present_summary"] = _summarize_play_presents(trace_path, window["windows"])
+                        if window["present_summary"]["status"] != "PASS":
+                            window["status"] = "FAIL"
+                    result["new_game_play"] = window
+                    result["captures"]["ps3_play"] = _capture(
+                        display, f"g1-saved-{variant}", pid, "ps3_play", crop, artifact_root, log)
+                if victory_poke:
+                    if read_ps is None:
+                        raise ProbeError("--victory-poke needs a program-state reader")
+                    victory = _victory_poke_window(
+                        inject=lambda point, **kw: _inject(display, origin, point, scale, env, log, **kw),
+                        read_ps=read_ps, trace_path=trace_path,
+                        read_flag=lambda: int.from_bytes(
+                            runtime_driver.read(pid, VICTORY_POKE_VA, 4), "little"),
+                        write_flag=lambda value: runtime_driver.write(
+                            pid, VICTORY_POKE_VA, value.to_bytes(4, "little")),
+                        capture=lambda name: result["captures"].__setitem__(name, _capture(
+                            display, f"g1-saved-{variant}", pid, name, crop, artifact_root, log)))
+                    victory["fixture"] = {"name": "victory-poke", "synthetic": True,
+                                          "note": "forced victory without the win condition"}
+                    if candidate and victory.get("windows"):
+                        victory["present_summary"] = _summarize_victory(trace_path, victory)
+                        if victory["present_summary"]["status"] != "PASS":
+                            victory["status"] = "FAIL"
+                    result["victory_poke"] = victory
+            return
+        time.sleep(1.0)  # let the destination screen accept input before the next click
 
 
 def _wait_census_presents(census_path: Path, census_state: int, timeout: float) -> dict[str, Any]:
@@ -2857,6 +4058,11 @@ def _histogram_percentile(histogram: list[int], percentile: int) -> int | None:
     return None
 
 
+def _disable_present_trace(env: dict[str, str]) -> None:
+    """Disable present events while retaining the run ID used for owned close."""
+    env.pop("SYW2_G1_PRESENT_TRACE", None)
+
+
 def _performance_present_metrics(trace_path: Path) -> dict[str, Any]:
     summaries: list[dict[str, Any]] = []
     histogram = [0] * 256
@@ -2913,28 +4119,67 @@ def _scene_identity(state: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _selection_slots(read_memory: Callable[[int, int], bytes]) -> list[int]:
+def _selection_array(esl2613: bool | None = None) -> tuple[int, int]:
+    if ESL2613 if esl2613 is None else esl2613:
+        from tools import esl2613_runtime
+        return esl2613_runtime.SELECTION_ENTRIES_VA, esl2613_runtime.SELECTION_CAPACITY
+    return SELECTION_ARRAY_ADDRESS, SELECTION_ARRAY_CAPACITY
+
+
+def _prepare_lane_game(runtime_root: Path, bridge: Path | None, *,
+                       esl2613: bool | None = None) -> dict[str, Any]:
+    """Private original copy + 2612 bundle + pinned 2613 executable and Wine prefix."""
+
+    if not (ESL2613 if esl2613 is None else esl2613):
+        return runtime_env.prepare(SOURCE, runtime_root=runtime_root, bridge=bridge, timeout=90)
+    from tools import esl2613_runtime
+    exe_bytes = esl2613_runtime.ESL2613_EXE.read_bytes()
+    if hashlib.sha256(exe_bytes).hexdigest() != esl2613_runtime.ESL2613_SHA256:
+        raise ProbeError("ESL 2613 executable SHA-256 mismatch")
+    manifest, copied = esl2613_runtime.prepare(exe_bytes, runtime_root, bridge=bridge, timeout=90)
+    manifest["esl2613_overlays"] = copied
+    return manifest
+
+
+def _selection_slots(read_memory: Callable[[int, int], bytes],
+                     esl2613: bool | None = None) -> list[int]:
     """Read the bounded stock selection entries, not just count/first slot."""
 
-    raw = read_memory(SELECTION_ARRAY_ADDRESS, SELECTION_ARRAY_CAPACITY * 4)
-    if len(raw) != SELECTION_ARRAY_CAPACITY * 4:
+    address, capacity = _selection_array(esl2613)
+    raw = read_memory(address, capacity * 4)
+    if len(raw) != capacity * 4:
         raise ProbeError("selection array read returned an unexpected size")
     # Each stock entry is a dword whose low word is the unit slot; the upper
     # word is auxiliary selection state and must not become part of the slot id.
-    return [value & 0xFFFF for value in struct.unpack(f"<{SELECTION_ARRAY_CAPACITY}I", raw)]
+    return [value & 0xFFFF for value in struct.unpack(f"<{capacity}I", raw)]
+
+
+def _selection_memory(read_memory: Callable[[int, int], bytes],
+                      esl2613: bool | None = None) -> Callable[[int, int], bytes]:
+    """With --esl2613, redirect reads of stock selection entries to the 2613 array."""
+
+    if not (ESL2613 if esl2613 is None else esl2613):
+        return read_memory
+    address, _ = _selection_array(True)
+    span = SELECTION_ARRAY_CAPACITY * 4
+
+    def read(target: int, size: int) -> bytes:
+        if SELECTION_ARRAY_ADDRESS <= target and target + size <= SELECTION_ARRAY_ADDRESS + span:
+            return read_memory(address + target - SELECTION_ARRAY_ADDRESS, size)
+        return read_memory(target, size)
+
+    return read
 
 
 def _selection_observation(read_memory: Callable[[int, int], bytes]) -> dict[str, Any]:
-    evidence = runtime_env._read_g1_selection_evidence(read_memory)
+    evidence = runtime_env._read_g1_selection_evidence(_selection_memory(read_memory))
     slots = _selection_slots(read_memory)
     count = evidence.get("count")
-    if type(count) is int and 0 <= count <= SELECTION_ARRAY_CAPACITY:
+    if type(count) is int and 0 <= count <= len(slots):
         evidence["selected_slots"] = slots[:count]
     else:
         evidence["selected_slots"] = []
-    evidence["selection_array_raw_hex"] = struct.pack(
-        f"<{SELECTION_ARRAY_CAPACITY}I", *slots
-    ).hex()
+    evidence["selection_array_raw_hex"] = struct.pack(f"<{len(slots)}I", *slots).hex()
     return evidence
 
 
@@ -3066,6 +4311,7 @@ def _production_issue_acceptance(
     )
     result: dict[str, Any] = {
         "status": "UNKNOWN", "cost_match": "INEXACT",
+        "issue_transition_observed": False,
         "previous": dict(previous), "a": dict(issued), "b": dict(following),
         "expected_cost": {"rice": -spec.get("rice", 0), "wood": -spec.get("wood", 0),
                           "reserved": spec.get("population", 0)},
@@ -3073,6 +4319,7 @@ def _production_issue_acceptance(
     }
     if not identity_ok or not issue_transition:
         return result
+    result["issue_transition_observed"] = True
     expected = result["expected_cost"]
     for label, later in (("prev_to_a", issued), ("prev_to_b", following)):
         delta = _production_global_delta(previous, later)
@@ -3099,6 +4346,18 @@ def _production_effect(
         before, witness, witness, expected_slot=PRODUCTION_SLOT,
         producer_type=producer_type, queue_type=queue_type, spec=spec,
     )["status"] == "PASS"
+
+
+def _should_observe_production_completion(
+    click: Mapping[str, Any] | None, target: Mapping[str, Any],
+    issue_acceptance: Mapping[str, Any],
+) -> bool:
+    """Observe native completion after a real click and witnessed queue transition."""
+    return (
+        click is not None
+        and target.get("valid") is True
+        and issue_acceptance.get("issue_transition_observed") is True
+    )
 
 
 def _poll_production_issue(
@@ -3323,11 +4582,30 @@ def _run_lane(
     census_watch_cache: bool = False,
     census_watch_presents: int = 0,
     census_skip_presents: int = 0,
+    new_game_path: bool = False,
+    new_game_start: bool = False,
+    new_game_play: bool = False,
+    new_game_act: bool = False,
+    new_game_menu: bool = False,
+    new_game_menu_subs: Sequence[str] = (),
+    victory_poke: bool = False,
+    title_button: str | None = None,
+    scenario_start: bool = False,
+    scenario_play: bool = False,
+    scenario_briefing_dwell: float = SCENARIO_BRIEFING_DWELL_SECONDS,
+    result_screen: bool = False,
     stale_mask: str | None = None,
     blend_size_reject_diag: bool = False,
+    ret_range_diag: bool = False,
+    no_present_trace: bool = False,
+    native_ddraw: bool = False,
+    no_unit_ticks: bool = False,
     layer_drift: bool = False,
     screen_watch: bool = False,
     screen_watch_cache: bool = False,
+    screen_watch_state: int = 3,
+    screen_watch_call_from: int = 0,
+    stale_mask_state: int = 3,
     drift_samples: str | None = None,
     terrain_trace: bool = False,
     terrain_scroll: bool = False,
@@ -3356,18 +4634,20 @@ def _run_lane(
     save_name, save_sha256, save_index = _fixture_pin(fixture)
     artifact_root.mkdir(parents=True, exist_ok=False)
     _, source_exe = runtime_env.validate_original_source(SOURCE)
-    fixture_root = FIXTURE_SOURCE.resolve()
-    manifest = runtime_env.prepare(SOURCE, runtime_root=runtime_root, bridge=bridge, timeout=90)
+    manifest = _prepare_lane_game(runtime_root, bridge)
     run_dir = Path(manifest["output"]["run_dir"])
     game = Path(manifest["game"]["root"])
     prefix = Path(manifest["wine"]["prefix"])
     snapshot_dir = prefix / "drive_c" / "g1_state_snapshots"
     private_save = game / "save" / save_name
-    shutil.copy2(fixture_root / "save" / save_name, private_save)
+    fixture_file = _fixture_path(fixture)
+    _verify_fixture_file(fixture, fixture_file)
+    shutil.copy2(fixture_file, private_save)
     if _sha256(private_save) != save_sha256:
         raise ProbeError("private save fixture hash mismatch")
 
     candidate = variant == "candidate"
+    new_game_walk = new_game_path or (census and census_state in (5, 7))
     lane_label = lane_label or variant
     result: dict[str, Any] = {
         "schema": "syw2plus.g1-saved-scene-paired.v1",
@@ -3376,7 +4656,7 @@ def _run_lane(
         "source_exe_sha256": _sha256(source_exe),
         "private_exe_sha256": _sha256(game / runtime_env.ORIGINAL_EXE),
         "fixture": {"name": save_name, "sha256": _sha256(private_save), "selected_index": save_index,
-                    "synthetic": False, "source_root": str(fixture_root)},
+                    "synthetic": False, "source_root": str(fixture_file.parent)},
         "manifest": str(run_dir / "manifest.json"),
         "private_game": str(game),
         "private_prefix": str(prefix),
@@ -3464,14 +4744,31 @@ def _run_lane(
                 env["SYW2_G1_HD_NEGATIVE_MISMATCH"] = "1"
             if stale_mask is not None:
                 env["SYW2_G1_STALE_MASK"] = stale_mask
+                if stale_mask_state != 3:
+                    env["SYW2_G1_STALE_MASK_STATE"] = str(stale_mask_state)
             if blend_size_reject_diag:
                 env["SYW2_G1_BLEND_SIZE_REJECT_DIAG"] = "1"
+            if ret_range_diag:
+                env["SYW2_G1_RET_RANGE_DIAG"] = "1"
+            if no_present_trace:
+                # user-trial env: the stub installs the mirror without the trace opt-in
+                _disable_present_trace(env)
+            if native_ddraw:
+                # user game folder ships its own ddraw.dll; load it instead of Wine's builtin
+                env["WINEDLLOVERRIDES"] = "ddraw=n,b"
+            if no_unit_ticks:
+                # user-trial env: the stub skips the PS3 unit dump (inmm_unit_ticks.jsonl)
+                env["INMM_STUB_NO_UNIT_TICKS"] = "1"
             if layer_drift:
                 env["SYW2_G1_LAYER_DRIFT"] = "1"
             if screen_watch:
                 env["SYW2_G1_SCREEN_WATCH"] = "1"
                 if screen_watch_cache:
                     env["SYW2_G1_SCREEN_WATCH_CACHE"] = "1"
+                if screen_watch_state != 3:
+                    env["SYW2_G1_SCREEN_WATCH_STATE"] = str(screen_watch_state)
+                if screen_watch_call_from:
+                    env["SYW2_G1_SCREEN_WATCH_CALL_FROM"] = str(screen_watch_call_from)
             if drift_samples is not None:
                 env["SYW2_G1_DRIFT_SAMPLES"] = drift_samples
         xvfb, display = runtime_env._xvfb(log, "1600x1200x24")
@@ -3580,6 +4877,48 @@ def _run_lane(
             # sending the menu click; the 2x compositor is intentionally live
             # and can otherwise drop this transition on a busy Wine/Xvfb tick.
             time.sleep(0.5)
+        if title_button:
+            # H-TM0: one click on an unmeasured title-menu button, then watch the screens it leads to
+            # without any further input (no game start, no file change).
+            window = _title_button_window(
+                inject=lambda point, **kw: _inject(display, origin, point, scale, env, log, **kw),
+                read_ps=lambda: runtime_driver.state(pid, False).get("ps"), trace_path=trace_path,
+                capture=lambda name: result["captures"].__setitem__(name, _capture(
+                    display, f"g1-saved-{variant}", pid, name, crop, artifact_root, log)),
+                button=title_button,
+                trace_states=lambda line_start: _trace_program_states(trace_path, line_start))
+            if candidate:
+                window["state_summary"] = _summarize_state_runs(
+                    trace_path, window["window"]["line_start"], window["window"]["line_end"])
+            if scenario_start and window.get("status") == "PASS":
+                # H-SC0: press 시작하기 once on PS15 and watch briefing/loading/in-game (no 나가기 click).
+                window["scenario_start"] = _scenario_start_window(
+                    inject=lambda point, **kw: _inject(display, origin, point, scale, env, log, **kw),
+                    read_ps=lambda: runtime_driver.state(pid, False).get("ps"), trace_path=trace_path,
+                    capture=lambda name: result["captures"].__setitem__(name, _capture(
+                        display, f"g1-saved-{variant}", pid, name, crop, artifact_root, log)),
+                    send_key=lambda key: _send_key(display, env, key, log),
+                    trace_states=lambda line_start: _trace_program_states(trace_path, line_start),
+                    play=scenario_play, briefing_dwell=scenario_briefing_dwell)
+                if candidate:
+                    window["scenario_start"]["state_summary"] = _summarize_state_runs(
+                        trace_path, window["scenario_start"]["window"]["line_start"],
+                        window["scenario_start"]["window"]["line_end"])
+            result["title_button"] = window
+            raise _CensusStateComplete()
+        if new_game_walk:
+            # PS7/PS5 are measured screens: walk the same clicks a new game uses and
+            # stop before the lobby start click so no map is generated.
+            _walk_new_game_path(
+                pid=pid, display=display, origin=origin, scale=scale, env=env, log=log,
+                variant=variant, crop=crop, artifact_root=artifact_root, candidate=candidate,
+                trace_path=trace_path, census_path=census_path, census=census,
+                census_state=census_state, stop_at=(census_state if census else 5), result=result,
+                start_game=new_game_start, play=new_game_play, read_camera=lambda: runtime_env._read_camera(runtime_read),
+                act=new_game_act, read_selection=lambda: _selection_observation(runtime_read),
+                menu=new_game_menu, read_ps=lambda: runtime_driver.state(pid, False).get("ps"),
+                menu_subs=new_game_menu_subs, victory_poke=victory_poke)
+            raise _CensusStateComplete()
         load_clicks = [_inject(display, origin, LOAD_MENU, scale, env, log)]
         # XTest delivery can lose the first menu click while the live
         # presenter is still servicing a frame.  Retry only when the game is
@@ -3591,6 +4930,15 @@ def _run_lane(
         wait35 = _wait_state(pid, lambda state: state.get("ps") == 35, "PS35")
         result["actions"].append({"tag": "load_menu", "from": wait9, "to": wait35,
                                    "clicks": load_clicks, "result": "PASS"})
+        if census and census_state == 35:
+            # The PS35 load-slot screen is the measured scene: stay until its
+            # present window is full, before slot navigation changes the state.
+            result["census_wait"] = _wait_census_presents(census_path, census_state, 120.0)
+            if result["census_wait"]["status"] != "PASS":
+                raise ProbeError(f"PS35 census window incomplete: {result['census_wait']}")
+            result["captures"]["load_screen"] = _capture(
+                display, f"g1-saved-{variant}", pid, "load_screen", crop, artifact_root, log)
+            raise _CensusStateComplete()
 
         navigation: list[int | None] = []
         navigation_delay = 0.30 if hd_source == "scale2x" else 0.12
@@ -3610,12 +4958,55 @@ def _run_lane(
         result["save_navigation"] = navigation
         result["navigation_delay_seconds"] = navigation_delay
         _inject(display, origin, LOAD_CONFIRM, scale, env, log)
-        loaded = _wait_state(pid, lambda state: state.get("ps") == 3 and state.get("tick", 0) > 0, "loaded PS3")
+        if result_screen:
+            # The defeat fixture can leave PS3 for PS27/PS29 within seconds: accept any of them as "loaded".
+            loaded = _wait_state(
+                pid, lambda state: state.get("ps") in (27, RESULT_SCREEN_PS)
+                or (state.get("ps") == 3 and state.get("tick", 0) > 0), "loaded PS3/27/29")
+            result["actions"].append({"tag": "load_fixture", "to": loaded, "result": "PASS"})
+            walk = _result_screen_window(
+                inject=lambda point, **kw: _inject(display, origin, point, scale, env, log, **kw),
+                read_ps=lambda: runtime_driver.state(pid, False).get("ps"), trace_path=trace_path,
+                capture=lambda name: result["captures"].__setitem__(name, _capture(
+                    display, f"g1-saved-{variant}", pid, name, crop, artifact_root, log)))
+            if candidate:
+                walk["present_summary"] = _summarize_result_screen(trace_path, walk)
+                if walk["present_summary"]["status"] != "PASS":
+                    walk["status"] = "FAIL"
+            result["result_screen"] = walk
+            raise _ResultScreenComplete()
+        if census and census_state == RESULT_SCREEN_PS:
+            # H-RS0 attribution: the defeat fixture reaches PS29 on its own; census the result screen.
+            loaded = _wait_state(
+                pid, lambda state: state.get("ps") in (27, RESULT_SCREEN_PS)
+                or (state.get("ps") == 3 and state.get("tick", 0) > 0), "loaded PS3/27/29")
+        else:
+            loaded = _wait_state(pid, lambda state: state.get("ps") == 3 and state.get("tick", 0) > 0, "loaded PS3")
         time.sleep(0.15)
         loaded_detailed = runtime_driver.state(pid, True)
         result["actions"].append({"tag": "load_fixture", "to": loaded, "result": "PASS"})
-        result["scene"] = {"state": _scene_identity(loaded_detailed),
-                            "snapshot": runtime_env._g1_scene_snapshot(loaded_detailed, runtime_read)}
+        if fixture == "save006":
+            scene_sample = _read_scene_at_exact_tick(
+                pid, SAVE006_INITIAL_SCENE_TICK, runtime_read,
+            )
+            scene_record = {
+                key: scene_sample.get(key) for key in (
+                    "source", "status", "target_tick", "sim_tick_before", "sim_tick_after",
+                    "program_state_before", "program_state_after", "read_duration_ms",
+                    "barrier", "reason",
+                )
+            }
+            result["scene"] = {"sampling": scene_record, "state": None, "snapshot": None}
+            if scene_sample.get("status") != "PASS":
+                raise ProbeError(f"initial save006 scene sample invalid: {scene_record}")
+            result["scene"] = {
+                "sampling": scene_record,
+                "state": _scene_identity(scene_sample["state"]),
+                "snapshot": runtime_env._g1_scene_snapshot(scene_sample["state"], runtime_read),
+            }
+        else:
+            result["scene"] = {"state": _scene_identity(loaded_detailed),
+                                "snapshot": runtime_env._g1_scene_snapshot(loaded_detailed, runtime_read)}
         if rice_phase_diagnostic is not None:
             rice_control = artifact_root / "rice-phase-trace"
             rice_control.mkdir(parents=True, exist_ok=False)
@@ -4752,6 +6143,9 @@ def _run_lane(
                                   "issue_result": production_wait["status"],
                                   "issue_acceptance": production_wait.get("acceptance")})
         result["captures"]["production"] = _capture(display, f"g1-saved-{variant}", pid, "production", crop, artifact_root, log)
+        completion_observation_allowed = _should_observe_production_completion(
+            production_click, production_target, production_wait.get("acceptance", {}),
+        )
         completion_wait = (
             _poll_observation(
                 "owner0 type31 production completion",
@@ -4761,7 +6155,7 @@ def _run_lane(
                     selected_slot=PRODUCTION_SLOT,
                 )["status"] == "PASS",
                 timeout=max(0.0, 120.0 - (time.monotonic() - click_started)),
-            ) if production_click is not None and production_wait["status"] == "PASS"
+            ) if completion_observation_allowed
             else {"status": "UNKNOWN", "samples": 0, "elapsed": 0.0,
                   "final": production_before}
         )
@@ -4778,7 +6172,7 @@ def _run_lane(
         result["status"] = "PASS"
     except _RiceDiagnosticComplete:
         result["status"] = "DIAGNOSTIC_ONLY"
-    except (_CensusStateComplete, _LoadedOnlyComplete):
+    except (_CensusStateComplete, _ResultScreenComplete, _LoadedOnlyComplete):
         result["status"] = "PASS"
     except Exception as exc:
         result["status"] = "FAIL"
@@ -4867,8 +6261,14 @@ def _run_lane(
             trace_copy = artifact_root / "trace_raw.jsonl"
             shutil.copy2(trace_path, trace_copy)
             result["trace"] = {"path": str(trace_copy), "sha256": _sha256(trace_copy)}
+            result["trace_summary"] = _trace_close_summary(
+                trace_copy, f"g1-saved-{lane_label}",
+            )
             if candidate:
-                result["mirror_validator"] = validate_trace(trace_copy, required_states=(3, 9, 35))
+                result["mirror_validator"] = validate_trace(
+                    trace_copy, required_states=(9, 35, 3, 29) if result_screen
+                    else (9, 7, 5, 3) if new_game_start else (9, 7, 5) if new_game_path else (3, 9, 35)
+                ) if not title_button else validate_trace(trace_copy, required_states=(9,))
                 if hd_source == "identity":
                     from tools.g1_hd_identity_probe import validate_trace as validate_identity_trace
 
@@ -4877,6 +6277,33 @@ def _run_lane(
                     from tools.g1_hd_scale2x_probe import validate_trace as validate_scale2x_trace
 
                     result["scale2x_validator"] = validate_scale2x_trace(trace_copy)
+            if candidate and isinstance(result.get("new_game_act"), dict):
+                dropped = _trace_dropped_count(trace_copy)
+                result["new_game_act"]["trace_dropped_count"] = dropped
+                if dropped != 0:
+                    result["new_game_act"]["status"] = "FAIL"
+            if candidate and isinstance(result.get("result_screen"), dict):
+                dropped = _trace_dropped_count(trace_copy)
+                result["result_screen"]["trace_dropped_count"] = dropped
+                if dropped != 0:
+                    result["result_screen"]["status"] = "FAIL"
+            if candidate and isinstance(result.get("victory_poke"), dict):
+                dropped = _trace_dropped_count(trace_copy)
+                result["victory_poke"]["trace_dropped_count"] = dropped
+                if dropped != 0:
+                    result["victory_poke"]["status"] = "FAIL"
+            if candidate and isinstance(result.get("new_game_menu"), dict):
+                dropped = _trace_dropped_count(trace_copy)
+                result["new_game_menu"]["trace_dropped_count"] = dropped
+                if dropped != 0:
+                    result["new_game_menu"]["status"] = "FAIL"
+            if candidate and isinstance(result.get("title_button"), dict):
+                dropped = _trace_dropped_count(trace_copy)
+                result["title_button"]["trace_dropped_count"] = dropped
+                if isinstance(result["title_button"].get("scenario_start"), dict):
+                    result["title_button"]["scenario_start"]["trace_dropped_count"] = dropped
+                if dropped != 0:
+                    result["title_button"]["status"] = "FAIL"
             if isinstance(result.get("performance_window"), dict):
                 result["performance_window"]["primary_present"] = _performance_present_metrics(trace_copy)
         if candidate and input_trace_path.is_file():
@@ -5113,7 +6540,8 @@ def _v2s_scale2x_reference(baseline_image: Any, candidate_image: Any) -> tuple[i
     """
     black = (0, 0, 0)
     width, height = baseline_image.size
-    source = list(baseline_image.get_flattened_data())
+    source_bytes = baseline_image.tobytes()
+    source = list(zip(source_bytes[0::3], source_bytes[1::3], source_bytes[2::3]))
     candidate_pixels = candidate_image.load()
     reference_blocks = unexplained_blocks = 0
     for y in range(480):
@@ -5181,7 +6609,11 @@ def _compare_images(
                 "reason": f"unexpected sizes: {base.size}, {cand.size}"}
     nearest = base.resize(cand.size, Image.Resampling.NEAREST)
     diff = ImageChops.difference(nearest, cand)
-    differing = sum(1 for pixel in diff.get_flattened_data() if pixel != (0, 0, 0))
+    diff_bytes = diff.tobytes()
+    differing = sum(
+        1 for index in range(0, len(diff_bytes), 3)
+        if diff_bytes[index] or diff_bytes[index + 1] or diff_bytes[index + 2]
+    )
     baseline_black = sum(
         1 for y in range(480) for x in range(800)
         if base.getpixel((x, y)) == (0, 0, 0)
@@ -5276,6 +6708,7 @@ def _v2q_capture_gate(comparisons: Mapping[str, Mapping[str, Any]]) -> dict[str,
 def _pair_status(
     pair: Mapping[str, Any], *, performance_requested: bool,
     hd_source: str, scale2x_gate_status: str, terrain_scroll: bool,
+    input_effects_required: bool = True,
 ) -> str:
     performance_comparison = pair.get("performance_comparison")
     performance_gate_pass = (
@@ -5283,8 +6716,27 @@ def _pair_status(
         or (isinstance(performance_comparison, Mapping)
             and performance_comparison.get("status") == "PASS")
     )
+    candidate = pair.get("candidate")
+    trace_close = candidate.get("trace_close") if isinstance(candidate, Mapping) else None
+    trace_summary = candidate.get("trace_summary") if isinstance(candidate, Mapping) else None
+    candidate_close_pass = (
+        isinstance(trace_close, Mapping) and trace_close.get("status") == "PASS"
+        and isinstance(trace_summary, Mapping)
+        and trace_summary.get("status") == "PASS"
+        and trace_summary.get("summary_count") == 1
+        and trace_summary.get("dropped_count") == 0
+        and trace_summary.get("detach") == "complete"
+        and trace_summary.get("flush") == "complete"
+    )
+    input_effects_pass = (
+        not input_effects_required
+        or (isinstance(pair.get("input_effect_comparison"), Mapping)
+            and pair["input_effect_comparison"].get("status") == "PASS")
+    )
     return "PASS" if (
         pair.get("scene_state_equal") is True
+        and candidate_close_pass
+        and input_effects_pass
         and pair.get("v2_capture_gate", {}).get("status") == "PASS"
         and pair.get("v2s_capture_gate", {}).get("status") == "PASS"
         and pair.get("v2q_capture_gate", {}).get("status") == "PASS"
@@ -5543,18 +6995,66 @@ def main(argv: list[str] | None = None) -> int:
                         help="skip the first N target-state presents before the 64-present census window starts (0-9999); diagnostic opt-in")
     parser.add_argument("--stale-mask", metavar="SPEC",
                         help="candidate lane: dump 800x600 covered/stale maps for these PS3 present ordinals (e.g. 6-12,300); diagnostic opt-in")
+    parser.add_argument("--stale-mask-state", type=int, choices=(3, 5, 7, 20, 23, 27, 29), default=3,
+                        help="candidate lane (needs --stale-mask): program state whose presents the stale-mask ordinals count (default PS3; 20 = scenario briefing, H-SC1; 27/29 = defeat result screen, H-RS1); diagnostic opt-in")
     parser.add_argument("--blend-size-reject-diag", action="store_true",
                         help="candidate lane: reproduce the lap1083 size reject of 0x467580/0x467B00 (H-ULc control run); diagnostic opt-in")
+    parser.add_argument("--ret-range-diag", action="store_true",
+                        help="candidate lane: count primitive B / TextOutA calls returning into the 2611 .kills/.idle sections (H-E2611G1-1); diagnostic opt-in")
+    parser.add_argument("--candidate-no-present-trace", action="store_true",
+                        help="candidate lane: run without SYW2_G1_PRESENT_TRACE/TRACE_RUN_ID like a user trial (H-UA0 U-0)")
+    parser.add_argument("--candidate-native-ddraw", action="store_true",
+                        help="candidate lane: load the game folder's own ddraw.dll (WINEDLLOVERRIDES ddraw=n,b) like a user machine (H-UA0 U-2)")
+    parser.add_argument("--candidate-no-unit-ticks", action="store_true",
+                        help="candidate lane: set INMM_STUB_NO_UNIT_TICKS=1 like the user .bat so inmm_unit_ticks.jsonl is not written (H-UA2 UA2-2)")
     parser.add_argument("--layer-drift", action="store_true",
                         help="candidate lane: record the 1x terrain-cache layer drift (sample points and rect counters per PS3 present, compose outcomes); diagnostic opt-in")
     parser.add_argument("--screen-watch", action="store_true",
                         help="candidate lane (needs --layer-drift): hardware write watch on the three screen sample points of every process thread (EIP/thread/value per hit); diagnostic opt-in")
     parser.add_argument("--screen-watch-cache", action="store_true",
                         help="candidate lane (needs --screen-watch): watch the sample points in the 1x terrain cache (0xBA3D30, pitch 832) instead of the screen buffer; diagnostic opt-in")
+    parser.add_argument("--screen-watch-state", type=int, choices=(3, 5, 7, 9, 20, 23, 27, 29), default=3,
+                        help="candidate lane (needs --screen-watch): program state the write watch follows (default PS3; 9 = title menu popup, H-TM1; 20 = scenario briefing, H-SC1; 23 = Esc pause menu/save window, H-PM1; 27/29 = defeat result screen, H-RS1); diagnostic opt-in")
+    parser.add_argument("--screen-watch-call-from", type=int, default=0, metavar="N",
+                        help="candidate lane (needs --screen-watch): skip ddraw call-table rows before watch present N (0-99999; H-SC1); diagnostic opt-in")
     parser.add_argument("--drift-samples", metavar="X,Y;X,Y;X,Y",
                         help="candidate lane (needs --layer-drift): move the three drift/screen-watch sample points to these 800x600 screen pixels; diagnostic opt-in")
-    parser.add_argument("--census-state", type=int, choices=(3, 9), default=3,
-                        help="program state the --census-only run measures (default PS3 save load; 9 = menu)")
+    parser.add_argument("--census-state", type=int, choices=(3, 5, 7, 9, 29, 35), default=3,
+                        help="program state the --census-only run measures (default PS3 save load; 9 = menu; 35 = load-slot screen; 7 = new-game map/settings; 5 = solo lobby)")
+    parser.add_argument("--esl2613", action="store_true",
+                        help="run both lanes on the official 2612 data bundle with the pinned ESL 2613 executable")
+    parser.add_argument("--new-game-path", action="store_true",
+                        help="measure the new-game screens: both lanes walk PS9 -> PS7 -> PS5 (no save load); H-OS0 diagnostic")
+    parser.add_argument("--new-game-start", action="store_true",
+                        help="with --new-game-path: continue from the PS5 lobby into the new game's PS3 and capture ps3_start; H-NG3 diagnostic")
+    parser.add_argument("--new-game-play", action="store_true",
+                        help="with --new-game-start: after ps3_start hold RIGHT/DOWN/LEFT/UP 2s each then idle 60s, measuring PS3 HD per window; H-NG4 diagnostic")
+    parser.add_argument("--new-game-play-keys", default=None,
+                        help="with --new-game-play: comma list of scroll keys (RIGHT,DOWN,LEFT,UP) held in order instead of the default four; H-HDK0 K-1 long-run option")
+    parser.add_argument("--new-game-play-hold", type=float, default=None,
+                        help="with --new-game-play: seconds each scroll key is held (default 2); H-HDK0 K-1 long-run option")
+    parser.add_argument("--new-game-play-dwell", type=float, default=None,
+                        help="with --new-game-play: idle seconds after the scroll keys (default 60); H-HDK0 K-1 long-run option")
+    parser.add_argument("--new-game-play-dwell-captures", type=int, default=None,
+                        help="with --new-game-play: capture N times, evenly spaced, inside the dwell (ps3_dwell_1..N); H-E2611G1-1 combat-scene option")
+    parser.add_argument("--new-game-act", action="store_true",
+                        help="with --new-game-start: after ps3_start select a farmer, queue production, drag-select and move, then idle 60s (before --new-game-play scrolling), measuring PS3 HD per window; H-NG5 diagnostic")
+    parser.add_argument("--new-game-menu", action="store_true",
+                        help="with --new-game-start: after ps3_start (and --new-game-act) press Esc, open the save window, go back and resume without saving, dwelling 10s in each screen and measuring mirror presents of every program state; H-PM0 diagnostic")
+    parser.add_argument("--new-game-menu-subs", type=parse_menu_subs, default=(),
+                        help="with --new-game-menu: also open and close these pause-menu sub windows after the save window (comma list of load,options; never runs a load or changes a setting); H-PM3 diagnostic")
+    parser.add_argument("--title-button", choices=tuple(TITLE_BUTTONS), default=None,
+                        help="click one unmeasured title-menu button (scenario, user, charroom, prologue) once and observe the program-state column and HD per state for 15s, with two captures per lane; no game start or file change; H-TM0 diagnostic")
+    parser.add_argument("--scenario-start", action="store_true",
+                        help="with --title-button scenario: after PS15 press 시작하기 once (retry once) and record the briefing/loading/in-game states for up to 90s with a capture per state and PS3 at +10s/+30s; never clicks 나가기; H-SC0 diagnostic")
+    parser.add_argument("--scenario-play", action="store_true",
+                        help="with --scenario-start: hold the briefing (PS20) 10s, click 게임하기 once (retry once; never 돌아가기/다시보기), await PS3 for 60s and hold it 30s with captures at +10s/+30s; H-SC0 diagnostic")
+    parser.add_argument("--scenario-briefing-dwell", type=float, default=SCENARIO_BRIEFING_DWELL_SECONDS,
+                        help="with --scenario-play: seconds to hold the briefing (PS20) before clicking 게임하기, capturing scenario_ps20_dwell at its end (default 10; keep under ~60 to stay inside the 8192-event trace); H-SC0 diagnostic")
+    parser.add_argument("--victory-poke", action="store_true",
+                        help="with --new-game-start: after ps3_start (and any act/menu/play) write the cheat flag [0xB63238]=1 once (synthetic forced victory) and walk the PS24 banner -> PS29 result screen; H-VS0 diagnostic")
+    parser.add_argument("--result-screen", action="store_true",
+                        help="after loading the g7defeat fixture, watch PS27 -> PS29 (결과 화면), switch its tabs and confirm; H-RS0 HD measurement")
     parser.add_argument("--terrain-trace", action="store_true")
     parser.add_argument("--terrain-scroll", action="store_true",
                         help="run same-key DOWN/RIGHT scroll input without gdb terrain tracing")
@@ -5620,6 +7120,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(throttle_error)
     candidate_throttle = (_parse_candidate_throttle(args.candidate_throttle)
                           if args.candidate_throttle is not None else None)
+    global ESL2613
+    ESL2613 = args.esl2613
     if args.p4b_s_snapshot and not args.terrain_scroll:
         parser.error("--p4b-s-snapshot requires --terrain-scroll")
     if args.p4b_s_snapshot and args.fixture != "save006":
@@ -5639,8 +7141,10 @@ def main(argv: list[str] | None = None) -> int:
     _, source_exe = runtime_env.validate_original_source(SOURCE)
     if _sha256(source_exe) != runtime_env.ORIGINAL_SHA256:
         raise SystemExit("protected source executable SHA mismatch")
-    if _sha256(FIXTURE_SOURCE / "save" / fixture_name) != fixture_sha256:
-        raise SystemExit("protected save fixture SHA mismatch")
+    try:
+        _verify_fixture_file(args.fixture, _fixture_path(args.fixture))
+    except ProbeError as error:
+        raise SystemExit(str(error)) from None
     args.artifact_root.mkdir(parents=True, exist_ok=False)
     bridge_dir = args.artifact_root / "bridge"
     subprocess.run([
@@ -5717,18 +7221,88 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--census-skip-presents must be 0-9999")
     if args.stale_mask is not None and (args.hd_source != "scale2x" or args.census_only):
         parser.error("--stale-mask requires --hd-source scale2x")
+    if args.stale_mask_state != 3 and args.stale_mask is None:
+        parser.error("--stale-mask-state requires --stale-mask")
     if args.blend_size_reject_diag and (args.hd_source != "scale2x" or args.census_only):
         parser.error("--blend-size-reject-diag requires --hd-source scale2x")
+    if args.ret_range_diag and (args.hd_source != "scale2x" or args.census_only):
+        parser.error("--ret-range-diag requires --hd-source scale2x")
+    if args.candidate_no_present_trace and (args.hd_source != "scale2x" or args.census_only):
+        parser.error("--candidate-no-present-trace requires --hd-source scale2x")
+    if args.candidate_native_ddraw and (args.hd_source != "scale2x" or args.census_only):
+        parser.error("--candidate-native-ddraw requires --hd-source scale2x")
+    if args.candidate_no_unit_ticks and (args.hd_source != "scale2x" or args.census_only):
+        parser.error("--candidate-no-unit-ticks requires --hd-source scale2x")
     if args.layer_drift and (args.hd_source != "scale2x" or args.census_only):
         parser.error("--layer-drift requires --hd-source scale2x")
     if args.screen_watch and not args.layer_drift:
         parser.error("--screen-watch requires --layer-drift")
     if args.screen_watch_cache and not args.screen_watch:
         parser.error("--screen-watch-cache requires --screen-watch")
+    if args.screen_watch_state != 3 and not args.screen_watch:
+        parser.error("--screen-watch-state requires --screen-watch")
+    if args.screen_watch_call_from and not args.screen_watch:
+        parser.error("--screen-watch-call-from requires --screen-watch")
+    if not 0 <= args.screen_watch_call_from <= 99999:
+        parser.error("--screen-watch-call-from must be 0-99999")
     if args.drift_samples is not None and not args.layer_drift:
         parser.error("--drift-samples requires --layer-drift")
     if args.census_only and args.hd_source is not None:
         parser.error("--census-only observes original pinned prologues and cannot be combined with --hd-source")
+    if args.new_game_path and args.census_only:
+        parser.error("--new-game-path cannot be combined with --census-only")
+    if args.new_game_path and args.hd_source != "scale2x":
+        parser.error("--new-game-path requires --hd-source scale2x")
+    if args.new_game_start and not args.new_game_path:
+        parser.error("--new-game-start requires --new-game-path")
+    if args.new_game_play and not args.new_game_start:
+        parser.error("--new-game-play requires --new-game-start")
+    play_options = (args.new_game_play_keys, args.new_game_play_hold, args.new_game_play_dwell)
+    if any(option is not None for option in play_options) and not args.new_game_play:
+        parser.error("--new-game-play-keys/-hold/-dwell require --new-game-play")
+    if args.new_game_play_dwell_captures is not None:
+        if not args.new_game_play:
+            parser.error("--new-game-play-dwell-captures requires --new-game-play")
+        if args.new_game_play_dwell_captures < 1:
+            parser.error("--new-game-play-dwell-captures must be >= 1")
+        NEW_GAME_PLAY_OVERRIDE["dwell_captures"] = args.new_game_play_dwell_captures
+    if args.new_game_play_keys is not None and args.new_game_play_keys.strip().lower() == "none":
+        NEW_GAME_PLAY_OVERRIDE["keys"] = ()  # no scrolling: dwell at the start camera (H-E2611G1-1)
+    elif args.new_game_play_keys is not None:
+        keys = tuple(key.strip().upper() for key in args.new_game_play_keys.split(",") if key.strip())
+        if not keys or any(key not in NEW_GAME_PLAY_KEYS for key in keys):
+            parser.error(f"--new-game-play-keys must list keys from {','.join(NEW_GAME_PLAY_KEYS)}")
+        NEW_GAME_PLAY_OVERRIDE["keys"] = keys
+    for name, option in (("hold", args.new_game_play_hold), ("dwell", args.new_game_play_dwell)):
+        if option is not None:
+            if option < 0:
+                parser.error(f"--new-game-play-{name} must be >= 0")
+            NEW_GAME_PLAY_OVERRIDE[name] = option
+    if args.new_game_act and not args.new_game_start:
+        parser.error("--new-game-act requires --new-game-start")
+    if args.new_game_menu and not args.new_game_start:
+        parser.error("--new-game-menu requires --new-game-start")
+    if args.victory_poke and not args.new_game_start:
+        parser.error("--victory-poke requires --new-game-start")
+    if args.scenario_start and args.title_button != "scenario":
+        parser.error("--scenario-start requires --title-button scenario")
+    if args.scenario_briefing_dwell != SCENARIO_BRIEFING_DWELL_SECONDS and not args.scenario_play:
+        parser.error("--scenario-briefing-dwell requires --scenario-play")
+    if args.scenario_play and not args.scenario_start:
+        parser.error("--scenario-play requires --scenario-start")
+    if args.title_button and args.hd_source != "scale2x":
+        parser.error("--title-button requires --hd-source scale2x")
+    if args.title_button and (args.census_only or args.new_game_path or args.result_screen
+                              or args.terrain_scroll):
+        parser.error("--title-button cannot be combined with --census-only, --new-game-path, --result-screen or --terrain-scroll")
+    if args.new_game_menu_subs and not args.new_game_menu:
+        parser.error("--new-game-menu-subs requires --new-game-menu")
+    if args.result_screen and args.fixture != "g7defeat":
+        parser.error("--result-screen requires --fixture g7defeat")
+    if args.result_screen and args.hd_source != "scale2x":
+        parser.error("--result-screen requires --hd-source scale2x")
+    if args.result_screen and (args.census_only or args.new_game_path or args.terrain_scroll):
+        parser.error("--result-screen cannot be combined with --census-only, --new-game-path or --terrain-scroll")
     if args.census_only:
         census = _run_lane(
             variant="baseline", bridge=bridge,
@@ -5753,6 +7327,159 @@ def main(argv: list[str] | None = None) -> int:
             "cleanup": census.get("cleanup"),
         }, ensure_ascii=False))
         return 0 if census.get("status") == "PASS" and census_gate["status"] == "PASS" else 2
+    if args.result_screen:
+        lanes = {
+            name: _run_lane(
+                variant=name, bridge=bridge, runtime_root=args.runtime_root / name,
+                artifact_root=args.artifact_root / name, close_helper=close_helper,
+                hd_source=args.hd_source if name == "candidate" else None,
+                result_screen=True, fixture=args.fixture, scene_actions=args.scene_actions,
+                stale_mask=args.stale_mask if name == "candidate" else None,
+                stale_mask_state=args.stale_mask_state,
+                layer_drift=args.layer_drift if name == "candidate" else False,
+                screen_watch=args.screen_watch if name == "candidate" else False,
+                screen_watch_cache=args.screen_watch_cache if name == "candidate" else False,
+                screen_watch_state=args.screen_watch_state,
+                drift_samples=args.drift_samples if name == "candidate" else None)
+            for name in ("baseline", "candidate")
+        }
+        passed = all(lane.get("status") == "PASS" for lane in lanes.values()) and all(
+            lane.get("cleanup", {}).get("ok") and lane.get("source_unchanged") for lane in lanes.values()
+        ) and lanes["candidate"].get("scale2x_validator", {}).get("status") == "PASS" and all(
+            lane.get("result_screen", {}).get("status") == "PASS" for lane in lanes.values())
+        summary = {
+            "schema": "syw2plus.g1-result-screen.v1",
+            "status": "PASS" if passed else "FAIL",
+            "fixture": {"name": fixture_name, "sha256": fixture_sha256, "synthetic": False},
+            "lanes": {name: {key: lane.get(key) for key in (
+                "status", "error", "trace", "captures", "cleanup", "source_unchanged",
+                "mirror_validator", "scale2x_validator", "result_screen", "actions",
+                "stale_mask", "screen_watch")}
+                for name, lane in lanes.items()},
+        }
+        (args.artifact_root / "result-screen-result.json").write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2) + "\n")
+        print(json.dumps({"status": summary["status"],
+                          "result": str(args.artifact_root / "result-screen-result.json")},
+                         ensure_ascii=False))
+        return 0 if passed else 2
+    if args.title_button:
+        lanes = {
+            name: _run_lane(
+                variant=name, bridge=bridge, runtime_root=args.runtime_root / name,
+                artifact_root=args.artifact_root / name, close_helper=close_helper,
+                hd_source=args.hd_source if name == "candidate" else None,
+                title_button=args.title_button,
+                scenario_start=args.scenario_start,
+                scenario_play=args.scenario_play,
+                scenario_briefing_dwell=args.scenario_briefing_dwell,
+                fixture=args.fixture,
+                scene_actions=args.scene_actions,
+                layer_drift=args.layer_drift if name == "candidate" else False,
+                screen_watch=args.screen_watch if name == "candidate" else False,
+                screen_watch_cache=args.screen_watch_cache if name == "candidate" else False,
+                screen_watch_state=args.screen_watch_state,
+                screen_watch_call_from=args.screen_watch_call_from,
+                stale_mask=args.stale_mask if name == "candidate" else None,
+                stale_mask_state=args.stale_mask_state,
+                drift_samples=args.drift_samples if name == "candidate" else None)
+            for name in ("baseline", "candidate")
+        }
+        windows = {name: lane.get("title_button", {}) for name, lane in lanes.items()}
+        # The poll samples a transient chain (PS150 -> target) at 0.05 s, so the full columns can differ by
+        # one sampled hop: the gate compares the last state each lane reached (PS9 again, or the target
+        # screen); the columns and the late-flushed baseline trace are disclosed beside it.
+        sequences = {name: [row["ps"] for row in window.get("states", [])] for name, window in windows.items()}
+        finals = {name: (seq[-1] if seq else None) for name, seq in sequences.items()}
+        candidate_summary = windows["candidate"].get("state_summary", {})
+        passed = all(lane.get("status") == "PASS" for lane in lanes.values()) and all(
+            lane.get("cleanup", {}).get("ok") and lane.get("source_unchanged") for lane in lanes.values()
+        ) and all(window.get("status") in ("PASS", "IN_PLACE", "EXITED") for window in windows.values()) and (
+            windows["baseline"].get("status") == windows["candidate"].get("status")
+        ) and all(len(lane.get("captures", {})) >= (1 if windows[name].get("status") == "EXITED" else 3)
+                  for name, lane in lanes.items()) and (
+            finals["baseline"] == finals["candidate"]) and (
+            candidate_summary.get("fallback_max") == 0 and candidate_summary.get("success_min") == 1
+            and all(value == 0 for value in candidate_summary.get("safety_max", {}).values())) and (
+            not args.scenario_start or all(
+                window.get("scenario_start", {}).get("status") == "PASS" for window in windows.values()) and (
+                windows["candidate"]["scenario_start"].get("state_summary", {}).get("fallback_max") == 0
+                and all(value == 0 for value in windows["candidate"]["scenario_start"].get(
+                    "state_summary", {}).get("safety_max", {}).values())))
+        scenario_sequences = {
+            name: [row["ps"] for row in window.get("scenario_start", {}).get("states", [])]
+            for name, window in windows.items()} if args.scenario_start else None
+        summary = {
+            "schema": "syw2plus.g1-title-button.v1",
+            "status": "PASS" if passed else "FAIL",
+            "button": args.title_button,
+            "state_sequences": sequences,
+            "state_sequences_match": sequences["baseline"] == sequences["candidate"],
+            "final_states": finals,
+            "final_states_match": finals["baseline"] == finals["candidate"],
+            "scenario_state_sequences": scenario_sequences,
+            "scenario_state_sequences_match": (
+                None if scenario_sequences is None
+                else scenario_sequences["baseline"] == scenario_sequences["candidate"]),
+            "trace_states": {name: window.get("trace_states", []) for name, window in windows.items()},
+            "lanes": {name: {key: lane.get(key) for key in (
+                "status", "error", "trace", "captures", "cleanup", "source_unchanged",
+                "mirror_validator", "scale2x_validator", "title_button", "layer_drift",
+                "screen_watch", "stale_mask")} for name, lane in lanes.items()},
+        }
+        (args.artifact_root / "title-button-result.json").write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2) + "\n")
+        print(json.dumps({"status": summary["status"],
+                          "result": str(args.artifact_root / "title-button-result.json")},
+                         ensure_ascii=False))
+        return 0 if passed else 2
+    if args.new_game_path:
+        lanes = {
+            name: _run_lane(
+                variant=name, bridge=bridge, runtime_root=args.runtime_root / name,
+                artifact_root=args.artifact_root / name, close_helper=close_helper,
+                hd_source=args.hd_source if name == "candidate" else None,
+                new_game_path=True, new_game_start=args.new_game_start,
+                new_game_play=args.new_game_play, new_game_act=args.new_game_act,
+                new_game_menu=args.new_game_menu,
+                new_game_menu_subs=args.new_game_menu_subs,
+                victory_poke=args.victory_poke,
+                layer_drift=args.layer_drift if name == "candidate" else False,
+                screen_watch=args.screen_watch if name == "candidate" else False,
+                screen_watch_cache=args.screen_watch_cache if name == "candidate" else False,
+                screen_watch_state=args.screen_watch_state,
+                drift_samples=args.drift_samples if name == "candidate" else None,
+                stale_mask=args.stale_mask if name == "candidate" else None,
+                stale_mask_state=args.stale_mask_state,
+                ret_range_diag=args.ret_range_diag if name == "candidate" else False,
+                fixture=args.fixture, scene_actions=args.scene_actions)
+            for name in ("baseline", "candidate")
+        }
+        passed = all(lane.get("status") == "PASS" for lane in lanes.values()) and all(
+            lane.get("cleanup", {}).get("ok") and lane.get("source_unchanged") for lane in lanes.values()
+        ) and lanes["candidate"].get("scale2x_validator", {}).get("status") == "PASS" and (
+            not args.new_game_play
+            or all(lane.get("new_game_play", {}).get("status") == "PASS" for lane in lanes.values())) and (
+            not args.new_game_act
+            or all(lane.get("new_game_act", {}).get("status") == "PASS" for lane in lanes.values())) and (
+            not args.new_game_menu
+            or all(lane.get("new_game_menu", {}).get("status") == "PASS" for lane in lanes.values())) and (
+            not args.victory_poke
+            or all(lane.get("victory_poke", {}).get("status") == "PASS" for lane in lanes.values()))
+        summary = {
+            "schema": "syw2plus.g1-new-game-path.v1",
+            "status": "PASS" if passed else "FAIL",
+            "lanes": {name: {key: lane.get(key) for key in (
+                "status", "error", "trace", "captures", "dwell", "cleanup", "source_unchanged",
+                "source_exe_sha256", "private_exe_sha256", "mirror_validator", "scale2x_validator", "new_game_start", "new_game_play",
+                "new_game_act", "new_game_menu", "victory_poke", "screen_watch")} for name, lane in lanes.items()},
+        }
+        (args.artifact_root / "new-game-path-result.json").write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2) + "\n")
+        print(json.dumps({"status": summary["status"],
+                          "result": str(args.artifact_root / "new-game-path-result.json")},
+                         ensure_ascii=False))
+        return 0 if passed else 2
     reference_states = None
     if args.reference_completed_states is not None:
         reference_states = _load_completed_state_reference(args.reference_completed_states)
@@ -5786,9 +7513,14 @@ def main(argv: list[str] | None = None) -> int:
                           inprocess_snapshot=args.p4b_s_snapshot,
                           stale_mask=args.stale_mask,
                           blend_size_reject_diag=args.blend_size_reject_diag,
+                          ret_range_diag=args.ret_range_diag,
+                          no_present_trace=args.candidate_no_present_trace,
+                          native_ddraw=args.candidate_native_ddraw,
+                          no_unit_ticks=args.candidate_no_unit_ticks,
                           layer_drift=args.layer_drift,
                           screen_watch=args.screen_watch,
                           screen_watch_cache=args.screen_watch_cache,
+                          screen_watch_state=args.screen_watch_state,
                           drift_samples=args.drift_samples,
                           negative_mismatch=args.negative_mismatch,
                           performance_window=args.performance_window,
@@ -5890,6 +7622,7 @@ def main(argv: list[str] | None = None) -> int:
         hd_source=args.hd_source,
         scale2x_gate_status=scale2x_gate_status,
         terrain_scroll=args.terrain_scroll,
+        input_effects_required=args.scene_actions == "all",
     )
     pair["status"] = pair_status
     pair_path = args.artifact_root / "pair-result.json"

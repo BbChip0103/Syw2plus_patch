@@ -1,0 +1,16 @@
+Lap1234 work handoff — H-TR2613 fresh middle review required.
+
+Work implemented the pinned 2613 profile, ran two save006 pairs and one new-game test, and staged a 3-file candidate set in shared temp. Do not treat staging as external delivery or G1 milestone approval.
+
+Evidence:
+- Detailed work record: docs/history/laps/20261010_lap1234_work_g1_htr2613_runtime_pair_staging.md
+- Independent raw/staging audit: ../temp/Syw2plus_patch/20261010_lap1234_htr2613/work-audit.json, SHA256 fba1cfcb748e262d68eb16de9c3fa3ad5f08e6ac69e2ab638098bd576c17e54d
+- Fresh pair results: ../temp/Syw2plus_patch/20261010_lap1234_htr2613/pair01/pair-result.json and pair02/pair-result.json; both PASS with equal scenes, input 7/7, V2/V2s/V2q/Scale2x, owned close, run ID, summary 1/drop 0 and flush/detach complete. Both lane executable hashes equal the pinned ESL 2613 SHA.
+- Fresh new-game result: ../temp/Syw2plus_patch/20261010_lap1234_htr2613/newgame/new-game-path-result.json; both lanes PASS, camera four directions PASS, candidate Scale2x PASS, close and trace summaries PASS.
+- Candidate PS3 stale pixels: 0 in pair01, pair02 and new-game. Lap1233 stale240 location/writer remains UNKNOWN and was not reproduced; don't infer a writer. Combat `.kills`/`.idle` path remains INCONCLUSIVE.
+- Review staging: ../temp/Syw2plus_patch/20261010_lap1234_htr2613/user_test_staging/ contains exactly `_inmm.dll` and two ASCII `.bat` files, no txt. Direct batch starts `[ESL]Syw2plus 2613.exe`; no external placement/delivery occurred.
+- Pre-full-gate checks: doctor tooling/original PASS (default runtime manifest absent), lint PASS, typecheck 12 files PASS, focused G1 probe tests 234 passed. First full check became fingerprint-stale due a separate G2 worktree update; the next current-source full check found one 20s dry-loop timeout. Root cause was copying 2,209 archived docs into a dry-mode test fixture (measured 13.08s); excluding unused `docs/history` reduced that fixture run to 2.79s, and all nine `tests/test_patch_loop.py` tests now pass. No timeout threshold was loosened. Final full make check and safety/context/diff evidence are recorded in docs/STATUS.md after completion.
+
+Middle review scope: independently recompute pair/new-game raw results, 2613/fixture pins, lane close-summary ownership, candidate PS3 stale counts and input timestamps, 15-file 2612 overlay digest, staging SHA and launcher diff, full make check/fingerprint and final safety/context/diff. Preserve generic mirror_validator BLOCKED as a diagnostic alongside Scale2x/V2 gate PASS. Historical 2611 HOLD/delivery remains unchanged.
+
+After middle accepts the technical partial evidence, next work follows the registered stale-mask (`--stale-mask 55-90 --stale-mask-state 3`) location procedure, then existing screen-watch/drift-samples writer attribution if stale reappears. Trial staging may be considered only after middle's independent review; root owns any user trial request/delivery. No G1 milestone completion is claimed.

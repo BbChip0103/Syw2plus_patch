@@ -43,6 +43,7 @@ from typing import Any, Callable, Mapping, cast
 
 import numpy as np
 
+from patches.esl2610 import g6_shift_click_2610 as g6_2610_patch
 from patches.population.g2_esl2608_runtime_layout import ESL2608_LAYOUT
 from patches.population.runtime_driver import read as read_memory
 from patches.population.runtime_driver import state as read_state
@@ -51,7 +52,7 @@ from patches.selection import g5_esl2608_g2_port as port_patch
 from patches.selection import g6_shift_click_count_bound as g6_patch
 from patches.selection import g7_save_trailer_local_restore as g7r5_patch
 from patches.selection import g7_title_load_seat_restore as g7_patch
-from tools import runtime_env
+from tools import esl2610_runtime, runtime_env
 from tools.g2_esl2608_phase_a_shift_probe import (
     BASE_SOURCE, CALIBRATION_POINTS, SEED_TYPE, UNIT_HP_OFFSET, UNIT_OWNER_OFFSET,
     UNIT_PENDING_XY_OFFSET, UNIT_STRIDE, UNIT_TYPE_OFFSET, UNIT_X_OFFSET, UNIT_Y_OFFSET, copy_overlay,
@@ -60,7 +61,7 @@ from tools.g5_candidate_drag_probe import ProbeError, SupplyProbe, capture, sha2
 from tools.g5_screen_world_calibration import decode_xy, fit_affine
 
 REPO = Path(__file__).resolve().parents[1]
-INPUT_ROOT = REPO.parent / "260921_temp"
+INPUT_ROOT = REPO.parent / "260921_temp" / "archive"
 STOCK = REPO / "Syw2plus" / "syw2plus_original.exe"
 PORT_EXE = INPUT_ROOT / (
     "[ESL]Syw2plus 2608_AI상점개설_장수7명_전비1500-500-5000_G2_개인500_공용4092_G5_선택50_시험용.exe"
@@ -85,6 +86,9 @@ LAYOUTS = {
     "cand-r5": (port_patch.G5BSS_VA, 50, ESL2608_LAYOUT.unit_pool_base, ESL2608_LAYOUT.unit_existence_base,
                 ESL2608_LAYOUT.capacity),  # H-G7s: port + G6 + R5 save trailer
 }
+# ESL 2610: original 1200-slot pool, the 100-slot selection entries moved away from count+4 (count stays 0x899024).
+LAYOUTS["base2610"] = LAYOUTS["cand2610"] = (0x00899024, esl2610_runtime.SELECTION_CAPACITY, 0x0066B790, 0x008990C8, 1200)
+ESL2610_VARIANTS = ("base2610", "cand2610")
 LOBBY_TABLE_VA = 0x632C9C
 LOBBY_TABLE_SIZE = 0x170
 LOBBY_SNAPSHOT_VA = 0x632E0C
@@ -115,6 +119,10 @@ CLICK_DY = (-12, -20, -6, 0, 6)
 SPARSE_ROWS = (110, 180, 250, 320)
 SPARSE_COLS = tuple(range(60, 780, 90))
 DENSE_ROWS = (385, 410, 435, 458)
+# 2610 dense band: one fixture per world tile whose screen point lies in this box (up to 148 type-7 units fit the cap)
+DENSE_BAND_2610 = (100, 780, 335, 462)
+FILL_BAND_2610 = (100, 780, 60, 325)  # spawned after G6-1..3 (sparse isolation done) to reach the 100 cap
+ESL2610_SEED_TYPE = 7
 DENSE_COLS = tuple(range(150, 770, 38))
 
 
@@ -138,7 +146,8 @@ def selection_snapshot(pid: int, variant: str) -> dict[str, Any]:
     count = _u(pid, base, 4, signed=True)
     if not 0 <= count <= cap:
         raise ProbeError(f"selection count outside 0..{cap}: {count}")
-    raw = [_u(pid, base + 4 + i * 4, 4) for i in range(count)]
+    entries = esl2610_runtime.SELECTION_ENTRIES_VA if variant in ESL2610_VARIANTS else base + 4
+    raw = [_u(pid, entries + i * 4, 4) for i in range(count)]
     slots = [value & 0xFFF for value in raw]
     return {"count": count, "slots": slots, "unique_slots": len(set(slots))}
 
@@ -216,6 +225,13 @@ def _install(variant: str, port: str = "normal") -> tuple[bytes | None, dict[str
     """Return the EXE bytes to install (None keeps the private original copy)."""
     if variant == "orig":
         return None, {"sha256": sha256(STOCK)}
+    if variant in ESL2610_VARIANTS:
+        base_bytes = esl2610_runtime.ESL2610_EXE.read_bytes()
+        if sha256(esl2610_runtime.ESL2610_EXE) != esl2610_runtime.ESL2610_SHA256:
+            raise ProbeError("ESL2610 EXE SHA mismatch")
+        if variant == "base2610":
+            return base_bytes, {"sha256": esl2610_runtime.ESL2610_SHA256}
+        return g6_2610_patch.build_candidate(base_bytes)
     if port not in PORT_EXES:
         raise ProbeError(f"unsupported port: {port}")
     if sha256(PORT_EXES[port]) != g6_patch.PORT_SHA256[port]:
@@ -250,16 +266,20 @@ def run_probe(variant: str, seat: int, runtime_root: Path, artifact_root: Path, 
     bridge_dir = artifact_root / "bridge"
     subprocess.run([sys.executable, str(REPO / "patches/population/build_runtime_bridge.py"),
                     "--out-dir", str(bridge_dir), "--unit-pool-capacity", str(pool_cap),
-                    *(["--unit-pool-base", hex(pool_base)] if variant != "orig" else [])],
+                    *(["--unit-pool-base", hex(pool_base)] if variant not in ("orig", *ESL2610_VARIANTS) else [])],
                    cwd=REPO, check=True, env=dict(os.environ, PYTHONPATH=str(REPO)))
     bridge = bridge_dir / "_inmm.dll"
-    manifest = runtime_env.prepare(BASE_SOURCE, runtime_root=runtime_root, bridge=bridge, timeout=90)
+    if variant in ESL2610_VARIANTS:
+        manifest, overlay = esl2610_runtime.prepare(cast(bytes, exe_bytes), runtime_root, bridge=bridge)
+    else:
+        manifest = runtime_env.prepare(BASE_SOURCE, runtime_root=runtime_root, bridge=bridge, timeout=90)
     game = Path(cast(str, cast(Mapping[str, Any], manifest["game"])["root"]))
     prefix = Path(cast(str, cast(Mapping[str, Any], manifest["wine"])["prefix"]))
     private_exe = game / runtime_env.ORIGINAL_EXE
-    if sha256(private_exe) != runtime_env.ORIGINAL_SHA256:
+    if variant not in ESL2610_VARIANTS and sha256(private_exe) != runtime_env.ORIGINAL_SHA256:
         raise ProbeError("private source copy SHA mismatch before install")
-    overlay = copy_overlay(game) if variant != "orig" else []
+    if variant not in ESL2610_VARIANTS:
+        overlay = copy_overlay(game) if variant != "orig" else []
     if exe_bytes is not None:
         private_exe.write_bytes(exe_bytes)
     result: dict[str, Any] = {
@@ -579,6 +599,8 @@ def run_probe(variant: str, seat: int, runtime_root: Path, artifact_root: Path, 
         # slot0 emulation keeps local at the lobby seat (0) and fixtures owned by it; only the empty-slot
         # owner byte (what the Shift+click loop compares against local) is changed after the setup.
         fx_owner = local_ps3
+        # 2610 caps supply at 1500: type 7 (10 supply) fits 148 fixtures, type 2 (13) only 113.
+        seed_type = ESL2610_SEED_TYPE if variant in ESL2610_VARIANTS else SEED_TYPE
         anchor_owner = fx_owner
         owned = live_units(pid, variant, anchor_owner)
         result["owned_before_fixture"] = [{"slot": r["slot"], "type": r["type"], "hp": r["hp"],
@@ -643,6 +665,11 @@ def run_probe(variant: str, seat: int, runtime_root: Path, artifact_root: Path, 
         dense_screen = [(x, y) for y in DENSE_ROWS for x in DENSE_COLS]
         planned: list[tuple[str, tuple[int, int]]] = []
         for kind, pts in (("sparse", sparse_screen), ("dense", dense_screen)):
+            if kind == "dense" and variant in ESL2610_VARIANTS:
+                x0, x1, y0, y1 = DENSE_BAND_2610
+                planned += [("dense", (wx, wy)) for wx in range(1, map_w - 1) for wy in range(1, map_h - 1)
+                            if x0 <= world_to_screen(wx, wy)[0] <= x1 and y0 <= world_to_screen(wx, wy)[1] <= y1]
+                continue
             for sx, sy in pts:
                 wx, wy = screen_to_world(sx, sy)
                 if 1 <= wx < map_w - 1 and 1 <= wy < map_h - 1:
@@ -651,10 +678,16 @@ def run_probe(variant: str, seat: int, runtime_root: Path, artifact_root: Path, 
                                   "dense": sum(1 for k, _ in planned if k == "dense"),
                                   "owner": fx_owner, "synthetic": True,
                                   "method": "engine-seeded op5 at screen-derived world tiles"}
+        fixture_spawned = 0
         for kind, (wx, wy) in planned:
-            receipt = supply.call(op=5, owner=fx_owner, unit_type=SEED_TYPE, x=wx, y=wy, count=1)
+            receipt = supply.call(op=5, owner=fx_owner, unit_type=seed_type, x=wx, y=wy, count=1)
+            if (variant in ESL2610_VARIANTS and receipt.get("reason") == "fixture_exceeds_unreserved_supply"
+                    and fixture_spawned):
+                result["fixture_supply_exhausted_after"] = fixture_spawned
+                break
             if not receipt.get("ok") or receipt.get("fixture_added") != 1:
                 raise ProbeError(f"fixture spawn failed at {(wx, wy)}: {receipt}")
+            fixture_spawned += 1
         time.sleep(1)
         slot0_owner_va = pool_base + UNIT_OWNER_OFFSET
         if seat_method == "slot0" and seat != fx_owner:
@@ -669,7 +702,7 @@ def run_probe(variant: str, seat: int, runtime_root: Path, artifact_root: Path, 
                 raise ProbeError("slot-0 owner poke did not stick")
         time.sleep(2)
         check_alive()
-        fixture = live_units(pid, variant, fx_owner, unit_type=SEED_TYPE)
+        fixture = live_units(pid, variant, fx_owner, unit_type=seed_type)
         sparse_world = {w for k, w in planned if k == "sparse"}
         sparse_rows = [r for r in fixture if (r["x"], r["y"]) in sparse_world]
         shot("fixture")
@@ -720,8 +753,18 @@ def run_probe(variant: str, seat: int, runtime_root: Path, artifact_root: Path, 
         deselect()
         check_alive()
 
-        # G6-1: plain click A, then five Shift+clicks B..F.
+        # G6-0: Shift+click own unit A with an EMPTY selection (count 0 -> 1).
         (a_slot, a_xy), rest = isolated[0], isolated[1:]
+        g60: dict[str, Any] = {"before": snap()}
+        shift_hold(lambda: click(*a_xy))
+        g60["after"] = snap()
+        g60["alive"] = read_state(pid).get("ps") == 3
+        result["stages"]["g6_0"] = g60
+        shot("g6_0_after")
+        deselect()
+        check_alive()
+
+        # G6-1: plain click A, then five Shift+clicks B..F.
         click(*a_xy)
         time.sleep(0.3)
         g61: dict[str, Any] = {"after_click": snap(), "steps": []}
@@ -761,6 +804,25 @@ def run_probe(variant: str, seat: int, runtime_root: Path, artifact_root: Path, 
 
         # G6-4: at the 50 cap an additional Shift+click is rejected (cand/port only).  The drag rectangle
         # starts right of the left-most isolated unit so that unit stays unselected as the extra.
+        if variant in ESL2610_VARIANTS:
+            x0, x1, y0, y1 = FILL_BAND_2610
+            filled = 0
+            for wx in range(1, map_w - 1):
+                for wy in range(1, map_h - 1):
+                    sx, sy = world_to_screen(wx, wy)
+                    if not (x0 <= sx <= x1 and y0 <= sy <= y1):
+                        continue
+                    receipt = supply.call(op=5, owner=fx_owner, unit_type=seed_type, x=wx, y=wy, count=1)
+                    if receipt.get("reason") == "fixture_exceeds_unreserved_supply":
+                        break
+                    if not receipt.get("ok") or receipt.get("fixture_added") != 1:
+                        raise ProbeError(f"cap fill spawn failed at {(wx, wy)}: {receipt}")
+                    filled += 1
+                else:
+                    continue
+                break
+            result["g6_4_fill"] = {"spawned": filled, "band": list(FILL_BAND_2610)}
+            time.sleep(1)
         if cap >= 50:
             deselect()
             extra_slot, extra_xy = isolated[0]
@@ -777,6 +839,8 @@ def run_probe(variant: str, seat: int, runtime_root: Path, artifact_root: Path, 
         s1, s2, s3 = g61, result["stages"]["g6_2"], result["stages"]["g6_3"]
         counts = [s1["after_click"]["count"], *[x["count"] for x in s1["steps"]]]
         result["checks"] = {
+            "g6_0_empty_shift_adds": g60["before"]["count"] == 0 and g60["after"]["count"] == 1
+            and g60["after"]["slots"] == [a_slot] and g60["alive"],
             "plain_click_selects_one": s1["after_click"]["count"] == 1 and s1["after_click"]["slots"] == [a_slot],
             "g6_1_counts": counts,
             "g6_1_grows": counts == [1, 2, 3, 4, 5, 6],
@@ -786,7 +850,8 @@ def run_probe(variant: str, seat: int, runtime_root: Path, artifact_root: Path, 
             "g6_3_removes": s3["after"]["count"] == s3["before"]["count"] - 1
             and s3["victim"] not in s3["after"]["slots"],
             "g6_4_cap": cap < 50 or ("after_extra" in result["stages"]["g6_4"]
-                                      and result["stages"]["g6_4"]["after_extra"]["count"] == 50),
+                                      and result["stages"]["g6_4"]["after_extra"]["count"] == cap),
+            "g6_4_drag_count": result["stages"].get("g6_4", {}).get("drag", {}).get("count"),
             "game_alive": game_proc.poll() is None,
         }
         result["status"] = "COMPLETE"

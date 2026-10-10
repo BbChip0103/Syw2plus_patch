@@ -1,0 +1,4 @@
+lap1206 work(sonnet-5-5): H-HDU2 U2-0~U2-5 PASS 후보. 사용자 입력 묶음 W/upscaler_input_1x(43,622 PNG, 191MB), W=/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261009_lap1206_work_hdu2
+middle이 이어서 검증: 새 스크립트로 개수 43,622·SHA(W/upscaler_input_1x.manifest.sha256 007bc9d7…)·형식(P·팔레트·tRNS254·크기)·manifest SHA 4f65df5d… 재계산, 전부-투명 10,782 확인.
+그 뒤 APPROVALS lap1203 항목에 사용자 안내(위치·이름 NNNN.png·정확히 2배·폴더 구조 유지·RGB 허용·일부만 가능·결과 위치 알려주기) — 마일스톤 경계, txt 금지.
+기록 docs/history/laps/20261009_lap1206_work_g1_hdu2_upscaler_input_bundle.md. 소스/게임 run 0.

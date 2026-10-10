@@ -1,0 +1,14 @@
+lap1188 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 검수 요청: H-HDB0 (효과(반투명) ① 0x4672E0 HUD 로고 50% 혼합 HD 키 경로)
+
+사유: 역할 경계(실무는 자기 결과를 승인하지 않음). 합격식은 모두 충족(키 경로 100%·자기 검사 불일치 0·안전 0·p95 6/7/6 ≤ 끔 6+2·pair PASS·로고 캡처가 끔과 다름·표식 팩 색 반영 육안 확인)이라 `PASS(partial, 기술·격리)` 후보이며 임의로 마감하지 않고 검수를 넘긴다. 기록: docs/history/laps/20261008_lap1188_work_g1_hdb0_translucent_logo_key_path.md. 산출물(공유 temp): 20261008_lap1188_work_hdb0/ (run_B0·K1·K2·O1·M1·pair_PB·pack_logo·pack_marker·logo_pack_report.json·logo_cmp_marker.png·scripts/b_metrics.py).
+
+변경(모두 uncommitted): tools/inmm_stub/g1_blend_key.h(신규 순수 함수), g1_hd_asset.{c,h}(SYW2_G1_HD_PACK_BLEND·blend_key_path·current_pack_frame·blend 카운터), g1_mirror2x.{c,h}(mirror_blend_rle 키 시도·blend_rle_key_apply·카운터 5), direct_draw_trace.c(필드 8), tools/g1_hd_convert.py(logo 하위 명령), tests/test_g1_blend_key.py(신규)·test_g1_hd_pack.py(blend 3)·test_g1_hd_convert.py(logo 2). 끔 = SYW2_G1_HD_PACK_BLEND=0.
+
+middle이 이어서 검증/판정할 것:
+1. B-1 독립 확인: 원본 EXE(읽기 전용)에서 0x4672E0 행 규칙(행은 col<w 동안 토큰 소비, FE n = n열 건너뛰기, n=0 허용)·팔레트 +0x419A0 RGB 3바이트·역 LUT +0x19A0 식 재확인, fnt/imjin2plus.spr(헤더 fc=0)의 0xBF4 스트림 128바이트 FNV `3475a863`·디코드 2,958바이트 정확 소비·불투명 2,110 재계산.
+2. 래퍼 구조(mirror_blend_rle): covered·HD 목적지 사본이 원본 호출 전에 떠지는지, 키 덮어쓰기가 diff 미러 뒤인지(diff 미러는 건너뛰지 않음 = 폴백이 곧 기존 결과), covered 아닌 픽셀·팩 키 부분픽셀이 있는 픽셀을 건너뛰는 규칙이 충분한지, 디코드 한도 pixels*2+h*2와 begin/bind 실패 시 폴백이 안전한지.
+3. 변이 재현(격리 사본): 건너뛰기+1·covered 게이트 제거·after 비교 제거·목적지를 팩에서 읽음·자기 검사 비활성·시도 무조건·env 무시·hit 미집계 8종 RED, lap1187 v3(`active = FALSE;` 제거) RED.
+4. 새 스크립트 raw 재계산: run별 candidate/trace_raw.jsonl의 mirror2x_metrics(blend_4672E0_*·hd_pack_blend_*)·mirror2x_present(program_state==3) p95·stale, 키 로그 hit 1줄, K1 vs K2 로고 사각형 0 px·B0 vs K 5,052 px, M1 표식 색.
+5. 판정 주의: O1·M1은 시작 맵 갈래가 달라(키 ~1,340 vs ~750) 픽셀 비교에 쓰지 않았다. K1 80.0 s 90 px 단발은 끔 O1 77.5 s 283 px·lap1187 기존 현상(76.6:90)과 같은 시각대로 판단했으나 stale 위치(로고 안/밖)는 계측하지 않았다.
+
+다음 순서 제안: 반투명 다음 writer(변화량 순 0x467580 가중표 64×64 16비트 혼합 → 0x467B00 → 0x4685C0 → 0x467FD0). 사용자 G1 시험 결과가 오면 최우선.

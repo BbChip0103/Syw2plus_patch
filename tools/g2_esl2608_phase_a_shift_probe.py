@@ -34,9 +34,9 @@ from tools.g5_candidate_drag_probe import ProbeError, SupplyProbe, capture, sha2
 from tools.g5_screen_world_calibration import decode_xy, fit_affine
 
 REPO = Path(__file__).resolve().parents[1]
-INPUT_ROOT = REPO.parent / "260921_temp"
+INPUT_ROOT = REPO.parent / "260921_temp" / "archive"
 BASE_SOURCE = REPO.parent / "[ESL]Syw2plus"
-DATA_OVERLAY = INPUT_ROOT / "[ESL]Syw2plus 2608"
+DATA_OVERLAY = INPUT_ROOT.parent / "[ESL]Syw2plus 2608"
 LEGACY = INPUT_ROOT / "[ESL]Syw2plus 2606_장수7명_전비1600-200-3000.exe"
 STOCK = REPO / "Syw2plus" / "syw2plus_original.exe"
 LANES = {

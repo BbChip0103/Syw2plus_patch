@@ -490,3 +490,119 @@ def test_native2x_control_validator_accepts_1600_surface_without_mirror(tmp_path
     report = validate_native2x_control(path)
     assert report["status"] == "PASS"
     assert report["mirror_present_count"] == 0
+
+
+def _install_function(source: str) -> str:
+    start = source.index("int g1_direct_draw_trace_install(void)")
+    return source[start:source.index("void g1_direct_draw_trace_detach(void)", start)]
+
+
+def test_user_mode_trace_log_failure_falls_back_to_temp_and_keeps_install():
+    """H-UA1: an unwritable C:\\ root must not disable G1 for a user build."""
+    source = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
+    fallback_start = source.index("static void open_log_fallback(void)")
+    fallback = source[fallback_start:source.index("\nstatic DWORD read_state", fallback_start)]
+    assert "if (g_trace_log != INVALID_HANDLE_VALUE || env_enabled()) return;" in fallback
+    assert "GetTempPathA" in fallback
+    assert '"inmm_g1_present_trace.jsonl"' in fallback
+    assert "CREATE_ALWAYS" in fallback
+
+    install = _install_function(source)
+    assert install.index("open_log();") < install.index("open_log_fallback();")
+    gate = ("if (g_trace_log == INVALID_HANDLE_VALUE && env_enabled()) "
+            "{ g_trace_failed = 1; return 0; }")
+    assert gate in install
+    assert install.index("open_log_fallback();") < install.index(gate)
+    assert install.index(gate) < install.index('trace_event("install", "starting"')
+
+
+def test_trace_opt_in_log_open_failure_stays_fail_closed():
+    source = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
+    install = _install_function(source)
+    assert "if (g_trace_log == INVALID_HANDLE_VALUE) { g_trace_failed = 1; return 0; }" not in install
+    assert '#define TRACE_PATH "C:\\\\inmm_g1_present_trace.jsonl"' in source
+
+
+_OVERFLOW_FIXTURE = r"""#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+typedef uint32_t DWORD;
+typedef int BOOL;
+typedef long LONG;
+#define TRUE 1
+#define FALSE 0
+#define TRACE_MAX_EVENTS 8192u
+#define TRACE_RESERVED_EVENTS 4u
+#define wsprintfA sprintf
+#define lstrcmpA strcmp
+static volatile LONG g_trace_failed = 0;
+static DWORD g_event_count = 0, g_dropped_count = 0, g_overflow_emitted = 0, g_source_seq = 0;
+static DWORD read_state(DWORD address) { return address; }
+static DWORD next_source_seq(void) { return ++g_source_seq; }
+static int raw_ok = 1, raw_calls = 0;
+static char last_overflow[256], last_event[64];
+/* the real trace_event_raw rejects at the event cap; here it fails or succeeds on request */
+static BOOL trace_event_raw(const char *event, const char *install_status, const char *details, DWORD call_seq,
+                            DWORD program_state, DWORD game_tick)
+{
+    (void)install_status; (void)call_seq; (void)program_state; (void)game_tick;
+    ++raw_calls;
+    if (g_event_count >= TRACE_MAX_EVENTS) return FALSE;
+    if (!strcmp(event, "overflow")) { strcpy(last_overflow, details); ++g_event_count; return TRUE; }
+    if (!raw_ok) return FALSE;
+    snprintf(last_event, sizeof(last_event), "%s", event);
+    ++g_event_count;
+    return TRUE;
+}
+@@FUNCTIONS@@
+int main(void)
+{
+    trace_event("present", "active", "");                                    /* ordinary record */
+    assert(g_dropped_count == 0u && !g_trace_failed && g_event_count == 1u);
+    raw_ok = 0;                                                               /* serialization / write failure below the cap */
+    trace_event("metrics", "active", "");
+    assert(g_dropped_count == 1u && g_trace_failed && strstr(last_overflow, "\"scope\":\"serialize\"") && g_overflow_emitted == 1u);
+    assert(strstr(last_overflow, "\"dropped_count\":1"));
+    g_overflow_emitted = 0u; last_overflow[0] = '\0'; raw_calls = 0; raw_ok = 1;
+    g_event_count = TRACE_MAX_EVENTS - TRACE_RESERVED_EVENTS;                 /* the cap: the record is not even attempted */
+    trace_event("present", "active", "");
+    assert(raw_calls == 1 && strstr(last_overflow, "\"scope\":\"event_limit\""));   /* only the overflow marker reached the writer */
+    assert(!strstr(last_overflow, "serialize"));
+    g_overflow_emitted = 0u; last_overflow[0] = '\0'; raw_calls = 0; raw_ok = 0;
+    g_event_count = TRACE_MAX_EVENTS - TRACE_RESERVED_EVENTS;                 /* the summary is exempt from the cap, yet its serialization fails */
+    trace_event("summary", "active", "");
+    assert(raw_calls == 2 && strstr(last_overflow, "\"scope\":\"serialize\"") && g_overflow_emitted == 1u);   /* i15: not misnamed event_limit */
+    g_overflow_emitted = 0u; last_overflow[0] = '\0'; raw_calls = 0; raw_ok = 1;
+    g_event_count = TRACE_MAX_EVENTS - TRACE_RESERVED_EVENTS;
+    trace_event("present", "active", "");
+    assert(g_event_count == TRACE_MAX_EVENTS - TRACE_RESERVED_EVENTS + 1u);
+    trace_event("present", "active", "");                                    /* second reserved overflow marker */
+    assert(g_event_count == TRACE_MAX_EVENTS - TRACE_RESERVED_EVENTS + 2u);
+    trace_event("ret_range_diag", "active", "");
+    assert(g_event_count == TRACE_MAX_EVENTS - 1u && !strcmp(last_event, "ret_range_diag"));
+    trace_event("summary", "active", "");
+    assert(g_event_count == TRACE_MAX_EVENTS);
+    return 0;
+}
+"""
+
+
+def _function_text(source: str, signature: str) -> str:
+    start = source.index(signature)
+    return source[start:source.index("\n}\n", start) + 3]
+
+
+def test_trace_overflow_names_a_serialize_failure_apart_from_the_event_cap(tmp_path):
+    """H-HDB5 B5-5: lap1198 S1 lost a metrics line to an over-long record, yet the marker said event_limit; the real trace_event/trace_overflow text, run on the host."""
+    source = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
+    assert "#define TRACE_RESERVED_EVENTS 4u" in source
+    functions = _function_text(source, "static void trace_overflow(") + "\n" + _function_text(source, "static void trace_event(const char *event")
+    fixture = tmp_path / "overflow.c"
+    executable = tmp_path / "overflow"
+    fixture.write_text(_OVERFLOW_FIXTURE.replace("@@FUNCTIONS@@", functions), encoding="utf-8")
+    built = subprocess.run(["gcc", "-std=gnu11", "-Wall", "-Wextra", "-Werror", str(fixture), "-o", str(executable)],
+                           capture_output=True, text=True, check=False)
+    assert built.returncode == 0, built.stderr
+    ran = subprocess.run([str(executable)], capture_output=True, text=True, check=False)
+    assert ran.returncode == 0, ran.stderr

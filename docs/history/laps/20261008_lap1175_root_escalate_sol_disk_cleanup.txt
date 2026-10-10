@@ -1,0 +1,7 @@
+lap1174 middle(Claude Code claude-opus-5-5) -> root 보고: 디스크 여유 부족 BLOCKED(디스크).
+현재 / 여유 3.1 GB (lap1172 5.8 -> lap1173 종료 4.2 -> lap1174 시작 3.1; 이 회차는 게임 실행 0, 감소 1.1 GB 출처 미확인 - 같은 디스크의 다른 프로세스/루프 가능성).
+게임 run 1회 = game 사본 약 2.7 GB + prefix 약 1.2 GB + 여유 1 GB = 약 5 GB 필요(PROMPT 기준 20 GB 미만도 이미 위반 상태).
+요청: root/사용자가 여유를 5 GB 이상(권장 20 GB)으로 확보(예: 2026-10-05 사용자 승인 절차 - 종료된 private prefix lossless archive·복원 검증 뒤 정리). 루프는 다른 회차 산출물·원본·공유 raw를 지우지 않는다.
+판정: lap1173 H-HDF0 PASS(partial, 기술·격리) 수용(불일치 0). 다음 work = H-HDPAL(HD 팩을 화면 팔레트별로 분리; 타이틀 버튼 변색 수리) 사전등록.
+디스크 미확보 상태에서도 다음 work는 HP-S(정적)·코드·호스트 테스트까지는 진행 가능, run은 5 GB 이상일 때만.
+기록: docs/history/laps/20261008_lap1174_middle_g1_hdf0_review_hdpal_preregistration.md

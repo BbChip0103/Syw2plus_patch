@@ -1,0 +1,11 @@
+Lap1233 fresh middle — H-TR2612 review preserved; release/milestone boundary HOLD.
+User instruction: middle does not implement game code; boundary requires escalation and end.
+Evidence: docs/history/laps/20261010_lap1233_middle_g1_htr2612_review_stale_boundary_handoff.md.
+Audit: ../temp/Syw2plus_patch/20261010_lap1233_middle_review/review.json SHA256 14f49831ca492611df2bb15320803a60032a407884c632c33e51df1d3d4a9315 (678 checks PASS, no discrepancy).
+Two2612/save006 pairs: independent scene/input7/7/pixel gates/owned close/summary1/drop0 PASS; newgame start/camera4/Scale2x PASS. Source65x3 and original/fixture hashes MATCH. Base manifest is pre-overlay HQ2002 snapshot, not executed2612 assertion; actual private EXE removed by required cleanup.
+Entry source fingerprint a0acde8037b858ef6c9830d2b307342dbe2ba1ee matched lap1232 Fast. Current lap full Fast/fingerprint and safety results are recorded only in STATUS after fixed history/handoff; inspect those exact results/logs, exit0 alone is not approval.
+New finding: first candidate pair has one primitive stale240 at PS3 ordinal66/+3292ms, 40ms before building click(450,195), next frame0. Reopens lap1222 stale backlog; writer/location UNKNOWN. Other pair/newgame stale0; host performance attribution UNKNOWN.
+Superior must verify the final Fast/fingerprint and observations, decide technical partial acceptance and stale work before2612 trial boundary. Preserve historical2611 HOLD and already-delivered fact. TR-3 staging3files is absent, not completed.
+Explicit work handoff: same2612/save006 options with --stale-mask 55-90 --stale-mask-state 3 to locate; then existing --layer-drift --screen-watch --screen-watch-state 3 with actual supported --drift-samples to attribute writer. One work lap/60min/two failed hypotheses; no guessed position or gate weakening. Fix traceable harness defects and repeat; game hands-on only work tier. Detailed contract in lap record.
+Only after superior decision, work prepares3files DLL(first pair bridge bytes)+two ASCII2612 .bat, txt0, fresh middle SHA/diff verification; root handles user request/delivery. No G1 milestone/user approval/Windows/combat/24k/144k proof this lap.
+Previous lap1232 ESCALATE preserved byte-exact in docs/history/laps/20261010_lap1233_preserved_lap1232_escalate_sol.txt.

@@ -1,0 +1,15 @@
+lap1194 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 검수 요청: H-HDB2 (`0x467B00` 클립 가중표 혼합 HD 키 경로)
+
+사유: 역할 경계(실무는 자기 결과를 승인하지 않음) + C 변경(키 경로 확장) 승인 필요. 사전등록 §7 측정식은 충족했으나 한 항목(stale ≤ 끔 규모)이 literal 미달이라 임의로 마감하지 않고 판정을 넘긴다. 기록: docs/history/laps/20261009_lap1194_work_g1_hdb2_clipped_weighted_translucent_key_path.md. 산출물(공유 temp): 20261009_lap1194_work_hdb2/ (run_Y0·Y1·Y2·Y3·pair_PB·pair_PB2·pack_hdb2·pack_hdb2b·ref·hd·ref2·hd2·mut/{mutation_lap1194.py,mut_out.txt,mutation_lap1194.txt}·scripts/{run,pair,seq1,seq2,seq3,w_metrics}).
+
+변경(모두 uncommitted): tools/inmm_stub/g1_blend_key.h(g1_blend_clip_window), g1_mirror2x.c(mirror_blend_clip 키 경로·g_blend_clip_key·key_clip_cut/key_clip_empty), g1_mirror2x.h(접근자 6), direct_draw_trace.c(blend_467B00_keyed_*/selfcheck_*/key_clip_* 7필드), g1_hd_asset.c(G1_HD_BLEND_CLIP를 blend 카운트에 추가), tests/test_g1_blend_key.py(+6, 총 23), test_g1_hd_pack.py(+3), test_g1_hd_convert.py(+2). 빌드 산출 tools/inmm_stub/_inmm.dll(547e6179…). 모든 run은 이 DLL(Y1만 key_clip_empty 카운터 추가 전 DLL).
+
+결과 요약: B2-0 변이 c4·c9·p2 3/3 RED, B2-2 변이 19/19 RED(m20 동등 1). 실게임 켬 Y2·Y3 `0x467B00` 화면 안 944호출 = keyed 841 + 폴백 0 + 클립 빈 창 103, 시도 호출 100% keyed, 자기 검사 불일치 0(1,360만 px), key_clip_cut 11+8, 안전 7종 0, p95 6~7(끔 6), pair PB2(`0x467B00` 16키 전부 hit) PASS·scene_state_equal. 키 digest 62개 전부 `.spr` 7개에 귀속.
+
+middle이 이어서 검증/판정할 것:
+1. C 독립 검토: mirror_blend_clip에서 클립 4값을 원본 호출 전에 읽고(left/top/right/bottom = renderer+0x4D0/4D4/4D8/4DC, 오른쪽·아래 포함) g1_blend_clip_window로 만든 창에만 snapshot·crop·selfcheck·그리기를 하는지, `0x467B00` 원본 역어셈블(orig_467B00.asm)의 클립 의미(위 잘림 행 파싱·쓰지 않음, 아래 잘림 행 파싱 안 함, 열 [left,right])와 창 계산이 일치하는지, 아래가 잘려 원본이 파싱하지 않은 행까지 디코더가 읽는 것이 안전한지(스트림 한도 `pixels*2+height*2`, 스프라이트 프레임 전체가 메모리에 있다는 전제), key_try 해제 경로(빈 창·버퍼 초과)가 diff 미러를 건드리지 않는지.
+2. 변이 재현(격리 사본): B2-2 19종·B2-0 3종 RED 재확인, 새 변이(snapshot/crop/selfcheck 창 불일치, 클립 읽기를 원본 호출 뒤로 옮기기, `key_clip_cut` 조건) 시도.
+3. 새 스크립트 raw 재계산: run별 candidate/trace_raw.jsonl 마지막 mirror2x_metrics `blend_467B00_*`·`blend_467580_*`·mirrored 분해(keyed + key_fallbacks + key_clip_empty = mirrored), present p95·stale, 키 로그 `0x467B00` hit/miss·digest 귀속(lap1192 digest_index), pair PB/PB2 pair-result.json.
+4. 판정 사항: (a) stale ≤ 끔 규모 literal 미달 — Y3(켬) 13.1 s 245·14.9 s 242·15.2 s 79/75·15.3 s 18 군집. Y0(끔)·Y1·Y2에는 없고, 코드에 `0x467B00` 키 경로가 없던 lap1192 T0에도 같은 시각·크기(13~15 s 군집 최대 259)가 있었다(간접 증거, 같은 장면 켬/끔 대조 아님). 기존 서명 backlog(lap1187 15.5 s 선택 군집)로 수용할지, 켬/끔 반복 run을 요구할지. (b) 팩 그림이 bicubic stand-in이라 클립 경계의 시각 검증 없음(자기 검사·key_clip_cut 불일치 0으로 갈음) — 수용 또는 추가 run. (c) pair PB(pack에 itemlight 없음)는 키 경로를 못 타 PB2로 보강 — 수용 여부. (d) pair candidate.trace_close FAIL·mirror_validator BLOCKED는 기존 하네스 문제.
+
+다음 순서 제안: 반투명 다음 writer `0x4685C0` → `0x467FD0`. 사용자 G1 시험 결과가 오면 최우선.

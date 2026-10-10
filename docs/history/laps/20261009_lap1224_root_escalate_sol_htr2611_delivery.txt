@@ -1,0 +1,9 @@
+lap1224 middle — 승격 middle/root 검증 요청: H-TR2611 사용자 시험판 경계 + 필수 Fast 차단. 일반 작업자는 경계를 마감하지 않음.
+- 기록: docs/history/laps/20261009_lap1224_middle_g1_htr2611_review_gate_blocked_escalation.md
+- 이전 lap1223 요청은 docs/history/laps/20261009_lap1224_preserved_lap1223_escalate_sol.txt에 byte-exact 보존했다.
+- 독립 수치 확인 PASS: 공유 temp 20261009_lap1224_middle_review/recalc.json, 후보 PS3 781/793/1718 present stale·안전 0, 실제 클릭 2회 간격 10072ms·hold118/108ms, 6 lane trace SHA MATCH, staging3파일·DLL tr1_1 byte MATCH. 최종 기술 수용 HOLD.
+- gate: doctor/typecheck PASS, G1 focused305 passed, m7 memory-only RED. lap1223 실패3 target current3 passed(설명 가능한 Capstone detail/stock-oracle 계약 수정). fresh lint F4014건으로 full make check SKIP(BLOCKED), 과거 exit0/full 결과 재사용 없음.
+- 명시적 work-tier 수리: 별도 2611 파일 소유 work가 patches/esl2610/g2_scan.py struct, g2_state_2610.py capstone.x86, tools/g2_esl2610_spike_probe.py Callable, tools/g2_esl2611_saveload_replication.py shutil 미사용 import를 수리. 루프/middle이 대신 수정 금지. make lint/typecheck 통과 뒤 source 고정·기록 먼저 작성·make check 끝까지 완주·로그 SHA/before-after fingerprint를 제시.
+- 승격 검수자: 위 전체 Fast·TR-1/TR-2 raw 근거를 검수하고 H-TR2611 수용 및 APPROVALS 2611 시험판 요청 여부 판정. 성능 p95/max 상승의 host-load 귀속은 통제 대조가 없어 UNKNOWN; 필요한 경우 같은 DLL/fixture의 유휴 호스트 pair를 work에 명시적으로 맡긴다.
+- 이후 root 전달 여부는 검수자가 판정: 공유 temp 20261009_lap1223_work_htr2611/user_test_staging/ 3파일, 기존 lap1151판은 archive/로(덮어쓰기/삭제/txt 생성 금지). 이번 세션 전달·APPROVALS·사용자 합격·G1 마감 0.
+- 다음 한 가지 live queue는 STATUS만 따른다. 사용자 업스케일/G1 결과가 오면 최우선. 게임/source 수정·다른 세션 접촉·커밋 0. 이번 회차 장기 background 검사/게임 없음.

@@ -1,0 +1,10 @@
+lap1139 work(Claude Code claude-sonnet-5-5) → middle 검수 요청: H-TM0(타이틀 메뉴 미측정 버튼 4개 HD 관측) PASS(partial, 기술·격리 관측). 다음 마일스톤 후보(사용자변경 PS9 팝업 수리 후보 판정)로 넘기는 경계라 승격.
+
+현재 변경(전부 uncommitted): tools/g1_saved_scene_probe.py(`--title-button`·_title_button_window·_trace_program_states·_summarize_state_runs, 최종 b8fa67498b0c)·tests/test_g1_new_game_path.py(+12 테스트, 6d970743391d)·기록 docs/history/laps/20261007_lap1139_work_g1_htm0_title_menu_buttons.md·STATUS·INBOX 갱신. C 변경 0. 산출물은 공유 temp 20261007_lap1139_work_htm0/ (scenario/ user/ prologue/ charroom/ 최종 4 run, charroom_net/, scripts/, recalc_tm0.json, 이전 시도 prelim_harness_v1·attempt2~4 보존).
+
+승격 작업자가 이어서 검증할 것:
+1. 최종 4 run 결과 JSON(scenario 0ac4393d0b2e·user 9ebbdf2da1a2·prologue cd35a5819ce5·charroom fe793fa01895) 새 스크립트 재계산: 시나리오 PS15 1,076 present HD 100/100·stale 0, **사용자변경 PS9 1,793 present 나머지 min/p50 84.1/84.1·stale max 76,319(수리 후보 <90%)**·팝업이 PS9 위에 열림(상태 변화 없음, 두 lane IN_PLACE), 서장·캐릭오픈방 일시 상태 뒤 PS9 복귀(후보 모드 호출 640×480×16 → 800×600×8 영상 시도 vs 0)·화면 없음. 안전 7종·fallback·dropped 0.
+2. 판정 타당성: 서장 = 영상 BLOCKED(lap1137과 같은 Wine winegstreamer 한계)·캐릭오픈방 = 방 열기 즉시 실패(소켓 표본 127회에서 wine 프로세스 소켓 0, probe.log socket/connect/dplay 0) → "화면 없음 BLOCKED" 수용 여부.
+3. 하네스 결함 4건 수리(IN_PLACE 분리·재시도 클릭이 영상 시도를 두 번 만든 문제·트레이스 이탈 판정·빠른 폴링·최종 상태 일치 게이트)의 타당성과 prelim~attempt4 보존 산출물 대조.
+4. 수용 시: 사용자변경 PS9 팝업(사용자등록 창) 수리 work 사전등록 — stale 위치·writer 귀속(`--stale-mask-state`는 3/23/27/29만 지원하므로 PS9용 stale mask 확장 또는 census가 필요, C 변경 범위 결정). 종료하기 확인 `(410,560)` 등 같은 PS9의 다른 팝업 측정도 후보.
+5. 전체 make check 결과는 STATUS 검증 줄 참조(하네스·테스트 변경이 있어 1회 실행). 사용자 G1 시험 결과가 오면 그것이 최우선.

@@ -1,0 +1,6 @@
+lap1212 work(H-PS5W0) 완료 — middle 독립 검수 요청 (제품 미러 동작 변경 0, 진단 env 파서·하네스 전달만).
+- 기록: docs/history/laps/20261009_lap1212_work_g1_hps5w0_ps5_maplist_writer_attribution.md
+- raw: 공유 temp 20261009_lap1212_work_hps5w0/ (run_M1 mask, run_W1 screen_watch, scripts/mask_ana.py)
+- 검증 요청: (1) M1 stale_mask.bin 10 dump 5,044 = trace stale_pixels, 띠 안 92.9% 재계산 (2) W1 screen_watch.jsonl 표본 3점 writer A = 게임 EIP 0x4662DE(block_copy 0x466280, 호출 0x4B6486, 기존 mirror_cache_copy hook)·writer B = wined3d.dll tid 288 EIP 0x73A399CF 독립 재확인
+- lap1211 가설("기존 hook 밖 writer") 반증으로 판정할지, 다음 work(H-PS5W1a: transfer_block_copy_to_screen 진입 인자·채택 계측 + writer B 의미 대조) 사전등록 여부 결정.
+- W0-2 barrier 타임아웃은 비재현(원인 UNKNOWN).

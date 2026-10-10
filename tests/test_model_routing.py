@@ -42,7 +42,11 @@ def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
             ROOT / name,
             root / name,
             ignore=shutil.ignore_patterns(
-                "__pycache__", ".lap_counter", "STOP", "env.local.sh", "FULL_TEST", "ESCALATE_SOL"
+                "__pycache__", ".lap_counter", "STOP", "env.local.sh", "FULL_TEST", "ESCALATE_SOL",
+                # Historical evidence is not an input to these routing tests.
+                # Keeping 1,500+ archived files makes each synthetic loop
+                # fingerprint needlessly expensive without improving coverage.
+                "history",
             ),
         )
     shutil.copy2(ROOT / ".gitignore", root / ".gitignore")

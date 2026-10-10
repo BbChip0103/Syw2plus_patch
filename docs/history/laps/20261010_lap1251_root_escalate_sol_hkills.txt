@@ -1,0 +1,9 @@
+# lap1251 work escalation — H-KILLS2613 telemetry remains unresolved
+
+Two approved isolated official-2613 new-game runs both reached the defeat/result screen. Candidate PS3 stale=0 and the existing safety counters=0; private EXE/source pins, owned close/summary/flush and cleanup passed. This is actual battle evidence, not a no-combat inconclusive result.
+
+The required `.kills` Primitive-B return counter was not emitted. Run1 dropped 3,604 trace events. Run2, built with a first reservation repair (`TRACE_RESERVED_EVENTS=3`), dropped 703; both overflow markers consumed the reserved slots before `ret_range_diag`. The candidate screenshot is a defeat result board, not a verified `.kills` badge. H-KILLS therefore remains HOLD; no product failure is established.
+
+The work source now reserves four events (two overflow markers, return-range diagnostic, summary), and the focused host regression passes. This final reserve4 edit was made after run2 and has not been tested in game. The registered H-KILLS cap of two runs is spent. Middle/root must review the handoff and decide whether to open a new bounded work lap for one runtime confirmation. Do not run a third probe in this lap, expand diagnostics, change validators/pins, or report G1 completion.
+
+Evidence: `docs/history/laps/20261010_lap1251_work_g1_hkills_trace_reservation_escalation.md`; current queue summary in `docs/STATUS.md`.

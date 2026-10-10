@@ -1,0 +1,5 @@
+lap1210 work → middle: H-SIG0 NOT_REPRODUCED(실게임 6 run, 서명 0/6) 독립 검수 요청.
+검증할 것: 공유 temp 20261009_lap1210_work_hsig0/run_S1..S6/candidate/trace_raw.jsonl 의 PS3 mirror2x_present stale_pixels를 독립 재계산(scripts/ana.py 참고)해
+ (1) 창 250-313 최대 0, 전체 ≥150 present 0 확인, (2) ord 262 시각이 13.1 s 부근인지, (3) 확률 (2/3)^6≈8.8% 한계 인정 여부,
+ (4) lap1195 쌍봉 backlog를 0/6 기록으로 닫을지 또는 그 사이 C 변경(lap1194 Y3 DLL vs 현 DLL 7b1c2203…) 때문인지 비교할지 결정.
+제품 C·도구·테스트 변경 0, 커밋 없음. 기록: docs/history/laps/20261009_lap1210_work_g1_hsig0_not_reproduced.md

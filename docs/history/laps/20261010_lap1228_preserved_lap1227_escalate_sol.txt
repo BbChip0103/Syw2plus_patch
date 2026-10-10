@@ -1,0 +1,13 @@
+# lap1227 G1 2612 work 결과 — fresh middle 독립 검수 요청
+
+일반 work 세션은 2612 실행 데이터와 기술 근거를 확보했다. G1 마감·사용자 마일스톤 PASS는 아니다. 다음 fresh middle이 아래를 independently 재계산한 뒤 기술 수용/보류와 2612 사용자 trial 준비 여부를 결정한다.
+
+- 기록: `docs/history/laps/20261009_lap1227_work_g1_esl2612_fresh_pair_new_game.md`; 현재 큐: `docs/STATUS.md`.
+- 정본 ESL 2612 EXE `../patch_history/[ESL]Syw2plus 2612/[ESL]Syw2plus 2612.exe`: SHA256 `6562797d95ddb2013931ffb23ec10bf3fcac631af5f82efdd06a56ef95ce42e7`, 2,000,896 B. 2611 SHA는 `d9d6bb3dca11c229dfb129547166ecdea7b777c0d2494a2baa38ce68635de21d`. 섹션 `.idle`/`.kills` VA/size 동일; `.kills` 3 changed bytes 정적 대조. 2612 entrypoint/new game 실측 PASS.
+- save006 pair: shared output `../temp/Syw2plus_patch/20261009_lap1227_work_e2612g1/pair01/pair-result.json`, overall PASS, selected index 7, fixture non-synthetic. 두 lane private EXE SHA가 모두 2612와 MATCH; original source/save unchanged; game_removed true; scene state/input effect/minimap/visual V2/V2s/V2q/Scale2x gates PASS. Candidate raw trace SHA `bef2938d4b7f4fafeb7b86cd6bd60c0e29c77fad588913e2eca8f0db7a0b3312`.
+- new game: `../temp/Syw2plus_patch/20261009_lap1227_work_e2612g1/newgame/new-game-path-result.json`, overall PASS, baseline/candidate PS9→PS7→PS5→PS3, 1600×1200 candidate, four camera key directions moved, stale/safety 0, both game copies removed and source unchanged. Candidate raw SHA `2a84e09e14306c0342e20bb3337712bbd4d885404592e813cd4bd608289d6f80`.
+- `.kills` runtime diag raw event in candidate new-game trace: `b_kills=0,b_idle=0,textout_kills=0,textout_idle=0`. No combat occurred; treat as INCONCLUSIVE on behavior, not PASS. Verify attribution/section compare and preserve the limit.
+- focused checks: G1 saved-scene + new-game tests 302 passed; lint PASS; typecheck PASS(12). This is not full `make check` nor user confirmation. Root/BS0 session process is separate; don't signal/clean its processes or files.
+- Full `make check` is running/awaiting as part of this lap; exact exit/log and source-before/after will be added to STATUS only. User said the latest official version can stabilize first; no delivery/staging/overwrite was performed. Do not use the older 2611 user trial as acceptance for 2612.
+
+Middle 검수 완료 후 G1 trial 요청·root 전달은 별도 승인 경계다. 사용자 G1 milestone completion / next milestone handoff requires explicit user confirmation. Preserve all raw and pre-existing uncommitted files; no commit/push/deploy.

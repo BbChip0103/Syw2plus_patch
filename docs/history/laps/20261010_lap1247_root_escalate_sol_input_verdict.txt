@@ -1,0 +1,24 @@
+# lap1247 fresh middle → escalation owner → work tier
+
+H-PACK2613 full acceptance HOLD. Material actual-raw/aggregate conflict independently reproduced; user requires preservation and escalation termination. No milestone closure or transition, no game/harness implementation in this middle session.
+
+Evidence and exact work handoff: docs/history/laps/20261010_lap1247_middle_g1_pack2613_input_verdict_diagnosis_handoff.md
+Prior lap1246 marker preserved byte-exact: docs/history/laps/20261010_lap1247_preserved_lap1246_escalate_sol.txt
+Independent review: ../temp/Syw2plus_patch/20261010_lap1247_middle_review/review.json
+SHA256 76da58402cae1398c9bb8d5ff472f322e67111faeb3a1fb71e60c1605900d13b
+
+Confirmed:
+- Common PS3 tick24600, both560 identities including slot39, render/owned close/summary/source/cleanup evidence.
+- _pair_status ignores input_effect_comparison; actual HOLD and in-memory FAIL/UNKNOWN/missing all return PASS. Full pair is HOLD, never 7/7 success.
+- Candidate production real click maps to668,540; command1→15/queue31/progress100→0/rice−800/wood−300 observed. Reserved net−5 versus expected+10 makes exact-cost UNKNOWN. Unrelated global reservation movement is observed; its cause remains unproven.
+- completion_wait samples0, final exactly pre-click before. 14→14 is fallback, not observed missing production. Completion UNOBSERVED.
+- New-game stale4(max279px) is within drag_move window2256–2279; rejects stay1 during stale, increments at1689/2304. Key/spatial writer UNKNOWN; no blanket pack repair/watch loop justified.
+
+Next one: route immediately to work tier (no extra planning-only round).
+Ownership: tools/g1_saved_scene_probe.py and tests/test_g1_saved_scene_probe.py.
+1. RED→GREEN minimal standard scene_actions=all input acceptance gate; HOLD/UNKNOWN/missing must block overall PASS. Keep explicit scene_actions=none diagnostic scope and all render/owned-close gates.
+2. Observe native completion within existing120s budget when real producer/click/queue transition is seen even if cost UNKNOWN. Separate exact-cost verdict from observed completion; preserve UNKNOWN/full HOLD. Never fabricate resources/queue or count fallback as live after state.
+3. Related regression → same official2613/save006/full-pack fresh private pair. If reservation mismatch repeats, localize with existing bounded adjacent witnesses and repair attributable sampler defects; do not relax exact-cost tests or silently compensate. Fix/reexecute tracked defects per PROMPT③.
+Existing source-matched new-game evidence may be reused outside the changed sampling/acceptance behavior. No new multi/Windows/full-dwell gate, source pin update, broad telemetry, deployment, delivery or milestone approval.
+
+Escalation owner must verify the work repair and actual production observation before any full acceptance. Current raw/history/HOLD are immutable. This middle lap changes records only; doctor/focused tests and final document/safety checks are preparation/review evidence, not fresh gameplay.

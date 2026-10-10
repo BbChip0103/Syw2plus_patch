@@ -1,0 +1,12 @@
+lap1252 H-HDU3 — fresh middle independent review required
+
+Reason for escalation: the registered official-2613/save006 pair with the returned upscaled pack is HOLD. Baseline drag selected slots [124,140,151,170], candidate selected [124,140,151]. The pair JSON records common initial scene and passing W-1 visual gates (unexplained blocks 593/589/629/640/869, all <=2000), but `drag_exact=false`. Current raw proves the selection difference; it does not establish whether this came from simulation/tick drift or a candidate input/display regression. Do not promote pair to PASS or claim product failure yet.
+
+Work/evidence retained:
+- Detailed lap record: `docs/history/laps/20261010_lap1252_work_g1_hdu3_upscaled_assets_runtime.md`.
+- Pair/raw/screens: `../temp/Syw2plus_patch/20261010_lap1252_hdu3/artifacts/pair/{pair-result.json,baseline/,candidate/}`; pair result SHA256 `4ef7118a45656037598a3d7e40e82b6311b92053ef0a0114cabaab6db7206a54`.
+- Returned upscaled asset pack and logs/screens/video: `../temp/Syw2plus_patch/20261010_lap1252_hdu3/`.
+- New-game probe PASS: all four camera directions moved, 60 s dwell produced 1,207 candidate presents, stale0/safety0/fallback0, cleanup PASS; candidate official EXE SHA256 `818721a5e8539f9ed97090a6d64cfdba429d46ec9caaa5671528005b22f5b724`.
+- Full Fast PASS: `make check` 2,193 passed/9 skipped, 867.19 s. Lint, typecheck, safety, context, diff, candidate MP4 decode PASS. No product source/test changes or commits.
+
+Fresh middle should independently compare lap1252 baseline/candidate drag trace and captures, confirm exact source/fixture/pack identity, and decide whether the mismatch is timing drift or an implementation regression. Preserve HOLD until resolved. If timing drift is supported, specify the narrow next probe; if an implementation defect is supported, hand repair to a work lap. Do not repeat full Fast or claim G1 completion based on this partial result. G1 milestone, Windows/DxWnd, and user acceptance remain open.

@@ -1,0 +1,14 @@
+lap1169 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 검수 요청. 사유: 마일스톤 경계(④-3 완료 → ④-4 선택 필요) + reject 키 1건 판정 필요, 상시 규칙에 따른 독립 검수.
+기록: docs/history/laps/20261008_lap1169_work_g1_hdc1_tinted_lut_pack.md
+H-HDC1 PASS(partial, 기술·격리): C-0 FEASIBLE(lap1167 run tinted 키 → 팩 대응 97.4~98.0%). C 변경 = tools/inmm_stub/g1_hd_asset.c(aux 키 중 writer 0x466540·0x466EA0만: 키 생성 때 aux 256 B 복사+FNV-1a==auxiliary_digest 검사 → read_pack_frame HIT면 불투명 화소 hd[i]=lut[hd[i]], 불일치 PACK_LUT_REJECT→Scale2x, 끔 env SYW2_G1_HD_PACK_TINTED=0, 카운터 4개, 키 로그 lut_hit/lut_reject·reject 상세), g1_hd_asset.h, direct_draw_trace.c(trace 필드 4개), tests/test_g1_hd_pack.py(+7, 변이 확인 RED). 전부 uncommitted. 팩 = fnt+char 26,441프레임 가장자리 복제 바이큐빅 → pack_tint 18,279파일 + lap1167 pack_t2 = pack_c 25,634.
+  NG5 켬 H1·H2: 크래시·안전 7종·fallback·dropped 0, scale2x 바깥 diff 0, lut_rejects 0, HD min 99.949/100, p95 8/7, tinted matched hit 0x466540 126/126·136/136, 0x466EA0 61/63·61/63, A/B·지형 100%, 비항등 LUT HIT 187/197. 끔 OFF1: tinted aux 키 342 전부 skip_aux·lut_hits 0(끔 스위치 입증). 진단 빌드 D1~D3 동일 경향.
+  미충족 1건: hd_pack_rejects 0 → H1·H2 각 2(= fnt/tree_plus.spr 프레임 0, 0x466EA0 96×112, h44c611f6 한 키의 두 에폭). D1·D3 진단: identity written 5257 vs 팩 불투명 5261, opaque_unwritten 4 = 픽셀 (51..53,104..105) = 스프라이트 마지막 불투명 두 행(원본 1x 마스크 확인). 클립 추정(미확인). Scale2x 폴백으로 무해, D2는 0. 검증기 완화 없음.
+검증해 줄 것(새 스크립트로 재계산):
+ 1) capture_lut/build_hd_frame LUT 적용 코드·테스트 검토(복사 시점·FNV 범위·refresh 때 재적용·lut_key_color 정의).
+ 2) run_H1·H2·OFF1·D1~D3 .keys.jsonl·trace_raw.jsonl로 hit/reject/lut_hit·PS3 HD·p95·안전·끔 대조 재계산, H1·H2는 진단 코드 추가 전 빌드(키 로그 문자열만 차이) 수용 여부.
+ 3) reject 키 판정: 클립 가설을 확인할 추가 probe가 필요한지(예: identity 마스크 vs 뷰포트 하단) 또는 backlog로 둘지, rejects 0 합격식 미충족의 처리.
+ 4) crops/ 직접 열람(trees·units·area3 OFF 위/ON 아래: 나무 색조·팀색 파랑 유지 여부).
+ 5) H-0: 0x466540 변형 6개 중 합성 변형(0x4668xx, 목적지 읽기)이 같은 키로 호출될 때의 안전 폴백 가정 타당성.
+ 6) 공개 한계: 화질 평가 아님(바이큐빅 stand-in), 팀색 크롭 건물 1곳, 기본 켬/전달 아님, normal 테마·유닛 팀색 장면 미관측.
+다음 후보(middle 판단): ④-4 음영 지형(0x468CC0·0x4690A0, aux = 화소별 음영, 렌더러 팔레트 체인) 사전등록.
+공유 temp: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261008_lap1169_work_hdc1/

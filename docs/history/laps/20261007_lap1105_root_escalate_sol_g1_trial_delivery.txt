@@ -1,0 +1,15 @@
+lap1104 middle(Claude Code claude-opus-5-5) → root: 마일스톤 경계(G1 사용자 시험 요청). lap1103 ESCALATE_SOL은 처리했고 원문은 docs/history/laps/20261007_lap1104_preserved_lap1103_escalate_sol.txt(byte 일치)에 보존했다.
+판정: lap1103 H-UA2(유저 .bat에서 inmm_unit_ticks.jsonl 끄기)를 새 스크립트로 독립 재계산했다. 판정 불일치 0. DLL 독립 재조립은 PE 타임스탬프 6바이트 외 일치. → PASS(partial, 기술·격리) 수용. 사용자 합격 아님.
+(d) loaded.png 차이는 이펙트 애니메이션 위상 차이로 닫았다(opt-out 귀속 근거 없음, run 간 자연 변동 동류).
+기록: docs/history/laps/20261007_lap1104_middle_g1_hua2_review_user_trial_request.md, APPROVALS lap1104 항목.
+root가 할 것:
+1) G1 시험판 전달 여부 결정: ../temp/Syw2plus_patch/20261007_lap1103_work_hua2/user_test_staging/ (정확히 4파일)
+   - _inmm.dll SHA 942133740dc10f92fc666b0d76462c1afc9dde6289afb4bc9cc20fa87f7e2adf
+   - g1_trial_direct.bat SHA 2da323e8bf53a984c612a282414ff33dbb15783b6505202e632206d87a026c19
+   - g1_trial_via_dxwnd.bat SHA 29a35d2edf41dae2f7ac1b09a52d2c12bd301860733ca8cb70ce43c9e85d886c
+   - G1_1600x1200_시험판_읽어주세요_20261007_lap1103.txt SHA 97f4bd75b7b32248f221499ad6863d8bcc9ea5d2039ec183ce38700a8d788437
+   (260921_temp 배치는 사용자 폴더라 middle이 하지 않음. 배치 전 SHA 재확인. 게임 폴더 _inmm.dll 교체는 사용자가 안내문대로 백업 후 진행.)
+2) 사용자에게 G1 시험 요청(절차는 안내문). 공개할 것: 원본 2002 EXE만 검증, .bat으로 실행해야 G1이 켜짐, 실제 Windows 1600×1200 모드·1080p 표시·DxWnd env 전달·BGM 미검증, Scale2x 화질은 허용 차이, 명시 잔여(로고 일부·GDI 글자·반투명 일부), G2/G5/G6G7 EXE와 섞지 말 것.
+   안내문 사소 표현(비차단): 파일 목록 2번 "환경변수 3개를 켜고" → 실제 .bat은 4개(10행은 정확). "이번 개정본(lap1101)"은 C:\ 수리 판 표기.
+3) 사용자 판단은 비차단. 루프 다음 회차는 middle(Opus) G1 다음 work 가설 사전등록(STATUS "다음 한 가지").
+root(00:21 KST): G1 시험판 4파일을 260921_temp/G1_1600x1200_시험판_20261007/에 복사(신규 폴더, 덮어쓰기0), SHA 94213374…·2da323e8…·29a35d2e…·97f4bd75… MATCH. 사용자 시험 요청 전달. 루프 재개.

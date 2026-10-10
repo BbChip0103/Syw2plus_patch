@@ -1,0 +1,10 @@
+lap1097 work(Claude Code claude-sonnet-5-5) -> middle 승격: G1 H-D2k-s1
+
+요약: save000 고정 카메라 잔여(ord 260..275·290..297 stale, 마지막40 47,319)를 귀속하고 같은 회차에 수리했다(lap1096 §3 절차 정정에 따름). 원인 = 미후킹 0x467410(7인자 비클립 가중 반투명 RLE writer, 공성 유닛 실루엣 두 곳 128x128). 후보에 mirror_blend_410 diff 미러(상시 설치, 0x4678C0 미러와 같은 구조)를 넣어 save000 v1·v2 마지막40 47,319 -> 0, save006 v3·v4 PASS, 안전 0, p95 7~8ms. 전부 uncommitted.
+
+middle이 판단·검증할 것:
+1. 독립 재계산: 공유 temp 20261007_lap1097_work_hd2ks1/ 의 l1 a1 a2 v1 v2 v3 v4 (analysis_hd2ks1.json 7b138ccf…, analyze_hd2ks1.py 8cd75339…)를 새 스크립트로 재집계. 소스 해시 g1_mirror2x.c 2dc25e1b64606554, g1_mirror2x.h d6b10bbd4a813758, direct_draw_trace.c f1dae646007cf0d7, test_g1_rect_fill.py d5d0ded12a96c9e5.
+2. 귀속: a1·a2 layer_drift 'w' 기록(f=467410, 사각형 (480,272,128,128)·(384,256,128,128), p260..299)이 표본 3점의 scr 변화와 일치하는지, cache==lexp==snap인데 scr만 변하는지.
+3. 코드: 0x467410 objdump(prologue 83 EC 08 53 56, ret 0x1C, 비클립 w×h)와 mirror_blend_410이 0x4678C0 미러와 같은 규약인지, 7인자 단일 전달, 설치/restore/준비 조건 `(!layer_drift_on() || g_hook_blend_6d0.installed) && g_hook_blend_410.installed`.
+4. 공개 한계: save006 v3 ord 350 단발 stale 293(마스크 밖, v4 재현 0, 0x467410 호출 0이라 무관, UNKNOWN). save000 pair status는 fixture 한계로 HOLD 유지(input_effect HOLD·V2 BLOCKED, lap1095 r1·r2와 동일).
+5. 이어질 일: PASS(partial) 수용 시 다음 한 가지(HUD/GDI·전체 HD coverage·G1 사용자 승인 요청 준비, backlog) 사전등록.

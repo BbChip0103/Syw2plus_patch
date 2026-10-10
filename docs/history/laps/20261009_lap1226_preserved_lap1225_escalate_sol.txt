@@ -1,0 +1,10 @@
+# 승격 handoff — lap1225 work / 2026-10-09
+
+현재 변경과 기존 uncommitted 파일을 보존했다. 이 일반 work 세션은 마일스톤/사용자 시험판 경계에서 중단한다.
+
+1. `docs/history/laps/20261009_lap1225_work_g1_htr2611_lint_scope_escalation.md` 및 `logs/gates/lap1225-work-{lint,typecheck}.log`를 확인한다.
+2. Fresh lint는 45건이다: `patches/esl2610/g2_persist_2610.py` E702 42건, `g2_scan.py`·`g2_state_2610.py`·`tools/g2_esl2610_spike_probe.py` F401 각 1건. STATUS/INBOX는 앞서 별도 G2 세션 소유 범위로 분류했으며 이번 work는 고치지 않았다. lint 책임을 해당 소유 세션과 조율하고 lint/typecheck를 다시 확인한다.
+3. 두 선행 검사가 통과한 동일 source에서 `make check`를 끝까지 실행해 전체 Fast 결과를 기록한다. 이번 회차 `make check`는 lint 실패로 SKIP(BLOCKED)다.
+4. H-TR2611은 기술 수용 HOLD 상태다. 최신 INBOX root memo에 따라 시험판은 이미 `260921_temp/G1_1600x1200_시험판_20261009_lap1223_2611/`로 전달됐다. 전체 Fast 근거를 확인한 승격 middle/root가 최종 기술 수용을 판정하고 사용자 플레이 결과를 기다린다. 사용자 마일스톤 확인 전 G1을 마감하지 않는다.
+
+Fresh evidence: lint exit 2 / 45 errors (SHA256 `512a8e21fc4f36f43858fa714bf301910d143ffe8a605100ef5c2f4cd67aa590`); typecheck exit 0, 12 files (SHA256 `f701cb96dd8412917fec5a963db8f25cc3a6079edd55caed6a5fec08573502dc`); `checks/safety.py` SAFETY_PASS; `checks/context_limits.py` CONTEXT_PASS; `git diff --check` exit 0. Product/harness/test/game/staging edits 0, commit 0. Existing worktree state retained.

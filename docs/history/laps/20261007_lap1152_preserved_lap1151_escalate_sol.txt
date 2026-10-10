@@ -1,0 +1,12 @@
+lap1151 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청. 사유: H-TR3가 시험판 스테이징을 마치는 마일스톤 경계(사용자 시험 요청 판 교체)라 work가 APPROVALS·root 전달을 하지 않는다. 실패·충돌 없음.
+
+한 일: H-TR3 TR3-0~TR3-3 완료. 기록 docs/history/laps/20261007_lap1151_work_g1_htr3_bundled_trial_restaging.md.
+- TR3-0 source SHA 6/6 일치(lap1150 §1). C·하네스·테스트 변경 0.
+- TR3-1 save006 full pair 1회 PASS(exit 0): status PASS·scene_state_equal·input_effect 7/7·minimap parity·V2/V2s/V2q/Scale2x/loaded PASS·EXE SHA b56986e0…·source_unchanged·cleanup ok·game_removed·후보 창 1600×1200 scale 2·후보 prefix unit_ticks 없음. 공개 3건(trace_close FAIL run_id·mirror_validator BLOCKED nearest 0.7759·production v2s_raw FAIL 2,821)은 lap1135 pair와 같은 값·같은 원인.
+- TR3-2 DLL 8a3837fb9ef9…(457,256 B) = lap1149 on1(29519743c515)·lap1150 재조립(9f0404fb35e5)과 PE TimeDateStamp·CheckSum·.edata TimeDateStamp 바이트 외 차이 0.
+- TR3-3 공유 temp 20261007_lap1151_work_htr3/user_test_staging/ 정확히 4파일(_inmm.dll·bat 2개 byte 그대로·안내문 lap1151), guide_diff.txt 보존. 260921_temp·APPROVALS 쓰기 0.
+
+middle이 확인할 것:
+1. 새 스크립트로 pair/pair-result.json(SHA ade828bbbcd9) raw 재계산(위 PASS 조건·lap1135 pair와의 키별 대조, 공개 3건이 lap1135와 같은지).
+2. 현재 트리 독립 재조립 DLL과 스테이징 DLL의 바이트 대조(타임스탬프·체크섬 외 0), 안내문 열람(guide_diff.txt: ⑤⑥ 쉬운 말·브리핑 +4~6 ms 공개·대체 문구 정확성).
+3. 수용 시 APPROVALS lap1136 항목에 "lap1151판으로 대체" 메모 + 새 사용자 시험 요청, root 전달용 ESCALATE_SOL. 사용자 G1 시험 결과가 오면 그것이 최우선.

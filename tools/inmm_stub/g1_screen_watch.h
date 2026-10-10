@@ -64,8 +64,74 @@ static inline unsigned g1_screen_watch_module_class(unsigned long base,
     return 2u;
 }
 
-/* Called at each PS3 present boundary with the locked source surface and the
- * ordinal of the next present (the drift present counter).  No-op unless the
+/* lap1119 H-PM1 PM1-0: SYW2_G1_SCREEN_WATCH_STATE=23 makes the watch follow the
+ * Esc pause-menu state (PS23) instead of PS3 so the writer of the menu<->save
+ * window transition can be named.  Only the exact value "23" selects it; absent
+ * or any other value keeps PS3 (current behaviour). */
+#define G1_SCREEN_WATCH_STATE_PS3 3ul
+#define G1_SCREEN_WATCH_STATE_PS5 5ul
+#define G1_SCREEN_WATCH_STATE_PS7 7ul
+#define G1_SCREEN_WATCH_STATE_PS9 9ul
+#define G1_SCREEN_WATCH_STATE_PS20 20ul
+#define G1_SCREEN_WATCH_STATE_PS23 23ul
+#define G1_SCREEN_WATCH_STATE_PS27 27ul
+#define G1_SCREEN_WATCH_STATE_PS29 29ul
+
+/* lap1127 H-RS1 RS1-0: "27" / "29" follow the defeat result screen's PS27 / PS29.
+ * lap1141 H-TM1 TM1-0: "9" follows the title menu's PS9 (user-registration popup).
+ * lap1147 H-SC1 SC1-0: "20" follows the scenario briefing's PS20.
+ * lap1153 H-OS1 OS1-0: "5" / "7" follow the solo lobby's PS5 / the connection-method PS7. */
+static inline unsigned long g1_screen_watch_state_parse(const char *value, unsigned long length)
+{
+    if (length == 1ul && value[0] == '9') return G1_SCREEN_WATCH_STATE_PS9;
+    if (length == 1ul && value[0] == '5') return G1_SCREEN_WATCH_STATE_PS5;
+    if (length == 1ul && value[0] == '7') return G1_SCREEN_WATCH_STATE_PS7;
+    if (length == 2ul && value[0] == '2') {
+        if (value[1] == '0') return G1_SCREEN_WATCH_STATE_PS20;
+        if (value[1] == '3') return G1_SCREEN_WATCH_STATE_PS23;
+        if (value[1] == '7') return G1_SCREEN_WATCH_STATE_PS27;
+        if (value[1] == '9') return G1_SCREEN_WATCH_STATE_PS29;
+    }
+    return G1_SCREEN_WATCH_STATE_PS3;
+}
+
+/* lap1147 H-SC1 SC1-2: SYW2_G1_SCREEN_WATCH_CALL_FROM=<present> keeps the 48-row ddraw call table
+ * from filling with early rows (PS20's typed text lines) by skipping calls made before that watch
+ * present ordinal.  1..5 decimal digits; absent or anything else = 0 (record from the start). */
+static inline unsigned long g1_screen_watch_call_from_parse(const char *value, unsigned long length)
+{
+    unsigned long i, result = 0ul;
+    if (length == 0ul || length > 5ul) return 0ul;
+    for (i = 0ul; i < length; ++i) {
+        if (value[i] < '0' || value[i] > '9') return 0ul;
+        result = result * 10ul + (unsigned long)(value[i] - '0');
+    }
+    return result;
+}
+
+/* Present ordinal logged in watch records: the drift counter only advances in
+ * PS3, so other states use the watch's own present counter. */
+static inline unsigned long g1_screen_watch_present_ordinal(unsigned long state,
+                                                            unsigned long drift_present,
+                                                            unsigned long watch_present)
+{
+    return state == G1_SCREEN_WATCH_STATE_PS3 ? drift_present : watch_present;
+}
+
+/* H-PM1 PM1-1b (H-RS1: any non-PS3 watched state): with SYW2_G1_SCREEN_WATCH_STATE=9|23|27|29
+ * every ddraw Blt (kind 1) / BltFast (kind 2) call made in the watched state is folded into a small table keyed by
+ * (kind, caller EIP, destination/source surface, rects, x/y, flags) with the
+ * first/last watch present ordinal and a call count, published as {"t":"q"} rows
+ * with the heartbeat.  rects are RECT-shaped {left,top,right,bottom} or NULL.
+ * Read-only; returns at once unless the PS23 watch is armed. */
+void g1_screen_watch_on_surface_call(unsigned long kind, unsigned long caller,
+                                     unsigned long dest_this, unsigned long dest_primary,
+                                     unsigned long source, const long *dst_rect,
+                                     const long *src_rect, unsigned long x, unsigned long y,
+                                     unsigned long flags);
+
+/* Called at each present boundary of the watched state (PS3 by default) with the
+ * locked source surface and the ordinal of the next present (the drift present counter).  No-op unless the
  * env gate is on. */
 void g1_screen_watch_on_present(const unsigned char *surface, unsigned long pitch,
                                 unsigned long next_present);

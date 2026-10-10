@@ -1,0 +1,24 @@
+# 2026-10-10 | lap 1229 | G1 work — pair 종료 집계 수리 및 과거 raw 충돌 승격
+
+- 역할: hands-on work. Codex App native-hook surface; 실제 resolved model ID/effort는 이 surface에서 확인 불가, provider 폴백 주장 없음.
+- 입력: `loop/PROMPT.md` ①~⑥, 최신 INBOX root 배정(lap1228 수리 + lap1223 TR-1 raw 확인), APPROVALS, STATUS, DESIGN G1, lap1228 handoff. lap counter 1229 읽기만, STOP 없음. 시작 시 `loop/ESCALATE_SOL`은 없었으며 lap1228 root handoff는 INBOX/history/STATUS에 보존되어 있었다.
+- 목표/가설: Fast timeout은 모델 라우팅 fixture가 불필요한 archived docs를 복사하고 fingerprint 반복 해시하느라 20초 예산을 초과한다. G1 pair는 no-present-trace에서 run ID를 보존하고 candidate owned close + complete summary를 요구하면 정상 PASS여야 한다.
+- 변경 파일: `tests/test_model_routing.py`, `tools/g1_saved_scene_probe.py`, `tests/test_g1_saved_scene_probe.py`, 본 기록, STATUS, `loop/ESCALATE_SOL`. 기존 다른 미커밋 파일은 변경/복원하지 않았다.
+
+## 수리 및 검증
+
+- `tests/test_model_routing.py`의 synthetic project fixture에서 `docs/history` 복사를 제외했다. 모델 라우팅/재시도 분기는 그대로 실행한다. 제외한 과거 문서는 해당 테스트 입력이 아니며 당시 `docs/history`는 1,503 files/26 MB였다. lap1228 diagnostic은 90초 관찰로 동작 단언 모두 통과/25.1067초였고, root는 부하 시 20.27초 실패를 관측했다. 수리 후 같은 두 exit-75 tests는 합계 4.13초에 **2 passed**(fixture 포함), 전체 원래 동작 단언 유지.
+- user-trial env helper는 `SYW2_G1_PRESENT_TRACE`만 해제하고 lane 소유권용 `SYW2_G1_TRACE_RUN_ID`는 유지한다. 후보 aggregate PASS는 `trace_close=PASS`, unique summary 1, drop 0, `install_status=detached`, detach/flush complete를 요구한다. 실제 summary 뒤 `textout_iat_restore`가 올 수 있음을 raw에서 확인해 “마지막 이벤트” 조건은 두지 않았다.
+- 회귀: user-trial run ID, summary run binding/drop/flush, 후보 close 실패·summary 누락/불완전 시 HOLD. Routing tests **2 passed/4.13s**; G1 pair/summary targeted **6 passed**; `tests/test_g1_saved_scene_probe.py tests/test_g1_new_game_path.py` **308 passed/12.99s**.
+- `make lint` PASS(Ruff, compileall); `make typecheck` PASS(12 files). 이 확인은 전체 `make check`가 아니다.
+- ESL 2612 정본 EXE `6562797d95ddb2013931ffb23ec10bf3fcac631af5f82efdd06a56ef95ce42e7`/2,000,896 B, HQ2002 base EXE `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`, read-only save006 `616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064`/3,437,942 B. Fresh isolated baseline/candidate run IDs: `g1-saved-baseline` / `g1-saved-candidate`; candidate run `local/runtime/lap1229_2612_pair_retry2/`, raw/output `../temp/Syw2plus_patch/20261010_lap1229_work_g1_pair_repair/pair03_fresh/`.
+- 최종 fresh pair PASS(exit 0), scene equal; V2/V2s/V2q/Scale2x PASS, input effects 7/7. Candidate owned PID close PASS, summary 1/drop 0/detach complete/flush complete, source unchanged, cleanup `game_removed=true`, prefix/output preserved. Candidate raw SHA256 `1a81e28b856cb51b7a356228568e38377bd0d9611adf9144adc2a55643037f43`; pair JSON SHA256 `138ba66567489ab63265f2a55066083ffff69cd6e84ee2196a5b72147b48ec27`. First two fresh attempts ended HOLD from this lap’s trace parser assumptions; raw explained both (`textout_iat_restore` tail event, then `install_status` field name), code/tests were corrected and third fresh run passed. A separate first launch hit FileExistsError before game startup because an empty output dir had been pre-created; no files were overwritten and the run was retried under a fresh path.
+
+## Historical raw conflict — escalate, do not amend old evidence
+
+- INBOX required read-only inspection of lap1223 TR-1 2611 pairs. Both archived `pair-result.json` files say PASS, but candidate `probe-result.json` says `trace_close=FAIL` (`mismatched run_id`); candidate raw contains only `run_id=unknown`, summary count 0. This exactly matches the lap1228 defect. Raw was not edited.
+- `tr1_1`: pair JSON SHA `a98416dc0867434dc8d93f2b6ac113e8694a2b719e718b1060bfa32d01bd7fd0`; candidate probe SHA `11c9c881a527e30cfbf94e9f5a833dcd27098757cef024109587ee7e06d0b11c`; candidate trace SHA `5058f5fa1e391edd835d5f6158f29c3f3ccfbc64136bdec2e0519180a11c0df2`.
+- `tr1_2`: pair JSON SHA `7cc5500a2b87296d821e8abbe0f2628ec3d1218b006a37725b912d2450dac695`; candidate probe SHA `f041265a208c04f432530b61efe82562d57ddf33b216e6eab1ba94f583e483ab`; candidate trace SHA `e46abe1845de082e924c1d18cb7db9a16671c01196b5d4f623f711aa25615718`.
+- Material contradiction is historical H-TR2611 technical PASS vs both raw candidate lanes failing owned close and lacking summary. User’s session rule requires middle review, so I preserved all evidence and created `loop/ESCALATE_SOL`. Do not change old JSON/raw or previously delivered 2611 trial artifacts.
+- **Not run:** full `make check` after repairs, stopped at the escalation condition; no user-facing trial staging/re-delivery, approval, or G1 milestone acceptance. No 24k/144k/Windows user validation. Commit/push/deploy 0.
+- Next: fresh middle independently adjudicates the two 2611 raw/PASS conflicts and current lap1229 2612 fresh PASS; then decides current full Fast and technical acceptance. No 2612 trial preparation before that review.

@@ -1,0 +1,18 @@
+# lap1242 — stale253 layer probe NOT_REPRODUCED (middle-tier handoff)
+
+The lap1241 work contract was executed twice on fresh isolated official2613/save006
+pairs with `--stale-mask 55-90 --stale-mask-state 3 --layer-drift --drift-samples
+'438,182;450,185;462,197'`, hardware watch omitted. Both pair/candidate runs, owned
+close/flush, and game-copy cleanup passed; each candidate had 36 stale-mask records
+and stale=0 throughout (0/2 this lap). Exact pins, raw SHAs, and commands:
+`docs/history/laps/20261010_lap1242_work_g1_stale253_layer_probe_not_reproduced.md`.
+
+No same-present stale event exists in these runs. Do not infer a writer or repair
+from the separate lap1240/lap1241 observations, and do not add another watch run
+without a reproduced event. Middle tier should adjudicate the bounded result,
+preserve root cause UNKNOWN, and choose the next actual G1 product probe from
+`docs/STATUS.md`. User 2613 G1 trial/upscaler evidence retains priority.
+
+Current source/test changes: none. No G1 milestone closure, user approval, delivery,
+commit, or deployment. Raw/output/prefix/manifests are retained; only this lap's
+owned `game` copies were removed by the probe.

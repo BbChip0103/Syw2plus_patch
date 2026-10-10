@@ -1,0 +1,45 @@
+# 2026-10-10 | lap 1235 | G1 middle — H-TR2613 independent review and boundary handoff
+
+- Role/provider: fresh middle, Codex App/native-hook; the root surface does not expose a resolved model ID, so no root ID is invented. Bounded native verifier requested `gpt-6.1-sol`/high under MODEL_ROUTING; no model substitution. Root owns integration/decision; verifier wrote shared-temp audit only.
+- Read order: loop/PROMPT ①–⑥ → AGENTS/latest INBOX/APPROVALS → full STATUS → DESIGN 1–4/MODEL_ROUTING → H-TR2613 card and lap1234 record. Counter1235 read only; STOP absent; previous ESCALATE_SOL byte-exact preserved. Latest root 05:28 INBOX/PROMPT/fingerprint update was read during review.
+- Hypothesis: lap1234 two save006 pairs and one new-game on official2613 satisfy the registered isolated runtime/input/render/owned-close subset. PASS requires independent pins/raw/source/capture/input/staging agreement. A material disagreement is HOLD/escalate; milestone/user delivery remains outside this middle lane.
+- Changed files: this lap record; `docs/history/laps/20261010_lap1235_preserved_lap1234_escalate_sol.txt`; STATUS; ignored loop/ESCALATE_SOL and visual state. No game/harness/test/product implementation edits, fresh game, original/reference writes, staging/delivery, commit, publish or deploy.
+- Current source/fingerprint: final gate writes before/after canonical and implementation fingerprints plus per-file SHA inventories to `logs/gates/lap1235-middle-check.*`. Read final numbers in STATUS only. All records/handoff are fixed before the one final `make check`.
+
+## Independent evidence
+
+- Original HQ2002 SHA256 `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; official2613 SHA256 `818721a5e8539f9ed97090a6d64cfdba429d46ec9caaa5671528005b22f5b724`/2,000,896B; save006 SHA256 `616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064`: independently recalculated MATCH.
+- 2612 overlay15-file ordered path+SHA digest `4df7e7091f87a89c75fdf43f1952ffb57178617bd8d3110b59a15a40bfaca899` MATCH, source assembly inspected: private original→2612 data bundle→SHA-checked2613 EXE. Preparation manifests retain original EXE SHA; final private_exe observation is2613. These distinct snapshots are not interchangeable. Game copies were already removed by lap1234; retained output/manifest/prefix/raw used for offline review, not a new execution.
+- Fixture save006 is non-synthetic saved scene. Eight player records/559 units are not proof of8 simultaneously active players or G2 cap/load. New-game camera observation is a noncombat fixture; `.kills`/`.idle` remain INCONCLUSIVE. No newly seeded live fixture.
+- Six lane traces/result JSONs/candidate input SHA and PNG hashes/dimensions were directly recalculated with agreement. Candidate PS3 presents/stale-positive: pair01 786/0; pair02 571/0; newgame1712/0. Building click times257296883ms/257599627ms match input traces. No stale position exists in these runs; historical stale240 location/writer stays UNKNOWN.
+- Four pair lanes owned-close helpers PASS; expected trace run IDs, summary1/drop0 and detach/flush complete. New-game aggregate omits close details, but individual baseline/candidate `probe-result.json` and probe logs contain close-helper PASS: baseline ownedPID276/thread280, candidate ownedPID232/thread236, matching trace/summary ownership. There are no trace window_close events; do not invent one. All six private cleanup reports have game_removed true and prefix_processes_after empty.
+- Parent replay independently recomputed all10 pair tags from actual PNGs with existing source-matched `_compare_images` and V2/V2s/W-1/V2q helpers, plus scene snapshots/input action witnesses/minimap parity. All calculated fields match recorded values; pixel mismatch0, both scenes equal and input7/7 PASS. This is offline witness replay, not a new live memory read.
+- Generic mirror_validator BLOCKED is preserved beside configured Scale2x PASS. No validator/gate/coverage/reference/golden changes. Existing Scale2x raw outside-mask/palette/subpixel indicators and summaries checked independently; original diagnostic does not become milestone approval.
+- Source65×3 current ledger MATCH; copied bridge inputs MATCH after documented `_imeGetTime` polling insertion in inmm_stub.c and runtime_bridge.c insertion in Makefile. Runtime bridge source SHA `923fd1e149a638f3a7ab086beb9aca549c76988e00caafa83dcbc2b62f8da8f1` MATCH. DLL rebuild/byte-exact rollback SKIP (no product patch change).
+- Staging has exactly3 files/txt0. DLL SHA `96094ec1dc59172e6cca394b976be21b10a50f34b0e165c93ad6c6d897db8e7a` matches pair01 bridge bytes; direct BAT SHA `f137976f8c8b8bd54b0471d8791d9315f849b4e2adf7cce4924ff600c106111f` differs from2611 only version comment/start; via-DxWnd SHA `29a35d2edf41dae2f7ac1b09a52d2c12bd301860733ca8cb70ce43c9e85d886c` byte-identical. Review staging only; external delivery0.
+- Directly viewed pair01 original/candidate production PNGs: visual95/pass, UI/world proportions and positions consistent without visible clipping; permitted Scale2x edge texture difference. Static captured-fixture result only. Verdict stored shared-temp and `.omx/state/lap1235/ralph-progress.json`.
+
+## Commands, measurements, gate decision
+
+- `make doctor`: tooling/original PASS; optional default runtime manifest absent (`runtime.ok=false`) is not fresh runtime proof.
+- `make lint` / `make typecheck`: PASS, 12 typed files. Focused `.venv/bin/python -m pytest -q tests/test_esl2613_runtime.py tests/test_g1_saved_scene_probe.py tests/test_patch_loop.py`:243 passed/19.44s before root's05:28 loop-only change; final current-source full gate below covers that later change. Lint rerun on changed loop snapshot PASS.
+- Parent `.venv/bin/python ../temp/Syw2plus_patch/20261010_lap1235_middle_review/pixel_input_review.py`:10tag pixel/scene/input/minimap replay PASS, mismatch0.
+- Existing lap1234 full log SHA `b6775d167da81ad914818740c5444e3ae04183864a3e20707437ce44945a8dde` matches actual2181passed/9skipped. Narrative-only reuse is not claimed: old gate lacks a complete per-file execution snapshot, and root changed loop.sh during this session. Run one fresh current-source `make check` after all records are frozen; result/status/limitations in STATUS.
+- Latest root05:28 exclusion update: separate G2/2613 goal paths excluded by current canonical validation_fingerprint. This session refreshed its shared-temp wrapper from the actual current function. Full file inventories still expose any excluded-path changes for interpretation; no loop code modification by middle.
+- Deterministic gate limitation: PROMPT says ESCALATE_SOL is included, but `.gitignore:44` excludes it and git ls-files --exclude-standard omits it. Snapshot its explicit SHA before/after in this lap gate. Do not claim the canonical hash covers it. Root decides a separate work-tier regression-backed correction; no relaxed validator or unsafe reference/pin change is authorized.
+- Final `make check`, safety/context/diff and file SHA are recorded in STATUS only after completion, so changing this history does not invalidate the gate. Gate is FAST/source verification; no24k/144k/Windows/multiplayer proof.
+
+## Outcome and bounded handoff
+
+- H-TR2613 isolated/raw/staging observations: PASS(partial, technical), no material mismatch in independently checked data. Final acceptance/trial/milestone boundary HOLD, ESCALATE_SOL required under this session's user instruction; no G1 completion or APPROVALS/user PASS mutation.
+- Preserve historical2611 HOLD and delivered fact; no recall/replacement performed. Preserve previous stale240 and all prior raw/failed gates. User Windows/DxWnd/BGM/upscaled pack/combat/long-run/EXE-combo checks remain unverified.
+- Next owner root/upgrade middle: check final current-source gate inventories/fingerprints and the explicit handoff SHA, adjudicate partial technical acceptance and trial boundary. If work is authorized next, immediately run same2613/save006 `--stale-mask 55-90 --stale-mask-state 3`; if stale reproduces, locate pixels/frame/input interval, then existing screen-watch/supported --drift-samples for writer attribution. Traceable harness/input defects must be repaired by work then rerun. No repeated planning or writer guessed from zero-stale runs.
+- Separate work-tier handoff for fingerprint implementation discrepancy: root determines ownership and regression shape for ignored ESCALATE_SOL coverage, preserving exclusion contract for separate G2 sessions. Middle does not implement it.
+- Previous handoff preserved byte-exact: SHA256 `b7be1dc6c4a405ec3154eca0d216c85c7e16e642aca9ab71edc658715bcd2498`.
+
+## Artifact hashes
+
+- Shared review `audit_lap1234_htr2613.json` SHA256 `3147bf68d945674be430745fcbcb63943df05b6ae5cac8ae46c62dd00753bc35`.
+- Shared review `pixel-input-review.json` SHA256 `bb5a175bdf91fe13a1377512dcad3bb6e78581019f88e5c611efa432e7a746ab`.
+- Shared review `close-audit.json` SHA256 `fec92b5c95050471f5a7153ca80ac6bfbcd8ccb1518e22d7985ec7b04b242771`.
+- Shared review `visual-verdict.json` SHA256 `5f9672df2e49cfe431e78cb906d70a716732884d96f6f0a6d67c7d09d8cca847`.

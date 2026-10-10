@@ -37,7 +37,7 @@ from tools.g2_esl2608_phase_a_shift_probe import (  # noqa: E402
 )
 from tools.g5_candidate_drag_probe import ProbeError, write_json  # noqa: E402
 
-INPUT_ROOT = REPO.parent / "260921_temp"
+INPUT_ROOT = REPO.parent / "260921_temp" / "archive"
 DXWND_SOURCE = REPO.parent / "Syw2plus" / "dxwnd_backup"
 DXWND_EXE = "dxwnd.exe"
 CAMERA_ADDRESS = 0x00B42D7C

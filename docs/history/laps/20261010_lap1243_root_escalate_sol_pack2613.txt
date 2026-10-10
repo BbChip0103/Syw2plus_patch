@@ -1,0 +1,20 @@
+# lap1243 middle — bounded review complete; repair evidence UNKNOWN
+
+lap1242 raw independent review: 123 checks PASS, no mismatch; two candidate
+runs/72 masks stale0, four owned lane closes and summaries verified. The first
+audit SHA mismatch was pre-close versus post-close trace comparison; exact
+raw prefixes match. No historical conflict or product repair was introduced.
+Previous ESCALATE_SOL is byte-exact preserved in lap1243 history.
+
+Escalation reason: stale253 repair evidence/same-present writer remains UNKNOWN.
+Keep lap1240 raw valid and defer further same-condition watch retries. This is
+not G1 closure, a next milestone transition, user approval or current fullFast.
+
+Promoted reviewer/root should verify the bounded decision and repair deferral,
+then hand the ready H-PACK2613 actual probe directly to work tier (luna/high):
+existing read-only full stand-in HD pack on official2613 save006 pair, followed
+by new-game input/scroll/dwell. Exact commands and criteria are in
+ docs/history/laps/20261010_lap1243_middle_g1_stale253_review_pack2613_handoff.md.
+STATUS is the sole current queue. Do not add another planning/tool audit lap.
+User2613 trial/upscaled output takes priority. No code/test/game/commit/delivery
+changes this lap. All historical raw, original assets and pins preserved.

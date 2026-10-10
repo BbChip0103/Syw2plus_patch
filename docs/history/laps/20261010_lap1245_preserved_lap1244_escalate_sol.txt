@@ -1,0 +1,16 @@
+# lap1244 work → fresh middle tier: H-PACK2613 pair state mismatch
+
+승격 이유: 사용자 `loop/PROMPT.md`의 raw 충돌/근거 불명확 중단 조건. H-PACK2613 두 fresh actual pair에서 같은 후보 상태 차이가 반복됐고, lap1234의 공식 2613 무팩 pair scene-equal PASS와 구성이 달라 원인을 현재 귀속할 수 없다. 자동 재시도·마감 금지.
+
+독립 확인 대상:
+- `docs/history/laps/20261010_lap1244_work_g1_pack2613_scene_mismatch_escalation.md`
+- `../temp/Syw2plus_patch/20261010_lap1244_pack2613_pair/pair-result.json` (SHA256 `6b827536d63343e8c336c302f1c939e453f7d3b2d9f4a48e6cb7e0fbdd94018c`)
+- `../temp/Syw2plus_patch/20261010_lap1244_pack2613_pair_retry1/pair-result.json` (SHA256 `f096e570f0638507b384af23ba08abbe8c3ba028e20fd1708550f3fe90fa2ec2`)
+- 각 pair candidate trace SHA: `b8dbb9b9ae517ad17ed5b690abbfc1662f08863cb13f8344101bd79ce013be26` / `348f2f6dda4309ac646346197709aa15af7ba17091dd1de2410fe553b8978699`; raw, input trace, PNG, manifests, private prefixes는 원래 artifact 경로에 보존.
+- 비교 기준: `docs/history/laps/20261010_lap1234_work_g1_htr2613_runtime_pair_staging.md`의 공식 2613 무팩 scene-equal pair PASS 및 해당 기록이 가리키는 이전 raw.
+
+현재 관측: official 2613 EXE/save006/base SHA는 고정 일치. 두 run 모두 양 lane 개별 PASS와 input 7/7, minimap/V2/V2s/V2q/Scale2x, 소유 close·summary1/drop0·flush/detach PASS. Candidate pack enabled, hits 880/838, rejects0. 두 run에서 candidate는 `load_fixture` 직후부터 slot39 `(39,64,3,720935)` 누락, owner3 active 96→95; final scene 559 vs558, `scene_state_equal=false`. pack이 원인이라고 단정하지 말 것.
+
+fresh middle의 최소 다음 행동: 두 raw의 load 직후 snapshots/state를 독립 재계산하고 lap1234 무팩 raw와 비교하여 차이가 pack/variant, 2613 runtime/data overlay, load timing 또는 harness 중 어디에 속하는지 판정한다. 설명이 되면 근거 있는 최소 work 수리/probe 복귀를 지정하고, 불명확하면 blocker를 유지한다. stale253은 별도 UNKNOWN으로 유지. 이 판정 전 H-PACK new-game/입력/4방향 스크롤/60초 dwell을 수행·수용하지 않는다.
+
+미실행/미주장: 4방향 scroll 및 dwell, G1 완료, 사용자 승인, 전체 Fast. 원본·reference·pack·fixture 변경0, 커밋/deploy/delivery0. 각 run game copy cleanup PASS; prefix/manifest/raw 보존; lap1244 own process 종료 확인.

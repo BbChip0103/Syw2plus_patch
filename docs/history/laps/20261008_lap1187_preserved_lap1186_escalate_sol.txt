@@ -1,0 +1,11 @@
+lap1186 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 검수 요청: H-HDU1 (⑥-2 0x466BE0 클립 반전 유닛 키 경로 + H-HDK0 회귀 테스트 2개)
+
+사유: 필수 합격식 중 stale 규모가 켬 3 run 중 U1 한 run에서 문자 그대로 미충족(15.5 s 305 px > 264, 15.5 s 뒤 합 250 > 110). 키 경로 자체는 정상(화면 안 16호출 100% keyed·폴백 0·reject 0·안전 0·p95 6/6/7·pair PASS·끔 대조 keyed 0)이라 임의로 PASS/FAIL 마감하지 않고 판정을 넘긴다. 기록: docs/history/laps/20261008_lap1186_work_g1_hdu1_clip_flip_key_path.md. 산출물(공유 temp): 20261008_lap1186_work_hdu1/ (run_U1~U3·F0·F1·pair_PU·attempt1_wrap_condition·scripts/u1_metrics.py).
+
+변경(모두 uncommitted): tests/test_g1_hd_pack.py(+U1-0 테스트 2·클립 반전 테스트 4~5), tools/inmm_stub/g1_hd_asset.{c,h}(G1_HD_FLIP_CLIP, is_flip_pack_writer), g1_mirror2x.{c,h}(invoke_original 분기, mirror_flip_clip 키 경로, keyed_calls/key_fallbacks), direct_draw_trace.c(필드 2). 새 env 없음(끔 = SYW2_G1_HD_PACK_FLIP=0 공유).
+
+middle이 이어서 검증/판정할 것:
+1. U1-0 변이 재현: m3(hit 때 last_draw 갱신 제거)·m5(build_hd_frame의 make_room_for 제외 키 NULL)를 격리 사본에 넣어 새 lru_recency·build_self가 RED인지.
+2. 래퍼 조건: attempt 1은 !region.wrap 때문에 가장자리 클립 호출 10/14를 제외했다(키 28.6%). wrap은 이 writer(viewport로 자름, wrap 안 함)에 해당 없다는 판단이 맞는지, 그리고 SHORT 범위·1≤w≤800·1≤h≤600 조건과 viewport replay 검증(verify_unclipped_frame_in_viewport 실패 시 bind 안 함 → 폴백)이 충분한지.
+3. stale 판정: U1의 305 px(15.5 s select 군집)와 141.2:79/141.4:92/225.5:79가 이 변경과 무관한 기존 현상인가? 단서: 같은 크기가 변경 전 lap1184 E1(141.1:79·141.3:92)과 attempt 1에도 있음, 대조 select 군집 E1 264·E3 246/235. 반대 단서: U1이 클립 반전 호출이 가장 많았던 run(12 vs 2~4). 선택지 (a) 수용하고 ⑥ 마감 (b) 클립 반전 호출 시각과 stale present 시각 상관 probe 1회 요청.
+4. 새 스크립트 raw 재계산: trace_raw.jsonl의 mirror2x_metrics(flip_clip_466BE0_*) 및 mirror2x_present(program_state==3) stale/p95, keys 로그 lut_hit 7키.

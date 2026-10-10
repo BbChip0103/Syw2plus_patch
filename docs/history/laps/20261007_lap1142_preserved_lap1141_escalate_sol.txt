@@ -1,0 +1,11 @@
+lap1141 work(Claude Code claude-sonnet-5-5) → middle 검수 요청: H-TM1(사용자등록 팝업 바탕 writer 귀속 → 미러 수리) TM1-1 PASS·TM1-2 PASS. 새 C 훅 1개(`0x466480`)가 들어갔고 시험판 묶음 포함 여부를 정하는 경계라 승격.
+
+현재 변경(전부 uncommitted): tools/inmm_stub/g1_screen_watch.h(PS9 파서, 3880b0025f58)·g1_mirror2x.c(`mirror_keyed_copy`, 1b056280f662)·g1_mirror2x.h(0fc9cc4b1edf)·direct_draw_trace.c(keyed_copy 요약 키·mirror_details 12288, 0de218aa84d6)·tools/g1_saved_scene_probe.py(--title-button이 screen watch 옵션 전달, a82a0308fa18)·tests/test_g1_screen_watch.py(923dd9325397)·tests/test_g1_rect_fill.py(d8e4430db905)·기록 docs/history/laps/20261007_lap1141_work_g1_htm1_popup_keyed_copy_mirror.md·STATUS·INBOX. 산출물은 공유 temp 20261007_lap1141_work_htm1/ (r1 귀속 run, on_a·on_b 켬, off 끔, scn·ng 비회귀, off_interrupted_tool_timeout 중단 run 보존, scripts/).
+
+승격 작업자가 이어서 검증할 것:
+1. TM1-1 귀속(r1/candidate/screen_watch.jsonl `17632a56e7e2`, 새 스크립트 재계산): 표본 3개(300,250·270,300·480,400)가 전부 EIP 0x4664BF(팝업 열림 present 60부터 매 present 표본당 1,489회, 스택 0x4C8773→0x495093→0x4248C5)와 기존 0x4662DE(전 present 1,549회)만 기록. 원본 EXE `0x466480` 역어셈블 재확인: thiscall ret 0x14, (x,y,w,h,src) → [this+0x1514]+y*[this+0x10]+x에 h행×w바이트, 0xFE 건너뜀, 클립 없음, 32비트 인자. 프롤로그 8B 51 10 / 53 / 8B C2.
+2. TM1-2 켬/끔: on_a 9c557ec3c23e·on_b 0d47e43e10ef 후보 PS9 정착 HD 99.819(stale 871, 상수)·끔 1013ff705124 84.100(stale 76,319, lap1139 재현)·`keyed_copy_466480_invocations` 1,570 = mirrored 1,570·reject 0(켬), mirrored 0(끔). 안전 7종·fallback·dropped 0. 캡처 on_a/candidate/user_inplace_a.png 정상 여부.
+3. 비회귀: scenario(0d9e033653eb) PS15 1,002 present 100·new-game(c41f6c75ddd3) PS3 HD 최저 99.998. **`0x466480` 훅이 PS3(save006) 등 다른 상태의 화질·성능에 영향이 없는지**는 save006 pair·성능이 미측정이므로 middle이 필요 여부 판정(필요하면 work로 pair 1회).
+4. 잔여 stale 871 px 위치·writer 미조사(UNKNOWN) — 수용 가능한 부분 잔여인지 판정.
+5. 수용 시: 시험판 묶음(lap1135판 `6cbb12ac…` 대체) 재스테이징 여부(root 전달 필요)·다음 work 결정(종료하기 확인 팝업 `(410,560)` 측정, HQNET 제외). 사용자 G1 시험 결과가 오면 그것이 최우선.
+6. 전체 make check 결과는 STATUS 검증 줄 참조(C·하네스·테스트 변경이 있어 1회 실행). Bash 도구 2분 타임아웃으로 중단된 off 첫 실행은 판정에 쓰지 않았다.

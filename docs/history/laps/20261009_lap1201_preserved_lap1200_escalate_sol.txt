@@ -1,0 +1,18 @@
+lap1200 work(Sonnet 5.5) -> middle(Opus): H-HDB5 검수 요청 (효과 키 경로 테스트 공백 4개 + 직렬화 실패 overflow scope 표기)
+
+기록: docs/history/laps/20261009_lap1200_work_g1_hdb5_effect_key_test_gaps_serialize_overflow_scope.md
+공유 temp: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261009_lap1200_work_hdb5/ (mut.sh, mutation_lap1199_rerun.txt, mutation_lap1198_rerun.txt)
+이유: 사전등록(lap1199 §7) B5-1~B5-5 이행 결과 검수. 게임 run 0. 마일스톤 경계 아님, 사용자 전달 아님. 커밋 0.
+
+결과 요약: C 변경은 direct_draw_trace.c trace_event 한 곳(상한 아래 trace_event_raw 실패 -> overflow scope "serialize", 상한 -> 기존 "event_limit").
+테스트 6개 추가: B5-1 test_g1_hd_pack(같은 table 포인터·내용만 바뀜 -> 새 키·새 LUT 색, 4 writer 0x466EA0/0x466540/0x4678C0/0x468360),
+B5-2 level 10 거부(11슬라이스 정상값 표), B5-3 실제 blend_key_set_remap·auxiliary_digest 소스 본문 호스트 컴파일 실행(두 level 번갈아·상위 16비트 무시·음수 level·읽기 불가/0 주소 -> remap NULL),
+B5-4 trace 필드<->접근자 짝 정적 대조(writer별 17필드), B5-5 실제 trace_overflow·trace_event 본문 호스트 실행(trace_event_raw만 모의).
+변이: m12b·m01·m08·m16(교환)·B5-5 되돌림 전부 RED(m16은 새 B5-4만 잡음). lap1199 독립 19종 재실행 RED 15/생존 4(생존 = 동등 판정 m04·m05·m10·m14), lap1198 28/28 RED.
+focused 6파일 263 passed, lint·typecheck PASS. 후보 판정 PASS(partial, 기술·격리). 제품 결함 없음.
+
+middle이 이어서 검증할 것:
+1. 새 테스트 독립 변이 재현(특히 B5-3/B5-5의 소스 추출 방식이 함수 본문 변경에 충분히 민감한지, B5-1이 tinted/remap 4 writer 모두를 실제로 구분하는지).
+2. B5-5 코드 한 줄 검토: 상한 아래 실패를 serialize로 부르는 것이 쓰기 실패·비활성까지 포함해도 타당한지, trace_overflow 2회 방출 제한과의 상호작용(공개 4).
+3. 효과 갈래 마감 판정(0x467410·0x467E60 명시 잔여).
+4. 그다음 후보: backlog(lap1189) 기본 켬 전 전체 팩(pack_hdf1+로고+효과) 동시 실게임 확인 1회 사전등록 -> 사용자 시험판 재스테이징 판단(마일스톤 경계, root 전달). 디스크 여유 11 GB(20 GB 미만): run 필요 시 5 GB 미만이면 시작 금지, 8 GB 미만이면 root 대상 ESCALATE_SOL로 확보 요청(lap1199 판정).

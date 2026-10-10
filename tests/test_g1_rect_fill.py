@@ -618,6 +618,34 @@ def test_rect_solid_hook_table_and_wrapper_contract() -> None:
     assert "DWORD g1_mirror2x_rect_solid_ybound(void);" in header
 
 
+def test_rect_solid_wide_rect_is_tiled_with_default_on_env_gate() -> None:
+    """H-OS1 OS1-2: a solid rect wider than 320 (PS7/PS5 list highlight bar 365x21) used to be rejected."""
+    mirror = (STUB / "g1_mirror2x.c").read_text(encoding="utf-8")
+    header = (STUB / "g1_mirror2x.h").read_text(encoding="utf-8")
+    bridge = (STUB / "direct_draw_trace.c").read_text(encoding="utf-8")
+    assert '#define G1_RECT_SOLID_WIDE_ENV "SYW2_G1_RECT_SOLID_WIDE"' in mirror
+    assert "static BOOL g_rect_solid_wide_enabled = TRUE;" in mirror
+    assert "g_rect_solid_wide_enabled = !(size == 1u && value[0] == '0');" in mirror
+    # the before copy holds a whole screen rect and a tile buffer feeds the tiled apply
+    assert "static BYTE g_rect_solid_before[G1_OVERLAY_SCREEN_WIDTH * G1_OVERLAY_SCREEN_HEIGHT];" in mirror
+    assert "static BYTE g_rect_solid_tile[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];" in mirror
+    start = mirror.index("mirror_rect_solid(void *renderer")
+    body = mirror[start:mirror.index("BOOL g1_mirror2x_primitives_install(void)", start)]
+    assert "g_rect_solid_wide_enabled" in body
+    assert "g1_overlay_blt_apply_tiled(g_rect_solid_before" in body
+    assert "g_rect_solid_tile" in body
+    # small rects keep the old single-tile path and its accept gate; off keeps the old reject
+    assert "g1_overlay_blt_accepts(" in body and "g1_overlay_blt_apply(g_rect_solid_before" in body
+    assert body.index("g_original_rect_solid(renderer") < body.index("g1_overlay_blt_apply_tiled(")
+    assert "g_rect_solid_wide_calls" in body
+    install = mirror[mirror.index("g1_mirror2x_primitives_install"):]
+    assert "g_rect_solid_wide_calls = 0u;" in install
+    assert "rect_solid_465E80_wide_calls" in bridge
+    assert "DWORD g1_mirror2x_rect_solid_wide_calls(void);" in header
+    env = mirror[mirror.index("G1_RECT_SOLID_WIDE_ENV, value"):]
+    assert env.startswith("G1_RECT_SOLID_WIDE_ENV, value, sizeof(value))")
+
+
 def test_textout_iat_hook_and_wrapper_contract() -> None:
     """H-G: GDI TextOutA IAT slot 0x4E502C call diff mirror (slot-checked, restored)."""
     mirror = (STUB / "g1_mirror2x.c").read_text(encoding="utf-8")
@@ -665,6 +693,67 @@ def test_textout_iat_hook_and_wrapper_contract() -> None:
                    "install_mismatch", "slot_installed", "slot_restored"):
         assert f"textout_iat_{suffix}" in bridge
         assert f"DWORD g1_mirror2x_textout_{suffix}(void);" in header
+
+
+def test_textout_reject_target_diagnostic_is_opt_in_and_state_split() -> None:
+    """H-OS2 OS2-0: reject_target is split by program state and logged only under layer_drift."""
+    mirror = (STUB / "g1_mirror2x.c").read_text(encoding="utf-8")
+    header = (STUB / "g1_mirror2x.h").read_text(encoding="utf-8")
+    bridge = (STUB / "direct_draw_trace.c").read_text(encoding="utf-8")
+    body = mirror[mirror.index("static BOOL WINAPI mirror_textout("):]
+    body = body[:body.index("static BOOL textout_install(void)")]
+    reject = body[body.index("++g_textout_reject_target;"):]
+    reject = reject[:reject.index("g_textout_align(hdc)")]
+    assert "textout_reject_target_note(hdc, x, y, text, length)" in reject
+    log = mirror[mirror.index("static void textout_reject_target_note("):]
+    log = log[:log.index("\n}\n")]
+    assert "layer_drift_on()" in log and "G1_TEXTOUT_REJECT_LOG_LIMIT" in log
+    assert "g_last_present_screen" in log and "g_textout_reject_target_dc_screen" in log
+    assert "read_game_dword(G1_PROGRAM_STATE_VA)" in log
+    for key in ("\\\"t\\\":\\\"tx\\\"", "\\\"state\\\"", "\\\"len\\\"", "\\\"cx\\\"", "\\\"cy\\\"",
+                "\\\"rbuf\\\"", "\\\"rstride\\\"", "\\\"rh\\\"", "\\\"dcbits\\\"", "\\\"dcw\\\"",
+                "\\\"dch\\\"", "\\\"dcstride\\\"", "\\\"scr\\\""):
+        assert key in log
+    dc = mirror[mirror.index("static void textout_dc_bitmap("):]
+    dc = dc[:dc.index("\n}\n")]
+    assert "GetCurrentObject" in dc and "GetObjectA" in dc and "OBJ_BITMAP" in dc
+    assert "textout_dc_bitmap(hdc, &bitmap)" in log
+    install_all = mirror[mirror.index("BOOL g1_mirror2x_primitives_install(void)"):]
+    for counter in ("g_textout_reject_target_ps5", "g_textout_reject_target_ps7",
+                    "g_textout_reject_target_other", "g_textout_reject_logged_ps5",
+                    "g_textout_reject_logged_ps7", "g_textout_reject_target_dc_screen",
+                    "g_textout_reject_target_dc_buffer", "g_textout_reject_target_dc_other"):
+        assert counter in mirror
+        assert f"{counter} = 0u;" in install_all
+    for suffix in ("ps5", "ps7", "other", "dc_screen", "dc_buffer", "dc_other"):
+        assert f"textout_iat_reject_target_{suffix}" in bridge
+        assert f"DWORD g1_mirror2x_textout_reject_target_{suffix}(void);" in header
+
+
+def test_textout_screen_dc_target_is_accepted_with_default_on_env_gate() -> None:
+    """H-OS2 OS2-2 (i): a DC whose bitmap bits are the last present's screen is a valid target."""
+    mirror = (STUB / "g1_mirror2x.c").read_text(encoding="utf-8")
+    header = (STUB / "g1_mirror2x.h").read_text(encoding="utf-8")
+    bridge = (STUB / "direct_draw_trace.c").read_text(encoding="utf-8")
+    assert '#define G1_TEXTOUT_SCREEN_DC_ENV "SYW2_G1_TEXTOUT_SCREEN_DC"' in mirror
+    env = mirror[mirror.index("G1_TEXTOUT_SCREEN_DC_ENV, value"):]
+    assert env.startswith("G1_TEXTOUT_SCREEN_DC_ENV, value, sizeof(value))")
+    assert "g_textout_screen_dc_enabled = !(size == 1u && value[0] == '0');" in env[:200]
+    helper = mirror[mirror.index("static BOOL textout_screen_dc_target("):]
+    helper = helper[:helper.index("\n}\n")]
+    assert "g_textout_screen_dc_enabled" in helper and "g_last_present_screen" in helper
+    assert "bitmap.bmBits" in helper and "bmWidthBytes" in helper and "G1_MAX_STRIDE" in helper
+    assert "G1_OVERLAY_SCREEN_WIDTH" in helper and "G1_OVERLAY_SCREEN_HEIGHT" in helper
+    body = mirror[mirror.index("static BOOL WINAPI mirror_textout("):]
+    body = body[:body.index("static BOOL textout_install(void)")]
+    # the renderer-binding check stays first; the screen DC is only a second chance
+    assert body.index("buffer == g_panel_bound_buffer") < body.index("textout_screen_dc_target(hdc, &buffer, &stride)")
+    assert body.index("textout_screen_dc_target(hdc, &buffer, &stride)") < body.index("++g_textout_reject_target;")
+    assert "++g_textout_screen_dc_calls;" in helper
+    install_all = mirror[mirror.index("BOOL g1_mirror2x_primitives_install(void)"):]
+    assert "g_textout_screen_dc_calls = 0u;" in install_all
+    assert "textout_iat_screen_dc_calls" in bridge
+    assert "DWORD g1_mirror2x_textout_screen_dc_calls(void);" in header
 
 
 def test_blend_rle_hook_table_and_wrapper_contract() -> None:
@@ -762,7 +851,7 @@ def test_blend_clip_hook_table_and_wrapper_contract() -> None:
     assert "g_hook_blend_clip.installed" in mirror
     assert "g_original_blend_clip = NULL;" in mirror
     start = mirror.index("mirror_blend_clip(void *renderer")
-    body = mirror[start:mirror.index("static DWORD __attribute__((thiscall)) observe_blend_410", start)]
+    body = mirror[start:mirror.index("static DWORD __attribute__((thiscall)) mirror_blend_410", start)]
     assert "g_original_blend_clip(renderer, a_x, a_y, a_w, a_h, rle)" in body
     assert body.count("(int16_t)") >= 4
     before = body.index("g_blend_clip_before")
@@ -891,7 +980,7 @@ def test_blend_clip7_hook_table_and_wrapper_contract() -> None:
     assert "g_original_blend_clip7 = NULL;" in mirror
     assert "static G1Primitive7Fn g_original_blend_clip7" in mirror
     start = mirror.index("mirror_blend_clip7(void *renderer")
-    body = mirror[start:mirror.index("static DWORD __attribute__((thiscall)) observe_blend_410", start)]
+    body = mirror[start:mirror.index("static DWORD __attribute__((thiscall)) mirror_blend_410", start)]
     # all 7 original args are forwarded unchanged, exactly once
     assert "g_original_blend_clip7(renderer, a_x, a_y, a_w, a_h, rle, remap, level)" in body
     assert body.count("g_original_blend_clip7(") == 1
@@ -916,7 +1005,7 @@ def test_blend_clip7_hook_table_and_wrapper_contract() -> None:
         assert f"g_blend_clip7_{suffix} = 0u;" in install
         assert f"blend_4678C0_{suffix}" in bridge
         assert f"DWORD g1_mirror2x_blend_clip7_{suffix}(void);" in header
-    assert bridge.count("char mirror_details[7200];") == 1  # first builder; second is 9728 (H-L2, was 9216 H-D2r)
+    assert bridge.count("char mirror_details[7200];") == 1  # first builder; second is 10240 (H-D2k-s1, was 9728 H-L2)
     assert "char mirror_details[5400];" not in bridge
 
 
@@ -962,7 +1051,7 @@ def test_blend_clip_flip7_hook_table_and_wrapper_contract() -> None:
         assert f"g_blend_flip7_{suffix} = 0u;" in install
         assert f"blend_468360_{suffix}" in bridge
         assert f"DWORD g1_mirror2x_blend_flip7_{suffix}(void);" in header
-    assert bridge.count("char mirror_details[7200];") == 1  # first builder; second is 9728 (H-L2, was 9216 H-D2r)
+    assert bridge.count("char mirror_details[7200];") == 1  # first builder; second is 10240 (H-D2k-s1, was 9728 H-L2)
     assert "char mirror_details[6600];" not in bridge
 
 
@@ -1106,7 +1195,7 @@ def test_flip_blend_hook_table_and_wrapper_contract() -> None:
         assert f"g_flip_blend_{suffix} = 0u;" in install
         assert f"blend_467FD0_{suffix}" in bridge
         assert f"DWORD g1_mirror2x_flip_blend_{suffix}(void);" in header
-    assert bridge.count("char mirror_details[7200];") == 1  # first builder; second is 9728 (H-L2, was 9216 H-D2r)
+    assert bridge.count("char mirror_details[7200];") == 1  # first builder; second is 10240 (H-D2k-s1, was 9728 H-L2)
     assert "char mirror_details[6000];" not in bridge
 
 
@@ -1177,7 +1266,7 @@ def test_rect_blt_back_buffer_diff_mirror_contract() -> None:
 
 
 def test_layer_drift_sibling_observe_hooks_and_write_attribution_contract() -> None:
-    """H-B2: env-gated pass-through hooks 0x467410/0x4676D0 + per-call sample attribution."""
+    """H-B2: env-gated pass-through hook 0x4676D0 (0x467410 became a diff mirror in H-D2k-s1) + per-call sample attribution."""
     mirror = (STUB / "g1_mirror2x.c").read_text(encoding="utf-8")
     header = (STUB / "g1_mirror2x.h").read_text(encoding="utf-8")
     bridge = (STUB / "direct_draw_trace.c").read_text(encoding="utf-8")
@@ -1187,18 +1276,20 @@ def test_layer_drift_sibling_observe_hooks_and_write_attribution_contract() -> N
     assert "{0x83, 0xEC, 0x08, 0x53, 0x56}" in mirror
     assert "{0x83, 0xEC, 0x14, 0x33, 0xC0}" in mirror
     # 0x467410 ret 0x1C = 7 stack args, 0x4676D0 ret 0x14 = 5 stack args
-    assert "observe_blend_410(void *renderer, DWORD a_x," in mirror
+    assert "mirror_blend_410(void *renderer, DWORD a_x," in mirror
     assert "DWORD remap, DWORD weight)" in mirror
-    start = mirror.index("observe_blend_410(void *renderer")
+    start = mirror.index("mirror_blend_410(void *renderer")
     body = mirror[start:mirror.index("static BOOL WINAPI mirror_textout", start)]
     assert "g_original_blend_410(renderer, a_x, a_y, a_w, a_h, rle, remap, weight)" in body
     assert "g_original_blend_6d0(renderer, a_x, a_y, a_w, a_h, rle)" in body
-    # observation only: no mirror/apply, no guard mutation
-    assert "g1_overlay_blt_apply(" not in body
-    assert "g_primitive_guard =" not in body and "++g_primitive_guard" not in body
+    # 0x4676D0 stays observation only: no mirror/apply, no guard mutation
+    obs = body[body.index("observe_blend_6d0(void *renderer"):]
+    assert "g1_overlay_blt_apply(" not in obs
+    assert "g_primitive_guard =" not in obs and "++g_primitive_guard" not in obs
     # installed only when the diagnostic is on; rolled back with the rest
     install = mirror[mirror.index("g1_mirror2x_primitives_install"):]
-    assert "layer_drift_on() && !install_one(G1_BLEND_410" in install
+    assert "!install_one(G1_BLEND_410" in install
+    assert "layer_drift_on() && !install_one(G1_BLEND_410" not in install
     assert "layer_drift_on() && !install_one(G1_BLEND_6D0" in install
     assert "restore_hook(&g_hook_blend_410)" in mirror
     assert "restore_hook(&g_hook_blend_6d0)" in mirror
@@ -1206,7 +1297,7 @@ def test_layer_drift_sibling_observe_hooks_and_write_attribution_contract() -> N
     assert "g_original_blend_6d0 = NULL;" in mirror
     # per-call write attribution: before/after screen samples around the original call
     wstart = mirror.index("mirror_blend_wrle(void *renderer")
-    wbody = mirror[wstart:mirror.index("observe_blend_410(void *renderer", wstart)]
+    wbody = mirror[wstart:mirror.index("mirror_blend_410(void *renderer", wstart)]
     begin = wbody.index("layer_drift_write_begin(")
     original = wbody.index("g_original_blend_wrle(renderer")
     end = wbody.index("layer_drift_write_end(")
@@ -1229,6 +1320,45 @@ def test_layer_drift_sibling_observe_hooks_and_write_attribution_contract() -> N
         assert f"DWORD g1_mirror2x_{name}(void);" in header
     for key in ("drift_467410_installed", "drift_4676D0_installed",
                 "drift_w_records", "drift_unattributed"):
+        assert key in bridge
+
+
+def test_blend_410_hook_table_and_wrapper_contract() -> None:
+    """H-D2k-s1: 0x467410 unclipped weighted translucent RLE (ret 0x1c, 7 args) diff mirror."""
+    mirror = (STUB / "g1_mirror2x.c").read_text(encoding="utf-8")
+    header = (STUB / "g1_mirror2x.h").read_text(encoding="utf-8")
+    bridge = (STUB / "direct_draw_trace.c").read_text(encoding="utf-8")
+    # prologue: sub esp,8; push ebx; push esi (5 B), installed in production (not env-gated)
+    assert "!install_one(G1_BLEND_410, expected_blend_410," in mirror
+    assert "G1_BLEND_410_LEN, (void *)mirror_blend_410, &g_hook_blend_410," in mirror
+    assert "static G1Primitive7Fn g_original_blend_410" in mirror
+    assert "static BYTE g_blend_410_before[G1_OVERLAY_MAX_WIDTH * G1_OVERLAY_MAX_HEIGHT];" in mirror
+    assert "g_hook_blend_410.installed" in mirror
+    assert "(!layer_drift_on() ||\n            (g_hook_blend_6d0.installed))" in mirror
+    start = mirror.index("mirror_blend_410(void *renderer")
+    body = mirror[start:mirror.index("static DWORD __attribute__((thiscall)) observe_blend_6d0", start)]
+    assert "DWORD remap, DWORD weight)" in body
+    # all 7 original args are forwarded unchanged, exactly once, between snapshot and apply
+    assert "g_original_blend_410(renderer, a_x, a_y, a_w, a_h, rle, remap, weight)" in body
+    assert body.count("g_original_blend_410(") == 1
+    assert body.count("(int16_t)") >= 4
+    before = body.index("g_blend_410_before")
+    original = body.index("g_original_blend_410(renderer")
+    apply_at = body.index("g1_overlay_blt_apply(")
+    assert before < original < apply_at
+    for other in ("g_blend_clip7_before", "g_blend_clip_before", "g_blend_wrle_before"):
+        assert other not in body
+    assert "g_blend_410_reject_bounds" in body and "x0 >= x1" in body
+    assert "G1_CACHE_BASE" in body and "g_panel_bound_buffer" in body
+    assert "g_primitive_guard" in body
+    assert "layer_drift_write_end(&drift, G1_BLEND_410" in body
+    install = mirror[mirror.index("g1_mirror2x_primitives_install"):]
+    for suffix in ("mirrored_calls", "mirrored_pixels", "reject_target", "reject_bounds",
+                   "reject_size", "reject_guard"):
+        assert f"g_blend_410_{suffix} = 0u;" in install
+        assert f"DWORD g1_mirror2x_blend_410_{suffix}(void);" in header
+    for key in ("blend_467410_mirrored_calls", "blend_467410_mirrored_pixels",
+                "blend_467410_reject_size", "blend_467410_reject_other"):
         assert key in bridge
 
 
@@ -1319,7 +1449,7 @@ def test_shade_flip_hook_table_and_wrapper_contract() -> None:
         assert f"shade_4689C0_{suffix}" in bridge
         assert f"DWORD g1_mirror2x_shade_flip_{suffix}(void);" in header
     assert "lstrcatA(mirror_details, shade_flip_details)" in bridge
-    assert "char mirror_details[9728];" in bridge
+    assert "char mirror_details[14336];" in bridge  # H-HDB4 (was 12288 H-TM1, 10240 H-D2k-s1, 9728 H-L2)
 
 
 def test_shade_clip_hook_table_and_wrapper_contract() -> None:
@@ -1547,3 +1677,46 @@ def test_mirror_details_builder_holds_worst_case_concatenation() -> None:
     total += 1 * section.count('? "1" : "0"')
     assert appended >= 15
     assert total + 1 <= declared, (total, declared)
+
+
+def test_keyed_copy_466480_hook_table_and_wrapper_contract() -> None:
+    """H-TM1: 0x466480 unclipped 0xFE-colorkey rectangle copy (ret 0x14, 5 args) tiled diff mirror."""
+    mirror = (STUB / "g1_mirror2x.c").read_text(encoding="utf-8")
+    header = (STUB / "g1_mirror2x.h").read_text(encoding="utf-8")
+    bridge = (STUB / "direct_draw_trace.c").read_text(encoding="utf-8")
+    assert "#define G1_KEYED_COPY 0x00466480u" in mirror
+    assert "#define G1_KEYED_COPY_LEN 6u" in mirror
+    assert '#define G1_KEYED_COPY_ENV "SYW2_G1_KEYED_COPY"' in mirror
+    # prologue 8B 51 10 / 53 / 8B C2 = six relocatable bytes, verified before the trampoline
+    assert "expected_keyed_copy[G1_KEYED_COPY_LEN] =\n        {0x8B, 0x51, 0x10, 0x53, 0x8B, 0xC2};" in mirror
+    assert "!install_one(G1_KEYED_COPY, expected_keyed_copy, G1_KEYED_COPY_LEN," in mirror
+    assert "(void *)mirror_keyed_copy, &g_hook_keyed_copy," in mirror
+    assert "static G1PrimitiveFn g_original_keyed_copy" in mirror
+    assert "static BYTE g_keyed_copy_before[G1_OVERLAY_SCREEN_WIDTH * G1_OVERLAY_SCREEN_HEIGHT];" in mirror
+    assert "g_hook_keyed_copy.installed" in mirror
+    assert "restore_hook(&g_hook_keyed_copy)" in mirror and "g_original_keyed_copy = NULL;" in mirror
+    # env gate: default on, only an exact "0" turns the mirror off
+    assert "g_keyed_copy_enabled = !(size == 1u && value[0] == '0');" in mirror
+    start = mirror.index("mirror_keyed_copy(void *renderer")
+    body = mirror[start:mirror.index("/* Original returns: 0x466BE0 ret 0x18", start)]
+    assert "DWORD a_h, DWORD src)" in body
+    # all five original args are forwarded unchanged, exactly once, between snapshot and apply
+    assert "g_original_keyed_copy(renderer, a_x, a_y, a_w, a_h, src)" in body
+    assert body.count("g_original_keyed_copy(") == 1
+    assert body.count("(int32_t)a_") == 4 and "(int16_t)" not in body
+    before = body.index("g_keyed_copy_before[row")
+    original = body.index("g_original_keyed_copy(renderer")
+    apply_at = body.index("g1_overlay_blt_apply_tiled(")
+    assert before < original < apply_at
+    assert "!g_keyed_copy_enabled" in body and "g_primitive_guard" in body
+    assert "G1_CACHE_BASE" in body and "g_panel_bound_buffer" in body
+    assert "layer_drift_write_end(&drift, G1_KEYED_COPY" in body
+    install = mirror[mirror.index("g1_mirror2x_primitives_install"):]
+    for suffix in ("invocations", "mirrored_calls", "mirrored_pixels", "changed_calls",
+                   "clipped_calls", "reject_target", "reject_bounds", "reject_size",
+                   "reject_guard"):
+        assert f"g_keyed_copy_{suffix} = 0u;" in install
+        assert f"DWORD g1_mirror2x_keyed_copy_{suffix}(void);" in header
+    for key in ("keyed_copy_466480_invocations", "keyed_copy_466480_mirrored_calls",
+                "keyed_copy_466480_mirrored_pixels", "keyed_copy_466480_reject_size"):
+        assert key in bridge

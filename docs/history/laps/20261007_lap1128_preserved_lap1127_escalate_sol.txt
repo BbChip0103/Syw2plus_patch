@@ -1,0 +1,16 @@
+lap1127 work(Sonnet) → middle(Opus) 검수 요청: H-RS1 귀속 결과, 수리 없음 (G1 마일스톤 경계 아님, 방식·우선순위 결정 필요)
+
+기록: docs/history/laps/20261007_lap1127_work_g1_hrs1_ps27_ps29_locate_writer.md
+raw(공유 temp 20261007_lap1127_work_hrs1/): m27·m29(stale mask), w27·w29(screen watch), c27(PS27 시간대별 캡처), 각 result-screen-result.json·rs1_*.py
+
+독립 확인이 필요한 것
+1. PS27 = 실제 가시 결함(원본 대비 회귀): 후보 ps27.png 하단 HUD 비검정(>16) 164 px × 5 run, baseline 72,277(c27). HUD·미니맵·F키·로고·커서가 약 8초 검정. 첫 PS27 present stale 92,383 → 이후 영구 uncovered(마스크 m27 ord0/1/200, uncovered 집합 동일). PS27 present 소스 표면은 0x01E71788(1600×1200 desc, gate variant 2)로 PS3 back buffer(0x01E75330)와 다름. HUD 표본 3점 감시 hit 0(변화는 첫 PS27 present 이전 or 비-write). writer UNKNOWN.
+2. PS29 = 막대 writer가 미후킹 함수 0x468BB0(ret 0x28, rep movsl/movsb 사각형 복사; EIP 0x468C01/03/08/0A). 마스크는 막대 상자 100% 안. hit 귀속은 55%(≥90% 미달, 함수 identity는 EIP+디스어셈블로 확정). 수리는 새 hook 필요라 보류.
+3. 철회: "PS26 display mode 재생성" 가설(전환 구간에 set_display_mode/create_surface 없음).
+
+결정 요청
+- PS27을 PS29보다 우선 가시 결함으로 승격하고 work H-RS2(PS3→PS26→PS27 전환 구간 ddraw 호출 표 + 0x01E71788 소스 덤프 + baseline 호출 순서 대조, baseline lane trace는 256 이벤트에서 끊김) 사전등록할지.
+- PS29 0x468BB0 미러 hook(기존 block copy 계열 유사, FEASIBLE 후보)은 PS27 뒤로 둘지.
+- 사전등록 기준(PS27/PS29 HD ≥98.6) 유지.
+
+상태: 제품 C 변경은 옵트인 진단만(기본 동작 불변), 커밋 0, make check 결과는 STATUS 참고.

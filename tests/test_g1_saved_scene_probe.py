@@ -16,9 +16,11 @@ from tools.g1_saved_scene_probe import (
     SAVE_SHA256,
     _compare_input_effects,
     _compare_minimap_diagnostic_parity,
+    _disable_present_trace,
     _histogram_percentile,
     _performance_present_metrics,
     _pair_status,
+    _trace_close_summary,
     _production_effect,
     _poll_stable_observation,
     _scene_identity,
@@ -1832,6 +1834,88 @@ def test_exact_common_tick_wait_rejects_missed_target(monkeypatch: pytest.Monkey
     assert missed["reason"] == "target tick missed"
 
 
+def test_live_scene_sampler_accepts_only_coherent_target_tick(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import tools.g1_saved_scene_probe as probe
+
+    monkeypatch.setattr(probe, "_wait_for_exact_tick", lambda _pid, tick: {
+        "status": "PASS", "target_tick": tick, "observed_tick": tick,
+    })
+    monkeypatch.setattr(probe, "_read_batched_scene", lambda _pid, _read: {
+        "status": "PASS", "program_state_before": 3, "program_state_after": 3,
+        "sim_tick_before": 24600, "sim_tick_after": 24600,
+        "state": {"tick": 24600, "units": []},
+    })
+
+    result = probe._read_scene_at_exact_tick(1, 24600, lambda _address, _size: b"")
+
+    assert result["status"] == "PASS"
+    assert result["source"] == "live_common_tick"
+    assert result["target_tick"] == 24600
+    assert result["state"]["tick"] == 24600
+
+
+@pytest.mark.parametrize("snapshot", [
+    {"status": "PASS", "program_state_before": 3, "program_state_after": 3,
+     "sim_tick_before": 24599, "sim_tick_after": 24600, "state": {"units": []}},
+    {"status": "PASS", "program_state_before": 3, "program_state_after": 3,
+     "sim_tick_before": 24601, "sim_tick_after": 24601, "state": {"units": []}},
+    {"status": "PASS", "program_state_before": 3, "program_state_after": 27,
+     "sim_tick_before": 24600, "sim_tick_after": 24600, "state": {"units": []}},
+])
+def test_live_scene_sampler_holds_tick_cross_or_non_ps3_snapshot(
+    monkeypatch: pytest.MonkeyPatch, snapshot: dict[str, object],
+) -> None:
+    import tools.g1_saved_scene_probe as probe
+
+    monkeypatch.setattr(probe, "_wait_for_exact_tick", lambda _pid, tick: {
+        "status": "PASS", "target_tick": tick, "observed_tick": tick,
+    })
+    monkeypatch.setattr(probe, "_read_batched_scene", lambda _pid, _read: snapshot)
+
+    result = probe._read_scene_at_exact_tick(1, 24600, lambda _address, _size: b"")
+
+    assert result["status"] == "INVALID"
+    assert result["target_tick"] == 24600
+    assert result["reason"] == "target tick not coherently bracketed"
+
+
+def test_live_scene_sampler_does_not_read_after_missed_target(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import tools.g1_saved_scene_probe as probe
+
+    monkeypatch.setattr(probe, "_wait_for_exact_tick", lambda _pid, tick: {
+        "status": "INVALID", "target_tick": tick,
+        "observed_tick": tick + 1, "reason": "target tick missed",
+    })
+    monkeypatch.setattr(
+        probe, "_read_batched_scene",
+        lambda *_args: pytest.fail("must not sample after the target tick was missed"),
+    )
+
+    result = probe._read_scene_at_exact_tick(1, 24600, lambda _address, _size: b"")
+
+    assert result["status"] == "INVALID"
+    assert result["barrier"]["reason"] == "target tick missed"
+
+
+def test_save006_initial_scene_uses_pinned_common_tick_sampler() -> None:
+    source = (Path(__file__).parents[1] / "tools/g1_saved_scene_probe.py").read_text(
+        encoding="utf-8"
+    )
+    load_scene = source[source.index('if fixture == "save006":', source.index('def _run_lane')):]
+    load_scene = load_scene[:load_scene.index("if rice_phase_diagnostic is not None:")]
+    save006_branch = load_scene[:load_scene.index("        else:")]
+
+    assert "SAVE006_INITIAL_SCENE_TICK = 24600" in source
+    assert "_read_scene_at_exact_tick(\n                pid, SAVE006_INITIAL_SCENE_TICK, runtime_read," in load_scene
+    assert '"sim_tick_before", "sim_tick_after"' in load_scene
+    assert 'raise ProbeError(f"initial save006 scene sample invalid:' in load_scene
+    assert "_g1_scene_snapshot(loaded_detailed, runtime_read)" not in save006_branch
+
+
 def test_saved_scene_fixture_contract_is_pinned() -> None:
     assert SAVE_NAME == "save006.dat"
     assert len(SAVE_SHA256) == 64
@@ -1897,9 +1981,15 @@ def test_requested_performance_gate_blocks_pair_pass(performance_status: str | N
 def test_requested_performance_pass_allows_pair_pass() -> None:
     pair: dict[str, object] = {
         "scene_state_equal": True,
+        "candidate": {
+            "trace_close": {"status": "PASS"},
+            "trace_summary": {"status": "PASS", "summary_count": 1,
+                              "dropped_count": 0, "detach": "complete", "flush": "complete"},
+        },
         "v2_capture_gate": {"status": "PASS"},
         "v2s_capture_gate": {"status": "PASS"},
         "v2q_capture_gate": {"status": "PASS"},
+        "input_effect_comparison": {"status": "PASS"},
         "performance_comparison": {"status": "PASS"},
     }
 
@@ -1912,6 +2002,55 @@ def test_requested_performance_pass_allows_pair_pass() -> None:
 def test_unrequested_performance_gate_remains_optional() -> None:
     pair: dict[str, object] = {
         "scene_state_equal": True,
+        "candidate": {
+            "trace_close": {"status": "PASS"},
+            "trace_summary": {"status": "PASS", "summary_count": 1,
+                              "dropped_count": 0, "detach": "complete", "flush": "complete"},
+        },
+        "v2_capture_gate": {"status": "PASS"},
+        "v2s_capture_gate": {"status": "PASS"},
+        "v2q_capture_gate": {"status": "PASS"},
+        "input_effect_comparison": {"status": "PASS"},
+    }
+
+    assert _pair_status(
+        pair, performance_requested=False, hd_source="none",
+        scale2x_gate_status="PASS", terrain_scroll=False,
+    ) == "PASS"
+
+
+@pytest.mark.parametrize("input_verdict", [None, "UNKNOWN", "HOLD", "FAIL"])
+def test_standard_pair_requires_registered_input_effect_pass(
+    input_verdict: str | None,
+) -> None:
+    pair: dict[str, object] = {
+        "scene_state_equal": True,
+        "candidate": {
+            "trace_close": {"status": "PASS"},
+            "trace_summary": {"status": "PASS", "summary_count": 1,
+                              "dropped_count": 0, "detach": "complete", "flush": "complete"},
+        },
+        "v2_capture_gate": {"status": "PASS"},
+        "v2s_capture_gate": {"status": "PASS"},
+        "v2q_capture_gate": {"status": "PASS"},
+    }
+    if input_verdict is not None:
+        pair["input_effect_comparison"] = {"status": input_verdict}
+
+    assert _pair_status(
+        pair, performance_requested=False, hd_source="none",
+        scale2x_gate_status="PASS", terrain_scroll=False,
+    ) == "HOLD"
+
+
+def test_diagnostic_pair_can_skip_semantic_input_gate() -> None:
+    pair: dict[str, object] = {
+        "scene_state_equal": True,
+        "candidate": {
+            "trace_close": {"status": "PASS"},
+            "trace_summary": {"status": "PASS", "summary_count": 1,
+                              "dropped_count": 0, "detach": "complete", "flush": "complete"},
+        },
         "v2_capture_gate": {"status": "PASS"},
         "v2s_capture_gate": {"status": "PASS"},
         "v2q_capture_gate": {"status": "PASS"},
@@ -1920,7 +2059,62 @@ def test_unrequested_performance_gate_remains_optional() -> None:
     assert _pair_status(
         pair, performance_requested=False, hd_source="none",
         scale2x_gate_status="PASS", terrain_scroll=False,
+        input_effects_required=False,
     ) == "PASS"
+
+
+@pytest.mark.parametrize(
+    ("trace_close", "trace_summary"),
+    [
+        ({"status": "FAIL"}, {"status": "PASS", "summary_count": 1,
+                                "dropped_count": 0, "detach": "complete", "flush": "complete"}),
+        ({"status": "PASS"}, {"status": "FAIL", "summary_count": 0}),
+        ({"status": "PASS"}, {"status": "PASS", "summary_count": 1,
+                                "dropped_count": 1, "detach": "complete", "flush": "complete"}),
+        ({"status": "PASS"}, {"status": "PASS", "summary_count": 1,
+                                "dropped_count": 0, "detach": "complete", "flush": "pending"}),
+    ],
+)
+def test_pair_status_requires_candidate_owned_close_and_complete_summary(
+    trace_close: dict[str, str], trace_summary: dict[str, object],
+) -> None:
+    pair: dict[str, object] = {
+        "scene_state_equal": True,
+        "candidate": {"trace_close": trace_close, "trace_summary": trace_summary},
+        "v2_capture_gate": {"status": "PASS"},
+        "v2s_capture_gate": {"status": "PASS"},
+        "v2q_capture_gate": {"status": "PASS"},
+    }
+
+    assert _pair_status(
+        pair, performance_requested=False, hd_source="none",
+        scale2x_gate_status="PASS", terrain_scroll=False,
+    ) == "HOLD"
+
+
+def test_trace_close_summary_checks_run_binding_and_flush(tmp_path: Path) -> None:
+    trace = tmp_path / "trace.jsonl"
+    trace.write_text("\n".join(json.dumps(row) for row in [
+        {"event": "install", "run_id": "g1-saved-candidate"},
+        {"event": "summary", "run_id": "g1-saved-candidate", "install_status": "detached",
+         "dropped_count": 0, "detach": "complete", "flush": "complete"},
+        {"event": "textout_iat_restore", "run_id": "g1-saved-candidate"},
+    ]) + "\n", encoding="utf-8")
+
+    assert _trace_close_summary(trace, "g1-saved-candidate")["status"] == "PASS"
+    assert _trace_close_summary(trace, "g1-saved-baseline")["status"] == "FAIL"
+
+
+def test_user_trial_disables_present_trace_but_keeps_owned_run_id() -> None:
+    env = {
+        "SYW2_G1_PRESENT_TRACE": "1",
+        "SYW2_G1_TRACE_RUN_ID": "g1-saved-candidate",
+    }
+
+    _disable_present_trace(env)
+
+    assert "SYW2_G1_PRESENT_TRACE" not in env
+    assert env["SYW2_G1_TRACE_RUN_ID"] == "g1-saved-candidate"
 
 
 def test_scene_identity_excludes_tick_but_keeps_state() -> None:
@@ -1935,7 +2129,7 @@ def test_probe_source_has_no_binary_write_path() -> None:
     source = Path(__file__).parents[1] / "tools" / "g1_saved_scene_probe.py"
     text = source.read_text(encoding="utf-8")
     assert "private_save" in text
-    assert "fixture_root / \"save\" / save_name" in text
+    assert "shutil.copy2(fixture_file, private_save)" in text
     assert "write_bytes" not in text
 
 
@@ -1952,6 +2146,7 @@ def test_production_effect_requires_owner0_type58_and_type31_native_queue() -> N
     accepted = _production_issue_acceptance(before, issue, issue, expected_slot=1199,
                                             producer_type=58, queue_type=31, spec=spec)
     assert accepted["status"] == "PASS"
+    assert accepted["issue_transition_observed"] is True
     assert not _production_effect(before, {**issue, "production_type": 7},
                                   producer_type=58, queue_type=31, spec=spec)
     assert not _production_effect({**before, "owner": 1}, issue,
@@ -1994,10 +2189,26 @@ def test_production_issue_cost_accepts_only_exact_adjacent_sample_delta() -> Non
     assert _production_issue_acceptance(previous, issued, issued, expected_slot=1199,
                                         producer_type=58, queue_type=31,
                                         spec=spec)["cost_match"] == "prev_to_a"
-    assert _production_issue_acceptance(previous, {**issued, "rice": 840},
-                                        {**issued, "rice": 840}, expected_slot=1199,
-                                        producer_type=58, queue_type=31,
-                                        spec=spec)["status"] == "UNKNOWN"
+    inexact = _production_issue_acceptance(previous, {**issued, "rice": 840},
+                                           {**issued, "rice": 840}, expected_slot=1199,
+                                           producer_type=58, queue_type=31, spec=spec)
+    assert inexact["status"] == "UNKNOWN"
+    assert inexact["issue_transition_observed"] is True
+
+
+def test_inexact_issue_cost_still_authorizes_native_completion_observation() -> None:
+    from tools.g1_saved_scene_probe import _should_observe_production_completion
+
+    click = {"logical": [668, 540]}
+    target = {"valid": True}
+    inexact_transition = {"status": "UNKNOWN", "cost_match": "INEXACT",
+                         "issue_transition_observed": True}
+    no_transition = {"status": "UNKNOWN", "issue_transition_observed": False}
+
+    assert _should_observe_production_completion(click, target, inexact_transition)
+    assert not _should_observe_production_completion(None, target, inexact_transition)
+    assert not _should_observe_production_completion(click, {"valid": False}, inexact_transition)
+    assert not _should_observe_production_completion(click, target, no_transition)
 
 
 def test_production_spec_reads_three_signed_words() -> None:
@@ -2615,8 +2826,8 @@ def test_scene_actions_none_stops_after_loaded_capture_and_threads_fixture() -> 
     assert 'parser.add_argument("--fixture"' in source
     assert 'parser.add_argument("--scene-actions"' in source
     assert 'default="save006"' in source and 'default="all"' in source
-    # option check + census lane + baseline lane + candidate lane
-    assert source.count("fixture=args.fixture, scene_actions=args.scene_actions") == 4
+    # option check + census lane + new-game-path lanes + result-screen lanes + baseline lane + candidate lane
+    assert source.count("fixture=args.fixture, scene_actions=args.scene_actions") == 6
     loaded = source.index('result["captures"]["loaded"] = _capture(')
     stop = source.index("raise _LoadedOnlyComplete()")
     selection = source.index("def selection() -> dict[str, Any]:")
@@ -2975,3 +3186,171 @@ def test_candidate_throttle_flag_wiring_is_candidate_only_and_stopped_in_finally
         "throttle.start()")
     assert "throttle.stop()" in lane[lane.index("    finally:"):]
     assert 'result["candidate_throttle"]' in lane
+
+
+def test_esl2613_flag_switches_game_preparation_and_selection_array(monkeypatch, tmp_path: Path) -> None:
+    from tools import esl2613_runtime, g1_saved_scene_probe as probe, runtime_env
+
+    calls: list[str] = []
+    monkeypatch.setattr(runtime_env, "prepare",
+                        lambda source, **kw: calls.append("hq2002") or {"lane": "hq2002"})
+    exe = b"2610-exe"
+    monkeypatch.setattr(esl2613_runtime, "ESL2613_EXE", tmp_path / "2613.exe")
+    (tmp_path / "2613.exe").write_bytes(exe)
+    monkeypatch.setattr(esl2613_runtime, "ESL2613_SHA256", hashlib.sha256(exe).hexdigest())
+    seen: dict[str, object] = {}
+
+    def fake_prepare(exe_bytes, runtime_root, *, bridge=None, timeout=90):
+        seen.update(exe=exe_bytes, root=runtime_root, bridge=bridge)
+        calls.append("esl2613")
+        return {"lane": "esl2613"}, [{"path": "x"}]
+
+    monkeypatch.setattr(esl2613_runtime, "prepare", fake_prepare)
+    assert probe._prepare_lane_game(tmp_path / "rt", None, esl2613=False) == {"lane": "hq2002"}
+    manifest = probe._prepare_lane_game(tmp_path / "rt", None, esl2613=True)
+    assert manifest["lane"] == "esl2613" and manifest["esl2613_overlays"] == [{"path": "x"}]
+    assert seen["exe"] == exe and calls == ["hq2002", "esl2613"]
+
+    reads: list[tuple[int, int]] = []
+
+    def read(address: int, size: int) -> bytes:
+        reads.append((address, size))
+        return bytes(size)
+
+    probe._selection_slots(read, esl2613=False)
+    probe._selection_slots(read, esl2613=True)
+    assert reads == [(0x00899028, 20 * 4), (esl2613_runtime.SELECTION_ENTRIES_VA, 100 * 4)]
+
+
+def test_esl2613_flag_refuses_a_wrong_executable(monkeypatch, tmp_path: Path) -> None:
+    from tools import esl2613_runtime, g1_saved_scene_probe as probe
+
+    monkeypatch.setattr(esl2613_runtime, "ESL2613_EXE", tmp_path / "2613.exe")
+    (tmp_path / "2613.exe").write_bytes(b"not the official exe")
+    with pytest.raises(probe.ProbeError, match="2613"):
+        probe._prepare_lane_game(tmp_path / "rt", None, esl2613=True)
+
+
+def test_esl2613_flag_is_off_by_default_and_also_serves_the_saved_scene_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """--esl2613 needs no new-game-only mode and can run the save006 lanes."""
+    from tools import g1_saved_scene_probe as probe
+
+    class _Reached(Exception):
+        pass
+
+    def reached(source):
+        raise _Reached
+
+    assert probe.ESL2613 is False
+    monkeypatch.setattr(probe, "ESL2613", False)
+    monkeypatch.setattr(probe.runtime_env, "validate_original_source", reached)
+    with pytest.raises(_Reached):
+        probe.main(["--runtime-root", str(tmp_path / "r"), "--artifact-root", str(tmp_path / "a"),
+                    "--esl2613"])
+    assert probe.ESL2613 is True  # parsed, past every option check, no --new-game-path
+    assert not (tmp_path / "a").exists()
+    with pytest.raises(_Reached):
+        probe.main(["--runtime-root", str(tmp_path / "r"), "--artifact-root", str(tmp_path / "a")])
+    assert probe.ESL2613 is False
+
+
+def test_esl2613_selection_memory_redirects_only_the_stock_entries() -> None:
+    from tools import esl2613_runtime, g1_saved_scene_probe as probe
+
+    reads: list[tuple[int, int]] = []
+
+    def read(address: int, size: int) -> bytes:
+        reads.append((address, size))
+        return bytes(size)
+
+    assert probe._selection_memory(read, esl2613=False) is read
+    view = probe._selection_memory(read, esl2613=True)
+    view(0x00899024, 4)                      # selection count stays
+    view(0x00899028, 2)                      # first slot -> first 2610 entry
+    view(0x00899028 + 8, 4)                  # entry 2 keeps its offset
+    view(0x00899028 + 20 * 4 - 2, 4)         # crosses the stock array end: not redirected
+    base = esl2613_runtime.SELECTION_ENTRIES_VA
+    assert reads == [(0x00899024, 4), (base, 2), (base + 8, 4), (0x00899028 + 78, 4)]
+
+
+def test_ret_range_diag_flag_is_candidate_only_opt_in_and_needs_scale2x() -> None:
+    """H-E2611G1-1 E1-1: --ret-range-diag sets SYW2_G1_RET_RANGE_DIAG for the candidate lane only."""
+    probe = (Path(__file__).parents[1] / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    assert '"--ret-range-diag"' in probe
+    assert "--ret-range-diag requires --hd-source scale2x" in probe
+    assert "ret_range_diag=args.ret_range_diag" in probe
+    candidate_env = probe[probe.index("if candidate:"):probe.index("xvfb, display = runtime_env._xvfb")]
+    assert 'env["SYW2_G1_RET_RANGE_DIAG"] = "1"' in candidate_env
+    assert probe.count('"SYW2_G1_RET_RANGE_DIAG"') == 1
+
+
+def test_new_game_path_summary_names_the_real_private_exe_of_every_lane() -> None:
+    """H-E2611G1-1 E1-0: the on-disk runtime manifest keeps the pre-overwrite EXE SHA, so the summary must carry the lane's measured one."""
+    probe = (Path(__file__).parents[1] / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    start = probe.index('"schema": "syw2plus.g1-new-game-path.v1"')
+    keys = probe[start:probe.index('"victory_poke", "screen_watch")', start)]
+    assert '"private_exe_sha256"' in keys and '"source_exe_sha256"' in keys
+
+
+def test_new_game_play_dwell_captures_split_the_dwell_into_equal_timed_captures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """H-E2611G1-1 E1-2: --new-game-play-dwell-captures N captures N times inside one unchanged dwell window; 0 = old behaviour."""
+    import tools.g1_saved_scene_probe as probe
+
+    slept: list[float] = []
+    captured: list[str] = []
+    monkeypatch.setattr(probe, "_send_key_edge", lambda display, env, key, *, down: 1)
+    monkeypatch.setattr(probe.time, "sleep", lambda seconds: slept.append(seconds))
+    monkeypatch.setattr(probe, "_trace_line_count", lambda path: 7)
+    camera = iter(([1, 1], [2, 1]))
+
+    def run(dwell_captures: int) -> dict:
+        slept.clear()
+        captured.clear()
+        return probe._new_game_play_window(
+            display=":91", env={}, read_camera=lambda: next(camera, [2, 1]), trace_path=tmp_path / "t.jsonl",
+            keys=("RIGHT",), hold=0.0, gap=0.0, dwell=60.0,
+            capture=captured.append, dwell_captures=dwell_captures)
+
+    result = run(0)
+    assert captured == [] and slept == [0.0, 0.0, 60.0]
+    camera = iter(([1, 1], [2, 1]))
+    result = run(1)  # N=1 boundary: one capture after the full dwell, not the old uncaptured sleep
+    assert captured == ["ps3_dwell_1"] and slept == [0.0, 0.0, 60.0]
+    assert result["dwell_captures"] == ["ps3_dwell_1"]
+    camera = iter(([1, 1], [2, 1]))
+    result = run(0)
+    assert [w["name"] for w in result["windows"]] == ["scroll_RIGHT", "dwell"]
+    camera = iter(([1, 1], [2, 1]))
+    result = run(3)
+    assert captured == ["ps3_dwell_1", "ps3_dwell_2", "ps3_dwell_3"]
+    assert slept == [0.0, 0.0, 20.0, 20.0, 20.0]
+    assert [w["name"] for w in result["windows"]] == ["scroll_RIGHT", "dwell"]
+    assert result["dwell_captures"] == ["ps3_dwell_1", "ps3_dwell_2", "ps3_dwell_3"]
+    source = (Path(__file__).parents[1] / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    assert '"--new-game-play-dwell-captures"' in source
+    assert "--new-game-play-dwell-captures requires --new-game-play" in source
+
+
+def test_new_game_play_keys_none_skips_scrolling_and_keeps_the_start_camera(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """H-E2611G1-1 E1-2: the random start can sit at a map edge, so --new-game-play-keys none dwells at the start camera."""
+    import tools.g1_saved_scene_probe as probe
+
+    edges: list[tuple[str, bool]] = []
+    monkeypatch.setattr(probe, "_send_key_edge", lambda display, env, key, *, down: edges.append((key, down)) or 1)
+    monkeypatch.setattr(probe.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(probe, "_trace_line_count", lambda path: 3)
+    monkeypatch.setitem(probe.NEW_GAME_PLAY_OVERRIDE, "keys", ())
+    result = probe._new_game_play_window(
+        display=":91", env={}, read_camera=lambda: [91, 54], trace_path=tmp_path / "t.jsonl",
+        hold=0.0, gap=0.0, dwell=1.0)
+    assert edges == [] and result["segments"] == []
+    assert result["status"] == "PASS" and [w["name"] for w in result["windows"]] == ["dwell"]
+    source = (Path(__file__).parents[1] / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    assert 'args.new_game_play_keys.strip().lower() == "none"' in source
+    assert 'NEW_GAME_PLAY_OVERRIDE["keys"] = ()' in source  # none -> no keys, not the default sequence

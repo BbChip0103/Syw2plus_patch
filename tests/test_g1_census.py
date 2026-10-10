@@ -376,6 +376,20 @@ def test_probe_exposes_census_state_option_and_passes_env() -> None:
     assert "_validate_census_lane(census, census_state=args.census_state)" in source
 
 
+def test_probe_census_state_35_waits_in_load_screen_before_slot_navigation() -> None:
+    source = (ROOT / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    assert "choices=(3, 5, 7, 9, 29, 35)" in source
+    ps35 = source.index("if census and census_state == 35:")
+    assert source.index('"tag": "load_menu"') < ps35 < source.index("navigation: list[int | None] = []")
+    branch = source[ps35:source.index("navigation: list[int | None] = []")]
+    assert "_wait_census_presents(census_path, census_state," in branch
+    assert "raise _CensusStateComplete()" in branch
+    # The measured screen is captured so an independent Scale2x oracle can check it.
+    assert '"load_screen"' in branch
+    # The PS9 branch is unchanged: it still finishes before the load click.
+    assert source.index("if census and census_state == 9:") < source.index("load_clicks = [_inject(display, origin, LOAD_MENU")
+
+
 def test_residual_shadow_compare_counts_only_post_hook_changes_with_host_gcc(tmp_path: Path) -> None:
     import subprocess
 

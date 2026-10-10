@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -731,18 +732,72 @@ def test_menu_block_copy_is_mirrored_from_its_packed_source_and_reported() -> No
     copy_hook = _function_body(source, "static DWORD __attribute__((thiscall)) mirror_cache_copy(")
     assert "transfer_block_copy_to_screen(renderer, x, y, width, height, source)" in copy_hook
     body = _function_body(source, "static void transfer_block_copy_to_screen(")
-    # Only the full-screen packed-source copy seen in the menu (lap950: (0,0,800,600)).
-    assert "x != 0u || y != 0u || width != 800u || height != 600u" in body
+    # The full-screen packed-source copy seen in the menu (lap950: (0,0,800,600)) plus,
+    # since H-P35, any in-bounds partial rectangle through the shared frame-copy helper.
+    assert "g1_frame_copy_accepts(x, y, width, height)" in body
     assert "G1_CACHE_BASE" in body and "g_panel_bound_buffer" in body
     assert "readable_bytes(src, width * height)" in body
-    assert "g1_scale2x_build_masked(" in body
+    assert "g1_frame_copy_apply(" in body
     assert 'g1_hd_asset_source_name()' in body
-    assert "g_covered[logical] = 1u" in body
-    assert "g_expected_snapshot[logical] = " in body
+    assert "g_expected_snapshot, g_covered, g_mirror" in body
     for name in ("menu_copy_calls", "menu_copy_pixels", "menu_copy_hash_first",
                  "menu_copy_hash_last", "menu_copy_hash_changes"):
         assert f"g1_mirror2x_{name}(void)" in header
         assert f'\\"{name}\\"' in trace
+
+
+def test_stale_mask_state_gate_defaults_to_ps3_and_follows_the_selected_state(tmp_path: Path) -> None:
+    """H-RS1 RS1-0: SYW2_G1_STALE_MASK_STATE picks the program state the stale mask dumps (3/5/7/20/23/27/29)."""
+    import subprocess
+
+    fixture = tmp_path / "stale_mask_state.c"
+    executable = tmp_path / "stale_mask_state"
+    fixture.write_text(
+        r'''#include <assert.h>
+#include "g1_stale_mask.h"
+
+int main(void) {
+    assert(g1_stale_mask_state_parse("27", 2u) == 27u);
+    assert(g1_stale_mask_state_parse("29", 2u) == 29u);
+    assert(g1_stale_mask_state_parse("23", 2u) == 23u);
+    /* H-SC1 SC1-0: "20" follows the scenario briefing PS20 */
+    assert(g1_stale_mask_state_parse("20", 2u) == 20u);
+    assert(g1_stale_mask_state_parse("200", 3u) == 3u);
+    assert(g1_stale_mask_state_parse("3", 1u) == 3u);
+    assert(g1_stale_mask_state_parse("", 0u) == 3u);
+    /* H-PS5W0 W0-0: single-digit "5" / "7" follow the solo lobby PS5 / the title protocol PS7 */
+    assert(g1_stale_mask_state_parse("5", 1u) == 5u);
+    assert(g1_stale_mask_state_parse("7", 1u) == 7u);
+    assert(g1_stale_mask_state_parse("57", 2u) == 3u);
+    assert(g1_stale_mask_state_parse("4", 1u) == 3u);
+    assert(g1_stale_mask_state_parse("50", 2u) == 3u);
+    assert(g1_stale_mask_state_parse("28", 2u) == 3u);
+    assert(g1_stale_mask_state_parse("270", 3u) == 3u);
+    assert(g1_stale_mask_state_parse("2", 1u) == 3u);
+    return 0;
+}
+''',
+        encoding="utf-8",
+    )
+    subprocess.run(
+        ["gcc", "-std=c11", "-Wall", "-Wextra", "-Werror", f"-I{ROOT / 'tools/inmm_stub'}",
+         str(fixture), "-o", str(executable)],
+        check=True,
+    )
+    subprocess.run([str(executable)], check=True)
+
+
+def test_mirror_present_selects_the_stale_mask_state_from_the_env() -> None:
+    source = (ROOT / "tools/inmm_stub/g1_mirror2x.c").read_text(encoding="utf-8")
+    assert '#define G1_STALE_MASK_STATE_ENV "SYW2_G1_STALE_MASK_STATE"' in source
+    init = source[source.index("static void initialize_environment(void)"):]
+    init = init[: init.index("\n}\n")]
+    assert "g1_stale_mask_state_parse(" in init
+    present = source[source.index("HRESULT g1_mirror2x_copy_present("):]
+    present = present[: present.index("ZeroMemory(&g_last_present")]
+    # env absent => g_stale_mask_state stays 3 => the old `== 3u` PS3 selection is unchanged
+    assert "program_state == 3u" not in present
+    assert "program_state == g_stale_mask_state" in present
 
 
 def test_stale_mask_helper_parses_ordinals_and_classifies_pixels_with_host_gcc(tmp_path: Path) -> None:
@@ -832,11 +887,41 @@ static inline LONG InterlockedCompareExchange(volatile LONG *d, LONG x, LONG c)
 { LONG o = *d; if (o == c) *d = x; return o; }
 static inline LONG InterlockedExchange(volatile LONG *d, LONG x) { LONG o = *d; *d = x; return o; }
 static inline void Sleep(DWORD ms) { (void)ms; }
+static inline DWORD GetTickCount(void) { static DWORD tick; return ++tick; }   /* every call is a new tick: no stale cache on the host */
 static inline SIZE_T VirtualQuery(const void *a, MEMORY_BASIC_INFORMATION *i, SIZE_T l)
 { (void)l; i->BaseAddress = (void *)a; i->RegionSize = 1u << 20; i->State = MEM_COMMIT; i->Protect = 4; return sizeof(*i); }
 static inline HANDLE GetProcessHeap(void) { return 0; }
 static inline void *HeapAlloc(HANDLE h, DWORD f, SIZE_T n) { (void)h; (void)f; return malloc(n); }
 static inline BOOL HeapFree(HANDLE h, DWORD f, void *p) { (void)h; (void)f; free(p); return 1; }
+/* stdio-backed file API for the HD pack loader and key log */
+#include <stdio.h>
+#define MAX_PATH 260
+#define INVALID_HANDLE_VALUE ((HANDLE)(intptr_t)-1)
+#define GENERIC_READ 1u
+#define GENERIC_WRITE 2u
+#define FILE_SHARE_READ 1u
+#define OPEN_EXISTING 3u
+#define CREATE_ALWAYS 2u
+#define FILE_ATTRIBUTE_NORMAL 0x80u
+#define INVALID_FILE_ATTRIBUTES 0xFFFFFFFFu
+#include <sys/stat.h>
+static inline DWORD GetFileAttributesA(const char *path)
+{ struct stat st; return stat(path, &st) == 0 ? (S_ISDIR(st.st_mode) ? 0x10u : 0x80u) : INVALID_FILE_ATTRIBUTES; }
+static inline HANDLE CreateFileA(const char *path, DWORD access, DWORD share, void *sec, DWORD disp, DWORD attr, void *tmpl)
+{ FILE *fp; (void)share; (void)sec; (void)disp; (void)attr; (void)tmpl;
+  fp = fopen(path, (access & GENERIC_WRITE) ? "wb" : "rb"); return fp ? (HANDLE)fp : INVALID_HANDLE_VALUE; }
+static inline DWORD GetFileSize(HANDLE h, DWORD *high)
+{ FILE *fp = (FILE *)h; long cur = ftell(fp), n; fseek(fp, 0, SEEK_END); n = ftell(fp); fseek(fp, cur, SEEK_SET);
+  if (high) { *high = 0; }
+  return (DWORD)n; }
+static inline BOOL ReadFile(HANDLE h, void *b, DWORD n, DWORD *got, void *o)
+{ (void)o; *got = (DWORD)fread(b, 1, n, (FILE *)h); return 1; }
+static inline BOOL WriteFile(HANDLE h, const void *b, DWORD n, DWORD *w, void *o)
+{ (void)o; *w = (DWORD)fwrite(b, 1, n, (FILE *)h); return 1; }
+static inline BOOL CloseHandle(HANDLE h) { return fclose((FILE *)h) == 0; }
+#define lstrlenA(s) ((DWORD)strlen(s))
+#define lstrcpyA(d, s) strcpy(d, s)
+#define wsprintfA sprintf
 #endif
 """
 
@@ -858,6 +943,7 @@ void g1_perf_sections_end(G1PerfSection s, ULONGLONG t, ULONGLONG b) { (void)s; 
 void g1_perf_sections_reset(void) {}
 static BYTE screen[800 * 600];
 static BYTE source[256];
+BYTE g_fake_renderer[0x70000];
 /* writer 7 at origin (10,10), 4x4 sprite of 5s; identity frame comes from a full-viewport replay */
 static void bind_sprite(void)
 {
@@ -914,9 +1000,11 @@ int main(void)
 """,
         encoding="utf-8",
     )
+    (tmp_path / "fake_renderer.h").write_text("#include <windows.h>\nextern BYTE g_fake_renderer[];\n", encoding="utf-8")
     build = subprocess.run(
         ["gcc", "-std=gnu11", "-Wall", "-Wextra", "-Werror", "-Wno-unused-function",
-         "-I", str(tmp_path), "-I", str(stub), str(fixture), str(stub / "g1_hd_asset.c"),
+         "-I", str(tmp_path), "-I", str(stub), "-include", str(tmp_path / "fake_renderer.h"),
+         "-DG1_HD_RENDERER_BASE=g_fake_renderer", str(fixture), str(stub / "g1_hd_asset.c"),
          "-o", str(executable)],
         cwd=ROOT, capture_output=True, text=True, check=False,
     )
@@ -948,9 +1036,10 @@ def test_stale_mask_dump_is_opt_in_ps3_only_and_leaves_default_present_path_unch
     assert present.index("g1_stale_mask_selected(") < present.index("for (y = 0; y < height; ++y)")
     assert "g1_stale_mask_value(" in present
     assert "mask_dump" in present
-    # ordinals count program_state 3 presents only and the dump is capped
+    # ordinals count presents of the selected program state only (PS3 unless H-RS1's state env says
+    # otherwise) and the dump is capped
     assert "G1_STALE_MASK_DUMP_LIMIT" in source
-    assert "g_stale_mask_ps3_ordinal" in source
+    assert "g_stale_mask_ordinal" in source
     assert '#define G1_STALE_MASK_PATH "C:\\\\inmm_g1_stale_mask.bin"' in source
     # the header sums are the present record's own covered/stale counters
     assert "g1_stale_mask_header(" in present
@@ -1185,3 +1274,140 @@ def test_ulc_blend_size_reject_diag_is_opt_in_env_and_candidate_only_flag() -> N
     assert "blend_size_reject_diag=args.blend_size_reject_diag" in probe
     candidate_env = probe[probe.index("if candidate:"):probe.index("xvfb, display = runtime_env._xvfb")]
     assert 'env["SYW2_G1_BLEND_SIZE_REJECT_DIAG"] = "1"' in candidate_env
+
+
+def test_ua0_candidate_no_present_trace_flag_preserves_owned_run_id() -> None:
+    """H-UA0 U-0: disable present events but keep the candidate run ID for owned close."""
+    probe = (ROOT / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    assert '"--candidate-no-present-trace"' in probe
+    assert "--candidate-no-present-trace requires --hd-source scale2x" in probe
+    assert "no_present_trace=args.candidate_no_present_trace" in probe
+    candidate_env = probe[probe.index("if candidate:"):probe.index("xvfb, display = runtime_env._xvfb")]
+    assert "if no_present_trace:" in candidate_env
+    assert "_disable_present_trace(env)" in candidate_env
+    disable_present_trace = probe[
+        probe.index("def _disable_present_trace("):probe.index("\ndef _performance_present_metrics(")
+    ]
+    assert 'env.pop("SYW2_G1_PRESENT_TRACE", None)' in disable_present_trace
+    assert 'env.pop("SYW2_G1_TRACE_RUN_ID", None)' not in disable_present_trace
+    # the stub installs the mirror without the trace opt-in (the trace log is a mirror byproduct)
+    trace = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
+    install = _function_body(trace, "int g1_direct_draw_trace_install(void)")
+    assert "!env_enabled() && !g1_mirror2x_enabled()" in install
+
+
+def test_ua0_candidate_native_ddraw_flag_is_candidate_only() -> None:
+    """H-UA0 U-2: the user's game folder ddraw.dll can be loaded (native) in the candidate lane only."""
+    probe = (ROOT / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    assert '"--candidate-native-ddraw"' in probe
+    assert "--candidate-native-ddraw requires --hd-source scale2x" in probe
+    assert "native_ddraw=args.candidate_native_ddraw" in probe
+    candidate_env = probe[probe.index("if candidate:"):probe.index("xvfb, display = runtime_env._xvfb")]
+    assert 'env["WINEDLLOVERRIDES"] = "ddraw=n,b"' in candidate_env
+
+
+def test_ua2_stub_unit_tick_dump_has_env_opt_out_before_file_open() -> None:
+    """H-UA2 UA2-1: INMM_STUB_NO_UNIT_TICKS skips the PS3 unit dump (no file open, no write); unset keeps the old behavior."""
+    stub = (ROOT / "tools/inmm_stub/inmm_stub.c").read_text(encoding="utf-8")
+    body = _function_body(stub, "static void dump_units_at_tick(DWORD logic_tick)")
+    # the only other mention sits inside the SYW2_G1_DEFAULT_ON build's default-setter block (H-DEF1)
+    plain = re.sub(r"#ifdef SYW2_G1_DEFAULT_ON.*?#endif\n", "", stub, flags=re.S)
+    assert plain.count('"INMM_STUB_NO_UNIT_TICKS"') == 1
+    assert 'GetEnvironmentVariableA("INMM_STUB_NO_UNIT_TICKS"' in body
+    assert "g_no_unit_ticks" in body
+    # read once and cached, and the early return comes before the log file is created
+    assert "g_no_unit_ticks < 0" in body
+    assert body.index("g_no_unit_ticks) return;") < body.index('CreateFileA("C:\\\\inmm_unit_ticks.jsonl"')
+    # the default (env unset) path still creates the same file
+    assert body.count('CreateFileA("C:\\\\inmm_unit_ticks.jsonl"') == 1
+
+
+def test_ua2_candidate_no_unit_ticks_flag_is_candidate_only() -> None:
+    """H-UA2 UA2-2: the user-trial opt-out env is reachable from the harness candidate lane only."""
+    probe = (ROOT / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    assert '"--candidate-no-unit-ticks"' in probe
+    assert "--candidate-no-unit-ticks requires --hd-source scale2x" in probe
+    assert "no_unit_ticks=args.candidate_no_unit_ticks" in probe
+    candidate_env = probe[probe.index("if candidate:"):probe.index("xvfb, display = runtime_env._xvfb")]
+    assert 'env["INMM_STUB_NO_UNIT_TICKS"] = "1"' in candidate_env
+    # baseline lane / default env never set it
+    assert probe.count('"INMM_STUB_NO_UNIT_TICKS"') == 1
+
+
+_RET_RANGE_FIXTURE = r"""
+#include <assert.h>
+#include <stdint.h>
+typedef uint32_t DWORD;
+#define G1_RET_RANGE_KILLS_BASE 0x0115B000u
+#define G1_RET_RANGE_IDLE_BASE 0x01157000u
+#define G1_RET_RANGE_SIZE 0x1000u
+@@FUNCTION@@
+int main(void)
+{
+    DWORD kills = 0u, idle = 0u;
+    ret_range_diag_count(0x0115BBB9u, &kills, &idle);   /* .kills call site of 0x4664D0 */
+    ret_range_diag_count(0x0115B000u, &kills, &idle);   /* first byte of .kills */
+    assert(kills == 2u && idle == 0u);
+    ret_range_diag_count(0x0115BFFFu, &kills, &idle);   /* last byte of .kills */
+    assert(kills == 3u && idle == 0u);
+    ret_range_diag_count(0x0115C000u, &kills, &idle);   /* one past .kills: not counted */
+    ret_range_diag_count(0x0115AFFFu, &kills, &idle);   /* one before .kills / past .idle */
+    assert(kills == 3u && idle == 0u);
+    ret_range_diag_count(0x01157000u, &kills, &idle);
+    ret_range_diag_count(0x01157FFFu, &kills, &idle);
+    assert(kills == 3u && idle == 2u);
+    ret_range_diag_count(0x01158000u, &kills, &idle);
+    ret_range_diag_count(0x01156FFFu, &kills, &idle);
+    ret_range_diag_count(0x0041B78Cu, &kills, &idle);   /* .text return addresses are neither */
+    assert(kills == 3u && idle == 2u);
+    return 0;
+}
+"""
+
+
+def test_ret_range_diag_counts_primitive_b_and_textout_returns_in_kills_idle_only_when_opted_in(tmp_path: Path) -> None:
+    """H-E2611G1-1 E1-1: opt-in return-address counters for the 2611 `.kills`/`.idle` sections; off = no change."""
+    import subprocess
+
+    source = MIRROR.read_text(encoding="utf-8")
+    assert '#define G1_RET_RANGE_DIAG_ENV "SYW2_G1_RET_RANGE_DIAG"' in source
+    assert "static BOOL g_ret_range_diag = FALSE;" in source
+    initializer = _function_body(source, "static void initialize_environment(void)")
+    assert "GetEnvironmentVariableA(G1_RET_RANGE_DIAG_ENV" in initializer
+    assert "g_ret_range_diag = size == 1u && value[0] == '1';" in initializer
+    # the real helper text, run on the host: [base, base+0x1000) of each section, half-open
+    helper = source[source.index("static void ret_range_diag_count("):]
+    helper = helper[: helper.index("\n}\n") + 3]
+    fixture = tmp_path / "ret_range.c"
+    executable = tmp_path / "ret_range"
+    fixture.write_text(_RET_RANGE_FIXTURE.replace("@@FUNCTION@@", helper), encoding="utf-8")
+    built = subprocess.run(["gcc", "-std=gnu11", "-Wall", "-Wextra", "-Werror", str(fixture), "-o", str(executable)],
+                           capture_output=True, text=True, check=False)
+    assert built.returncode == 0, built.stderr
+    ran = subprocess.run([str(executable)], capture_output=True, text=True, check=False)
+    assert ran.returncode == 0, ran.stderr
+    # primitive B counts its own return address before anything else runs, only when opted in
+    hook_b = _function_body(source, "static DWORD __attribute__((thiscall)) mirror_primitive_b(")
+    assert "DWORD return_address = (DWORD)(ULONG_PTR)__builtin_return_address(0);" in hook_b
+    count_b = "ret_range_diag_count(return_address, &g_ret_diag_b_kills, &g_ret_diag_b_idle);"
+    assert hook_b.count(count_b) == 1 and "if (g_ret_range_diag) " + count_b in hook_b
+    assert hook_b.index(count_b) < hook_b.index("InterlockedExchange(&g_primitive_guard, 1)")
+    assert hook_b.index("if (!g_original_b) return 0u;") < hook_b.index(count_b)
+    # the original B call and the mirror call are unchanged (one each)
+    assert hook_b.count("g_original_b(") == 2 and hook_b.count("mirror_reinvoke(") == 1
+    # TextOutA counts its caller the same way, before the guard / mirror decisions
+    textout = _function_body(source, "static BOOL WINAPI mirror_textout(")
+    assert "DWORD return_address = (DWORD)(ULONG_PTR)__builtin_return_address(0);" in textout
+    count_t = "ret_range_diag_count(return_address, &g_ret_diag_textout_kills, &g_ret_diag_textout_idle);"
+    assert textout.count(count_t) == 1 and "if (g_ret_range_diag) " + count_t in textout
+    assert textout.index(count_t) < textout.index("if (g_primitive_guard)")
+    # counters are reset with the other textout counters and exposed only through accessors
+    for name in ("g_ret_diag_b_kills", "g_ret_diag_b_idle", "g_ret_diag_textout_kills", "g_ret_diag_textout_idle"):
+        assert f"static DWORD {name} = 0u;" in source
+        assert f"    {name} = 0u;" in source
+    assert "BOOL g1_mirror2x_ret_range_diag_enabled(void)" in source
+    # the trace record exists only when the diagnostic is on (default output is byte-identical)
+    trace = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
+    assert 'trace_event("ret_range_diag", "active"' in trace
+    block = trace[trace.index("if (g1_mirror2x_ret_range_diag_enabled())"):]
+    assert block.index('trace_event("ret_range_diag"') < block.index("}") + 400

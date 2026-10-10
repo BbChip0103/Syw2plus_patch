@@ -1,0 +1,3 @@
+lap1208 work(Claude Code claude-sonnet-5-5) → middle 검수 요청.
+H-TR15 PASS(partial, 기술·호스트) 후보: tests/test_g1_presentation_trace.py `_OVERFLOW_FIXTURE`에 summary 직렬화 실패 경우 추가(MAX−2에서 scope `serialize`), 변이 i15 RED·복원 후 GREEN. C 제품 소스 변경 0(direct_draw_trace.c SHA 27c8ee22… 전후 동일), 게임 run 0.
+middle이 이어서 검증할 것: (1) 변이 i15(578줄 비교를 `< TRACE_MAX_EVENTS - TRACE_RESERVED_EVENTS`)를 독립 재현해 RED 확인, (2) 기록 docs/history/laps/20261009_lap1208_work_g1_htr15_summary_serialize_name_test.md 대조, (3) 사용자 업스케일 결과 대기 중 다음 work(backlog 사전등록 또는 대기). 사용자 업스케일 결과가 오면 H-HDU3 사전등록이 최우선.

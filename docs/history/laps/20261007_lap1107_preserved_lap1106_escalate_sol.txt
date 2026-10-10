@@ -1,0 +1,15 @@
+lap1106 work(Claude Code claude-sonnet-5-5) -> middle 검수 요청. 역할 경계: 실무 구현 완료, 수용 판정은 middle 몫.
+
+H-P35 PASS(partial, 기술·격리): PS35(불러오기 화면) HD 9.4% -> 100%(save006 pair 2회 + save000 1회, 전 present, stale 0, V1 0).
+기록: docs/history/laps/20261007_lap1106_work_g1_hp35_load_screen_frame_copy.md (§2 귀속 · §3 변경 · §4 측정 · §6 한계)
+raw: <공유 temp>/20261007_lap1106_work_hp35/{lap1106_census_ps35_a,lap1106_census_ps35_b,p1,p2,s1}/ , 재계산 스크립트 recalc_hp35.py · oracle_ps35.py
+
+middle이 새 스크립트로 독립 재계산·검수할 것:
+1. 귀속: census_raw(PS35 64 present) last-writer = unknown 380,518(index 0 100%) + block_copy 88,880 ...; trace에서 BltFast 0x01E6D920<-0x01E6DE78 caller 0x00493CCB(NULL rect, 매 present)가 검정을 다시 쓰는 writer라는 결론이 raw와 일치하는가(dd_surface_blt writer_pixels 0 = 값 동일).
+2. p1/p2/s1 candidate trace_raw의 상태별 HD((covered-stale)/480000)·stale·V1 outside·경과 p95를 raw에서 직접 재집계(PS35 100/100/100, PS9 100, PS3 min 99.287/99.287/98.618), 안전 7종 0, pair-result gate(save006 2/2 PASS, save000 s1은 fixture 한계 기존 HOLD).
+3. source diff 검수: tools/inmm_stub/g1_frame_copy.h(신규)·g1_mirror2x.c(transfer_block_copy_to_screen 부분 사각형 확장 + g1_mirror2x_frame_blt_copy)·direct_draw_trace.c(hook_blt_fast 게이트: caller 0x00493CCB·NULL src·x=y=0·상태 35·800x600, present 행 5필드, layer_details 640)·tools/g1_saved_scene_probe.py(--census-state 35).
+   특히 0x466280 부분 사각형 확장이 PS35 외 화면(타이틀·대기실·옵션·저장 창)에 미치는 영향은 미측정(PS3 census block_copy 0px라 PS3 무영향)이다. 부분 사각형 Scale2x는 바깥 이웃을 가장자리 복제로 가정해 패널 테두리 고리가 전체 프레임 Scale2x와 다를 수 있다.
+4. 한계 판정: PS35 후보 화면 PNG 직접 캡처·픽셀 정확 Scale2x 비교 없음(baseline 캡처 독자 Scale2x subpixel 21,131 vs 후보 trace inside diff 20.8k~21.1k의 1.6% 근사 일치만). 필요하면 다음 work에서 후보 PS35 캡처를 추가한다.
+5. 사용자 시험판 _inmm.dll(94213374...)은 재스테이징하지 않았다. 이번 변경을 시험판에 넣을지 재스테이징 여부와 다음 work(다른 화면 상태 coverage 등)를 정한다.
+
+원본 EXE SHA b56986e0...a8ac 5 run MATCH, game 사본 삭제, 커밋 0(전부 uncommitted). 전체 make check 결과는 STATUS lap1106 줄에 있다.

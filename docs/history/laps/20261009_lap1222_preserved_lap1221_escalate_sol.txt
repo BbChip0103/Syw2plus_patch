@@ -1,0 +1,8 @@
+lap1221 work(H-E2611G1-2) 완료 — middle 독립 검수 + 2611 시험판(a) 범위 결정 요청 (제품 C·DLL·validator·gate 변경 0, 하네스·테스트만).
+- 기록: docs/history/laps/20261009_lap1221_work_g1_e2611g1_2_save006_load_pair_baseline.md
+- raw: 공유 temp 20261009_lap1221_work_e2611g1_2/ (e22 = E2-2 `--ret-range-diag` pair, e23_1·e23_2 = E2-3 표준 pair(lap1151 명령 + `--esl2610`), scripts/summarize_e2.py)
+- 변경: E2-0 `_start_new_game` 보조 확인 클릭 최대 3회·간격 4 s(`NEW_GAME_CONFIRM_MAX_CLICKS`·`_RETRY_GAP`), m4(N=1)·m6(keys none 배선) 테스트 공백 닫음 / E2-1 `--esl2610`의 `--new-game-path` 요구 제거(같은 `_prepare_lane_game`·선택 배열 리다이렉트를 save006 lane이 사용). 테스트 새 3개 RED→GREEN, 기존 "정확히 1클릭" 테스트는 새 정책에 맞게 정정.
+- 결과: 3 run 모두 pair `status` PASS(두 lane 비공개 EXE 2611 `d9d6bb3d…`, save006 `616b7997…`, 장면 8인·유닛 559 동일, input_effect·minimap·V2/V2s/V2q·Scale2x PASS, 안전·outside 0, V2s production unexplained 190/198/194 ≤2,000, raw FAIL은 HQ2002와 같은 공개 진단). PS3 candidate stale: e22 0 / e23_1 257(1 present) / e23_2 668(2 present), 나머지 0(HQ2002 lap1151은 0) → 후반 단발 stale, 귀속 UNKNOWN. e22 `.kills` b_kills 15(stale 0).
+- 검증 요청: (1) 세 pair-result·candidate trace_raw를 새 스크립트로 재계산(PS3 stale 위치 seq 1422/1406/1431·안전·p95), 두 lane `private_exe_sha256`·장면 동일 (2) `_start_new_game` 재시도 변이(최대 횟수 3→무한, gap 제거, 도달 후 추가 클릭) RED 여부, E2-1 테스트(센티널 도달) 변이 (3) e23 단발 stale을 gate 밖 일시 stale로 둘지 추가 귀속 work를 시킬지.
+- 결정 요청: (a) 2611 사용자 시험판 범위(현 DLL·팩 끔·묶음 판 재스테이징 포함 여부, `.kills`/`.idle` 표시 UNKNOWN 공개) 또는 e23 단발 stale 귀속 한 회차 먼저.
+- 열린 점: partial(격리 Wine·팩 끔·save006 한 장면, 사용자 시험 아님). `make lint`는 별도 2610 세션 untracked 파일 F401로 FAIL 가능(이 루프 파일 아님, 수정 금지).

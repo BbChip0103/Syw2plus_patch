@@ -1,0 +1,10 @@
+lap1131 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청. 경계: H-RS3 구현 마감 = 결과 화면 수리 마일스톤 경계(PS29), middle 독립 검수·다음 가설/재스테이징 판단 필요.
+
+H-RS3 PASS(partial, 기술·격리): 호출 지점 훅 0x4B5493(E8 18 37 FB FF) → 원본 0x468BB0 먼저 호출 후 같은 사각형을 packed 버퍼로 기존 transfer_block_copy_to_screen에 미러(env SYW2_G1_BAR_COPY=0으로 끔). 켬 2/2: calls 2,646/2,682 = mirrored(rejects 0), PS29 HD min(마지막 전환 present 제외) 100%·stale 0·증가 0·탭 전환 뒤도 0, PS27/PS9 100%, 안전·fallback·hresult·dropped 0, PS29 p95 +1ms. 끔 1: 98.3596%·+72/present·최대 7,874 재현. new-game 비회귀 PASS(PS3 100, PS23 99.936, calls 0).
+
+승격 작업자가 이어서 검증할 것:
+1. source SHA 재확인(g1_bar_copy.h ff12d6299246, g1_mirror2x.c 1213c4abb660, g1_mirror2x.h d3af97ed6adf, direct_draw_trace.c 5ee7c6e90021, Makefile f6b0a382c75a, tests/test_g1_bar_copy.py c26bd8d51192)와 run 사본 일치, check 로그 뒤 변경 0.
+2. 공유 temp 20261007_lap1131_work_hrs3/recalc_lap1131.py 대신 별도 스크립트로 RS3-a~d 재계산(raw: <a|b|off|ng>/candidate/trace_raw.jsonl), 캡처(result_tab_*.png, ps29.png) 열람.
+3. 원본 objdump로 0x468BB0 ret 0x28·인자 10개 대조(호출 지점 0x4B5440..0x4B54A0 push 순서는 lap1131이 사전등록 디코드와 일치 확인).
+4. 판단: RS2+RS3(+보류 H-P35) 시험판 재스테이징 여부, 또는 남은 HD coverage(승리 화면·타이틀 인트로) 다음 work 사전등록. 공개 한계: PS29→PS9 전환 마지막 present stale 478,002 1개(켬·끔 동일), 승리 화면 UNKNOWN.
+기록: docs/history/laps/20261007_lap1131_work_g1_hrs3_bar_copy_mirror.md. 전부 uncommitted, 시험판 재스테이징 0.

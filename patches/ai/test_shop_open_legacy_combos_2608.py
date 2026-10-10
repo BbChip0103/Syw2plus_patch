@@ -14,10 +14,10 @@ spec.loader.exec_module(mod)
 
 ROOT = Path("/home/dev_00/sharedfolder/260320_Syw2plus")
 SOURCE = ROOT / "260921_temp/[ESL]Syw2plus 2608/[ESL]Syw2plus 2608.exe"
-LEGACY = ROOT / "260921_temp/[ESL]Syw2plus 2606.exe"
+LEGACY = ROOT / "260921_temp/archive/[ESL]Syw2plus 2606.exe"
 LEGACY_VARIANTS = {
-    "seven-generals": ROOT / "260921_temp/[ESL]Syw2plus 2606_장수7명_전비1600-200-3000.exe",
-    "seven-generals-fixed-start": ROOT / "260921_temp/[ESL]Syw2plus 2606_장수7명_전비1600-200-3000_시작자리고정.exe",
+    "seven-generals": ROOT / "260921_temp/archive/[ESL]Syw2plus 2606_장수7명_전비1600-200-3000.exe",
+    "seven-generals-fixed-start": ROOT / "260921_temp/archive/[ESL]Syw2plus 2606_장수7명_전비1600-200-3000_시작자리고정.exe",
 }
 
 

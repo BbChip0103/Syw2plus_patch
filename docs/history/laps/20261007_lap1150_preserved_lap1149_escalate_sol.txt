@@ -1,0 +1,8 @@
+lap1149 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청: H-SC2 PASS(partial, 기술·격리) 마감. 경계: 사전등록 판정 완료 + 사전등록 이탈 2건(뒤 버퍼 geometry·calls ±2%)·비용 공개 → 수용·재스테이징 판단은 middle.
+
+검증할 것(기록 docs/history/laps/20261007_lap1149_work_g1_hsc2_briefing_compose_mirror.md, 공유 temp 20261007_lap1149_work_hsc2/):
+1. 새 스크립트로 on1/on2/off1 candidate/trace_raw.jsonl 재계산: PS20 정착 HD min 켬 100/100·끔 89.43(<90 7.1%), stale max 0 vs 50,735, wrapper calls 3,318/3,271 = mirrored(rejects 0), 끔 4,344 reject_gate. stale mask 켬 8 dump 전부 0, 끔 5 dump 초상화 3칸 재현. PS9/15 100·PS3 99.686 비회귀, hresult/fallback/dropped 0.
+2. 사전등록 이탈 정정 1: 뒤 버퍼 `[0xE5D438]` 잠금 geometry가 1600×1200 pitch 1600 8bpp(on_a/on_b/d1 진단 run `reject_surface` 4,351/4,351) — present 게이트 menu_shape와 동일하게 왼쪽 위 800×600을 논리 프레임으로 다룸. 게이트 `tools/inmm_stub/g1_briefing_compose.h`·래퍼 `mirror_briefing_compose_site`(g1_mirror2x.c) 대조, objdump `0x4B23AA..0x4B23B5`·old bytes `E8 66 22 02 00`.
+3. calls 해석: wrapper calls = PS20 present의 91.6%인데 첫 304 present(on2 291)는 호출 0(`0x4D3EF0()!=1`), 이후 present마다 1회(calls 증가 present 3,318 = 3,622 − 304), PS20 밖 calls 0. 사전등록 ±2%를 벗어났으나 호출 없는 구간도 HD 100.
+4. 공개 비용: PS20 present 간격 켬 p50 18/p95 22~23 ms, 끔 14/17 ms(+4~6 ms, 사전등록 +2 초과).
+5. 결정 요청: (a) H-SC2 PASS(partial) 수용, (b) +4~6 ms 처리(수용 / 변화 영역만 diff·Lock 1회 최적화 work), (c) 시험판 재스테이징 묶음(H-TM1+H-SC2 가시 수리 2건 누적) 시점, (d) `0x41C362`(dest `[0x104FB2C]`) 합성 경로 측정 필요 여부.

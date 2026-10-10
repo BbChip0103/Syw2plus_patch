@@ -1,0 +1,23 @@
+lap1198 work(Sonnet 5.5) -> middle(Opus): H-HDB4 검수 요청 (7인자 가중 혼합 0x4678C0 / 반전 0x468360 HD 키 경로: remap + level DWORD 표)
+
+기록: docs/history/laps/20261009_lap1198_work_g1_hdb4_remap_level_weighted_translucent_key_path.md
+공유 temp: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261009_lap1198_work_hdb4/
+  (run_D0 발견, run_S3/S4 켬, run_Q1 끔, run_F1 new-game, 무효 run_S1/S2/Q0(DLL ad4f8ce1…, metrics 줄 버퍼 초과), *.keys.jsonl, scripts/{attrib,asym,w_metrics,run,seqD,seqR,seqR2}, mut/{mutation_lap1198.py,.txt,_firstpass.txt}, pack_hdb4, full.asm = 원본 objdump)
+이유: 사전등록(lap1197 §7) B4-0~B4-4 이행 결과 검수. 마일스톤 경계 아님, 사용자 전달 아님. 커밋 0.
+
+결과 요약: level 슬라이스 = 10(표 구성 0x4654D0: v=0,10..90, 슬라이스당 64x64 DWORD, 항목 max(d, max(0, s-floor(v*s/100))) 0..63) 정적 확정,
+0x468360 = 0x4685C0 + remap + level 정적 확정. level 값 자체의 상한은 정적으로 못 묶어 런타임 거부(0..9 밖·int16 밖, key_level_rejects)로 처리(S3+S4 384호출 거부 0).
+B4-2 변이 28/28 RED(a4 클립 우회·n11 키 블록 이동·클립 원본 뒤 읽기 포함), B4-3 digest 20개 전부 char/cannon2c1·cannon2c2 귀속(비대칭 실루엣 hit 0x468360 5/5),
+B4-4 save000 켬 2 run: 0x4678C0 184/184·0x468360 8/8 keyed 100%·자기 검사 불일치 0(249,736 px·6,446 px)·key_clip_cut 184·8·안전 0·p95 7(끔 7)·stale 0,
+pair status는 켬 2·끔·발견 4 run 모두 같은 기존 save000 HOLD(게이트 차이 0), F1 new-game 네 기존 writer keyed 100%·불일치 0. 후보 판정 PASS(partial, 기술·격리).
+
+middle이 이어서 검증할 것:
+1. 원본 독립 역어셈블: 0x4654D0 표 구성(슬라이스 10·항목 식·포인터 이어쓰기), 0x468360(쓰기 열 x+(int16)(w-col-1)·클립 필드·remap/level 인자 위치), 호출자의 level 바이트 출처.
+   level 상한을 정적으로 묶을 수 있는지(work는 못 묶고 런타임 거부로 처리).
+2. 코어 blend_key_apply의 remapped 분기: 디코드 전 level 슬라이스->int16 변환·거부, remap 평면 자기 검사, begin_with_aux(remap digest), identity는 스트림 색, 정적 변수 g_blend_key_remap/level 수명(호출 직전 설정·직후 해제).
+   asset 층 is_remap_blend_writer: LUT 캡처·적용·PACK_TINTED=0이면 팩 끔(키는 fallback으로 셈) 결정이 타당한지, 0x468360 팩 행 반전.
+3. 변이 재현(mut/mutation_lap1198.py)과 독립 변이, S3/S4/Q1/F1 trace·키 로그·귀속·비대칭 새 스크립트 재계산.
+4. work가 낸 버그 수리 판정: 카운터 추가로 metrics 레코드가 트레이스 줄 버퍼 line[10240]을 넘어 mirror2x_metrics 이벤트가 조용히 사라짐 -> line[16384]·mirror_details[14336] + 용량 테스트. 첫 run(S1·S2·Q0)은 근거에서 제외하고 S3·S4·Q1·F1을 새로 돌림.
+5. F1 summary aggregate_output_dropped_count 45(present 이벤트 7,103개로 이벤트 상한 8,192 근접, aggregate 줄만 손실, present·metrics 무손실)가 하네스 한계로 수용 가능한지.
+6. 디스크: 끝 여유 11 GB(20 GB 미만), game 사본은 없고 run당 약 1.2 GB prefix·output만 남음(8 run). 5 GB 미만이면 run 시작 금지이므로 prefix archive 회수(lossless archive·restore 검증 뒤 disposable prefix만)를 다음 run 전에 판단/지시.
+7. 다음 후보: 0x467E60(7인자 무클립 반전, 2 run만 관측) 사전등록 또는 효과 갈래 마감 판정. 남은 이름 충돌 3개·실제 업스케일 화질은 비목표.

@@ -1,0 +1,11 @@
+lap1117 work → middle 검수 요청 (H-PM0 결과 FAIL/귀속, 수리 없음)
+
+실제 모델: Claude Code claude-sonnet-5-5 / high / work. 기록: docs/history/laps/20261007_lap1117_work_g1_hpm0_pause_menu_hd.md.
+경계 사유: 사전등록(lap1116 §7) FAIL 규칙 — mirror/HD 결함 귀속·수리 사전등록은 middle 역할이다.
+
+middle이 이어서 검증할 것:
+1. raw 독립 재계산: 공유 temp 20261007_lap1117_work_hpm0/pm0_{a,b}/candidate/trace_raw.jsonl 의 mirror2x_present
+   (run a seq 3641 일시 stale 51,628 · seq 5358 stale 95,366 · seq 5359부터 covered 479,692→435,652; run b seq 4865 · 6601 · 6602 covered →435,868).
+2. 결함 요지: 저장 창을 닫고 일시정지 메뉴로 복귀한 뒤 약 44k 논리 px가 HD coverage에서 빠져(stale 0, covered 감소) PS23 구간 끝까지 1,260/1,277 present 지속(HD 90.76/90.81%). PS3 복귀 후 회복. 저장 창 열림 1 present 일시 stale 51.6k도 있다.
+3. 한 가설로 귀속(저장 창 닫기 배경 복원 writer가 mirror coverage를 갱신하지 않는 경로 의심) → 수리 work 사전등록. 재측정 도구: --new-game-path --new-game-start [--new-game-act] --new-game-menu.
+4. 제품 C 변경 0(후보 DLL lap1106 트리 그대로). 하네스·테스트 uncommitted. 원본 SHA b56986e0… MATCH. 사용자 G1 시험 결과(APPROVALS lap1104)는 아직 없음.

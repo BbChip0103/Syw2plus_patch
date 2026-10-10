@@ -1,0 +1,6 @@
+Lap 1232 hands-on work completed the registered H-TR2612 executions. Please hand this to a fresh middle reviewer for independent verification before any 2612 user trial request.
+
+- Two fresh 2612/save006 pairs PASS with scene equality, 7/7 input checks, V2/V2s/V2q/Scale2x, candidate PID-bound close, summary=1, drop=0, detach/flush complete.
+- Fresh 2612 new-game run PASS on both lanes; candidate 1600x1200, new-game start/play and four camera directions PASS. `.kills`/`.idle` return-range counters are 0 and remain INCONCLUSIVE without combat.
+- Raw outputs and hashes: `docs/history/laps/20261010_lap1232_work_g1_htr2612_fresh_pair_newgame.md`; source artifacts are in shared `temp/Syw2plus_patch/20261010_0930_lap1232_htr2612/`, `20261010_0211_lap1232_htr2612/`, and `20261010_0216_lap1232_htr2612/`. First artifact folder label `0930` is a naming typo; embedded run timestamps are 02:11 KST.
+- Review the pair raw/summary ownership fields, 2612 and save006 SHA, source fingerprint, `make check`, and final safety/context checks. Preserve the historical 2611 HOLD and prior delivery facts. Do not treat this as G1 milestone acceptance or user approval.

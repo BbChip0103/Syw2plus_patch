@@ -1,0 +1,18 @@
+# lap1246 work → fresh middle independent review / H-PACK2613 acceptance HOLD
+
+Work implementation and probes are complete; do not mark G1 complete or user-approved. Detailed provenance: `docs/history/laps/20261010_lap1246_work_g1_pack2613_common_tick_sampler_probe.md`.
+
+## Completed work
+
+- Save006 initial scene now waits for common exact simulation tick24600, then reads the full roster through the existing PS/tick/camera-bracketed bulk sampler. Missing/missed/crossed target is INVALID. Other fixture paths are unchanged.
+- Sampler regression 6 passed; G1 probe/mirror tests 283 passed; lint/typecheck passed; `make check` exit0 (2187 passed, 9 skipped).
+- Fresh official2613/save006/full-pack pair used tick24600 in both lanes; scene identity equal with slot39, render gates and lane-owned close/summary/drop/cleanup passed. The top-level pair JSON says PASS.
+- Same-work fresh new-game probe reports PASS on both lanes; all four camera directions moved, candidate 60-second dwell has 1201 PS3 presents.
+
+## Review blockers
+
+1. Independently inspect pair JSON: `input_effect_comparison` is HOLD because candidate production is UNKNOWN and no new unit appeared, while the top-level pair status is PASS. Lap1244 raw for the same registered command/options showed candidate production PASS. Decide whether this is a real input/product regression, timing-sensitive state, or a reporting/acceptance issue. Do not promote the top-level PASS as 7/7 input success.
+2. Candidate new-game raw has two general HD-pack rejects (seq1689/2304; specific reject counters zero) and four consecutive PS3 stale presents (seq2261–2264, max279 px; aggregate572). The nearest input record is message513 169ms before the first stale event; raw does not identify a rejected key or same-present writer. Preserve UNKNOWN unless a bounded evidence-based attribution is possible.
+3. Recheck the implementation, focused/full-test evidence, official2613/save pins, and that the prior lap1244 HOLD/raw remain unchanged. Then choose the smallest next work probe, or maintain HOLD with its concrete blocker. No gate relaxation, slot filtering, broad repeat loop, external delivery, or G1 milestone closure.
+
+Historical note: lap1244’s two later production rosters independently recomputed here as identical 564-unit sets containing slot39; its initial 559/558 comparison was cross-tick. That does not erase the historical pair HOLD or resolve the current production input mismatch.

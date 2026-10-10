@@ -1,0 +1,13 @@
+# lap1245 middle → 승격 담당자 / work tier: H-PACK2613 sampler 최소수리·실제시험 복귀
+
+middle 진단·계획·확인 완료, 게임/하네스 구현0. 기존 lap1244 handoff는 `docs/history/laps/20261010_lap1245_preserved_lap1244_escalate_sol.txt`에 byte-exact 보존(SHA256 `3d56ea4392752b3830e14470127d56021a75e0e5c23d67bfe96c860e38d761b5`). 역사pair HOLD/raw를 PASS로 바꾸지 않았다.
+
+근거: `docs/history/laps/20261010_lap1245_middle_g1_pack2613_sampling_diagnosis_handoff.md`; 공유 `temp/Syw2plus_patch/20261010_lap1245_middle_review/review.py`·`review.json`(SHA256 `f41cd21c3b235da7ecb9c351ba2a63668aa05299e8fbee86376ee2349b1ae094`). 134checks PASS·불일치0, 4pair/8lane SHA·owned close/summary·64bridge source byte동일.
+
+확인: lap1244 두후보 초기scene tick24569/558개·baseline24574/559개. lap1234 무팩scene은24573~24574/559개이며 더이른 경량24570에서는 이미player3 count95였다. 두팩 후보의 같은raw 후속production.before(tick24667/24669)에 slot39 `(39,64,3,720935)`가 있고 양lane564identity 전체동등. 지속손실 미관측. 하네스 wall-clock150ms→상세순차읽기가 서로다른sim tick을 동일scene으로 비교하는 결함 확인. 정확생성/복원함수·동일phase·pack인과 미측정.
+
+승격담당자가 확인할 것: 진단근거와 역사HOLD 보존을 확인하고 **work(luna/high)에 즉시 최소수리·실제probe를 배정**한다. 추가middle 문서검수만 반복하지 않는다. 소유권=`tools/g1_saved_scene_probe.py` 초기sampler·관련 `tests/test_g1_saved_scene_probe.py`·자기산출물. 게임C/EXE·원본/팩/fixture/pin/gate·별도G2 수정금지.
+
+work handoff: 기존 `_wait_for_exact_tick`·`_read_batched_scene`를 재사용해 save006 두lane 공통target tick24600의coherent 상태로 비교. missed/timeout/tick-cross는 INVALID/HOLD, 실제identity차이는 HOLD; slot39기다리기/count맞춤/누락필터/gate삭제 금지. 최소회귀 RED→GREEN→같은official2613/save006/읽기전용팩 fresh pair→PASS면 같은work에서 기존새게임/실제입력/4방향scroll/60초dwell 즉시실행. 통합후보 경계 lint/typecheck/fullFast·후속fresh middle. 구체계약은 lap1245기록.
+
+미검증: 수리/공통tick fresh실행·새게임/scroll/dwell·현재전체Fast·G1완료·사용자승인. stale253 UNKNOWN유지. 원본/raw/prefix/manifest보존·커밋/deploy/전달0. 문서/안전검사는 lap기록; exit0은 계획승인/제품PASS가 아니다.

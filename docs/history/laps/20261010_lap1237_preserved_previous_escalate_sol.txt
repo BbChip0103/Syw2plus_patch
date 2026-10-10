@@ -1,0 +1,11 @@
+lap=1235
+role=work
+status=blocked_on_current_lap_and_queue_conflict
+
+This session stopped before implementation or runtime work. The read-only lap counter is 1235, while `docs/history/laps/20261010_lap1235_middle_g1_htr2613_independent_review_handoff.md` records lap1235 as a completed middle review and `docs/feedback/INBOX.md` records root processing that handoff at 17:57 KST. Do not overwrite or invent a lap number.
+
+The current queue conflicts: `docs/STATUS.md` still says the next action is promotion review of H-TR2613 and the milestone/trial boundary is HOLD; the later INBOX entry says the review was accepted, the 2613 trial was delivered, and the next work is stale240 location/writer tracing. Relevant handoff: `docs/work/active/G1_WORK_H_TR2613_PINNED_RUNTIME_AND_PAIR.md`. Read-only SHA256 at stop: STATUS `731168526c7e5a27c6f4120cfc67eff5e7b76dcb1a0ae193c54c2cc52632e720`; INBOX `5df89f9cd8a03e2adaaf90eff2931c17f11f4220808e6d5ad1b5679658346151`; work card `f73c0aefe062e2e02853710f29961e43d0779f675d891c325eb279f991cee6c1`.
+
+Promotion worker should reconcile the authoritative current lap assignment without writing `loop/.lap_counter`, update STATUS to reflect the later root decision, and then assign a fresh work lap for the registered stale240 probe. The probe should use the 2613/save006 configuration and `--stale-mask 55-90 --stale-mask-state 3`, first locating the 2612 pair01 PS3 ordinal66 stale event relative to the building click at −40 ms, then attributing only a reproduced event with the existing screen-watch/`--drift-samples` path. Preserve the already delivered trial and all raw evidence; do not claim G1 completion or user approval.
+
+No source, test, product, or STATUS files were changed in this session. Existing dirty worktree and evidence were left untouched.

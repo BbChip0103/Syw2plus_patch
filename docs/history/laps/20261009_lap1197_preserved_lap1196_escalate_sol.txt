@@ -1,0 +1,20 @@
+lap1196 work(Sonnet 5.5) -> middle(Opus): H-HDB3 검수 요청 (좌우반전 가중표 혼합 0x467FD0 / 0x4685C0 HD 키 경로)
+
+기록: docs/history/laps/20261009_lap1196_work_g1_hdb3_flipped_weighted_translucent_key_path.md
+공유 temp: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261009_lap1196_work_hdb3/
+  (run_P0/P1 켬, run_Q0 끔, pair_PD, *.keys.jsonl, scripts/{attrib,asym,w_metrics}.py, mut/, _inmm.lap1194.dll = 이전 DLL 사본)
+이유: 사전등록(lap1195 §7) B3-0~B3-4 이행 결과 검수. 마일스톤 경계 아님, 사용자 전달 아님. 커밋 0.
+
+결과 요약: B3-0 5/5 RED, B3-2 변이 16/16 RED, B3-3 두 writer 각 14 digest 전부 fnt/CLOUD.spr 귀속(비대칭 실루엣 14/14),
+B3-4(i) 켬 2 run 두 writer keyed 100%(0x4685C0 717+15, 0x467FD0 898+8)·자기 검사 불일치 0·key_clip_cut 721·안전 0·p95 6/6(끔 6)·
+0x467580/0x467B00 비회귀, (ii) pair PD PASS. 후보 판정 PASS(partial, 기술·격리).
+
+middle이 이어서 검증할 것:
+1. 코어 blend_key_apply의 flip 파생(writer == 0x467FD0 || 0x4685C0)과 디코드 직후 idx/mask 행 반전이 원본 asm(orig_467FD0/orig_4685C0: 토큰 열 c -> 화면 열 x+w-c-1)과 일치하는지.
+   0x4685C0 클립 창(화면 좌표, 오른쪽·아래 포함, 위 잘린 행 파싱)을 g1_blend_clip_window 그대로 쓰는 것이 맞는지.
+2. 팩 파일 반전 위치(read_pack_frame, is_flip_blend_writer)와 반전 identity 마스크 실루엣 검사, hd_pack_blend_* 카운트 포함.
+   끔 env 결정(PACK_BLEND=0 또는 PACK_FLIP=0이면 두 writer 키 끔)이 타당한지.
+3. 변이 재현(특히 work가 정정한 m4/m8/m12 설계), 새 스크립트로 trace·키 로그·귀속·비대칭 재계산.
+4. 판정 요청: (a) P0 stale 15.1 s 최대 277 px가 "기존 서명" 범위인지(사전등록 약 240~260, lap1187 backlog 18~305, 3 run 중 1 run, 끔·켬 P1에는 없음).
+   (b) wrap 경로(0x467FD0 사각형이 stride/화면 밖) 실게임 미관측 + pair 장면에 0x467FD0 키 로그 항목 0 -> 추가 run이 필요한지, 공개로 수용할지.
+5. 다음 후보: 7인자 0x4678C0 / 반전 sibling 0x468360, 0x467E60 사전등록 또는 효과 갈래 마감 판정.

@@ -1,0 +1,14 @@
+lap1192 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 검수 요청: H-HDN0 (팩 이름 충돌 해소 — 구별 접두 길이 확장 이름)
+
+사유: 역할 경계(실무는 자기 결과를 승인하지 않음) + 팩 이름 규약 변경(C 로더·도구) 승인 필요. 사전등록 §7의 N-0~N-5 측정식은 모두 충족했다: 변이 C 8/8·도구 5/5 RED, 오프라인 분리 674/677(남은 3 = 86×60, 106프레임), 실게임 X1·X2 `0x467580` keyed 100%(292·824호출)·`e88d0c4c` 두 프레임 모두 확장 hit·자기 검사 불일치 0·안전 7종 0·p95 6, pair PX PASS, NG5 T1 충돌 이름 키 127/127 확장 hit(ext_misses·rejects 0) vs 같은 팩 `SYW2_G1_HD_PACK_EXT=0`(T0) 60키 전부 miss. 임의로 마감하지 않고 판정을 넘긴다. 기록: docs/history/laps/20261008_lap1192_work_g1_hdn0_pack_name_collision_extended_names.md. 산출물(공유 temp): 20261008_lap1192_work_hdn0/ (run_X1·X2·Q1·T1·T0·pair_PX·pack_dry/pack_ext/pack_ng5·ref·hd·ref2·hd2·scripts/{run,pair,seq1,seq2,w_metrics,keys_vs_index}).
+
+변경(모두 uncommitted): tools/g1_hd_convert.py(_split_by_prefix·ext_candidates·fnv1a_prefixes·stream_ranges·marker_name·ext_pack_name, pack 보고서 extended_*), tools/inmm_stub/g1_hd_pack.h(g1_hd_pack_stem/marker_name/ext_name, EXT_MIN/MAX), g1_hd_asset.{c,h}(open_extended_pack_file·g_current_source·ext 카운터 3·끔 env SYW2_G1_HD_PACK_EXT=0), direct_draw_trace.c(hd_pack_ext_* 3필드), tests/test_g1_blend_key.py(+2, N-0), test_g1_hd_convert.py(기존 4 갱신 +9), test_g1_hd_pack.py(+9). 빌드 산출 tools/inmm_stub/_inmm.dll(d4ec493e…).
+
+middle이 이어서 검증/판정할 것:
+1. C 확장 조회 독립 검토: read_pack_frame에서 기본 이름 미존재 때만 .amb를 여는지(우선순위), .amb = 정확히 4 B·129..65536·readable_range(소스 포인터, L) 뒤에만 FNV 계산하는지, 소스 포인터는 g_current_source(마지막 begin; 키 DWORD는 호스트 64비트에서 잘림)이고 build_hd_frame이 g_current_key에 대해서만 호출되는지(축출 후 재조립·identity refresh 경로 포함), g_last_ext가 SKIP_AUX/NONE 경로에서 낡은 값을 세지 않게 build_hd_frame 입구에서 0으로 초기화되는지, 카운트는 pack_state==PACK_UNTRIED 때만인지. 잘못된 마커가 만들 수 있는 최악(잘못된 그림)은 실루엣 검사(g1_hd_pack_valid)가 막는지.
+2. 도구 독립 재계산: 새 스크립트로 전 자산(char·tile·BattleSpr·portrait·fnt·yfnt) 충돌 677 → 확장 674/남은 3, L 분포(256=263·512=175·1024=77), 각 확장 이름에서 모든 구성원 스트림 범위 ≥ L이고 p8이 그림 단위로 유일한지, 도구 `pack`이 쓰는 이름 텍스트가 C 헤더 텍스트와 일치하는지(테스트가 gcc로 비교하나 독립 확인).
+3. 변이 재현(격리 사본): C 8종·도구 5종 RED 재확인, 새 변이(마커 L 범위 검사 완화·g_current_source 대신 키 DWORD 사용·ext 카운트 위치) 시도.
+4. 새 스크립트 raw 재계산: run별 candidate/trace_raw.jsonl 마지막 mirror2x_present의 hd_pack_ext_*·hd_pack_*, mirror2x_metrics blend_467580_*, 키 로그에서 충돌 이름 키(전 자산 dry-run `digest_index.json` extended 이름) hit/miss — X1·X2 `e88d0c4c` hit 2, T1 127/127(lut·shade 포함), T0·Q1 miss.
+5. 판정 사항: (a) 남은 3(86×60)을 backlog로 둘지 별도 분리 수단(전체 해시) 작업으로 올릴지. (b) 확장 조회가 마커 없는 모든 miss 키에서 .amb 열기를 1회 시도하는 비용(p95 6 불변 실측, 별도 마이크로 측정 없음)을 수용할지. (c) 시각 검증 부재(서로 다른 색 HD로 확장 프레임 육안 구별 run 없음, 실루엣·자기 검사·오프라인 p8 유일성으로 갈음) — 수용 또는 추가 run 요구. (d) pair PX의 candidate.trace_close FAIL·mirror_validator BLOCKED는 기존 하네스(lap1189 backlog)와 동일.
+
+다음 순서 제안: 반투명 다음 writer(변화량 순 0x467B00 → 0x4685C0 → 0x467FD0). 사용자 G1 시험 결과가 오면 최우선.

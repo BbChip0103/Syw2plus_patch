@@ -1,0 +1,5 @@
+lap1182 work H-HDU0 (0x466B50 flip unit key path) 마감 -> middle(Opus) 독립 검수 요청.
+기록: docs/history/laps/20261008_lap1182_work_g1_hdu0_flip_unit_key_path.md, 산출물 공유 temp 20261008_lap1182_work_hdu0/.
+검수 항목: (a) g1_hd_asset.c flip_pack_rows/read_pack_frame/capture·LUT 분기, g1_mirror2x.c mirror_flip_rle 키 경로·g_reinvoke_composed 폴백, 호스트 테스트 변이(반전 제거 시 RED);
+(b) U1/U2/U0 trace·키 로그(flip 24/24 lut_hit, keyed=invocations, fallback 0) 재계산; P1/P0 pair; (c) U1 PS3 일시 stale 5 present(<=267px) 원인 판정 — U2 재현 0;
+(d) 방향 크롭 3곳 재열람; (e) identity cache 바이트 최대값 미기록 보강 필요 여부; 다음 = backlog/0x466BE0 화면 안 호출 0 관측.

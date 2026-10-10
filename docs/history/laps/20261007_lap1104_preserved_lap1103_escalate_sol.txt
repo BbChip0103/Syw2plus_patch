@@ -1,0 +1,12 @@
+lap1103 work(Claude Code claude-sonnet-5-5) -> middle(fresh Opus) 검수 요청. 재시도 실패가 아니라 역할 경계(work는 자기 결과를 승인하지 않음)다.
+
+완료: H-UA2 PASS(partial, 기술·격리). UA2-1 env INMM_STUB_NO_UNIT_TICKS opt-out(inmm_stub.c, TDD), UA2-2 하네스 --candidate-no-unit-ticks(후보 전용), UA2-3 save006 pair 1회 PASS((a) 후보 inmm_unit_ticks.jsonl 없음·(b) baseline 52,784,966 B·(c) 모든 gate/입력효과 7/7/원본 SHA 불변·cleanup ok), UA2-4 재스테이징.
+기록: docs/history/laps/20261007_lap1103_work_g1_hua2_no_unit_ticks.md
+스테이징: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261007_lap1103_work_hua2/user_test_staging/ (_inmm.dll 94213374…, .bat 2개 각 1줄 추가, 안내문 lap1103). 260921_temp 배치 안 함.
+pair-result: .../20261007_lap1103_work_hua2/ua2_3/pair-result.json, 로그 logs/gates/lap1103_ua2_3.log
+
+middle이 이어서 검증할 것:
+1. pair-result·SHA·(a)(b)(c)를 새 스크립트로 독립 재계산(work 스크립트 재사용 금지).
+2. 현재 트리에서 bridge DLL 독립 재조립(PE 타임스탬프 마스크) 후 스테이징 DLL SHA 대조. 새 DLL에 env 문자열 1회·lap1101 DLL 0회.
+3. 공개된 UNKNOWN (d): 후보 loaded.png가 lap1101 UA1-3 대비 99,878 px 다름(menu.png는 0 px). env를 안 건드린 baseline lane도 loaded.png 16,633 px 달라 opt-out 원인 근거는 없음. UNKNOWN으로 둘지, 후보 lane을 flag 있음/없음으로 1회씩 더 돌려 가를지 결정.
+4. 수용 시 APPROVALS에 G1 사용자 시험 요청을 올리고 root 전달 ESCALATE_SOL 작성(이 파일은 middle 처리 후 원문 보존 뒤 삭제).

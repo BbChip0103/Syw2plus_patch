@@ -1,3 +1,26 @@
+# 모델 역할 계약 — provider 전환 가능(2026-10-09 갱신)
+
+역할별 provider는 **Codex와 Claude Code 사이에서 자유롭게 바꿀 수 있다**(토큰 상황 등 사용자 판단). 전환은 `loop/env.local.sh`의 네 변수로 하고, 바꿀 때 이 문서의 "현재 선택"을 같이 고친다. 전환은 바퀴와 바퀴 사이에 적용한다. G1 목표·검증·안전 범위는 provider와 무관하다.
+
+## 현재 선택 (2026-10-09 사용자 “코덱스로 전환”)
+
+| 역할 | 변수 | 현재 | 대안(Claude Code) | effort |
+|---|---|---|---|---|
+| 큰 방향·상위 계획(strategy) | `LOOP_STRATEGY_PROVIDER` | Codex `astra`(→ `gpt-6-astra`) | `opus` | high |
+| 중간 계획·독립 검토/컨펌(middle) | `LOOP_MIDDLE_PROVIDER` | Codex `sol`(→ `gpt-6.1-sol`) | `opus` | high |
+| 시각 판정(judge) | `LOOP_JUDGE` | Codex `sol` | `opus` | high |
+| 실무 조사·코딩·테스트·수정(work) | `LOOP_WORKER` | Codex `luna`(→ `gpt-6-luna`) | `sonnet` | high |
+
+- 값은 `codex` 또는 `claude`. 모델 별칭은 `LOOP_CODEX_*_MODEL`(Codex: `~/.codex/models_cache.json`에서 해석)·`LOOP_CLAUDE_*_MODEL`(Claude CLI 최신 별칭)이 정한다. 실제 resolved ID는 해당 호출 로그에 기록한다.
+- 일부 역할만 바꿔 섞어 쓸 수 있다(예: work Codex·middle Claude 교차 검수).
+- **루프 root**(driver 실행·10분 보고·root 대상 ESCALATE_SOL·사용자 전달)는 Claude Code 세션이나 Codex 세션 어느 쪽이든 맡을 수 있다. root는 역할 provider와 따로 정한다.
+- 설정한 모델이 미지원/접근 실패면 근거를 남기고 멈춘다. 다른 provider·다른 세대·낮은 effort로 **자동 폴백하지 않는다**.
+- 역할 경계는 provider와 무관하다: work가 자기 결과를 최종 승인하지 않고, middle은 fresh 세션이며, strategy는 큰 분기·교착에서만 부른다. 이전 Claude 계약 원문은 `docs/history/20261009_model_routing_before_codex_switch.md`.
+
+---
+
+## (이전 계약 — 역할 경계·실행 규칙 참고용, provider 표는 위 표가 우선)
+
 # 모델 역할 계약 — 2026-10-04 사용자 최신 전환
 
 사용자 지시: “큰 방향/계획은 클로드 오푸스로 하도록 하자”, 이어 “코덱스 -> 클로드로 스위치 하자”.

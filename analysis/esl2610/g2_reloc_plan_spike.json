@@ -1,0 +1,204 @@
+{
+  "schema": "syw2plus.esl2610.g2-reloc-plan.v1-spike",
+  "input_sha256": "d9d6bb3dca11c229dfb129547166ecdea7b777c0d2494a2baa38ce68635de21d",
+  "capacity": 4093,
+  "status": "SPIKE_PATTERN_SETTLED_RUNTIME_PENDING",
+  "g2bss_va": "0x1ab5000",
+  "six_array_base": "0x1ab5000",
+  "six_array_span": "0x7649d4",
+  "direct_arrays": [
+    {
+      "name": ".wecache",
+      "module": ".wefix",
+      "old_base": "0x114c000",
+      "new_base": "0x22199d4",
+      "stride": "0x10",
+      "span_1200": "0x4b00",
+      "span_4093": "0xffd0",
+      "index_kind": "id",
+      "gate_sites_raise_1200_to_4093": [
+        "0x1149007"
+      ],
+      "byte_span_gate_sites_raise": [],
+      "memset_count_rescale": [],
+      "note": "weapon-effect cache, 16B x id, gate on unit id < 1200"
+    },
+    {
+      "name": ".rsidle",
+      "module": ".idle",
+      "old_base": "0x1171010",
+      "new_base": "0x22299a4",
+      "stride": "0x10",
+      "span_1200": "0x4b00",
+      "span_4093": "0xffd0",
+      "index_kind": "slot",
+      "gate_sites_raise_1200_to_4093": [
+        "0x1157942",
+        "0x1157c17"
+      ],
+      "byte_span_gate_sites_raise": [],
+      "memset_count_rescale": [
+        {
+          "va": "0x115791e",
+          "old_dwords": "0x12c4"
+        }
+      ],
+      "note": "idle-portrait cache, 16B x slot; memset count covers header+body"
+    },
+    {
+      "name": ".killdat_sub",
+      "module": ".kills",
+      "old_base": "0x115c000",
+      "new_base": "0x2239974",
+      "stride": "0x20",
+      "span_1200": "0x9600",
+      "span_4093": "0x1ffa0",
+      "index_kind": "slot",
+      "gate_sites_raise_1200_to_4093": [
+        "0x115b09d",
+        "0x115b16b",
+        "0x115b350"
+      ],
+      "byte_span_gate_sites_raise": [
+        "0x115b005"
+      ],
+      "memset_count_rescale": [
+        {
+          "va": "0x115b285",
+          "old_dwords": "0x2980"
+        }
+      ],
+      "note": "per-slot kill log, 32B x slot; .killdat ALSO holds 256-entry tables (0x1165600/0x1166600/0x1170c00) that are NOT per-unit and stay in place"
+    },
+    {
+      "name": ".mvstate_body",
+      "module": ".mvcode",
+      "old_base": "0x1182014",
+      "new_base": "0x2259914",
+      "stride": "0x28",
+      "span_1200": "0xbb80",
+      "span_4093": "0x27f88",
+      "index_kind": "slot",
+      "gate_sites_raise_1200_to_4093": [],
+      "byte_span_gate_sites_raise": [
+        "0x1181421"
+      ],
+      "memset_count_rescale": [],
+      "note": "move-order state, 40B x slot, indexed [slot*5*8]; header stays"
+    }
+  ],
+  "spike_operand_sites": 2292,
+  "still_blocked": [
+    {
+      "kind": "new_code_unit_capacity_refs",
+      "count": 939,
+      "detail": "operands in 2610-new code sections referencing the stock unit pool/existence/age/list arrays; each must relocate with the arrays, runtime-verified per module, before a 4093 build is safe",
+      "sections": [
+        ".a16code",
+        ".adaptxp",
+        ".aires",
+        ".airfix",
+        ".armyrot",
+        ".atkfix",
+        ".bldpol",
+        ".bstart",
+        ".closeco",
+        ".cntgoal",
+        ".cpcomba",
+        ".csright",
+        ".cstxt",
+        ".enc16",
+        ".expcode",
+        ".f2code",
+        ".farmer",
+        ".forcebd",
+        ".grp60",
+        ".healai",
+        ".hrcode",
+        ".idle",
+        ".jcart",
+        ".jpecon",
+        ".jpopen",
+        ".kills",
+        ".krbuild",
+        ".mvcode",
+        ".n14code",
+        ".navcode",
+        ".prodtry",
+        ".psncode",
+        ".psndisp",
+        ".r17code",
+        ".resedge",
+        ".resplc",
+        ".sel60",
+        ".skcode",
+        ".tgcode",
+        ".weapon",
+        ".wefix"
+      ]
+    },
+    {
+      "kind": "capacity_bound_checks",
+      "count": 262,
+      "detail": "slot/length bound immediates (1200, 1199, 1198, 0x758*1200) gating unit-capacity array access across code sections; each must be raised to 4093 / 0x758*4093 or proven unrelated",
+      "sections": [
+        ".a16code",
+        ".adaptxp",
+        ".aires",
+        ".airfix",
+        ".armyrot",
+        ".atkfix",
+        ".bldpol",
+        ".bstart",
+        ".closeco",
+        ".cntgoal",
+        ".cpcomba",
+        ".csright",
+        ".cstxt",
+        ".enc16",
+        ".expcode",
+        ".f2code",
+        ".farmer",
+        ".forcebd",
+        ".grp60",
+        ".healai",
+        ".hrcode",
+        ".idle",
+        ".jcart",
+        ".jpecon",
+        ".jpopen",
+        ".kills",
+        ".krbuild",
+        ".mvcode",
+        ".n14code",
+        ".navcode",
+        ".prodtry",
+        ".psncode",
+        ".psndisp",
+        ".r17code",
+        ".resedge",
+        ".resplc",
+        ".skcode",
+        ".text",
+        ".tgcode",
+        ".weapon",
+        ".wefix"
+      ]
+    },
+    {
+      "kind": "new_perunit_bss_sized_1200",
+      "count": 8,
+      "detail": "2610-new BSS sections sized to an exact 1200 multiple (per-unit arrays/caches keyed by unit slot or id); each must grow to 4093 or be proven not per-unit before the pool is expanded",
+      "sections": [
+        ".wecache",
+        ".idldata",
+        ".rsidle",
+        ".mvstate",
+        ".hrstate",
+        ".skstate",
+        ".healst",
+        ".cpstate"
+      ]
+    }
+  ]
+}

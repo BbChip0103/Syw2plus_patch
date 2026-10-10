@@ -12,7 +12,7 @@ from patches.population.full_tail_relocation_storage_layout_v1 import layout
 
 
 ROOT = Path(__file__).resolve().parents[2]
-INPUT = ROOT.parent / "260921_temp"
+INPUT = ROOT.parent / "260921_temp" / "archive"
 LEGACY = INPUT / "[ESL]Syw2plus 2606_장수7명_전비1600-200-3000.exe"
 STOCK = ROOT / "Syw2plus" / "syw2plus_original.exe"
 SOURCES = {

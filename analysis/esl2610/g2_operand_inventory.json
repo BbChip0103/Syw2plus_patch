@@ -1,0 +1,1432 @@
+{
+  "schema": "syw2plus.esl2610.g2-operand-inventory.v1",
+  "input_sha256": "d9d6bb3dca11c229dfb129547166ecdea7b777c0d2494a2baa38ce68635de21d",
+  "stock_capacity": 1200,
+  "unit_stride": 1880,
+  "regions": {
+    "pool": [
+      "0x66b790",
+      "0x892410"
+    ],
+    "exist": [
+      "0x8990c8",
+      "0x899a28"
+    ],
+    "age": [
+      "0x899a28",
+      "0x89a388"
+    ],
+    "cat_a": [
+      "0x89b008",
+      "0x89c2cc"
+    ],
+    "cat_b": [
+      "0x89c2ca",
+      "0x89d58e"
+    ],
+    "active": [
+      "0x974fa6",
+      "0x97590c"
+    ]
+  },
+  "total_sites": 2554,
+  "text_sites": 1363,
+  "new_section_sites": 1173,
+  "sites_by_section": {
+    ".text": {
+      "imm:pool": 30,
+      "disp:cat_a": 19,
+      "disp:exist": 32,
+      "disp:pool": 983,
+      "imm:exist": 2,
+      "imm:age": 3,
+      "bound:N": 28,
+      "disp:active": 190,
+      "imm:active": 72,
+      "disp:age": 2,
+      "disp:cat_b": 2
+    },
+    ".rsrc": {
+      "imm:pool": 13,
+      "disp:pool": 5
+    },
+    ".psncode": {
+      "imm:pool": 5,
+      "bound:N": 1,
+      "disp:pool": 3,
+      "bound:N-1": 1
+    },
+    ".sel60": {
+      "imm:pool": 1
+    },
+    ".grp60": {
+      "bound:N": 6,
+      "disp:exist": 1,
+      "imm:pool": 2
+    },
+    ".weapon": {
+      "imm:pool": 5,
+      "bound:N": 1
+    },
+    ".enc16": {
+      "bound:N": 4,
+      "disp:exist": 1,
+      "imm:pool": 4,
+      "bound:N-1": 1
+    },
+    ".wefix": {
+      "bound:N": 2,
+      "imm:pool": 1
+    },
+    ".cstxt": {
+      "bound:N": 1,
+      "imm:pool": 1
+    },
+    ".csright": {
+      "bound:N": 6,
+      "disp:pool": 2,
+      "imm:pool": 4,
+      "disp:exist": 1
+    },
+    ".aires": {
+      "bound:N": 2,
+      "disp:exist": 1,
+      "imm:pool": 1
+    },
+    ".idle": {
+      "imm:pool": 1,
+      "disp:exist": 1,
+      "bound:N": 3,
+      "neg_pool_base:pool": 2
+    },
+    ".kills": {
+      "imm:pool": 4,
+      "bound:N*stride": 1,
+      "disp:exist": 4,
+      "bound:N": 3,
+      "disp:pool": 1
+    },
+    ".bldpol": {
+      "bound:N": 5,
+      "disp:exist": 3,
+      "imm:pool": 3,
+      "bound:N-1": 1,
+      "disp:pool": 1
+    },
+    ".expcode": {
+      "bound:N": 16,
+      "disp:exist": 10,
+      "imm:pool": 9,
+      "bound:N-1": 1,
+      "disp:pool": 5
+    },
+    ".resplc": {
+      "bound:N": 5,
+      "disp:exist": 3,
+      "imm:pool": 3,
+      "bound:N-1": 1,
+      "disp:pool": 3,
+      "bound:N*stride": 1
+    },
+    ".cntgoal": {
+      "bound:N": 5,
+      "disp:exist": 3,
+      "imm:pool": 3,
+      "bound:N-1": 1,
+      "disp:pool": 1
+    },
+    ".jcart": {
+      "bound:N": 10,
+      "disp:exist": 7,
+      "imm:pool": 7,
+      "bound:N-1": 1,
+      "disp:pool": 2,
+      "neg_pool_base:pool": 1,
+      "bound:N*stride-1": 1
+    },
+    ".prodtry": {
+      "neg_pool_base:pool": 3,
+      "bound:N*stride-1": 2,
+      "disp:exist": 2,
+      "disp:pool": 4
+    },
+    ".mvcode": {
+      "disp:exist": 1,
+      "neg_pool_base:pool": 1,
+      "bound:N*stride-1": 1
+    },
+    ".tgcode": {
+      "bound:N-1": 2,
+      "disp:exist": 2,
+      "disp:pool": 23
+    },
+    ".hrcode": {
+      "bound:N-1": 5,
+      "disp:exist": 4,
+      "imm:pool": 5,
+      "neg_pool_base:pool": 3,
+      "bound:N*stride-1": 1,
+      "imm:exist": 2,
+      "imm:age": 2,
+      "disp:pool": 1,
+      "bound:N": 1
+    },
+    ".skcode": {
+      "bound:N-2": 2,
+      "disp:exist": 2,
+      "imm:pool": 2,
+      "neg_pool_base:pool": 3,
+      "bound:N*stride-1": 1
+    },
+    ".jpecon": {
+      "neg_pool_base:pool": 2,
+      "bound:N*stride-1": 1,
+      "disp:exist": 4,
+      "disp:pool": 5,
+      "bound:N": 1,
+      "bound:N-1": 3,
+      "imm:pool": 3
+    },
+    ".resedge": {
+      "bound:N": 11,
+      "disp:exist": 5,
+      "imm:pool": 5,
+      "bound:N-1": 3,
+      "disp:pool": 6,
+      "bound:N*stride": 2
+    },
+    ".psndisp": {
+      "neg_pool_base:pool": 1,
+      "bound:N*stride-1": 1
+    },
+    ".healai": {
+      "bound:N-2": 2,
+      "disp:exist": 2,
+      "imm:pool": 3,
+      "neg_pool_base:pool": 4,
+      "bound:N*stride-1": 2,
+      "imm:exist": 2,
+      "imm:age": 2,
+      "bound:N": 1,
+      "bound:N-1": 1,
+      "disp:pool": 1
+    },
+    ".armyrot": {
+      "neg_pool_base:pool": 3,
+      "bound:N*stride-1": 1,
+      "disp:exist": 5,
+      "disp:pool": 4,
+      "bound:N-2": 4,
+      "imm:pool": 4
+    },
+    ".jpopen": {
+      "imm:pool": 1,
+      "neg_pool_base:pool": 2,
+      "bound:N*stride-1": 1,
+      "disp:exist": 1,
+      "disp:pool": 4
+    },
+    ".krbuild": {
+      "imm:pool": 2,
+      "bound:N-1": 1,
+      "disp:exist": 1,
+      "disp:pool": 7,
+      "imm:exist": 1,
+      "imm:age": 1
+    },
+    ".forcebd": {
+      "bound:N-1": 2,
+      "disp:exist": 2,
+      "disp:pool": 8
+    },
+    ".closeco": {
+      "imm:pool": 1,
+      "bound:N*stride": 1,
+      "disp:pool": 2,
+      "bound:N": 2
+    },
+    ".adaptxp": {
+      "bound:N-1": 1,
+      "disp:exist": 1,
+      "disp:pool": 3,
+      "imm:pool": 1,
+      "imm:exist": 1,
+      "imm:age": 1
+    },
+    ".cpcomba": {
+      "neg_pool_base:pool": 5,
+      "bound:N*stride-1": 1,
+      "disp:exist": 4,
+      "disp:pool": 4,
+      "bound:N-2": 2,
+      "imm:pool": 2
+    },
+    ".bstart": {
+      "bound:N-2": 2,
+      "disp:exist": 3,
+      "disp:pool": 10,
+      "neg_pool_base:pool": 1,
+      "bound:N*stride-1": 1
+    },
+    ".farmer": {
+      "bound:N-1": 1,
+      "disp:exist": 1,
+      "disp:pool": 3,
+      "imm:pool": 1,
+      "imm:exist": 1,
+      "imm:age": 1,
+      "bound:N": 1,
+      "neg_pool_base:pool": 1
+    },
+    ".atkfix": {
+      "bound:N-2": 10,
+      "disp:exist": 10,
+      "imm:pool": 10,
+      "neg_pool_base:pool": 2
+    },
+    ".airfix": {
+      "bound:N-2": 13,
+      "disp:exist": 10,
+      "imm:pool": 8,
+      "neg_pool_base:pool": 4,
+      "bound:N*stride-1": 2,
+      "disp:active": 2,
+      "bound:N": 2,
+      "disp:pool": 13
+    },
+    ".navcode": {
+      "bound:N": 5,
+      "disp:pool": 50
+    },
+    ".f2code": {
+      "disp:exist": 1,
+      "disp:pool": 16,
+      "imm:pool": 1,
+      "bound:N-2": 4,
+      "bound:N-1": 2,
+      "bound:N": 3
+    },
+    ".n14code": {
+      "bound:N": 5,
+      "disp:pool": 59
+    },
+    ".a16code": {
+      "imm:pool": 27,
+      "neg_pool_base:pool": 26,
+      "disp:pool": 255,
+      "disp:exist": 13,
+      "bound:N-1": 11,
+      "bound:N-2": 13,
+      "bound:N": 13,
+      "imm:exist": 7,
+      "imm:age": 5
+    },
+    ".r17code": {
+      "imm:pool": 2,
+      "neg_pool_base:pool": 1,
+      "disp:exist": 5,
+      "disp:pool": 104,
+      "bound:N": 6,
+      "bound:N-2": 1
+    }
+  },
+  "new_perunit_bss": [
+    {
+      "section": ".enccach",
+      "va": "0x1147000",
+      "vsize": "0x10",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".wecache",
+      "va": "0x114c000",
+      "vsize": "0x4b00",
+      "header_if_perunit": "0x0",
+      "stride_if_perunit": "0x10",
+      "looks_per_unit": true
+    },
+    {
+      "section": ".idldata",
+      "va": "0x1158000",
+      "vsize": "0x2590",
+      "header_if_perunit": "0x10",
+      "stride_if_perunit": "0x8",
+      "looks_per_unit": true
+    },
+    {
+      "section": ".killdat",
+      "va": "0x115c000",
+      "vsize": "0x14c18",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".rsidle",
+      "va": "0x1171000",
+      "vsize": "0x4b10",
+      "header_if_perunit": "0x10",
+      "stride_if_perunit": "0x10",
+      "looks_per_unit": true
+    },
+    {
+      "section": ".expdata",
+      "va": "0x117b000",
+      "vsize": "0x100",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".mvstate",
+      "va": "0x1182000",
+      "vsize": "0xbb94",
+      "header_if_perunit": "0x14",
+      "stride_if_perunit": "0x28",
+      "looks_per_unit": true
+    },
+    {
+      "section": ".tgstate",
+      "va": "0x118f000",
+      "vsize": "0xc90",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".hrstate",
+      "va": "0x1193000",
+      "vsize": "0x13ee0",
+      "header_if_perunit": "0x20",
+      "stride_if_perunit": "0x44",
+      "looks_per_unit": true
+    },
+    {
+      "section": ".skstate",
+      "va": "0x11ab000",
+      "vsize": "0x7090",
+      "header_if_perunit": "0x10",
+      "stride_if_perunit": "0x18",
+      "looks_per_unit": true
+    },
+    {
+      "section": ".healst",
+      "va": "0x11bc000",
+      "vsize": "0xbba0",
+      "header_if_perunit": "0x20",
+      "stride_if_perunit": "0x28",
+      "looks_per_unit": true
+    },
+    {
+      "section": ".armyst",
+      "va": "0x11d4000",
+      "vsize": "0x163e0",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".cpstate",
+      "va": "0x1200000",
+      "vsize": "0xe110",
+      "header_if_perunit": "0x10",
+      "stride_if_perunit": "0x30",
+      "looks_per_unit": true
+    },
+    {
+      "section": ".bldstat",
+      "va": "0x1220000",
+      "vsize": "0x1930",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".bsstate",
+      "va": "0x1230000",
+      "vsize": "0xbfd8",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".farmst",
+      "va": "0x1250000",
+      "vsize": "0x4b68",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".atkstat",
+      "va": "0x1270000",
+      "vsize": "0x28d0",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".airstat",
+      "va": "0x1280000",
+      "vsize": "0xb97c",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".navdata",
+      "va": "0x1295000",
+      "vsize": "0x36375c",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".f2data",
+      "va": "0x1604000",
+      "vsize": "0x8fbc",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".n14data",
+      "va": "0x1616000",
+      "vsize": "0x36cd6c",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".d15data",
+      "va": "0x1993000",
+      "vsize": "0x30",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".a16data",
+      "va": "0x1a03000",
+      "vsize": "0xaa90",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    },
+    {
+      "section": ".r17data",
+      "va": "0x1a13000",
+      "vsize": "0xa2000",
+      "header_if_perunit": null,
+      "stride_if_perunit": null,
+      "looks_per_unit": false
+    }
+  ],
+  "unresolved_count": 3,
+  "unresolved": [
+    {
+      "kind": "new_code_unit_capacity_refs",
+      "count": 939,
+      "detail": "operands in 2610-new code sections referencing the stock unit pool/existence/age/list arrays; each must relocate with the arrays, runtime-verified per module, before a 4093 build is safe",
+      "sections": [
+        ".a16code",
+        ".adaptxp",
+        ".aires",
+        ".airfix",
+        ".armyrot",
+        ".atkfix",
+        ".bldpol",
+        ".bstart",
+        ".closeco",
+        ".cntgoal",
+        ".cpcomba",
+        ".csright",
+        ".cstxt",
+        ".enc16",
+        ".expcode",
+        ".f2code",
+        ".farmer",
+        ".forcebd",
+        ".grp60",
+        ".healai",
+        ".hrcode",
+        ".idle",
+        ".jcart",
+        ".jpecon",
+        ".jpopen",
+        ".kills",
+        ".krbuild",
+        ".mvcode",
+        ".n14code",
+        ".navcode",
+        ".prodtry",
+        ".psncode",
+        ".psndisp",
+        ".r17code",
+        ".resedge",
+        ".resplc",
+        ".sel60",
+        ".skcode",
+        ".tgcode",
+        ".weapon",
+        ".wefix"
+      ]
+    },
+    {
+      "kind": "capacity_bound_checks",
+      "count": 262,
+      "detail": "slot/length bound immediates (1200, 1199, 1198, 0x758*1200) gating unit-capacity array access across code sections; each must be raised to 4093 / 0x758*4093 or proven unrelated",
+      "sections": [
+        ".a16code",
+        ".adaptxp",
+        ".aires",
+        ".airfix",
+        ".armyrot",
+        ".atkfix",
+        ".bldpol",
+        ".bstart",
+        ".closeco",
+        ".cntgoal",
+        ".cpcomba",
+        ".csright",
+        ".cstxt",
+        ".enc16",
+        ".expcode",
+        ".f2code",
+        ".farmer",
+        ".forcebd",
+        ".grp60",
+        ".healai",
+        ".hrcode",
+        ".idle",
+        ".jcart",
+        ".jpecon",
+        ".jpopen",
+        ".kills",
+        ".krbuild",
+        ".mvcode",
+        ".n14code",
+        ".navcode",
+        ".prodtry",
+        ".psncode",
+        ".psndisp",
+        ".r17code",
+        ".resedge",
+        ".resplc",
+        ".skcode",
+        ".text",
+        ".tgcode",
+        ".weapon",
+        ".wefix"
+      ]
+    },
+    {
+      "kind": "new_perunit_bss_sized_1200",
+      "count": 8,
+      "detail": "2610-new BSS sections sized to an exact 1200 multiple (per-unit arrays/caches keyed by unit slot or id); each must grow to 4093 or be proven not per-unit before the pool is expanded",
+      "sections": [
+        ".wecache",
+        ".idldata",
+        ".rsidle",
+        ".mvstate",
+        ".hrstate",
+        ".skstate",
+        ".healst",
+        ".cpstate"
+      ]
+    }
+  ],
+  "release_status": "BLOCKED",
+  "new_section_examples": {
+    ".a16code bound:N": [
+      "0x19a7480",
+      "cmp ebx, 0x4b0"
+    ],
+    ".a16code bound:N-1": [
+      "0x19987d9",
+      "cmp esi, 0x4af"
+    ],
+    ".a16code bound:N-2": [
+      "0x19a708e",
+      "cmp edx, 0x4ae"
+    ],
+    ".a16code disp:exist": [
+      "0x1997158",
+      "movzx edi, word ptr [esi + esi + 0x8990c8]"
+    ],
+    ".a16code disp:pool": [
+      "0x19947b0",
+      "cmp byte ptr [ecx + 0x66baac], 0"
+    ],
+    ".a16code imm:age": [
+      "0x19a9464",
+      "cmp ebx, 0x899a28"
+    ],
+    ".a16code imm:exist": [
+      "0x19a93b8",
+      "mov ebx, 0x8990ca"
+    ],
+    ".a16code imm:pool": [
+      "0x1994024",
+      "cmp ecx, 0x66bee8"
+    ],
+    ".a16code neg_pool_base:pool": [
+      "0x199403a",
+      "lea eax, [esi - 0x66b790]"
+    ],
+    ".adaptxp bound:N-1": [
+      "0x11f3a1a",
+      "cmp eax, 0x4af"
+    ],
+    ".adaptxp disp:exist": [
+      "0x11f3a21",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".adaptxp disp:pool": [
+      "0x11f3a35",
+      "cmp dword ptr [ecx + 0x66ba2c], eax"
+    ],
+    ".adaptxp imm:age": [
+      "0x11f3d81",
+      "cmp ebp, 0x899a28"
+    ],
+    ".adaptxp imm:exist": [
+      "0x11f3c69",
+      "mov ebp, 0x8990c8"
+    ],
+    ".adaptxp imm:pool": [
+      "0x11f3c64",
+      "mov esi, 0x66b968"
+    ],
+    ".aires bound:N": [
+      "0x1156b3e",
+      "cmp ebx, 0x4b0"
+    ],
+    ".aires disp:exist": [
+      "0x1156b70",
+      "cmp word ptr [eax*2 + 0x8990c8], 0"
+    ],
+    ".aires imm:pool": [
+      "0x1156b85",
+      "add edi, 0x66b790"
+    ],
+    ".airfix bound:N": [
+      "0x12742e4",
+      "cmp eax, 0x4b0"
+    ],
+    ".airfix bound:N*stride-1": [
+      "0x1273c5a",
+      "cmp esi, 0x226c7f"
+    ],
+    ".airfix bound:N-2": [
+      "0x12737fa",
+      "cmp eax, 0x4ae"
+    ],
+    ".airfix disp:active": [
+      "0x1274231",
+      "mov ax, word ptr [0x975908]"
+    ],
+    ".airfix disp:exist": [
+      "0x1273801",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".airfix disp:pool": [
+      "0x127433b",
+      "cmp dword ptr [esi + 0x66b844], 0"
+    ],
+    ".airfix imm:pool": [
+      "0x1273812",
+      "add eax, 0x66b790"
+    ],
+    ".airfix neg_pool_base:pool": [
+      "0x1273c50",
+      "lea esi, [ebp - 0x66b790]"
+    ],
+    ".armyrot bound:N*stride-1": [
+      "0x11c855a",
+      "cmp eax, 0x226c7f"
+    ],
+    ".armyrot bound:N-2": [
+      "0x11c8c3a",
+      "cmp eax, 0x4ae"
+    ],
+    ".armyrot disp:exist": [
+      "0x11c85db",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".armyrot disp:pool": [
+      "0x11c87ee",
+      "movzx eax, byte ptr [ecx + 0x66b81d]"
+    ],
+    ".armyrot imm:pool": [
+      "0x11c8c52",
+      "add eax, 0x66b790"
+    ],
+    ".armyrot neg_pool_base:pool": [
+      "0x11c8554",
+      "lea eax, [ecx - 0x66b790]"
+    ],
+    ".atkfix bound:N-2": [
+      "0x125676a",
+      "cmp eax, 0x4ae"
+    ],
+    ".atkfix disp:exist": [
+      "0x1256771",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".atkfix imm:pool": [
+      "0x1256782",
+      "add eax, 0x66b790"
+    ],
+    ".atkfix neg_pool_base:pool": [
+      "0x1257beb",
+      "lea esi, [edi - 0x66b790]"
+    ],
+    ".bldpol bound:N": [
+      "0x1178090",
+      "cmp eax, 0x4b0"
+    ],
+    ".bldpol bound:N-1": [
+      "0x1178183",
+      "cmp eax, 0x4af"
+    ],
+    ".bldpol disp:exist": [
+      "0x1178097",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".bldpol disp:pool": [
+      "0x1178236",
+      "mov al, byte ptr [ecx + 0x66b81e]"
+    ],
+    ".bldpol imm:pool": [
+      "0x11780a8",
+      "add eax, 0x66b790"
+    ],
+    ".bstart bound:N*stride-1": [
+      "0x1222801",
+      "cmp eax, 0x226c7f"
+    ],
+    ".bstart bound:N-2": [
+      "0x12225e6",
+      "cmp eax, 0x4ae"
+    ],
+    ".bstart disp:exist": [
+      "0x12225ed",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".bstart disp:pool": [
+      "0x12225fe",
+      "mov al, byte ptr [ecx + 0x66b81e]"
+    ],
+    ".bstart neg_pool_base:pool": [
+      "0x12227fb",
+      "lea eax, [ebp - 0x66b790]"
+    ],
+    ".closeco bound:N": [
+      "0x11f22ce",
+      "mov eax, 0x4b0"
+    ],
+    ".closeco bound:N*stride": [
+      "0x11f21fc",
+      "cmp ebp, 0x226c80"
+    ],
+    ".closeco disp:pool": [
+      "0x11f2236",
+      "movsx edi, word ptr [ebp + 0x66ba32]"
+    ],
+    ".closeco imm:pool": [
+      "0x11f2004",
+      "push 0x6abd8c"
+    ],
+    ".cntgoal bound:N": [
+      "0x117d220",
+      "cmp eax, 0x4b0"
+    ],
+    ".cntgoal bound:N-1": [
+      "0x117d313",
+      "cmp eax, 0x4af"
+    ],
+    ".cntgoal disp:exist": [
+      "0x117d227",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".cntgoal disp:pool": [
+      "0x117d3c6",
+      "mov al, byte ptr [ecx + 0x66b81e]"
+    ],
+    ".cntgoal imm:pool": [
+      "0x117d238",
+      "add eax, 0x66b790"
+    ],
+    ".cpcomba bound:N*stride-1": [
+      "0x11f54ca",
+      "cmp eax, 0x226c7f"
+    ],
+    ".cpcomba bound:N-2": [
+      "0x11f5dd2",
+      "cmp eax, 0x4ae"
+    ],
+    ".cpcomba disp:exist": [
+      "0x11f554b",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".cpcomba disp:pool": [
+      "0x11f575e",
+      "movzx eax, byte ptr [ecx + 0x66b81d]"
+    ],
+    ".cpcomba imm:pool": [
+      "0x11f5e02",
+      "add esi, 0x66b790"
+    ],
+    ".cpcomba neg_pool_base:pool": [
+      "0x11f54c4",
+      "lea eax, [ecx - 0x66b790]"
+    ],
+    ".csright bound:N": [
+      "0x1154005",
+      "cmp eax, 0x4b0"
+    ],
+    ".csright disp:exist": [
+      "0x11547fd",
+      "cmp word ptr [eax*2 + 0x8990c8], 0"
+    ],
+    ".csright disp:pool": [
+      "0x1154016",
+      "cmp byte ptr [eax + 0x66b81d], 0x70"
+    ],
+    ".csright imm:pool": [
+      "0x1154453",
+      "add edx, 0x66b790"
+    ],
+    ".cstxt bound:N": [
+      "0x1153a25",
+      "cmp edx, 0x4b0"
+    ],
+    ".cstxt imm:pool": [
+      "0x1153a37",
+      "add edx, 0x66b790"
+    ],
+    ".enc16 bound:N": [
+      "0x113d160",
+      "cmp edx, 0x4b0"
+    ],
+    ".enc16 bound:N-1": [
+      "0x1144108",
+      "mov edi, 0x4af"
+    ],
+    ".enc16 disp:exist": [
+      "0x113d168",
+      "cmp word ptr [edx*2 + 0x8990c8], 0"
+    ],
+    ".enc16 imm:pool": [
+      "0x113d1dd",
+      "mov esi, 0x66bee8"
+    ],
+    ".expcode bound:N": [
+      "0x1179500",
+      "cmp eax, 0x4b0"
+    ],
+    ".expcode bound:N-1": [
+      "0x11795f3",
+      "cmp eax, 0x4af"
+    ],
+    ".expcode disp:exist": [
+      "0x1179507",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".expcode disp:pool": [
+      "0x11796a6",
+      "mov al, byte ptr [ecx + 0x66b81e]"
+    ],
+    ".expcode imm:pool": [
+      "0x1179518",
+      "add eax, 0x66b790"
+    ],
+    ".f2code bound:N": [
+      "0x16028c3",
+      "cmp esi, 0x4b0"
+    ],
+    ".f2code bound:N-1": [
+      "0x160185a",
+      "cmp eax, 0x4af"
+    ],
+    ".f2code bound:N-2": [
+      "0x1601789",
+      "cmp edx, 0x4ae"
+    ],
+    ".f2code disp:exist": [
+      "0x160107a",
+      "movzx esi, word ptr [ecx + ecx + 0x8990c8]"
+    ],
+    ".f2code disp:pool": [
+      "0x1601091",
+      "movzx esi, byte ptr [ecx + 0x66b81e]"
+    ],
+    ".f2code imm:pool": [
+      "0x16011f4",
+      "mov esi, 0x66bee8"
+    ],
+    ".farmer bound:N": [
+      "0x123e1eb",
+      "mov dword ptr [esp + 0x14], 0x4b0"
+    ],
+    ".farmer bound:N-1": [
+      "0x123cb7a",
+      "cmp eax, 0x4af"
+    ],
+    ".farmer disp:exist": [
+      "0x123cb81",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".farmer disp:pool": [
+      "0x123cb95",
+      "cmp dword ptr [ecx + 0x66ba2c], eax"
+    ],
+    ".farmer imm:age": [
+      "0x123cee1",
+      "cmp ebp, 0x899a28"
+    ],
+    ".farmer imm:exist": [
+      "0x123cdc9",
+      "mov ebp, 0x8990c8"
+    ],
+    ".farmer imm:pool": [
+      "0x123cdc4",
+      "mov esi, 0x66b968"
+    ],
+    ".farmer neg_pool_base:pool": [
+      "0x123e903",
+      "lea ebp, [ebx - 0x66b790]"
+    ],
+    ".forcebd bound:N-1": [
+      "0x11ef558",
+      "cmp eax, 0x4af"
+    ],
+    ".forcebd disp:exist": [
+      "0x11ef55f",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".forcebd disp:pool": [
+      "0x11ef570",
+      "mov eax, dword ptr [ecx + 0x66b968]"
+    ],
+    ".grp60 bound:N": [
+      "0x113420a",
+      "mov ecx, 0x4b0"
+    ],
+    ".grp60 disp:exist": [
+      "0x1134224",
+      "cmp word ptr [ebx*2 + 0x8990c8], 0"
+    ],
+    ".grp60 imm:pool": [
+      "0x1134239",
+      "add esi, 0x66b790"
+    ],
+    ".healai bound:N": [
+      "0x11b7dc7",
+      "mov ecx, 0x4b0"
+    ],
+    ".healai bound:N*stride-1": [
+      "0x11b74eb",
+      "cmp eax, 0x226c7f"
+    ],
+    ".healai bound:N-1": [
+      "0x11b7e2c",
+      "cmp ecx, 0x4af"
+    ],
+    ".healai bound:N-2": [
+      "0x11b747a",
+      "cmp eax, 0x4ae"
+    ],
+    ".healai disp:exist": [
+      "0x11b7481",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".healai disp:pool": [
+      "0x11b7e78",
+      "mov esi, dword ptr [eax + 0x66ba2c]"
+    ],
+    ".healai imm:age": [
+      "0x11b7a97",
+      "cmp ebp, 0x899a28"
+    ],
+    ".healai imm:exist": [
+      "0x11b797c",
+      "mov ebp, 0x8990ca"
+    ],
+    ".healai imm:pool": [
+      "0x11b7492",
+      "add eax, 0x66b790"
+    ],
+    ".healai neg_pool_base:pool": [
+      "0x11b74e5",
+      "lea eax, [esi - 0x66b790]"
+    ],
+    ".hrcode bound:N": [
+      "0x1191208",
+      "mov ecx, 0x4b0"
+    ],
+    ".hrcode bound:N*stride-1": [
+      "0x11905cc",
+      "cmp eax, 0x226c7f"
+    ],
+    ".hrcode bound:N-1": [
+      "0x1190577",
+      "cmp eax, 0x4af"
+    ],
+    ".hrcode disp:exist": [
+      "0x119057e",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".hrcode disp:pool": [
+      "0x1190c08",
+      "mov ebx, dword ptr [eax + 0x66ba2c]"
+    ],
+    ".hrcode imm:age": [
+      "0x11908c0",
+      "cmp esi, 0x899a28"
+    ],
+    ".hrcode imm:exist": [
+      "0x11907f9",
+      "mov esi, 0x8990ca"
+    ],
+    ".hrcode imm:pool": [
+      "0x119058f",
+      "add eax, 0x66b790"
+    ],
+    ".hrcode neg_pool_base:pool": [
+      "0x11905c6",
+      "lea eax, [esi - 0x66b790]"
+    ],
+    ".idle bound:N": [
+      "0x1157150",
+      "cmp edi, 0x4b0"
+    ],
+    ".idle disp:exist": [
+      "0x115708c",
+      "cmp word ptr [edi*2 + 0x8990c8], 0"
+    ],
+    ".idle imm:pool": [
+      "0x1157082",
+      "mov esi, 0x66b790"
+    ],
+    ".idle neg_pool_base:pool": [
+      "0x115792b",
+      "lea eax, [esi - 0x66b790]"
+    ],
+    ".jcart bound:N": [
+      "0x117e3c0",
+      "cmp eax, 0x4b0"
+    ],
+    ".jcart bound:N*stride-1": [
+      "0x117ecfc",
+      "cmp eax, 0x226c7f"
+    ],
+    ".jcart bound:N-1": [
+      "0x117e4b3",
+      "cmp eax, 0x4af"
+    ],
+    ".jcart disp:exist": [
+      "0x117e3c7",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".jcart disp:pool": [
+      "0x117e566",
+      "mov al, byte ptr [ecx + 0x66b81e]"
+    ],
+    ".jcart imm:pool": [
+      "0x117e3d8",
+      "add eax, 0x66b790"
+    ],
+    ".jcart neg_pool_base:pool": [
+      "0x117ecf6",
+      "lea eax, [edi - 0x66b790]"
+    ],
+    ".jpecon bound:N": [
+      "0x11b398b",
+      "mov ecx, 0x4b0"
+    ],
+    ".jpecon bound:N*stride-1": [
+      "0x11b32fa",
+      "cmp eax, 0x226c7f"
+    ],
+    ".jpecon bound:N-1": [
+      "0x11b39b1",
+      "cmp eax, 0x4af"
+    ],
+    ".jpecon disp:exist": [
+      "0x11b337b",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".jpecon disp:pool": [
+      "0x11b358e",
+      "movzx eax, byte ptr [ecx + 0x66b81d]"
+    ],
+    ".jpecon imm:pool": [
+      "0x11b39cf",
+      "add ecx, 0x66b790"
+    ],
+    ".jpecon neg_pool_base:pool": [
+      "0x11b32f4",
+      "lea eax, [ecx - 0x66b790]"
+    ],
+    ".jpopen bound:N*stride-1": [
+      "0x11eb1ea",
+      "cmp eax, 0x226c7f"
+    ],
+    ".jpopen disp:exist": [
+      "0x11eb26b",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".jpopen disp:pool": [
+      "0x11eb47e",
+      "movzx eax, byte ptr [ecx + 0x66b81d]"
+    ],
+    ".jpopen imm:pool": [
+      "0x11eb004",
+      "mov esi, 0x6abd08"
+    ],
+    ".jpopen neg_pool_base:pool": [
+      "0x11eb1e4",
+      "lea eax, [ecx - 0x66b790]"
+    ],
+    ".kills bound:N": [
+      "0x115b09d",
+      "cmp eax, 0x4b0"
+    ],
+    ".kills bound:N*stride": [
+      "0x115b005",
+      "cmp eax, 0x226c80"
+    ],
+    ".kills disp:exist": [
+      "0x115b02b",
+      "cmp word ptr [eax*2 + 0x8990c8], 0"
+    ],
+    ".kills disp:pool": [
+      "0x115beeb",
+      "cmp byte ptr [eax + 0x66b81d], 0x70"
+    ],
+    ".kills imm:pool": [
+      "0x115b000",
+      "sub eax, 0x66b790"
+    ],
+    ".krbuild bound:N-1": [
+      "0x11ec3fd",
+      "cmp eax, 0x4af"
+    ],
+    ".krbuild disp:exist": [
+      "0x11ec404",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".krbuild disp:pool": [
+      "0x11ec415",
+      "mov al, byte ptr [ecx + 0x66b81e]"
+    ],
+    ".krbuild imm:age": [
+      "0x11ec60c",
+      "cmp edi, 0x899a28"
+    ],
+    ".krbuild imm:exist": [
+      "0x11ec4d4",
+      "mov edi, 0x8990c8"
+    ],
+    ".krbuild imm:pool": [
+      "0x11ec004",
+      "push 0x6abd0e"
+    ],
+    ".mvcode bound:N*stride-1": [
+      "0x1181421",
+      "cmp eax, 0x226c7f"
+    ],
+    ".mvcode disp:exist": [
+      "0x11812c7",
+      "cmp word ptr [edx + edx + 0x8990c8], 0"
+    ],
+    ".mvcode neg_pool_base:pool": [
+      "0x118141b",
+      "lea eax, [ebp - 0x66b790]"
+    ],
+    ".n14code bound:N": [
+      "0x1611046",
+      "cmp esi, 0x4b0"
+    ],
+    ".n14code disp:pool": [
+      "0x1611125",
+      "movzx eax, byte ptr [edx + 0x66b81e]"
+    ],
+    ".navcode bound:N": [
+      "0x129104d",
+      "cmp ecx, 0x4b0"
+    ],
+    ".navcode disp:pool": [
+      "0x1291110",
+      "movzx eax, byte ptr [esi + 0x66b81e]"
+    ],
+    ".prodtry bound:N*stride-1": [
+      "0x11801fa",
+      "cmp eax, 0x226c7f"
+    ],
+    ".prodtry disp:exist": [
+      "0x118027b",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".prodtry disp:pool": [
+      "0x118048e",
+      "movzx eax, byte ptr [ecx + 0x66b81d]"
+    ],
+    ".prodtry neg_pool_base:pool": [
+      "0x11801f4",
+      "lea eax, [ecx - 0x66b790]"
+    ],
+    ".psncode bound:N": [
+      "0x109024c",
+      "cmp eax, 0x4b0"
+    ],
+    ".psncode bound:N-1": [
+      "0x109115a",
+      "mov ecx, 0x4af"
+    ],
+    ".psncode disp:pool": [
+      "0x109070b",
+      "movsx eax, byte ptr [eax + 0x66b81e]"
+    ],
+    ".psncode imm:pool": [
+      "0x1090232",
+      "sub eax, 0x66b790"
+    ],
+    ".psndisp bound:N*stride-1": [
+      "0x11b60ca",
+      "cmp eax, 0x226c7f"
+    ],
+    ".psndisp neg_pool_base:pool": [
+      "0x11b60c4",
+      "lea eax, [ecx - 0x66b790]"
+    ],
+    ".r17code bound:N": [
+      "0x1a0ea8d",
+      "imul eax, edx, 0x4b0"
+    ],
+    ".r17code bound:N-2": [
+      "0x1a10e8c",
+      "cmp ecx, 0x4ae"
+    ],
+    ".r17code disp:exist": [
+      "0x1a0e18e",
+      "movzx ecx, word ptr [ecx + ecx + 0x8990c8]"
+    ],
+    ".r17code disp:pool": [
+      "0x1a0e1a2",
+      "cmp byte ptr [edx + 0x66baac], 0"
+    ],
+    ".r17code imm:pool": [
+      "0x1a0e021",
+      "cmp esi, 0x66bee8"
+    ],
+    ".r17code neg_pool_base:pool": [
+      "0x1a0e03b",
+      "lea eax, [esi - 0x66b790]"
+    ],
+    ".resedge bound:N": [
+      "0x11b42c0",
+      "cmp eax, 0x4b0"
+    ],
+    ".resedge bound:N*stride": [
+      "0x11b4c98",
+      "cmp ebp, 0x226c80"
+    ],
+    ".resedge bound:N-1": [
+      "0x11b43b3",
+      "cmp eax, 0x4af"
+    ],
+    ".resedge disp:exist": [
+      "0x11b42c7",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".resedge disp:pool": [
+      "0x11b4466",
+      "mov al, byte ptr [ecx + 0x66b81e]"
+    ],
+    ".resedge imm:pool": [
+      "0x11b42d8",
+      "add eax, 0x66b790"
+    ],
+    ".resplc bound:N": [
+      "0x117c240",
+      "cmp eax, 0x4b0"
+    ],
+    ".resplc bound:N*stride": [
+      "0x117cc18",
+      "cmp ebp, 0x226c80"
+    ],
+    ".resplc bound:N-1": [
+      "0x117c333",
+      "cmp eax, 0x4af"
+    ],
+    ".resplc disp:exist": [
+      "0x117c247",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".resplc disp:pool": [
+      "0x117c3e6",
+      "mov al, byte ptr [ecx + 0x66b81e]"
+    ],
+    ".resplc imm:pool": [
+      "0x117c258",
+      "add eax, 0x66b790"
+    ],
+    ".sel60 imm:pool": [
+      "0x112d413",
+      "add ecx, 0x66b790"
+    ],
+    ".skcode bound:N*stride-1": [
+      "0x11a738c",
+      "cmp eax, 0x226c7f"
+    ],
+    ".skcode bound:N-2": [
+      "0x11a733a",
+      "cmp eax, 0x4ae"
+    ],
+    ".skcode disp:exist": [
+      "0x11a7341",
+      "cmp word ptr [ecx + ecx + 0x8990c8], 0"
+    ],
+    ".skcode imm:pool": [
+      "0x11a7352",
+      "add eax, 0x66b790"
+    ],
+    ".skcode neg_pool_base:pool": [
+      "0x11a7386",
+      "lea eax, [edi - 0x66b790]"
+    ],
+    ".tgcode bound:N-1": [
+      "0x118e2a7",
+      "cmp eax, 0x4af"
+    ],
+    ".tgcode disp:exist": [
+      "0x118e2b4",
+      "cmp word ptr [eax + eax + 0x8990c8], 0"
+    ],
+    ".tgcode disp:pool": [
+      "0x118e2bf",
+      "cmp dword ptr [ecx + 0x66ba2c], edx"
+    ],
+    ".weapon bound:N": [
+      "0x11380c0",
+      "cmp ecx, 0x4b0"
+    ],
+    ".weapon imm:pool": [
+      "0x11372d4",
+      "cmp eax, 0x66b790"
+    ],
+    ".wefix bound:N": [
+      "0x1149007",
+      "cmp edi, 0x4b0"
+    ],
+    ".wefix imm:pool": [
+      "0x114953b",
+      "cmp ebx, 0x66bee8"
+    ]
+  }
+}

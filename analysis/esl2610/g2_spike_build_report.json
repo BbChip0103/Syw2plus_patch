@@ -1,0 +1,18 @@
+{
+  "schema": "syw2plus.esl2610.g2-spike.v1",
+  "status": "SPIKE_STATIC_ONLY_RUNTIME_PENDING",
+  "input_sha256": "d9d6bb3dca11c229dfb129547166ecdea7b777c0d2494a2baa38ce68635de21d",
+  "candidate_sha256": "e0e7b80a9fe3bd64c802607fa5d880e32e4bdee46fce2de8178924aeb7f34012",
+  "capacity": 4093,
+  "g2bss_va": "0x1ab5000",
+  "rebase_delta": "0xa29000",
+  "text_runs_applied": 1328,
+  "text_runs_skipped": 4,
+  "product_runs_skipped": 3,
+  "rebased_address_dwords": 1312,
+  "note": "six-array relocation only; direct-index arrays and new modules keep stock refs (expected first-failing-module isolation at slot>1200)",
+  "oracle_check": {
+    "runs_checked": 1328,
+    "mismatches": 0
+  }
+}

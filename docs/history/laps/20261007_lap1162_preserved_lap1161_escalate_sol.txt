@@ -1,0 +1,10 @@
+lap1161 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청: H-DEF1("함께 처리": SYW2_G1_DEFAULT_ON 저장소 반영 + 기본 켬 빌드 sfx_probe_live_units opt-in).
+결과: tools/inmm_stub/inmm_stub.c(DllMain G1 env 4개 기본값 블록 = default_on.patch와 텍스트 byte 동일 + 워커 probe 호출 앞 #ifdef 게이트 + sfx_probe_opted_in(), env INMM_STUB_SFX_PROBE), tools/inmm_stub/Makefile(default-on 대상 → _G1MM.dll), tests/test_g1_default_on.py 6개(RED→GREEN). 산출물 공유 temp 20261007_lap1161_work_hdef1/.
+D-1 PASS: lap1151 스냅샷에서 패치 블록을 저장소 블록으로 치환한 소스 == 스냅샷 소스(byte 동일), -DSYW2_G1_DEFAULT_ON+--image-base=0x6b640000 빌드가 _G1MM.dll 05bf7010…과 7바이트 차(PE 타임스탬프 2·체크섬 3·export 타임스탬프 2). 이미지 베이스 미고정 시 ld 임의 베이스로 12,934 B 차(재배치) — 설명됨.
+D-2 PASS: 플래그 없는 빌드 변경 전(H-DEF1 편집만 되돌린 사본)/후 5바이트 차(타임스탬프·체크섬·export 타임스탬프).
+D-3 PASS: 현재 트리 기본 켬 DLL + R5 일반 G1 EXE, 끔 = 1600×1200·훅 실패 0·PS3+30초 생존·SFX 로그 0줄; INMM_STUB_SFX_PROBE=1 = 로그 801줄(sfx_table_probe 1 + trigger:probe 800).
+D-4 PASS(후보 레인): 기본 켬 DLL + 원본 EXE NG5 --new-game-act/--new-game-play, PS3 present 2,622 HD min 100·stale 0·안전 0·fallback 0. top-level FAIL은 대조(800×600) 레인이 기본 켬 DLL과 구조적으로 양립 불가해서(공개).
+검증할 것(승격 작업자): (1) 새 스크립트로 D-1(베이스 고정 재현)·D-2·D-3 로그 대조 재계산, (2) D-4 대조 레인 한계 수용 여부, (3) 이미지 베이스 고정을 Makefile에 넣을지 판단(현재 미반영), (4) 수용 시 ③ HUD 패널 1장 시범 사전등록.
+공개: 기본 켬 빌드가 켜는 sfx_hook_install·asset_hook_install(파일 로그만)은 변경 안 함(census는 lap 기록), 저장소 트리 tools/inmm_stub/_inmm.dll 산출물은 재빌드(gitignore), 사용자 전달·260921_temp 쓰기 0, 커밋 0.
+테스트 수정: 첫 make check가 기존 test_g1_mirror2x.py::test_ua2_stub_unit_tick_dump_has_env_opt_out_before_file_open(env 문자열 1회 불변식)을 default-on 블록 때문에 실패 → default-on 구간 제외 후 세도록 수정(불변식 유지, 다른 assertion 불변). 최종 full check 결과는 STATUS 검증 줄.
+기록: docs/history/laps/20261007_lap1161_work_g1_hdef1_default_on_sfx_probe_opt_in.md

@@ -1,0 +1,17 @@
+Lap 1229 work escalation — historical 2611 pair raw conflicts with recorded technical PASS.
+
+Reason for escalation: the session rule requires stopping on material conflict between past records and raw evidence. Lap1223 TR-1 tr1_1 and tr1_2 pair-result.json both say PASS, while both candidate probe-result.json files say trace_close=FAIL (mismatched run_id), and candidate raw has run_id=unknown with zero summary events. This matches the lap1228 defect. Preserve old records/raw and previously delivered 2611 trial artifacts; do not revise them in place.
+
+Current implementation/evidence is preserved:
+- Work changes: tools/g1_saved_scene_probe.py, tests/test_g1_saved_scene_probe.py, tests/test_model_routing.py.
+- Targeted tests: routing 2 passed/4.13s; pair close regressions 6 passed; G1 focused 308 passed/12.99s.
+- make lint and make typecheck passed. Full make check not run after edits because the historical conflict triggered this escalation branch.
+- Fresh isolated 2612/save006 pair03 PASS: candidate owned close PASS, run ID g1-saved-candidate, exactly one summary/drop0/detach complete/flush complete; V2/V2s/V2q/Scale2x and input effects pass; source unchanged; game copies removed, prefixes/output preserved.
+- Full evidence and all pair/tr1 hashes: docs/history/laps/20261010_lap1229_work_g1_pair_harness_repair_escalation.md. Current pair JSON: ../temp/Syw2plus_patch/20261010_lap1229_work_g1_pair_repair/pair03_fresh/pair-result.json.
+
+Fresh middle must independently decide:
+1. Whether the lap1223 H-TR2611 technical PASS can stand given both raw close failures, and how the historical acceptance should be recorded without altering raw.
+2. Whether the current lap1229 2612 pair and repairs are technically acceptable; inspect fresh artifacts and source.
+3. Whether to run full make check on this repaired source before technical acceptance.
+
+No G1 milestone close or 2612 trial staging/re-delivery has occurred. User acceptance, 24k/144k, Windows/user play remain unverified. Commit/push/deploy 0.

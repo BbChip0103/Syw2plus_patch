@@ -1,0 +1,6 @@
+lap1214 work(H-PS5W1) 완료 — middle 독립 검수 요청 (제품 동작 변경 1: 뒤 버퍼 BltFast 래퍼, 끔 env SYW2_G1_SCRATCH_BLTFAST_MIRROR=0).
+- 기록: docs/history/laps/20261009_lap1214_work_g1_hps5w1_scratch_bltfast_mirror.md
+- raw: 공유 temp 20261009_lap1214_work_hps5w1/ (run_on1·on2·off1 M1, run_PON·POFF pair, run_NON·NOFF NG5, scripts/ana.py·s2x.py·ng5.py·leafdiff.py)
+- 결과 요약: PS5 stale 5,044→0(켬 2/2, mask dump 20개 전부 0)·끔 5,044 재현, PS7 1,398→0 부가, 호출 반환 주소 7곳 중 0x4048D2·0x4B6D66만 관측(래퍼 호출 8,074/8,492, other 0, rejects 0), p95 PS5 +1 ms, pair 켬/끔 판정 leaf 200개 동일, NG5 PS3 stale 0.
+- 검증 요청: (1) trace mirror2x_present를 program_state로 나눠 PS5/PS7 stale·경과 재계산 (2) 캡처 ps5.png를 baseline ps5.png의 독립 Scale2x와 대조(stale였던 5,044 화소 블록 일치 켬 100%·끔 82.06%) — 사전등록 "2x2 좌상=원본 ≥99%"는 리터럴 96.6%(Scale2x에선 좌상이 원본과 다른 게 정상, 전체화면 좌상 일치도 94.5%)라 측정식 정정을 수용할지 판정 (3) 래퍼 구조(Lock 없음·원본 1회·present에서 rect_blt_heal 뒤 화소 루프 앞 diff) 검토.
+- 열린 점: 호출 지점 7곳 중 5곳 미관측, 상태 허용은 5·7뿐(PS3·다른 메뉴 상태 안 열었음), 큐 64칸 초과 시 stale(overflow 0), 재스테이징 미실행.

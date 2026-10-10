@@ -1,0 +1,18 @@
+# lap1257 H-TRHD2613 promoted adjudication — HOLD, no delivery
+
+Role: root/promoted diagnostic confirmation. Preserve current artifacts; do not repeat middle paperwork or auto-deliver.
+Evidence: docs/history/laps/20261010_lap1257_middle_g1_htrhd2613_raw_stale_hold.md and shared temp 20261010_lap1257_middle_review/{review.json,clarification.json}.
+
+Independent verification confirms the staged pack26,253 files, DLL/launchers, current runtime source-input SHA, input/scene/pixel gates, both runs' owned close/summary/cleanup and new-game60s/1200 presents PASS. Existing minimap exact-state HOLD remains.
+
+Acceptance HOLD: latest INBOX23:19 requires stale0. Pair raw has two PS3 presents: seq1448 ts329870101 stale243; seq1473 ts329871354 stale69. Both next presents are0, final stale0 is true, but whole pair stale0 is not. They occur40ms before logical(450,195) mouse-down and5ms before(668,540). Raw trace SHA c405b249c3ef377847b7aa7c50bcd43a9f2e6c8d2890e811ac1cb9825dcf1c5b. Location/writer and identity with older stale253 backlog remain UNKNOWN; no product FAIL attribution. Seven safety/reject/fallback counters0 throughout. New-game actual dwell raw59.952s is clean.
+
+Initial review's DLL metadata failure is a reviewer allowed-offset omission: six differences are only COFF/export timestamps and checksum. clarification.json explicitly corrects this without deleting initial failure evidence.
+
+Required next judgment: reconcile these transient samples with the registered stale0 acceptance scope and existing disclosed backlog; record trial acceptance PASS/HOLD. Do not change historical raw or weaken the gate silently. lap1256 Fast log SHA/result matches(2193/9), runtime/probe source hashes match current; whole-repository Fast source inventory is absent, so current whole-Fast source-match remains UNKNOWN and old wrapper result is not proof. Do not create full-Fast repetition solely for narrative fingerprint drift.
+
+If repair is required, explicitly hand to work tier(luna/Sonnet), owning G1 probe/relevant mirror files only: reuse exact candidate+pack and existing stale-mask/layer-drift to locate/write-attribute the two click-adjacent intervals; minimal proven repair, related regression and same-scope game. No speculative game changes, gate relaxation, G2/multiplayer or new helper-product expansion. This session starts no work/game retry.
+
+Latest INBOX23:43 already authorizes root delivery after Fast+independent-review PASS, with no new permission question. Current review is HOLD: do not deliver. If accepted, target260921_temp/G1_1600x1200_시험판_20261010_lap1256_2613_HD/, oldlap1234 folder to archive(no delete/overwrite/txt). Preserve Windows/DxWnd/BGM/user milestone gaps; do not close G1.
+
+Previous handoff preserved byte-exact: docs/history/laps/20261010_lap1257_preserved_lap1256_escalate_sol.txt. Counter1257 read-only. No implementation, fresh game, delivery or commit; user escalation stop rule applies at this acceptance/delivery boundary.

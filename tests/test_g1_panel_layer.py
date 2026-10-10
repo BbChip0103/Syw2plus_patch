@@ -140,20 +140,20 @@ int main(void) {
     for (size_t i = 0; i < sizeof(source); ++i) source[i] = (uint8_t)i;
     uint32_t digest = g1_panel_source_digest(source, sizeof(source));
     assert(digest != 0u);
-    assert(g1_panel_asset_key(key, sizeof(key), 0x004663E0u, 0x12345678u,
+    assert(g1_panel_asset_key(key, sizeof(key), 0x004663E0u,
                               831u, 143u, digest));
     assert(g1_panel_asset_key(same_key, sizeof(same_key), 0x004663E0u,
-                              0x12345678u, 831u, 143u, digest));
+                              831u, 143u, digest));
     assert(strcmp(key, same_key) == 0);
-    assert(strstr(key, "w004663e0_s12345678_h") == key);
+    assert(strstr(key, "w004663e0_h") == key);
+    assert(g1_panel_asset_key(key, sizeof(key), 0x004663E0u, 831u, 143u,
+                              0x12345678u));
+    assert(strcmp(key, "w004663e0_h12345678_831x143.idx8") == 0);
     assert(g1_panel_asset_key(changed_key, sizeof(changed_key), 0x004663E0u,
-                              0x12345679u, 831u, 143u, digest));
-    assert(strcmp(key, changed_key) != 0);
-    assert(g1_panel_asset_key(changed_key, sizeof(changed_key), 0x004663E0u,
-                              0x12345678u, 831u, 143u, digest + 1u));
+                              831u, 143u, digest + 1u));
     assert(strcmp(key, changed_key) != 0);
     assert(!g1_panel_asset_key(changed_key, sizeof(changed_key), 0x004663E0u,
-                               0x12345678u, 800u, 143u, digest));
+                               800u, 143u, digest));
     assert(g1_panel_hd_pack_valid(frame, 2u, 2u, 2u, pack, sizeof(pack)));
     assert(!g1_panel_hd_pack_valid(frame, 2u, 2u, 2u, pack, sizeof(pack) - 1u));
     pack[2] = 0x44u;

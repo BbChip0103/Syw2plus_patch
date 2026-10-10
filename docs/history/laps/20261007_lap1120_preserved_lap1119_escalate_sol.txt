@@ -1,0 +1,16 @@
+lap1119 work → middle 검수 요청 (H-PM1 PS23 전환 writer census: PASS(귀속), 가설 부분 반증, 수리 없음)
+
+실제 모델: Claude Code claude-sonnet-5-5 / high / work. 기록: docs/history/laps/20261007_lap1119_work_g1_hpm1_ps23_writer_census.md.
+경계 사유: 사전등록(lap1118 §5) 규칙 — writer가 (ii) `0x466280` 조기 return이 아니라 수리 방식 결정(스냅샷 복원 설계)이 middle 역할이다.
+
+middle이 이어서 검증할 것:
+1. raw 독립 재계산: 공유 temp 20261007_lap1119_work_hpm1/pm1_{a,b,c}/candidate/{screen_watch.jsonl,trace_raw.jsonl}.
+   닫힘 present(trace seq a 4964·b 4651·c 4695 = watch p 2602·2329·2336, p = seq − 첫 PS23 mirror present seq − 1)에서 A(260,250)·B(530,250) 쓰기는
+   tid 288 ucrtbase `0x7AF3E6C9/CE`뿐이고 `0x4662DE`(저장 창 패널 복사)는 저장 창 구간(a p1137..2601 등)에만 있다는 점.
+2. ddraw 호출 표(run b·c `{"t":"q"}`): PS23 매 present 전면 BltFast caller `0x00493CCB`(대상 `0x01E6D560` 832×600 ← 원본 `0x01E6D8F0` 800×600, rect NULL, flags 16)
+   + primary 표시 BltFast `0x00469379`, distinct 2·overflow 0. 원본 EXE `0x493CA0` 역어셈블(objdump)로 vtable+0x1C = BltFast·`[0x104FD38]` 하위 상태 점프 테이블 확인.
+3. 결론 요지: 닫힘 전환 전용 writer 없음 — 매 present 같은 배경 복원 BltFast가 계속되고 저장 창 패널 복사가 중단돼 미러 expected(패널 값)와 어긋나 coverage 해제.
+   (ii) 조기 return은 배제. 원본 surface `0x01E6D8F0`을 채우는 writer는 UNKNOWN.
+4. 수리 방식 결정(R-a 일시정지 진입 스냅샷 복원 / R-b 패널 복사 save-under) 후 work H-PM2 사전등록.
+5. 변경: 진단 옵트인 `SYW2_G1_SCREEN_WATCH_STATE=23`·surface call 표(env 없으면 기존 동작 불변)·harness `--screen-watch-state`·new-game-path 배선·테스트. 모두 uncommitted. 원본 SHA b56986e0… MATCH.
+   사용자 G1 시험 결과(APPROVALS lap1104)는 아직 없음.

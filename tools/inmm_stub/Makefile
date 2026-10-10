@@ -11,17 +11,28 @@ LDFLAGS = -nostartfiles -nodefaultlibs -Wl,-e,_DllMain@12 \
 TARGET  = _inmm.dll
 
 
-.PHONY: all clean
+.PHONY: all default-on clean
 
 all: $(TARGET)
 
 SRCS = inmm_stub.c control_logging.c control_protocol.c control_registry.c control_state_bridge.c control_executor.c control_input_bridge.c control_handler_bridge.c asset_hook.c sfx_hook.c direct_draw_trace.c g1_mirror2x.c g1_screen_watch.c g1_hd_asset.c g1_perf_sections.c g1_census.c g1_state_snapshot.c final_d3d9_trace.c ai_shadow.c trace_record_serializer.c
 
-$(TARGET): $(SRCS) g1_census_contract.h g1_census_residual.h g1_census_watch.h g1_stale_mask.h g1_layer_drift.h g1_screen_watch.h g1_scratch_bounds.h g1_state_snapshot.h g1_panel_layer.h g1_overlay_blt.h g1_rect_fill.h g1_cache_fill.h inmm_stub.def
+$(TARGET): $(SRCS) g1_census_contract.h g1_census_residual.h g1_census_watch.h g1_stale_mask.h g1_layer_drift.h g1_screen_watch.h g1_scratch_bounds.h g1_state_snapshot.h g1_panel_layer.h g1_overlay_blt.h g1_frame_copy.h g1_pause_snapshot.h g1_primary_readback.h g1_bar_copy.h g1_briefing_compose.h g1_scratch_bltfast.h g1_rect_fill.h g1_cache_fill.h g1_blend_key.h inmm_stub.def
 	$(CC) $(CFLAGS) -o $(TARGET) $(SRCS) inmm_stub.def $(LDFLAGS) \
 		-Wl,--out-implib,lib_inmm.a
 	@echo "✅ Built: $(TARGET)"
 	@i686-w64-mingw32-objdump -p $(TARGET) | grep -A10 "The Export Tables" || true
 
+# Shipped G1 build: same sources with SYW2_G1_DEFAULT_ON, written to _G1MM.dll.
+# Module name inside stays _inmm (inmm_stub.def); only the file name differs.
+G1MM_TARGET = _G1MM.dll
+
+default-on: $(G1MM_TARGET)
+
+$(G1MM_TARGET): $(SRCS) $(wildcard *.h) inmm_stub.def
+	$(CC) $(CFLAGS) -DSYW2_G1_DEFAULT_ON -o $(G1MM_TARGET) $(SRCS) inmm_stub.def $(LDFLAGS) \
+		-Wl,--out-implib,lib_g1mm.a
+	@echo "✅ Built: $(G1MM_TARGET)"
+
 clean:
-	rm -f $(TARGET) lib_inmm.a
+	rm -f $(TARGET) lib_inmm.a $(G1MM_TARGET) lib_g1mm.a

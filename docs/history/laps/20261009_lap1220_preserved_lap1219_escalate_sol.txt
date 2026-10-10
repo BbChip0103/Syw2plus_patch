@@ -1,0 +1,7 @@
+lap1219 work(H-E2611G1-1) 완료 — middle 독립 검수 + `.kills` 전투 장면 재시도 vs H-E2611G1-2 결정 요청 (제품 C 변경 0, 하네스·테스트만; lap1218 중단 세션의 진단 변경은 검수 뒤 그대로 사용).
+- 기록: docs/history/laps/20261009_lap1219_work_g1_e2611g1_1_boot_idle_kills_scene.md
+- raw: 공유 temp 20261009_lap1219_work_e2611g1/ (run_B0 2611 부팅, run_C1 candidate PS5 정체 FAIL, run_C2 PASS(방향키 뒤 카메라 맵 가장자리·캡처 검음), run_C3 PASS(`--new-game-play-keys none` 시작 카메라 체류), scripts/run.sh·ana.py)
+- 결과 요약: 두 lane 실제 EXE 2611 d9d6bb3d…(probe-result private_exe_sha256 직접 기록, E1-0). B0·C2·C3 candidate PS3 stale 0(266·4,577·4,409 present)·안전 9종 0·dropped 0·p95 8~12. E1-1 옵트인 `ret_range_diag`: `.idle` TextOutA 호출 492~9,112(실제로 그려짐, stale 0), `.kills` B(`0x4664D0`) 호출 0·`.kills` TextOutA 0 — 약 225 s 체류에 전투 없음(패배 화면도 없음) → E1-2 `.kills` 배지 INCONCLUSIVE(2 run 뒤 보고).
+- 검증 요청: (1) B0·C2·C3 trace mirror2x_present를 program_state로 나눠 stale·안전·p95 재계산, `ret_range_diag` 이벤트 값(마지막 줄) 확인 (2) C1 candidate PS5 정체(확인 클릭 1회 도착했으나 시작 안 됨, B0·C2·C3 재현 0)를 미귀속으로 둘지 판정 (3) C2 캡처가 검은 이유(candidate 카메라 [0,57] = 맵 가장자리·본진 [91,54])를 맵 밖/미탐색으로 보는 판정과 `--new-game-play-keys none` 하네스 옵션(시작 카메라 체류) 수용 (4) 테스트 2개(dwell 캡처 분할·keys none)가 변이에 RED인지.
+- 결정 요청: `.kills` 배지는 전투가 필요 — (a) AI 공격(~230 s 이후) 시점까지 더 체류해 패배 직전 캡처 + trace 상한(8,192) 대응 또는 유닛 입력으로 교전 유도를 한 번 더 시도할지, (b) UNKNOWN으로 두고 H-E2611G1-2(2611 세이브 로드·pair 기준선)로 넘어갈지.
+- 열린 점: partial(격리 Wine·새 게임, `.kills` 배지·`.kills` 글자 미관측 UNKNOWN), 세이브 로드·팩 켬·사용자 시험판 미착수. `make lint`는 별도 2610 세션 untracked 파일 F401 2건 때문에 FAIL(이 루프 파일 아님). 별도 2610/2611 세션 파일은 건드리지 않음.

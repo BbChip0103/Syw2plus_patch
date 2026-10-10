@@ -1,0 +1,2694 @@
+{
+ "sections": [
+  ".resedge",
+  ".jcart",
+  ".tgcode",
+  ".hrcode",
+  ".armyrot",
+  ".healai",
+  ".jpecon",
+  ".cpcomba",
+  ".bstart",
+  ".resplc",
+  ".csright",
+  ".kills",
+  ".bldpol",
+  ".cntgoal",
+  ".krbuild",
+  ".forcebd",
+  ".prodtry",
+  ".psncode",
+  ".psndisp",
+  ".enc16",
+  ".skcode",
+  ".farmer",
+  ".grp60",
+  ".sel60",
+  ".jpopen",
+  ".adaptxp",
+  ".idle",
+  ".weapon",
+  ".closeco",
+  ".aires",
+  ".wefix",
+  ".mvcode",
+  ".cstxt",
+  ".bamboo",
+  ".wecache",
+  ".idldata",
+  ".killdat",
+  ".rsidle",
+  ".mvstate",
+  ".tgstate",
+  ".hrstate",
+  ".skstate",
+  ".healst",
+  ".armyst",
+  ".cpstate",
+  ".bldstat",
+  ".bsstate",
+  ".farmst",
+  ".psndata (psn_cache)",
+  ".enc16 data (enc16_list)"
+ ],
+ "bound_sites": [
+  {
+   "va": "0x109024c",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "psn_cache"
+   ],
+   "why": "slot=(ptr-pool)/0x758 < 1200 -> psn_cache [slot*16+0x110c000]."
+  },
+  {
+   "va": "0x109115a",
+   "insn": "mov ecx, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "slot_loop_counter",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Post-load fixup loop count 1199 from slot 1 over pool."
+  },
+  {
+   "va": "0x113420a",
+   "insn": "mov ecx, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "memset_len",
+   "arrays_guarded": [],
+   "why": "Clears selection buffer 0x1604004 (1200 dwords, ESL selection cap 100); buffer, not slot domain."
+  },
+  {
+   "va": "0x11342ba",
+   "insn": "cmp ebx, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot_loop_counter",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Loop slots 0..1199 over exist/pool filling per-owner group table 0x1a3d000."
+  },
+  {
+   "va": "0x1134462",
+   "insn": "mov ecx, 0x4b0",
+   "action": "raise_list_capacity",
+   "value_kind": "memset_len",
+   "arrays_guarded": [
+    "enc16_list"
+   ],
+   "why": "rep stosd 1200 dwords clearing enc16_list at 0x1141000."
+  },
+  {
+   "va": "0x113460a",
+   "insn": "mov ecx, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot_loop_counter",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Loop 1200 units from slot 0 writing byte [unit+0]."
+  },
+  {
+   "va": "0x113463c",
+   "insn": "mov ecx, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "memset_len",
+   "arrays_guarded": [],
+   "why": "Clears selection buffer 0x1604004 (1200 dwords); buffer, not slot domain."
+  },
+  {
+   "va": "0x1134689",
+   "insn": "mov ecx, 0x4b0",
+   "action": "raise_list_capacity",
+   "value_kind": "memset_len",
+   "arrays_guarded": [
+    "enc16_list"
+   ],
+   "why": "rep stosd 1200 dwords clearing enc16_list at 0x1141000."
+  },
+  {
+   "va": "0x11380c0",
+   "insn": "cmp ecx, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Selection entry id < 1200 before 0x416f70 and pool[id]."
+  },
+  {
+   "va": "0x113d160",
+   "insn": "cmp edx, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id (slot-domain, pool[id].+0x29c==id) range check before exist[id]/pool[id]."
+  },
+  {
+   "va": "0x113d243",
+   "insn": "cmp ebx, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot_loop_counter",
+   "arrays_guarded": [
+    "pool",
+    "enc16_list"
+   ],
+   "why": "Builder loop slots 1..1199; appends unchecked to enc16_list, so list must grow to 4093 first."
+  },
+  {
+   "va": "0x1144108",
+   "insn": "mov edi, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "slot_loop_counter",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Loop count 1199 from slot 1 (ptr 0x66bee8) over pool."
+  },
+  {
+   "va": "0x114436a",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_list_capacity",
+   "value_kind": "list_count",
+   "arrays_guarded": [
+    "enc16_list"
+   ],
+   "why": "List position cap for enc16_list read; grows with list."
+  },
+  {
+   "va": "0x1145a65",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_list_capacity",
+   "value_kind": "list_count",
+   "arrays_guarded": [
+    "enc16_list"
+   ],
+   "why": "List position cap for enc16_list read; grows with list."
+  },
+  {
+   "va": "0x1149007",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "we_cache"
+   ],
+   "why": "Unit id < 1200 -> we_cache [id*16+0x114c000]."
+  },
+  {
+   "va": "0x1149527",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_list_capacity",
+   "value_kind": "list_count",
+   "arrays_guarded": [
+    "enc16_list"
+   ],
+   "why": "List position cap for enc16_list read [i*4+0x1141000]; grows with list."
+  },
+  {
+   "va": "0x1153a25",
+   "insn": "cmp edx, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "PlayerStruct +0x3314 WORD unit id < 1200 before pool[id]."
+  },
+  {
+   "va": "0x1154005",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Command unit id (word arg) < 1200 before pool[id] type check."
+  },
+  {
+   "va": "0x1154441",
+   "insn": "cmp edx, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "PlayerStruct +0x3314 WORD unit id < 1200 before pool[id]."
+  },
+  {
+   "va": "0x11547f2",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Map-cell occupant unit id (grid word) < 1200 before exist/pool."
+  },
+  {
+   "va": "0x1154b07",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Command unit id (word arg) < 1200 before pool[id]."
+  },
+  {
+   "va": "0x1154c90",
+   "insn": "cmp esi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot_loop_counter",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Loop slots 1..1199 over pool (type 0x70 search)."
+  },
+  {
+   "va": "0x1154d06",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Unit id arg < 1200 before pool[id]."
+  },
+  {
+   "va": "0x1156b3e",
+   "insn": "cmp ebx, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x1156b65",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x1157150",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot_loop_counter",
+   "arrays_guarded": [
+    "exist",
+    "pool",
+    "idl_slot"
+   ],
+   "why": "Loop slots 0..1199 over exist/pool writing idl_slot 8B per slot."
+  },
+  {
+   "va": "0x1157942",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "rsidle_slot"
+   ],
+   "why": "slot=(ptr-pool)/0x758 < 1200 -> rsidle_slot [slot*16+0x1171010]."
+  },
+  {
+   "va": "0x1157c17",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "rsidle_slot"
+   ],
+   "why": "slot < 1200 -> rsidle_slot read."
+  },
+  {
+   "va": "0x115b005",
+   "insn": "cmp eax, 0x226c80",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool",
+    "kill_log"
+   ],
+   "why": "kills slot helper 0x115b000; slot used as kill_log index [slot*0x20+0x115c000]."
+  },
+  {
+   "va": "0x115b09d",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool",
+    "kill_log"
+   ],
+   "why": "Victim id < 1200 before exist/pool; kill_log via 0x115b01d (span-gated)."
+  },
+  {
+   "va": "0x115b16b",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id < 1200 before exist/pool (hp snapshot)."
+  },
+  {
+   "va": "0x115b350",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "pool",
+    "kill_log"
+   ],
+   "why": "Unit id < 1200 -> pool[id] -> 0x115b01d kill_log."
+  },
+  {
+   "va": "0x1178090",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x1178141",
+   "insn": "mov edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x1178183",
+   "insn": "cmp eax, 0x4af",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x117821a",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x1178290",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x1178363",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117c240",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117c2f1",
+   "insn": "mov edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x117c333",
+   "insn": "cmp eax, 0x4af",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x117c3ca",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117c440",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x117c513",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117cc18",
+   "insn": "cmp ebp, 0x226c80",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Byte offset into pool (< 0x758*1200, %0x758) then [off+0x66ba32/34] x/y reads."
+  },
+  {
+   "va": "0x117d220",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117d2d1",
+   "insn": "mov edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x117d313",
+   "insn": "cmp eax, 0x4af",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x117d3aa",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117d420",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x117d4f3",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117e3c0",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117e471",
+   "insn": "mov edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x117e4b3",
+   "insn": "cmp eax, 0x4af",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x117e54a",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117e5c0",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x117e693",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117e89d",
+   "insn": "mov ecx, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x117e923",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117ec48",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117ecfc",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Unit-pointer validator: (ptr-pool) <= 0x758*1200-1 and %0x758==0; only pool fields used afterwards."
+  },
+  {
+   "va": "0x117ee53",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x117f0e3",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11801fa",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Unit-pointer validator: (ptr-pool) <= 0x758*1200-1 and %0x758==0; only pool fields used afterwards."
+  },
+  {
+   "va": "0x1180676",
+   "insn": "cmp ecx, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Unit-pointer validator: (ptr-pool) <= 0x758*1200-1 and %0x758==0; only pool fields used afterwards."
+  },
+  {
+   "va": "0x1181421",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool",
+    "mv_state"
+   ],
+   "why": "slot=(ptr-pool)/0x758 -> mv_state [slot*0x28+0x1182014]."
+  },
+  {
+   "va": "0x118e2a7",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id (slot-domain, pool[id].+0x29c==id) range check before exist[id]/pool[id]."
+  },
+  {
+   "va": "0x118e58a",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Group member id (PlayerStruct group list +0x99a) range check before exist/pool."
+  },
+  {
+   "va": "0x1190577",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id (slot-domain, pool[id].+0x29c==id) range check before exist[id]/pool[id]."
+  },
+  {
+   "va": "0x11905cc",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool",
+    "hr_unit"
+   ],
+   "why": "hrcode validator; callers derive slot and index hr_unit [slot*0x40+0x11942e0]."
+  },
+  {
+   "va": "0x1190968",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id (slot-domain, pool[id].+0x29c==id) range check before exist[id]/pool[id]."
+  },
+  {
+   "va": "0x1190bc6",
+   "insn": "cmp eax, 0x4af",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x1190be7",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x1190c27",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id (slot-domain, pool[id].+0x29c==id) range check before exist[id]/pool[id]."
+  },
+  {
+   "va": "0x1191208",
+   "insn": "mov ecx, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Round-robin slot cursor (slot+1)%1200 stored at 0x1193018; modulus must be 4093 so high slots get turns."
+  },
+  {
+   "va": "0x11a733a",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "id-1<=0x4ae (ids 1..1199) before exist/pool; becomes 0xffb."
+  },
+  {
+   "va": "0x11a738c",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool",
+    "sk_unit",
+    "hr_unit"
+   ],
+   "why": "skcode validator; 0x11a782c caller then indexes sk_unit (encoded 0xbc756) and hr_unit by slot."
+  },
+  {
+   "va": "0x11a777f",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "id-1<=0x4ae before exist/pool; becomes 0xffb."
+  },
+  {
+   "va": "0x11b32fa",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Unit-pointer validator: (ptr-pool) <= 0x758*1200-1 and %0x758==0; only pool fields used afterwards."
+  },
+  {
+   "va": "0x11b398b",
+   "insn": "mov ecx, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x11b39b1",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11b3a64",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11b3d85",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11b42c0",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11b4371",
+   "insn": "mov edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x11b43b3",
+   "insn": "cmp eax, 0x4af",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x11b444a",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11b44c0",
+   "insn": "cmp edi, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Not-found sentinel for best roster slot (init/compare pair); raise both together or slot 1200 reads as not-found."
+  },
+  {
+   "va": "0x11b4593",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11b4c98",
+   "insn": "cmp ebp, 0x226c80",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Byte offset into pool (< 0x758*1200, %0x758) then [off+0x66ba32/34] x/y reads."
+  },
+  {
+   "va": "0x11b4f52",
+   "insn": "cmp eax, 0x4af",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x11b4f73",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11b5039",
+   "insn": "cmp ecx, 0x226c80",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Byte offset into pool (< 0x758*1200, %0x758) then [off+0x66ba32/34] x/y reads."
+  },
+  {
+   "va": "0x11b514b",
+   "insn": "cmp eax, 0x4af",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x11b5163",
+   "insn": "cmp eax, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "PlayerStruct roster (+0xd4a) WORD slot checked <1200 before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11b520a",
+   "insn": "mov eax, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "other",
+   "arrays_guarded": [],
+   "why": "Placement score constant returned (1200 - edges*32), not a unit capacity."
+  },
+  {
+   "va": "0x11b521b",
+   "insn": "mov eax, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "other",
+   "arrays_guarded": [],
+   "why": "Placement score constant returned (1200 - edges*32), not a unit capacity."
+  },
+  {
+   "va": "0x11b523c",
+   "insn": "mov eax, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "other",
+   "arrays_guarded": [],
+   "why": "Placement score constant returned (1200 - edges*32), not a unit capacity."
+  },
+  {
+   "va": "0x11b524d",
+   "insn": "mov eax, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "other",
+   "arrays_guarded": [],
+   "why": "Placement score constant returned (1200 - edges*32), not a unit capacity."
+  },
+  {
+   "va": "0x11b60ca",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Unit-pointer validator: (ptr-pool) <= 0x758*1200-1 and %0x758==0; only pool fields used afterwards."
+  },
+  {
+   "va": "0x11b747a",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool",
+    "heal_id",
+    "hr_unit"
+   ],
+   "why": "id-1<=0x4ae; returned unit id indexes heal_id (0x11c30a encoded) and unit slot indexes hr_unit."
+  },
+  {
+   "va": "0x11b74eb",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Unit-pointer validator: (ptr-pool) <= 0x758*1200-1 and %0x758==0; only pool fields used afterwards."
+  },
+  {
+   "va": "0x11b7af0",
+   "insn": "cmp esi, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool",
+    "heal_slot"
+   ],
+   "why": "healai main: slot=(ebp-pool)/0x758 indexes heal_slot via encoded base 0xbd2ac*0x18."
+  },
+  {
+   "va": "0x11b7dc7",
+   "insn": "mov ecx, 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Round-robin slot cursor (slot+1)%1200 stored at 0x11bc010; modulus must be 4093."
+  },
+  {
+   "va": "0x11b7e2c",
+   "insn": "cmp ecx, 0x4af",
+   "action": "keep_not_unit",
+   "value_kind": "list_count",
+   "arrays_guarded": [],
+   "why": "PlayerStruct roster count (+0x200a) vs roster capacity 1200; roster stays in PlayerStruct, owner cap 1008. Keep."
+  },
+  {
+   "va": "0x11b7e58",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot-1<=0x4ae before exist/pool; unit id then feeds heal_id/hr_unit via 0x11b7470."
+  },
+  {
+   "va": "0x11c855a",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool",
+    "army_slot"
+   ],
+   "why": "armyrot validator; 0x11c917c caller then indexes army_slot [slot*0x18+0x11e3360]."
+  },
+  {
+   "va": "0x11c8c3a",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id (slot-domain, pool[id].+0x29c==id) range check before exist[id]/pool[id]."
+  },
+  {
+   "va": "0x11c8e29",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11c9578",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Group member id (PlayerStruct group list) range check before exist/pool."
+  },
+  {
+   "va": "0x11c982e",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Group member id (PlayerStruct group list) range check before exist/pool."
+  },
+  {
+   "va": "0x11eb1ea",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Unit-pointer validator: (ptr-pool) <= 0x758*1200-1 and %0x758==0; only pool fields used afterwards."
+  },
+  {
+   "va": "0x11ec3fd",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11ef558",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11ef604",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x11f21fc",
+   "insn": "cmp ebp, 0x226c80",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool"
+   ],
+   "why": "Byte offset into pool (< 0x758*1200, %0x758) then [off+0x66ba32/34] x/y reads."
+  },
+  {
+   "va": "0x11f22ce",
+   "insn": "mov eax, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "other",
+   "arrays_guarded": [],
+   "why": "Score constant 1200/2400 (cmove 0x960) returned by closeco scorer; not unit capacity."
+  },
+  {
+   "va": "0x11f22e2",
+   "insn": "mov eax, 0x4b0",
+   "action": "keep_not_unit",
+   "value_kind": "other",
+   "arrays_guarded": [],
+   "why": "Score constant 1200/2400 (cmove 0x960) returned by closeco scorer; not unit capacity."
+  },
+  {
+   "va": "0x11f3a1a",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id (slot-domain, pool[id].+0x29c==id) range check before exist[id]/pool[id]."
+  },
+  {
+   "va": "0x11f54ca",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool",
+    "cp_a",
+    "cp_b"
+   ],
+   "why": "cpcomba unit validator; callers (0x11f5ba0,0x11f663a) then index cp_a/cp_b by slot=(ptr-pool)/0x758."
+  },
+  {
+   "va": "0x11f5dd2",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool",
+    "cp_a"
+   ],
+   "why": "Roster slot gate; slot*7*4 indexes cp_a [+0x1200024]."
+  },
+  {
+   "va": "0x11f655a",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id (slot-domain, pool[id].+0x29c==id) range check before exist[id]/pool[id]."
+  },
+  {
+   "va": "0x12225e6",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x1222801",
+   "insn": "cmp eax, 0x226c7f",
+   "action": "raise_span",
+   "value_kind": "byte_span",
+   "arrays_guarded": [
+    "pool",
+    "bs_slot"
+   ],
+   "why": "slot=(ptr-pool)/0x758 -> bs_slot [slot*0x28+0x1230458]."
+  },
+  {
+   "va": "0x1222a1b",
+   "insn": "cmp eax, 0x4ae",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Roster slot checked slot-1<=0x4ae / slot<=0x4af before exist[]/pool[] index."
+  },
+  {
+   "va": "0x123cb7a",
+   "insn": "cmp eax, 0x4af",
+   "action": "raise_slot",
+   "value_kind": "unit_id",
+   "arrays_guarded": [
+    "exist",
+    "pool"
+   ],
+   "why": "Unit id (slot-domain, pool[id].+0x29c==id) range check before exist[id]/pool[id]."
+  },
+  {
+   "va": "0x123e1eb",
+   "insn": "mov dword ptr [esp + 0x14], 0x4b0",
+   "action": "raise_slot",
+   "value_kind": "slot",
+   "arrays_guarded": [],
+   "why": "Initial minimum for lowest-roster-slot search; must exceed max slot (4092)."
+  }
+ ],
+ "sentinel_sites": [
+  {
+   "va": "0x1090a21",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1090b17",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1090b3f",
+   "insn": "cmp word ptr [0x8929d8], 1",
+   "action": "keep_bulk",
+   "why": "0x8929d8 bulk game-state WORD field."
+  },
+  {
+   "va": "0x1090ead",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1090f9a",
+   "insn": "mov ecx, 0x892410",
+   "action": "keep_bulk",
+   "why": "mov ecx,0x892410 thiscall bulk game-state object."
+  },
+  {
+   "va": "0x112dc6f",
+   "insn": "mov ecx, 0x892410",
+   "action": "keep_bulk",
+   "why": "mov ecx,0x892410 thiscall bulk game-state object."
+  },
+  {
+   "va": "0x112f475",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x112fa5d",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11372df",
+   "insn": "cmp eax, 0x892410",
+   "action": "relocate_pool_end",
+   "why": "Pointer range check eax in [0x66b790,0x892410) before (ptr-pool)/0x758; pool end."
+  },
+  {
+   "va": "0x11373ac",
+   "insn": "cmp eax, 0x892410",
+   "action": "relocate_pool_end",
+   "why": "Pointer range check eax in [0x66b790,0x892410) before (ptr-pool)/0x758; pool end."
+  },
+  {
+   "va": "0x1138175",
+   "insn": "mov ecx, 0x8929b4",
+   "action": "keep_bulk",
+   "why": "mov ecx,0x8929b4 thiscall bulk sub-object (+0x5a4)."
+  },
+  {
+   "va": "0x113d1a2",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1144033",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1144386",
+   "insn": "cmp ebx, 0x892410",
+   "action": "relocate_pool_end",
+   "why": "enc16_list entry pointer range check [slot1 0x66bee8, pool end)."
+  },
+  {
+   "va": "0x1145a81",
+   "insn": "cmp ebx, 0x892410",
+   "action": "relocate_pool_end",
+   "why": "enc16_list entry pointer range check [slot1 0x66bee8, pool end)."
+  },
+  {
+   "va": "0x1145c05",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1149547",
+   "insn": "cmp ebx, 0x892410",
+   "action": "relocate_pool_end",
+   "why": "enc16_list entry pointer range check [slot1 0x66bee8, pool end)."
+  },
+  {
+   "va": "0x11547c2",
+   "insn": "cmp byte ptr [eax + 0x89d58e], 2",
+   "action": "keep_bulk",
+   "why": "0x89d58e per-player vision array (not a list count); keep."
+  },
+  {
+   "va": "0x115702c",
+   "insn": "mov edx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x115745e",
+   "insn": "cmp edx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11574a8",
+   "insn": "mov edx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11575ff",
+   "insn": "mov eax, dword ptr [0x8924c4]",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x115761e",
+   "insn": "mov dword ptr [0x8924c4], eax",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x1157905",
+   "insn": "mov ebp, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1157c36",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1157eef",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1157f24",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1180888",
+   "insn": "imul eax, dword ptr [0x8924c4], 0xff83",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x118089d",
+   "insn": "mov dword ptr [0x8924c4], edx",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x118143f",
+   "insn": "mov edi, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x118e42b",
+   "insn": "mov ecx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11908c0",
+   "insn": "cmp esi, 0x899a28",
+   "action": "relocate_other",
+   "why": "Exist-array end (0x899a28) for slot loop that appends to hr_xy_list; new exist end; requires hr_xy_list growth."
+  },
+  {
+   "va": "0x1190eb1",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1190f04",
+   "insn": "mov edi, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1191351",
+   "insn": "cmp esi, 0x899a28",
+   "action": "relocate_other",
+   "why": "Exist-array end (0x899a28) for slot loop that appends to hr_xy_list; new exist end; requires hr_xy_list growth."
+  },
+  {
+   "va": "0x1191723",
+   "insn": "mov edx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11a7947",
+   "insn": "mov edx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11b3888",
+   "insn": "imul eax, dword ptr [0x8924c4], 0xff83",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11b389d",
+   "insn": "mov dword ptr [0x8924c4], edx",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11b7a97",
+   "insn": "cmp ebp, 0x899a28",
+   "action": "relocate_other",
+   "why": "Exist-array end (0x899a28) loop sentinel, read-only scan; must equal new exist base+2*4093."
+  },
+  {
+   "va": "0x11b7c91",
+   "insn": "mov ebx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11b81db",
+   "insn": "cmp edx, 0x899a28",
+   "action": "relocate_other",
+   "why": "Exist-array end (0x899a28) loop sentinel, read-only scan; must equal new exist base+2*4093."
+  },
+  {
+   "va": "0x11c8ae8",
+   "insn": "imul eax, dword ptr [0x8924c4], 0xff83",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11c8afd",
+   "insn": "mov dword ptr [0x8924c4], edx",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11c9118",
+   "insn": "imul eax, dword ptr [0x8924c4], 0xff83",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11c912d",
+   "insn": "mov dword ptr [0x8924c4], edx",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11c91c1",
+   "insn": "mov esi, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11c9445",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11c9483",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11c948c",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11c965c",
+   "insn": "mov ebp, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11c9a72",
+   "insn": "mov ebp, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11eb778",
+   "insn": "imul eax, dword ptr [0x8924c4], 0xff83",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11eb78d",
+   "insn": "mov dword ptr [0x8924c4], edx",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11ec60c",
+   "insn": "cmp edi, 0x899a28",
+   "action": "relocate_other",
+   "why": "Exist-array end (0x899a28) loop sentinel, read-only scan; must equal new exist base+2*4093."
+  },
+  {
+   "va": "0x11f3643",
+   "insn": "mov eax, dword ptr [0x8924c4]",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f3702",
+   "insn": "mov edx, 0x8924c4",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f37d9",
+   "insn": "mov edi, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11f3899",
+   "insn": "mov eax, dword ptr [0x8924c4]",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f3952",
+   "insn": "mov edx, 0x8924c4",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f3d81",
+   "insn": "cmp ebp, 0x899a28",
+   "action": "relocate_other",
+   "why": "Exist-array end (0x899a28) loop sentinel, read-only scan; must equal new exist base+2*4093."
+  },
+  {
+   "va": "0x11f4157",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11f4601",
+   "insn": "mov ebp, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11f5a58",
+   "insn": "imul eax, dword ptr [0x8924c4], 0xff83",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f5a6d",
+   "insn": "mov dword ptr [0x8924c4], edx",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f5ad0",
+   "insn": "mov ecx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11f5ccd",
+   "insn": "mov edi, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11f5d99",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11f60c6",
+   "insn": "imul eax, dword ptr [0x8924c4], 0xff83",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f60e0",
+   "insn": "mov dword ptr [0x8924c4], edx",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f61d8",
+   "insn": "mov esi, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x11f635a",
+   "insn": "imul eax, dword ptr [0x8924c4], 0xff83",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f636d",
+   "insn": "mov dword ptr [0x8924c4], edx",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x11f6809",
+   "insn": "mov ebp, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1222331",
+   "insn": "mov esi, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x12224f1",
+   "insn": "mov ebx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x122259f",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x122287c",
+   "insn": "mov ebx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1222b9e",
+   "insn": "mov ecx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1222c9a",
+   "insn": "mov ebx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x123c862",
+   "insn": "mov edx, 0x8924c4",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x123c939",
+   "insn": "mov edi, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x123c9f9",
+   "insn": "mov eax, dword ptr [0x8924c4]",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x123cab2",
+   "insn": "mov edx, 0x8924c4",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x123cee1",
+   "insn": "cmp ebp, 0x899a28",
+   "action": "relocate_other",
+   "why": "Exist-array end (0x899a28) loop sentinel, read-only scan; must equal new exist base+2*4093."
+  },
+  {
+   "va": "0x123d2e7",
+   "insn": "mov eax, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x123d781",
+   "insn": "mov ebp, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x123e160",
+   "insn": "mov ecx, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x123e352",
+   "insn": "movzx eax, word ptr [eax + eax + 0x89a388]",
+   "action": "keep_bulk",
+   "why": "0x89a388 = per-owner x type count table (8x200 WORD), not age end; keep."
+  },
+  {
+   "va": "0x123e892",
+   "insn": "mov esi, dword ptr [0x8924b8]",
+   "action": "keep_bulk",
+   "why": "0x8924b8 game tick (bulk field)."
+  },
+  {
+   "va": "0x1255553",
+   "insn": "mov eax, dword ptr [0x8924c4]",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  },
+  {
+   "va": "0x12555f4",
+   "insn": "mov ecx, 0x8924c4",
+   "action": "keep_bulk",
+   "why": "0x8924c4 bulk RNG seed field (imul 0xff83 LCG), not pool."
+  }
+ ],
+ "perunit_arrays": [
+  {
+   "name": "hr_xy_list",
+   "base": "0x1193020",
+   "header_bytes": 32,
+   "stride": "0x4",
+   "count": 1200,
+   "count_word_va": "0x119301c",
+   "index_kind": "list_position",
+   "refs": [
+    "0x11908a0 .hrcode mov word ptr [ebp*4 + 0x1193020], cx",
+    "0x11908af .hrcode mov word ptr [ebp*4 + 0x1193022], cx",
+    "0x11908ce .hrcode mov dword ptr [0x119301c], ebp",
+    "0x11908ee .hrcode cmp dword ptr [0x119301c], eax",
+    "0x1190900 .hrcode movzx ecx, word ptr [eax*4 + 0x1193022]",
+    "0x119090d .hrcode movzx ecx, word ptr [eax*4 + 0x1193020]",
+    "0x1190937 .hrcode mov ecx, 0x119301c",
+    "0x1190f60 .hrcode cmp dword ptr [0x1193000], 0x48525431",
+    "0x1190f74 .hrcode mov dword ptr [0x1193000], 0x48525431",
+    "0x1190f7e .hrcode mov dword ptr [0x1193004], 1",
+    "0x1190f88 .hrcode mov dword ptr [0x1193008], edi",
+    "0x1190f8e .hrcode mov dword ptr [0x119300c], 0",
+    "0x1190f98 .hrcode mov dword ptr [0x1193010], 0",
+    "0x1190fa2 .hrcode mov dword ptr [0x1193014], 0",
+    "0x1190fac .hrcode mov dword ptr [0x1193018], 0",
+    "0x1190fb6 .hrcode cmp edi, dword ptr [0x1193008]",
+    "0x1190fbe .hrcode mov eax, dword ptr [0x1193004]",
+    "0x1190fc4 .hrcode mov dword ptr [0x1193004], eax",
+    "0x1190fc9 .hrcode cmp dword ptr [0x1193004], 0",
+    "0x1190fd2 .hrcode mov dword ptr [0x1193004], 1",
+    "0x1190fdc .hrcode mov dword ptr [0x119300c], 0",
+    "0x1190fe6 .hrcode mov dword ptr [0x1193010], 0",
+    "0x1190ff0 .hrcode mov dword ptr [0x1193014], 0",
+    "0x1190ffa .hrcode mov dword ptr [0x1193018], 0",
+    "0x1191004 .hrcode mov dword ptr [0x1193008], edi",
+    "0x119100d .hrcode cmp eax, dword ptr [0x1193004]",
+    "0x1191052 .hrcode mov eax, dword ptr [0x1193004]",
+    "0x11911d5 .hrcode cmp edi, dword ptr [0x119300c]",
+    "0x11911e1 .hrcode cmp esi, dword ptr [0x1193018]",
+    "0x11911e9 .hrcode mov eax, dword ptr [0x119300c]",
+    "0x1191218 .hrcode mov dword ptr [0x119300c], eax",
+    "0x1191225 .hrcode mov dword ptr [0x1193018], edx",
+    "0x1191326 .hrcode mov word ptr [ebp*4 + 0x1193020], ax",
+    "0x1191335 .hrcode mov word ptr [ebp*4 + 0x1193022], ax",
+    "0x119135d .hrcode mov dword ptr [0x119301c], ebp",
+    "0x119163b .hrcode cmp esi, dword ptr [0x1193010]",
+    "0x1191666 .hrcode mov dword ptr [0x1193014], eax",
+    "0x1191676 .hrcode mov dword ptr [0x1193014], 0",
+    "0x1191695 .hrcode mov dword ptr [0x1193010], ecx",
+    "0x11916d3 .hrcode cmp dword ptr [0x1193000], 0x48525431",
+    "0x11916e3 .hrcode cmp dword ptr [0x1193014], ebx",
+    "0x1191737 .hrcode cmp eax, dword ptr [0x1193004]",
+    "0x11a755d .skcode cmp dword ptr [0x1193000], 0x48525431",
+    "0x11a756c .skcode cmp eax, dword ptr [0x1193004]",
+    "0x11a7aa8 .skcode cmp dword ptr [0x1193000], 0x48525431",
+    "0x11a7ab6 .skcode cmp eax, dword ptr [0x1193004]",
+    "0x11b76d5 .healai cmp dword ptr [0x1193000], 0x48525431",
+    "0x11b76e3 .healai cmp eax, dword ptr [0x1193004]",
+    "0x11f682a .cpcomba cmp dword ptr [0x1193000], 0x48525431",
+    "0x11f683c .cpcomba cmp eax, dword ptr [0x1193004]",
+    "0x1257c05 .atkfix cmp dword ptr [0x1193000], 0x48525431",
+    "0x1257c13 .atkfix cmp eax, dword ptr [0x1193004]",
+    "0x19b2332 .a16code mov eax, dword ptr [0x1193000]",
+    "0x19b2349 .a16code mov edx, dword ptr [0x1193004]",
+    "0x19b40dd .a16code mov ecx, dword ptr [0x1193000]",
+    "0x19b40eb .a16code mov dword ptr [0x1193000], 0x48525431",
+    "0x19b40f5 .a16code mov dword ptr [0x1193004], 1",
+    "0x19b40ff .a16code mov dword ptr [0x1193008], edx",
+    "0x19b4107 .a16code mov dword ptr [0x119300c], ecx",
+    "0x19b410d .a16code mov dword ptr [0x1193010], ecx",
+    "0x19b4113 .a16code mov dword ptr [0x1193014], ecx",
+    "0x19b4119 .a16code mov dword ptr [0x1193018], ecx",
+    "0x19b411f .a16code cmp edx, dword ptr [0x1193008]",
+    "0x19b4127 .a16code inc dword ptr [0x1193004]",
+    "0x19b412d .a16code cmp dword ptr [0x1193004], 0",
+    "0x19b4136 .a16code mov dword ptr [0x1193004], 1",
+    "0x19b4142 .a16code mov dword ptr [0x119300c], ecx",
+    "0x19b4148 .a16code mov dword ptr [0x1193010], ecx",
+    "0x19b414e .a16code mov dword ptr [0x1193018], ecx",
+    "0x19b4154 .a16code mov dword ptr [0x1193014], ecx",
+    "0x19b4165 .a16code mov dword ptr [0x1193008], edx",
+    "0x19b4251 .a16code cmp eax, dword ptr [0x1193004]",
+    "0x19b427a .a16code cmp eax, dword ptr [0x1193004]",
+    "0x19b42ba .a16code mov eax, dword ptr [0x1193004]",
+    "0x19b42e7 .a16code mov ecx, dword ptr [0x1193004]",
+    "0x19b4461 .a16code cmp eax, dword ptr [0x119300c]",
+    "0x19b4475 .a16code cmp eax, dword ptr [0x1193018]",
+    "0x19b4480 .a16code sub eax, dword ptr [0x119300c]",
+    "0x19b44ba .a16code mov dword ptr [0x119300c], eax",
+    "0x19b44bf .a16code mov dword ptr [0x1193018], ecx",
+    "0x19b4751 .a16code cmp edi, dword ptr [0x1193010]",
+    "0x19b4898 .a16code mov dword ptr [0x1193010], esi",
+    "0x19b4bfa .a16code mov word ptr [ecx*4 + 0x1193020], ax",
+    "0x19b4c05 .a16code mov word ptr [ecx*4 + 0x1193022], ax",
+    "0x19b4c2e .a16code mov dword ptr [0x119301c], eax",
+    "0x19b5309 .a16code mov dword ptr [0x1193014], eax",
+    "0x19b531e .a16code push dword ptr [0x1193014]",
+    "0x19b532a .a16code mov dword ptr [0x1193014], edi",
+    "0x19b56d5 .a16code mov ecx, dword ptr [0x1193000]",
+    "0x19b56e7 .a16code mov ecx, dword ptr [0x1193014]",
+    "0x19b571f .a16code cmp eax, dword ptr [0x1193004]",
+    "0x19ba332 .a16code mov eax, dword ptr [0x1193000]",
+    "0x19ba349 .a16code mov edx, dword ptr [0x1193004]",
+    "0x19be10c .a16code mov eax, dword ptr [0x1193000]",
+    "0x19be118 .a16code mov dword ptr [0x1193000], 0x48525431",
+    "0x19be122 .a16code mov dword ptr [0x1193004], 1",
+    "0x19be12c .a16code mov dword ptr [0x1193008], edx",
+    "0x19be134 .a16code mov dword ptr [0x119300c], eax",
+    "0x19be139 .a16code mov dword ptr [0x1193010], eax",
+    "0x19be13e .a16code mov dword ptr [0x1193014], eax",
+    "0x19be143 .a16code mov dword ptr [0x1193018], eax",
+    "0x19be148 .a16code cmp edx, dword ptr [0x1193008]",
+    "0x19be150 .a16code inc dword ptr [0x1193004]",
+    "0x19be156 .a16code cmp dword ptr [0x1193004], 0",
+    "0x19be15f .a16code mov dword ptr [0x1193004], 1",
+    "0x19be16b .a16code mov dword ptr [0x119300c], eax",
+    "0x19be170 .a16code mov dword ptr [0x1193010], eax",
+    "0x19be175 .a16code mov dword ptr [0x1193018], eax",
+    "0x19be17a .a16code mov dword ptr [0x1193014], eax",
+    "0x19be18a .a16code mov dword ptr [0x1193008], edx",
+    "0x19be27d .a16code cmp eax, dword ptr [0x1193004]",
+    "0x19be2a6 .a16code cmp eax, dword ptr [0x1193004]",
+    "0x19be2e6 .a16code mov eax, dword ptr [0x1193004]",
+    "0x19be316 .a16code mov ecx, dword ptr [0x1193004]",
+    "0x19be4c8 .a16code cmp eax, dword ptr [0x119300c]",
+    "0x19be4d4 .a16code cmp edi, dword ptr [0x1193018]",
+    "0x19be4df .a16code sub eax, dword ptr [0x119300c]",
+    "0x19be510 .a16code mov dword ptr [0x119300c], eax",
+    "0x19be515 .a16code mov dword ptr [0x1193018], edi",
+    "0x19befbe .a16code cmp edi, dword ptr [0x1193010]",
+    "0x19bf12c .a16code mov dword ptr [0x1193010], ecx",
+    "0x19bf574 .a16code mov word ptr [ecx*4 + 0x1193020], ax",
+    "0x19bf57f .a16code mov word ptr [ecx*4 + 0x1193022], ax",
+    "0x19bf5a8 .a16code mov dword ptr [0x119301c], eax",
+    "0x19bf7f2 .a16code mov eax, dword ptr [0x1193000]",
+    "0x19bf80a .a16code cmp ecx, dword ptr [0x1193004]",
+    "0x19c006f .a16code mov dword ptr [0x1193014], eax",
+    "0x19c0082 .a16code push dword ptr [0x1193014]",
+    "0x19c008e .a16code mov dword ptr [0x1193014], edi",
+    "0x19c0197 .a16code mov ecx, dword ptr [0x1193000]",
+    "0x19c01a9 .a16code mov ecx, dword ptr [0x1193014]",
+    "0x19c01e1 .a16code cmp eax, dword ptr [0x1193004]"
+   ],
+   "clear_sites": [],
+   "note": ".hrstate: header 0x1193000 (magic HRT1,gen,tick..) then WORD x,y list of qualifying units built by scanning ALL exist slots (hrcode 0x1190800, 0x1191280; a16code 0x19b4b6a) with NO capacity check; count dword 0x119301c. Capacity 1200 entries before hr_unit. Must grow to 4093 entries when exist-end sentinels move."
+  },
+  {
+   "name": "hr_unit",
+   "base": "0x11942e0",
+   "header_bytes": 0,
+   "stride": "0x40",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x1190f56 .hrcode add ebp, 0x11942e0",
+    "0x119172f .hrcode add esi, 0x11942e0",
+    "0x11a7557 .skcode add edx, 0x11942e0",
+    "0x11a7aa2 .skcode add ebx, 0x11942e0",
+    "0x11b76cf .healai add esi, 0x11942e0",
+    "0x11b7788 .healai cmp dword ptr [ebp + 0x119430c], 0",
+    "0x11b7795 .healai mov ecx, dword ptr [ebp + 0x119430c]",
+    "0x11b77a6 .healai mov eax, dword ptr [ebp + 0x119430c]",
+    "0x11b77ba .healai cmp dword ptr [ebp + 0x11942f4], 0",
+    "0x11b77c3 .healai mov eax, dword ptr [ebp + 0x11942f4]",
+    "0x11b77f3 .healai mov eax, dword ptr [ebp + 0x11942fc]",
+    "0x11b7803 .healai mov eax, dword ptr [ebp + 0x11942fc]",
+    "0x11b7842 .healai mov eax, dword ptr [ebp + 0x1194308]",
+    "0x11f6836 .cpcomba mov eax, dword ptr [ecx + 0x11942e0]",
+    "0x11f684a .cpcomba cmp dword ptr [ecx + 0x11942e4], eax",
+    "0x11f6852 .cpcomba cmp dword ptr [ecx + 0x11942f8], 0",
+    "0x11f685b .cpcomba cmp ebp, dword ptr [ecx + 0x11942f0]",
+    "0x11f6863 .cpcomba mov eax, dword ptr [ecx + 0x11942f0]",
+    "0x1257bff .atkfix add esi, 0x11942e0",
+    "0x19b2343 .a16code mov ecx, dword ptr [eax + 0x11942e0]",
+    "0x19b2353 .a16code mov ecx, dword ptr [eax + 0x11942e4]",
+    "0x19b235e .a16code mov ecx, dword ptr [eax + 0x11942f8]",
+    "0x19b2368 .a16code mov ecx, dword ptr [eax + 0x11942f0]",
+    "0x19b2373 .a16code mov eax, dword ptr [eax + 0x11942f0]",
+    "0x19b4005 .a16code mov esi, 0x11942e0",
+    "0x19b4160 .a16code mov esi, 0x11942e0",
+    "0x19b5718 .a16code mov eax, dword ptr [edx + edx + 0x11942e0]",
+    "0x19b5727 .a16code lea edi, [edx + edx + 0x11942e0]",
+    "0x19ba343 .a16code mov ecx, dword ptr [eax + 0x11942e0]",
+    "0x19ba353 .a16code mov ecx, dword ptr [eax + 0x11942e4]",
+    "0x19ba35e .a16code mov ecx, dword ptr [eax + 0x11942f8]",
+    "0x19ba368 .a16code mov ecx, dword ptr [eax + 0x11942f0]",
+    "0x19ba373 .a16code mov eax, dword ptr [eax + 0x11942f0]",
+    "0x19be006 .a16code mov esi, 0x11942e0",
+    "0x19be185 .a16code mov edi, 0x11942e0",
+    "0x19be1e5 .a16code mov ecx, 0x11942e0",
+    "0x19be25d .a16code mov eax, 0x11942e0",
+    "0x19be272 .a16code mov eax, 0x11942e0",
+    "0x19bedd1 .a16code mov eax, 0x11942e0",
+    "0x19beded .a16code mov eax, 0x11942e0",
+    "0x19bf24a .a16code mov ecx, 0x11942e0",
+    "0x19bf661 .a16code mov eax, 0x1194338",
+    "0x19c01da .a16code mov eax, dword ptr [edx + edx + 0x11942e0]",
+    "0x19c01e9 .a16code lea edi, [edx + edx + 0x11942e0]"
+   ],
+   "clear_sites": [],
+   "note": ".hrstate per-slot 64B records (gen,id,type|owner,..) indexed slot<<6 (+0x11942e0); immediately follows hr_xy_list; section end 0x11a6ee0. Also used by skcode/healai/cpcomba/atkfix/a16code. a16code 0x19b5718 uses [edx+edx+base] with magic-divide slot. No bulk clear (generation scheme)."
+  },
+  {
+   "name": "sk_unit",
+   "base": "0x11ab010",
+   "header_bytes": 16,
+   "stride": "0x18",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x11a7968 .skcode cmp dword ptr [0x11ab000], 0x534b3137",
+    "0x11a797c .skcode cmp edx, dword ptr [0x11ab008]",
+    "0x11a7984 .skcode mov dword ptr [0x11ab000], 0x534b3137",
+    "0x11a798e .skcode mov eax, dword ptr [0x11ab004]",
+    "0x11a7994 .skcode mov dword ptr [0x11ab004], eax",
+    "0x11a7999 .skcode mov eax, 0x11ab014",
+    "0x11a799e .skcode mov dword ptr [0x11ab008], edx",
+    "0x11a79dc .skcode cmp eax, 0x11b2094",
+    "0x11a79f0 .skcode mov dword ptr [0x11ab008], edx",
+    "0x19a75f5 .a16code mov bl, byte ptr [ecx + esi + 0x11b0ed0]",
+    "0x11a79e7 .skcode lea edi, [ebx + 0xbc756]"
+   ],
+   "clear_sites": [
+    {
+     "va": "0x11a7999",
+     "dwords": "0x1c20"
+    }
+   ],
+   "note": ".skstate: header 0x11ab000..0x11ab010; per-slot 24B. ENCODED base: lea edi,[slot+0xbc756]; *3; shl 3 (0x11a79e7) -> must be rewritten (new_base/0x18). Clear loop 0x11a7999..0x11a79dc end sentinel 0x11b2094 (6 dword stores/entry; dwords listed = 1200*6)."
+  },
+  {
+   "name": "heal_slot",
+   "base": "0x11bc020",
+   "header_bytes": 32,
+   "stride": "0x18",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x11b78e0 .healai mov eax, dword ptr [0x11bc004]",
+    "0x11b7cc4 .healai cmp dword ptr [0x11bc000], 0x484c3231",
+    "0x11b7cd4 .healai mov dword ptr [0x11bc000], 0x484c3231",
+    "0x11b7cde .healai mov dword ptr [0x11bc004], 1",
+    "0x11b7ce8 .healai mov dword ptr [0x11bc008], ebx",
+    "0x11b7cee .healai mov dword ptr [0x11bc00c], 0",
+    "0x11b7cf8 .healai mov dword ptr [0x11bc010], 0",
+    "0x11b7d02 .healai cmp ebx, dword ptr [0x11bc008]",
+    "0x11b7d0a .healai mov eax, dword ptr [0x11bc004]",
+    "0x11b7d10 .healai mov dword ptr [0x11bc004], eax",
+    "0x11b7d15 .healai cmp dword ptr [0x11bc004], 0",
+    "0x11b7d1e .healai mov dword ptr [0x11bc004], 1",
+    "0x11b7d28 .healai mov dword ptr [0x11bc00c], 0",
+    "0x11b7d32 .healai mov dword ptr [0x11bc010], 0",
+    "0x11b7d42 .healai mov dword ptr [0x11bc008], ebx",
+    "0x11b7d48 .healai mov eax, dword ptr [0x11bc004]",
+    "0x11b7d78 .healai mov eax, dword ptr [0x11bc004]",
+    "0x11b7d9f .healai cmp ebx, dword ptr [0x11bc00c]",
+    "0x11b7dab .healai cmp esi, dword ptr [0x11bc010]",
+    "0x11b7db3 .healai mov eax, dword ptr [0x11bc00c]",
+    "0x11b7dda .healai mov dword ptr [0x11bc00c], eax",
+    "0x11b7de5 .healai mov dword ptr [0x11bc010], edx",
+    "0x11b7f3d .healai mov eax, 0x11bc004",
+    "0x11b8224 .healai mov ecx, dword ptr [0x11bc004]",
+    "0x11b7d3c .healai lea edi, [esi + 0xbd2ac]"
+   ],
+   "clear_sites": [],
+   "note": ".healst: header 0x11bc000..0x11bc020; per-slot 24B via ENCODED lea edi,[slot+0xbd2ac];*3;shl 3 (0x11b7d3c). Gate 0x11b7af0 span."
+  },
+  {
+   "name": "heal_id",
+   "base": "0x11c30a0",
+   "header_bytes": 0,
+   "stride": "0x10",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "unit_id",
+   "refs": [
+    "0x11b78ed .healai add ecx, 0x11c30a",
+    "0x11b7f42 .healai add ecx, 0x11c30a",
+    "0x11b8213 .healai add edx, 0x11c30a"
+   ],
+   "clear_sites": [],
+   "note": ".healst tail: 16B per unit id via ENCODED (id+0x11c30a)<<4 at 0x11b78ed,0x11b7f42,0x11b8213; no direct operand to 0x11c30a0. Ids gated by 0x11b747a (id-1<=0x4ae). End = .healst end 0x11c7ba0."
+  },
+  {
+   "name": "army_slot",
+   "base": "0x11e3360",
+   "header_bytes": 0,
+   "stride": "0x18",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x11c9219 .armyrot mov eax, dword ptr [edx*8 + 0x11e3360]",
+    "0x11c922c .armyrot cmp dword ptr [edx*8 + 0x11e3364], eax",
+    "0x11c9235 .armyrot cmp dword ptr [edx*8 + 0x11e3368], ecx",
+    "0x11c923e .armyrot mov eax, dword ptr [edx*8 + 0x11e336c]",
+    "0x11c925a .armyrot mov dword ptr [edx*8 + 0x11e3360], eax",
+    "0x11c9265 .armyrot mov dword ptr [edx*8 + 0x11e3364], eax",
+    "0x11c9271 .armyrot mov dword ptr [edx*8 + 0x11e3368], ecx",
+    "0x11c927b .armyrot mov dword ptr [edx*8 + 0x11e3370], esi",
+    "0x11c9284 .armyrot mov dword ptr [edx*8 + 0x11e3374], eax",
+    "0x11c928b .armyrot mov dword ptr [edx*8 + 0x11e336c], esi",
+    "0x11c9292 .armyrot cmp esi, dword ptr [edx*8 + 0x11e3374]",
+    "0x11c929b .armyrot mov eax, dword ptr [edx*8 + 0x11e3370]",
+    "0x11c92b8 .armyrot mov dword ptr [edx*8 + 0x11e3374], eax"
+   ],
+   "clear_sites": [],
+   "note": ".armyst: header 0x11d4000 (gen 0x11d4004, widely read incl. atkfix/airfix/a16code), per-owner 8x0x1e68 at 0x11d4020 (not per-unit), then per-slot 24B at 0x11e3360 ([slot*3*8]). Only the per-slot tail needs growth."
+  },
+  {
+   "name": "cp_a",
+   "base": "0x1200010",
+   "header_bytes": 16,
+   "stride": "0x1c",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x108d8e8 .rsrc and byte ptr [0x1201d1d], bl",
+    "0x11f5ad6 .cpcomba cmp dword ptr [0x1200000], 0x43503332",
+    "0x11f5ae2 .cpcomba mov dword ptr [0x1200000], 0x43503332",
+    "0x11f5aec .cpcomba mov dword ptr [0x1200004], 1",
+    "0x11f5af6 .cpcomba mov dword ptr [0x1200008], ecx",
+    "0x11f5afc .cpcomba cmp ecx, dword ptr [0x1200008]",
+    "0x11f5b04 .cpcomba mov eax, dword ptr [0x1200004]",
+    "0x11f5b0a .cpcomba mov dword ptr [0x1200004], eax",
+    "0x11f5b0f .cpcomba cmp dword ptr [0x1200004], 0",
+    "0x11f5b18 .cpcomba mov dword ptr [0x1200004], 1",
+    "0x11f5b22 .cpcomba mov dword ptr [0x1200008], ecx",
+    "0x11f5ced .cpcomba lea esi, [eax*4 + 0x1200010]",
+    "0x11f5d09 .cpcomba cmp eax, dword ptr [0x1200004]",
+    "0x11f5d2d .cpcomba mov eax, dword ptr [0x1200004]",
+    "0x11f5dfb .cpcomba mov eax, dword ptr [edi*4 + 0x1200024]",
+    "0x11f5e59 .cpcomba mov eax, dword ptr [edi*4 + 0x1200010]",
+    "0x11f5e60 .cpcomba cmp eax, dword ptr [0x1200004]",
+    "0x11f5e72 .cpcomba cmp dword ptr [edi*4 + 0x1200014], eax",
+    "0x11f5e92 .cpcomba cmp dword ptr [edi*4 + 0x1200018], eax",
+    "0x11f5e9f .cpcomba cmp ecx, dword ptr [edi*4 + 0x120001c]",
+    "0x11f5ea8 .cpcomba mov eax, dword ptr [edi*4 + 0x120001c]",
+    "0x11f699a .cpcomba cmp eax, dword ptr [0x1200004]",
+    "0x11f69cd .cpcomba mov eax, dword ptr [0x1200004]",
+    "0x1273ba8 .airfix cmp dword ptr [0x1200000], 0x43503332",
+    "0x1273bb4 .airfix mov eax, dword ptr [edx*4 + 0x1200010]",
+    "0x1273bbb .airfix cmp eax, dword ptr [0x1200004]",
+    "0x1273bc9 .airfix cmp dword ptr [edx*4 + 0x1200014], eax",
+    "0x1273bd2 .airfix cmp dword ptr [edx*4 + 0x1200018], edi",
+    "0x1273bdf .airfix cmp ebp, dword ptr [edx*4 + 0x120001c]",
+    "0x1273be8 .airfix mov eax, dword ptr [edx*4 + 0x120001c]",
+    "0x1273bf8 .airfix cmp dword ptr [edx*4 + 0x1200024], ebx",
+    "0x1273e88 .airfix mov dword ptr [eax*4 + 0x1200024], 0",
+    "0x19b23b8 .a16code mov edx, dword ptr [0x1200004]",
+    "0x19b23e8 .a16code mov ecx, dword ptr [0x1200004]",
+    "0x19b26ab .a16code mov eax, dword ptr [0x1200000]",
+    "0x19b26b7 .a16code mov dword ptr [0x1200000], 0x43503332",
+    "0x19b26c1 .a16code mov dword ptr [0x1200004], 1",
+    "0x19b26cb .a16code mov dword ptr [0x1200008], ecx",
+    "0x19b26d1 .a16code mov eax, dword ptr [0x1200008]",
+    "0x19b26da .a16code inc dword ptr [0x1200004]",
+    "0x19b26e0 .a16code mov eax, dword ptr [0x1200004]",
+    "0x19b26e9 .a16code mov dword ptr [0x1200004], 1",
+    "0x19b26f3 .a16code mov dword ptr [0x1200008], ecx",
+    "0x19b8330 .a16code mov dword ptr [ecx + eax + 0x1200024], 0",
+    "0x19ba3b8 .a16code mov edx, dword ptr [0x1200004]",
+    "0x19ba3e8 .a16code mov ecx, dword ptr [0x1200004]",
+    "0x19ba6a2 .a16code mov eax, dword ptr [0x1200000]",
+    "0x19ba6ae .a16code mov dword ptr [0x1200000], 0x43503332",
+    "0x19ba6b8 .a16code mov dword ptr [0x1200004], 1",
+    "0x19ba6c2 .a16code mov dword ptr [0x1200008], ecx",
+    "0x19ba6c8 .a16code mov eax, dword ptr [0x1200008]",
+    "0x19ba6d1 .a16code inc dword ptr [0x1200004]",
+    "0x19ba6d7 .a16code mov eax, dword ptr [0x1200004]",
+    "0x19ba6e0 .a16code mov dword ptr [0x1200004], 1",
+    "0x19ba6ea .a16code mov dword ptr [0x1200008], ecx",
+    "0x19deabf .a16code mov eax, dword ptr [0x1200000]",
+    "0x19dead6 .a16code mov ecx, dword ptr [eax + 0x1200010]",
+    "0x19deadc .a16code mov edx, dword ptr [0x1200004]",
+    "0x19deae6 .a16code mov ecx, dword ptr [eax + 0x1200014]",
+    "0x19deaf6 .a16code mov ecx, dword ptr [eax + 0x1200018]",
+    "0x19deb17 .a16code mov ecx, dword ptr [eax + 0x120001c]",
+    "0x19deb25 .a16code mov ecx, dword ptr [eax + 0x120001c]",
+    "0x19deb41 .a16code mov eax, dword ptr [eax + 0x1200024]",
+    "0x19dee98 .a16code mov dword ptr [ebx + eax + 0x1200024], 0"
+   ],
+   "clear_sites": [],
+   "note": ".cpstate: header 0x1200000..0x1200010; per-slot 28B (slot*7*4). Refs also in .airfix (0x1273bb4.., 0x1273e88) and .a16code (0x19b8330,0x19dead6.., 0x19dee98)."
+  },
+  {
+   "name": "cp_b",
+   "base": "0x1208350",
+   "header_bytes": 0,
+   "stride": "0x14",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x11f6993 .cpcomba mov eax, dword ptr [ebx*4 + 0x1208350]",
+    "0x11f69a8 .cpcomba cmp dword ptr [ebx*4 + 0x1208354], eax",
+    "0x11f69b1 .cpcomba cmp dword ptr [ebx*4 + 0x1208358], edx",
+    "0x11f69ba .cpcomba mov eax, dword ptr [ebx*4 + 0x1208360]",
+    "0x11f69d2 .cpcomba mov dword ptr [ebx*4 + 0x1208350], eax",
+    "0x11f69df .cpcomba mov dword ptr [ebx*4 + 0x1208354], eax",
+    "0x11f69e6 .cpcomba mov dword ptr [ebx*4 + 0x1208358], edx",
+    "0x11f69ed .cpcomba mov dword ptr [ebx*4 + 0x120835c], 0",
+    "0x11f69f8 .cpcomba mov dword ptr [ebx*4 + 0x1208360], ebp",
+    "0x11f69ff .cpcomba cmp ebp, dword ptr [ebx*4 + 0x120835c]",
+    "0x11f6a0f .cpcomba mov dword ptr [ebx*4 + 0x120835c], eax",
+    "0x11f6a88 .cpcomba mov dword ptr [ebx*4 + 0x120835c], eax",
+    "0x19b2005 .a16code mov esi, 0x1208350",
+    "0x19b2395 .a16code lea edx, [eax*4 + 0x1208350]",
+    "0x19ba005 .a16code mov esi, 0x1208350",
+    "0x19ba395 .a16code lea edx, [eax*4 + 0x1208350]"
+   ],
+   "clear_sites": [],
+   "note": ".cpstate second per-slot array 20B ([slot*5*4]); end 0x120e110 = section end. a16code 0x19b2005/0x19ba005 mov esi,base and 0x19b2395 lea."
+  },
+  {
+   "name": "bs_slot",
+   "base": "0x1230458",
+   "header_bytes": 0,
+   "stride": "0x28",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x12223d4 .bstart cmp edx, 0x123045c",
+    "0x1222835 .bstart mov dword ptr [esi*8 + 0x1230458], 0",
+    "0x12228fd .bstart mov eax, dword ptr [esi*8 + 0x1230458]",
+    "0x1222929 .bstart cmp dword ptr [esi*8 + 0x123045c], eax",
+    "0x1222936 .bstart cmp dword ptr [esi*8 + 0x1230460], edx",
+    "0x1222947 .bstart cmp dword ptr [esi*8 + 0x123047c], eax",
+    "0x1222958 .bstart cmp dword ptr [esi*8 + 0x1230464], eax",
+    "0x1222965 .bstart cmp ebx, dword ptr [esi*8 + 0x1230468]",
+    "0x1222972 .bstart mov eax, dword ptr [esi*8 + 0x1230468]",
+    "0x1222986 .bstart cmp dword ptr [esi*8 + 0x1230468], ebx",
+    "0x1222997 .bstart mov dword ptr [esi*8 + 0x1230468], ebx",
+    "0x122299e .bstart cmp eax, dword ptr [esi*8 + 0x1230474]",
+    "0x12229a7 .bstart mov dword ptr [esi*8 + 0x1230474], eax",
+    "0x12229ae .bstart mov dword ptr [esi*8 + 0x123046c], ebx",
+    "0x12229b5 .bstart mov dword ptr [esi*8 + 0x1230470], 0",
+    "0x12229c5 .bstart mov eax, dword ptr [esi*8 + 0x123046c]",
+    "0x12229e1 .bstart cmp ebx, dword ptr [esi*8 + 0x1230470]",
+    "0x1222aa3 .bstart cmp dword ptr [esi*8 + 0x1230478], 2",
+    "0x1222b07 .bstart mov eax, dword ptr [esi*8 + 0x1230478]",
+    "0x1222b0f .bstart mov dword ptr [esi*8 + 0x1230478], eax",
+    "0x1222b1c .bstart mov dword ptr [esi*8 + 0x1230470], eax",
+    "0x1222b43 .bstart mov eax, dword ptr [esi*8 + 0x123046c]",
+    "0x1222bba .bstart mov dword ptr [esi*8 + 0x1230458], 0",
+    "0x1222be7 .bstart mov dword ptr [esi*8 + 0x1230458], eax",
+    "0x1222bf2 .bstart mov dword ptr [esi*8 + 0x123045c], eax",
+    "0x1222bfd .bstart mov dword ptr [esi*8 + 0x1230460], edx",
+    "0x1222c04 .bstart mov dword ptr [esi*8 + 0x123047c], eax",
+    "0x1222c0f .bstart mov dword ptr [esi*8 + 0x1230464], eax",
+    "0x1222c1a .bstart mov dword ptr [esi*8 + 0x1230468], ebx",
+    "0x1222c21 .bstart mov dword ptr [esi*8 + 0x123046c], ebx",
+    "0x1222c28 .bstart mov dword ptr [esi*8 + 0x1230470], 0",
+    "0x1222c33 .bstart mov dword ptr [esi*8 + 0x1230474], eax",
+    "0x1222c3a .bstart mov dword ptr [esi*8 + 0x1230478], 0"
+   ],
+   "clear_sites": [],
+   "note": ".bsstate: header 0x1230000..0x1230018 + per-owner 8x0x88 (0x1230018..0x1230458, clear loop end 0x123045c) stay; per-slot 40B [slot*5*8+0x1230458] gated by 0x1222801."
+  },
+  {
+   "name": "farm_slot",
+   "base": "0x1250068",
+   "header_bytes": 0,
+   "stride": "0x10",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x123e1a7 .farmer cmp eax, 0x125006c",
+    "0x123e1ae .farmer mov eax, 0x1250068",
+    "0x123e1c9 .farmer cmp eax, 0x1254b68",
+    "0x123e931 .farmer add edx, 0x1250068"
+   ],
+   "clear_sites": [
+    {
+     "va": "0x123e1ae",
+     "dwords": "0x12c0"
+    }
+   ],
+   "note": ".farmst: header 0x1250000..0x1250008 + per-owner 8x12B (0x1250008..0x1250068); per-slot 16B (slot<<4) at 0x123e92e. Clear loop 0x123e1ae..0x123e1c9 end sentinel 0x1254b68 (1 dword per 16B entry). Slot NOT gated <1200 (only 0x11c85c0 exist check)."
+  },
+  {
+   "name": "idl_slot",
+   "base": "0x1158010",
+   "header_bytes": 16,
+   "stride": "0x8",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x1157035 .idle cmp dword ptr [0x1158000], 1",
+    "0x115703e .idle cmp eax, dword ptr [0x1158004]",
+    "0x1157046 .idle cmp edx, dword ptr [0x1158008]",
+    "0x1157052 .idle mov edi, 0x1158010",
+    "0x115705e .idle mov dword ptr [0x1158000], 1",
+    "0x115706b .idle mov dword ptr [0x1158004], eax",
+    "0x1157073 .idle mov dword ptr [0x1158008], edx",
+    "0x1157087 .idle mov ecx, 0x1158010",
+    "0x1157261 .idle mov dword ptr [0x1158000], 0"
+   ],
+   "clear_sites": [
+    {
+     "va": "0x1157057",
+     "dwords": "0x960"
+    }
+   ],
+   "note": ".idldata: header 0x1158000..0x1158010; 8B per slot walked with ecx+=8 in loop bounded by 0x1157150. memset 0x960 dwords (body only) -> 4093*2=0x1ffa."
+  },
+  {
+   "name": "rsidle_slot",
+   "base": "0x1171010",
+   "header_bytes": 16,
+   "stride": "0x10",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x115790b .idle cmp ebp, dword ptr [0x1171000]",
+    "0x1157919 .idle mov edi, 0x1171000",
+    "0x1157925 .idle mov dword ptr [0x1171000], ebp",
+    "0x1157950 .idle add eax, 0x1171010",
+    "0x1157c25 .idle add eax, 0x1171010"
+   ],
+   "clear_sites": [
+    {
+     "va": "0x115791e",
+     "dwords": "0x12c4"
+    }
+   ],
+   "note": ".rsidle: tick header 0x1171000; 16B per slot. memset 0x12c4 dwords covers header+body -> (0x10+4093*16)/4=0x3ff8."
+  },
+  {
+   "name": "kill_log",
+   "base": "0x115c000",
+   "header_bytes": 0,
+   "stride": "0x20",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x115b046 .kills add eax, 0x115c000",
+    "0x115b25c .kills lea edi, [eax + 0x115c000]",
+    "0x115b285 .kills mov edi, 0x115c000",
+    "0x115b3f2 .kills mov esi, 0x115c000",
+    "0x115b422 .kills push 0x115c000",
+    "0x115b4bd .kills mov edi, 0x115c000",
+    "0x115b3f2 .kills mov esi, 0x115c000",
+    "0x115b422 .kills push 0x115c000",
+    "0x115b4c2 .kills mov esi, 0x1166600"
+   ],
+   "clear_sites": [
+    {
+     "va": "0x115b28a",
+     "dwords": "0x2980"
+    },
+    {
+     "va": "0x115b262",
+     "dwords": "0x8"
+    }
+   ],
+   "note": ".killdat: 32B per slot (slot<<5). Followed by 256x16B portrait table 0x1165600 (not per-unit) and misc 0x1170c00. Save writes 0xa600 bytes from 0x115c000 (0x115b3eb..0x115b422), load reads 0xa600 into staging 0x1166600 then FNV check and copies 0x2980 dwords (0x115b4bd..0x115b4cc); clear 0x2980 dwords covers log+portrait table. Growth changes save format and staging size."
+  },
+  {
+   "name": "mv_state",
+   "base": "0x1182014",
+   "header_bytes": 20,
+   "stride": "0x28",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x1181448 .mvcode cmp dword ptr [0x1182000], 0x4d4f5631",
+    "0x1181454 .mvcode mov dword ptr [0x1182000], 0x4d4f5631",
+    "0x118145e .mvcode mov dword ptr [0x1182004], 1",
+    "0x1181468 .mvcode mov dword ptr [0x1182008], edi",
+    "0x118146e .mvcode mov dword ptr [0x118200c], edx",
+    "0x1181474 .mvcode mov dword ptr [0x1182010], edx",
+    "0x118147a .mvcode cmp edi, dword ptr [0x1182008]",
+    "0x1181482 .mvcode mov eax, dword ptr [0x1182004]",
+    "0x1181488 .mvcode mov dword ptr [0x1182004], eax",
+    "0x118148d .mvcode cmp dword ptr [0x1182004], 0",
+    "0x1181496 .mvcode mov dword ptr [0x1182004], 1",
+    "0x11814a0 .mvcode mov dword ptr [0x118200c], 0",
+    "0x11814ac .mvcode mov dword ptr [0x1182008], edi",
+    "0x11814bf .mvcode mov dword ptr [esi*8 + 0x1182014], eax",
+    "0x118151d .mvcode mov eax, dword ptr [esi*8 + 0x1182014]",
+    "0x1181528 .mvcode cmp eax, dword ptr [0x1182004]",
+    "0x1181538 .mvcode cmp dword ptr [esi*8 + 0x1182018], eax",
+    "0x1181545 .mvcode cmp dword ptr [esi*8 + 0x118201c], edx",
+    "0x1181556 .mvcode cmp dword ptr [esi*8 + 0x1182028], eax",
+    "0x1181563 .mvcode cmp dword ptr [esi*8 + 0x1182020], ecx",
+    "0x1181574 .mvcode cmp dword ptr [esi*8 + 0x1182024], eax",
+    "0x1181581 .mvcode mov eax, dword ptr [esi*8 + 0x1182034]",
+    "0x1181595 .mvcode cmp dword ptr [esi*8 + 0x1182034], edi",
+    "0x11815a2 .mvcode mov dword ptr [esi*8 + 0x1182034], edi",
+    "0x11815a9 .mvcode cmp dword ptr [esi*8 + 0x1182038], 3",
+    "0x11815b7 .mvcode mov eax, dword ptr [esi*8 + 0x118202c]",
+    "0x11815d3 .mvcode cmp dword ptr [esi*8 + 0x1182038], 0",
+    "0x11815dd .mvcode mov eax, dword ptr [esi*8 + 0x1182030]",
+    "0x11815f4 .mvcode cmp edi, dword ptr [0x118200c]",
+    "0x118161b .mvcode mov eax, dword ptr [esi*8 + 0x1182038]",
+    "0x1181623 .mvcode mov dword ptr [esi*8 + 0x1182038], eax",
+    "0x118162d .mvcode mov dword ptr [esi*8 + 0x1182030], edi",
+    "0x1181634 .mvcode mov dword ptr [0x118200c], eax",
+    "0x1181639 .mvcode mov eax, dword ptr [0x1182010]",
+    "0x1181642 .mvcode mov dword ptr [0x1182010], eax",
+    "0x1181655 .mvcode mov eax, dword ptr [0x1182004]",
+    "0x118165a .mvcode mov dword ptr [esi*8 + 0x1182014], eax",
+    "0x1181665 .mvcode mov dword ptr [esi*8 + 0x1182018], eax",
+    "0x1181670 .mvcode mov dword ptr [esi*8 + 0x118201c], edx",
+    "0x1181677 .mvcode mov dword ptr [esi*8 + 0x1182020], ecx",
+    "0x118167e .mvcode mov dword ptr [esi*8 + 0x1182024], eax",
+    "0x1181689 .mvcode mov dword ptr [esi*8 + 0x1182028], eax",
+    "0x1181690 .mvcode mov dword ptr [esi*8 + 0x118202c], edi",
+    "0x1181697 .mvcode mov dword ptr [esi*8 + 0x1182030], edi",
+    "0x118169e .mvcode mov dword ptr [esi*8 + 0x1182034], edi",
+    "0x11816a5 .mvcode mov dword ptr [esi*8 + 0x1182038], 0"
+   ],
+   "clear_sites": [],
+   "note": ".mvstate: header 0x1182000..0x1182014; 40B per slot [slot*5*8+0x1182014], gate 0x1181421 span. No bulk clear."
+  },
+  {
+   "name": "we_cache",
+   "base": "0x114c000",
+   "header_bytes": 0,
+   "stride": "0x10",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "unit_id",
+   "refs": [
+    "0x1149016 .wefix add edi, 0x114c000"
+   ],
+   "clear_sites": [],
+   "note": ".wecache: 16B per unit id via helper 0x1149000 (id<1200 gate 0x1149007; returns 0 otherwise). Only operand is add edi,0x114c000."
+  },
+  {
+   "name": "psn_cache",
+   "base": "0x110c000",
+   "header_bytes": 0,
+   "stride": "0x10",
+   "count": 1200,
+   "count_word_va": null,
+   "index_kind": "slot",
+   "refs": [
+    "0x1090256 .psncode add eax, 0x110c000",
+    "0x19a972b .a16code mov eax, dword ptr [edx + 0x110c000]",
+    "0x19a973b .a16code mov eax, dword ptr [edx + 0x110c004]",
+    "0x11a7d26 .skcode add ecx, 0x110c00",
+    "0x1090db1 .psncode mov edi, 0x1100000",
+    "0x1090db8 .psncode mov ecx, 0x5800",
+    "0x109107b .psncode mov dword ptr [0x112c008], 0x16000",
+    "0x10910ae .psncode push 0x16000",
+    "0x109114b .psncode mov ecx, 0x5800"
+   ],
+   "clear_sites": [
+    {
+     "va": "0x1090db8",
+     "dwords": "0x5800"
+    }
+   ],
+   "note": ".psndata (writable data, not BSS): per-slot 16B portrait cache inside the saved PSN2 blob 0x1100000..0x1116000 (save size 0x16000, clear 0x5800 dwords). Cannot grow in place (0x1112000 used). skcode 0x11a7d26 uses ENCODED base (slot+0x110c00)<<4; a16code 0x19a972b/0x19a973b read it."
+  },
+  {
+   "name": "enc16_list",
+   "base": "0x1141000",
+   "header_bytes": 2056,
+   "stride": "0x4",
+   "count": 1200,
+   "count_word_va": "0x1140808",
+   "index_kind": "list_position",
+   "refs": [
+    "0x113443f .grp60 mov dword ptr [0x1140800], 0xffffffff",
+    "0x1134449 .grp60 mov dword ptr [0x1140804], 0xffffffff",
+    "0x1134453 .grp60 mov dword ptr [0x1140808], 0",
+    "0x113445d .grp60 mov edi, 0x1141000",
+    "0x113466b .grp60 mov dword ptr [0x1140800], 0xffffffff",
+    "0x1134675 .grp60 mov dword ptr [0x1140804], 0xffffffff",
+    "0x113467f .grp60 mov dword ptr [0x1140808], eax",
+    "0x1134684 .grp60 mov edi, 0x1141000",
+    "0x113d1a7 .enc16 cmp eax, dword ptr [0x1140800]",
+    "0x113d1b3 .enc16 mov dword ptr [0x1140800], eax",
+    "0x113d1b8 .enc16 mov dword ptr [0x1140808], 0",
+    "0x113d1cb .enc16 cmp eax, dword ptr [0x1140804]",
+    "0x113d1d3 .enc16 mov dword ptr [0x1140804], eax",
+    "0x113d22a .enc16 mov eax, dword ptr [0x1140808]",
+    "0x113d22f .enc16 mov dword ptr [eax*4 + 0x1141000], esi",
+    "0x113d236 .enc16 inc dword ptr [0x1140808]",
+    "0x113d2e6 .enc16 mov ebx, dword ptr [edi*4 + 0x1141000]",
+    "0x113d512 .enc16 mov dword ptr [0x1140800], 0xffffffff",
+    "0x114435e .enc16 cmp edi, dword ptr [0x1140808]",
+    "0x1144376 .enc16 mov ebx, dword ptr [edi*4 + 0x1141000]",
+    "0x1145a71 .enc16 mov ebx, dword ptr [edi*4 + 0x1141000]",
+    "0x114951b .wefix cmp edi, dword ptr [0x1140808]",
+    "0x1149533 .wefix mov ebx, dword ptr [edi*4 + 0x1141000]"
+   ],
+   "clear_sites": [
+    {
+     "va": "0x1134462",
+     "dwords": "0x4b0"
+    },
+    {
+     "va": "0x1134689",
+     "dwords": "0x4b0"
+    }
+   ],
+   "note": "In writable code section .enc16: header 0x1140800 (tick),0x1140804,0x1140808 (count); list of unit POINTERS of type 0x4c built by 0x113d1a0 (slot loop 0x113d243) without capacity check. Space before .enc16 data at 0x1143000 = 2048 entries; 4092 entries would overrun data/code at 0x1143000/0x1144000."
+  }
+ ],
+ "hazards": [
+  {
+   "va": "0x11908a0",
+   "what": "hr_xy_list append [ebp*4+0x1193020] has no capacity check; count only bounded by exist-loop end sentinel 0x11908c0",
+   "why": "Moving 0x899a28 sentinel to 4093-slot exist end lets >1200 entries overwrite hr_unit unless list grows."
+  },
+  {
+   "va": "0x1191326",
+   "what": "same unchecked hr_xy_list append (second builder, sentinel 0x1191351)",
+   "why": "Same as 0x11908a0."
+  },
+  {
+   "va": "0x19b4bfa",
+   "what": "a16code hr_xy_list builder (pool-end sentinel 0x8926b4 at 0x19b4c1f) also unchecked",
+   "why": "Other agent section; listed because array is in .hrstate."
+  },
+  {
+   "va": "0x113d22f",
+   "what": "enc16_list append without capacity check; bound only by slot loop 0x113d243",
+   "why": "Raising loop to 4093 without moving list overruns .enc16 data/code beyond 0x1143000."
+  },
+  {
+   "va": "0x123e92e",
+   "what": "farm_slot indexed by slot=(ptr-pool)/0x758 with no <1200 gate (validator 0x11c85c0 only checks exist/hp)",
+   "why": "Any unit in slot >=1200 writes past .farmst end (0x1254b68); farm_slot must grow."
+  },
+  {
+   "va": "0x11c85c0",
+   "what": "armyrot validator derives slot from pointer without span check, used as sole gate by farmer/adaptxp callers",
+   "why": "Fine for exist (relocated) but provides no 1200 bound for module arrays."
+  },
+  {
+   "va": "0x11a79e7",
+   "what": "sk_unit base encoded as lea [slot+0xbc756] (base/0x18)",
+   "why": "Mechanical relocation will not see it; must be rewritten to new_base/0x18 (base must stay 0x18-aligned)."
+  },
+  {
+   "va": "0x11b7d3c",
+   "what": "heal_slot base encoded as lea [slot+0xbd2ac] (base/0x18)",
+   "why": "Must be rewritten if heal_slot moves."
+  },
+  {
+   "va": "0x11b78ed",
+   "what": "heal_id base encoded (id+0x11c30a)<<4 at 0x11b78ed/0x11b7f42/0x11b8213",
+   "why": "Must be rewritten if heal_id moves; base must stay 16-aligned."
+  },
+  {
+   "va": "0x11a7d26",
+   "what": "psn_cache indexed via encoded (slot+0x110c00)<<4 from unit ebx without visible <1200 gate in function",
+   "why": "Slot >=1200 reads past cache into other .psndata (read-only); encoded base must be rewritten when cache relocates."
+  },
+  {
+   "va": "0x115b3eb",
+   "what": "kill_log saved/loaded as fixed 0xa600-byte blob (with 0x1165600 portrait table) via staging 0x1166600",
+   "why": "Growing kill_log needs save format/staging/size changes (0xa600, 0x2980) or a sidecar."
+  },
+  {
+   "va": "0x10910ae",
+   "what": "psn_cache lives inside fixed 0x16000-byte PSN2 save blob 0x1100000",
+   "why": "Growth requires relocation + separate save sidecar (as 2608 port did)."
+  }
+ ],
+ "unsure": [
+  {
+   "va": "0x11b43b3",
+   "question": "All roster-count bounds (PlayerStruct +0x200a vs 1200) kept: assumes PlayerStruct roster (+0xd4a, 1200x4B) is not relocated and owner cap stays 1008. Confirm."
+  },
+  {
+   "va": "0x113420a",
+   "question": "Selection buffer 0x1604004 (.f2data, 1200 dwords of unit ids, ends 0x16052c4) kept at 1200: OK only if selection count stays capped (ESL cap 100). Owner of .f2data should confirm."
+  },
+  {
+   "va": "0x11a7d0a",
+   "question": "Origin of unit ebx used for psn_cache read at 0x11a7d26 not fully traced (set via 0x11a7bef [esp+0x24]); may be id-gated earlier."
+  },
+  {
+   "va": "0x11b78e0",
+   "question": "heal_id helper 0x11b78e0 and hr_unit helper 0x11a7550 have no direct code xref (no call/imm); possibly dead or indirect. Encoded bases still need rewriting."
+  },
+  {
+   "va": "0x1190ee0",
+   "question": "hrcode/skcode entry points jmp to .a16code which jumps back into hrcode bodies (0x1190ee8, 0x11916b6, 0x11a7415, 0x11a7776); a16code may hold its own 1200 bounds for these arrays (other agent)."
+  },
+  {
+   "va": "0x19bf661",
+   "question": "a16code iterates hr_unit in parallel with pool (mov eax,0x1194338 = hr_unit+0x58, edi=0x66c3f0); loop bound lives in a16code (other agent) and must match grown hr_unit."
+  },
+  {
+   "va": "0x11d4004",
+   "question": "army_slot growth only moves per-slot tail 0x11e3360; header/per-owner 0x11d4000..0x11e3360 stays. Confirm no a16code/atkfix code indexes the tail by slot (only header refs seen)."
+  },
+  {
+   "va": "0x1153a3d",
+   "question": "cstxt/csright read byte [unit-0x72] after add edx,0x66b790 (0x1153a3d,0x1154459): odd negative field; compares owner. Mechanical pool relocation should still cover it."
+  }
+ ]
+}

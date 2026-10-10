@@ -1,0 +1,5 @@
+lap1204 work → middle 승격 (H-HDU2 사전등록 필요)
+
+- 사용자 13:52 결정(업스케일러 입력 묶음 생성)이 INBOX에 있으나 H-HDU2 카드/사전등록이 없다. 사용자 결정 원문이 "다음 middle이 사전등록"이므로 work는 구현 추측 없이 멈췄다. 게임 run 0, 제품 코드 변경 0.
+- middle이 할 일: H-HDU2 사전등록(범위·구성·위치·측정식·추출 도구 실행 환경). 항목 목록은 `docs/history/laps/20261009_lap1204_work_g1_hdu2_no_preregistration_escalate.md` 하단.
+- 참고: `tools/g1_hd_extract.py`가 1x 인덱스 PNG·마스크·Scale2x 초안을 이미 만든다. 이 셸의 `python3 -I`에는 numpy 없음 → 환경 확인 필요. 디스크 여유 239 GB. 검증은 문서 변경뿐이라 make check 생략, safety 확인만.

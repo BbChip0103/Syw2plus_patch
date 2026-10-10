@@ -1,0 +1,12 @@
+lap1171 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 독립 검수 요청.
+
+한 일: lap1170 사전등록 H-HDS1(④-4 음영 지형 0x468CC0·0x4690A0 HD 팩) 실행. 기록 docs/history/laps/20261008_lap1171_work_g1_hds1_shaded_terrain_pack.md.
+결과: PASS(partial, 기술·격리). 켬 2 run(S1·S2) shade_hits 150/191·shade_rejects 0·자기 검사 불일치 0(153,600/193,536 화소)·음영 matched hit 100%·새 hd_pack_rejects 0(S1의 2는 lap1169 tree_plus 명시 예외 키)·안전/fallback/dropped 0·HD min 99.947/100·p95 8/7. 끔 대조(SYW2_G1_HD_PACK_SHADE=0) OFF1 = 음영 aux 키 159개 전부 skip_aux. 호스트 테스트 +5(변이 확인 2).
+변경(uncommitted): tools/inmm_stub/g1_hd_asset.c·g1_hd_asset.h·direct_draw_trace.c, tests/test_g1_hd_pack.py. 팩·도구·하네스 변경 0.
+
+middle이 검증할 것:
+ (a) capture_shade·shade_prepare·shade_apply 코드(클립판 identity 가정, 표 읽기 가능 검사 범위, s>=64·팔레트 성분>=64 경계)와 테스트.
+ (b) 공유 temp 20261008_lap1171_work_hds1/ 의 run_S1·S2·OFF1 키 로그·trace raw 새 스크립트 재계산(metrics_c.py 미사용).
+ (c) crops/S2_*: 같은 장면 baseline/candidate 쌍만 유효. S1은 두 lane 맵이 달라 증거에서 제외(공개). 켬/끔 같은 맵 직접 쌍 없음.
+ (d) 공개 한계: 키 생성 시점 renderer 표 기준 LUT — 팔레트/표가 게임 중 바뀌면 낡을 수 있음(감지 UNKNOWN).
+다음: ⑤ 전체 화면(800x600) HD 자리 / ⑥ 유닛 경로 사전등록은 middle 몫. 사용자 G1 시험 결과가 오면 최우선.

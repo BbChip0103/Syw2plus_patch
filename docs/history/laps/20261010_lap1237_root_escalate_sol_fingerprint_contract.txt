@@ -1,0 +1,19 @@
+lap=1237
+role=middle
+status=confirmed_fingerprint_contract_conflict_work_handoff
+
+CURRENT USER RULE: when implementation evidence/contracts materially conflict, preserve evidence, create ESCALATE_SOL and end. This session diagnosed the conflict and did not repair game, harness or test code. No milestone completion, fresh game, delivery or automatic worker launch.
+
+Read docs/history/laps/20261010_lap1237_middle_g1_queue_reconciliation_fingerprint_handoff.md and current STATUS. Audit: ../temp/Syw2plus_patch/20261010_lap1237_middle_review/queue-delivery-stale-audit.json, SHA256 9fed5fdb75745c1bfbe94e560c89ad7a9d729fa7625f2bb2c37cd0a04307a9ee.
+
+CONFIRMED ROOT DECISION: latest INBOX root17:57 records partial technical acceptance and 2613 trial delivery. Actual delivered/staged DLL+two BAT SHA all MATCH, txt0. STATUS's earlier delivery-boundary HOLD queue was obsolete and is now reconciled. Counter is1237 (read only); the old handoff's lap1235 duplicate counter problem is not current. Do not reopen delivery or infer G1 user approval.
+
+EXPLAINED CONFLICT: PROMPT says validation fingerprint includes ESCALATE_SOL, but .gitignore:44 ignores it and validation_fingerprint only enumerates git ls-files --cached --others --exclude-standard. Explicit handoff SHA is useful supplementary evidence but does not fulfill the claimed canonical inclusion. Root/upgrade must verify this cause and assign WORK ownership of loop/loop.sh and focused loop regressions. Cover owned ignored handoff content and absent/present transition exactly once, retain approved G2 exclusions; no gate relaxation or deleting the protection claim. Middle performs no implementation.
+
+FRESH CHECKS: doctor tooling/original PASS (optional runtime manifest absent); lint/compileall PASS; typecheck12 PASS; focused243 passed/18.86s. make check SKIP per current user conflict-escalation termination rule, no FULL_TEST request. Old lap1235 full log SHA and2181/9 are confirmed for that old snapshot only. New actor_run1/tests/132 files were not created, deleted, modified or excluded by this session; current full source verification remains pending.
+
+WORK PRODUCT HANDOFF: existing FEASIBLE/authorized stale240 probe uses same2613/save006 options as lap1234 plus --stale-mask 55-90 --stale-mask-state 3. Official2613 EXE818721a5... over2612 data bundle, complete private game/fresh prefix/free display. First locate reproduced masks and actual input timing; only then existing --layer-drift --screen-watch --screen-watch-state 3 and supported --drift-samples with measured coordinates for writer attribution. Historical raw independently confirms ordinal66/seq1412/ts253505832 stale240, building click253505872 (+40ms), next present253505883 stale0; writer/location UNKNOWN. Zero-stale means NOT_REPRODUCED, not fixed. Do not add another planning lap before the registered work probe. Correct traceable harness defects in work then rerun.
+
+NEXT GATE: work repair with meaningful regressions, frozen records/handoff, lint+typecheck then current-source make check with source before/after and explicit handoff SHA. Root assigns repair ownership separately if needed and preserves all source/excluded-file drift evidence. Original/reference/raw/golden/private provenance unchanged. User Windows/DxWnd/combat/24k/144k/multiplayer/G1 judgement remain unverified.
+
+Previous ESCALATE preserved byte-exact at docs/history/laps/20261010_lap1237_preserved_previous_escalate_sol.txt, SHA25662107cc977d71a2686a7e1194df523d82c9d23907b3b7831b5b1d15834d480e8.

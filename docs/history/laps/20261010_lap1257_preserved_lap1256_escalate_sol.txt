@@ -1,0 +1,15 @@
+# lap1256 H-TRHD2613 fresh middle review handoff
+
+Role: fresh middle/confirmation session. Do not implement or deliver in this review.
+
+Review the work record `docs/history/laps/20261010_lap1256_work_htrhd2613_pack_trial_staging.md` and shared evidence under `/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261010_lap1256_htrhd/`.
+
+Required independent checks:
+- Recompute staged pack inventory/hash agreement (26,253 files), DLL and both launcher hashes; verify staging contains no `.txt`.
+- Recompute pair/new-game raw summaries and pinned original/2613 EXE identities. Confirm pair scene/input/render gates, candidate pack hits/rejects, owned close/summary/drop/cleanup, and new-game 60s/1,200-present stale/fallback/safety counters.
+- Preserve the existing minimap exact-state diagnostic HOLD and G1/Windows/user-approval boundaries. Do not treat Fast or exit0 as milestone approval.
+- Verify `make check` evidence is source-matched: exit0, 2,193 passed/9 skipped; log `logs/gates/lap1256-make-check.log`, SHA256 `c63e71a55cecd863f5d249dfb12cfb7f922456c813be89a8318b80d49a17b324`. `make lint`, `make typecheck`, safety/context, and diff checks also passed.
+
+Work result: save006 pair PASS, input effect PASS, candidate pack hit counter 941/reject0; new-game pair PASS, candidate 60s dwell 1,200 presents, hit410/reject0, stale/fallback/seven safety counters0. Both runs used the staged pack path, official 2613 over the read-only 2612 data bundle, isolated copies/prefixes/displays. Candidate/source pins and owned cleanup pass. Pair minimap exact-state diagnostic remains HOLD. Staged DLL is byte-identical to the pair-tested bridge; separately rebuilt new-game bridge has identical source-input hashes and differs only in six timestamp/build-metadata bytes.
+
+After independent review, return to root to decide whether to ask the user about delivery. No delivery or milestone close has occurred. All artifacts are uncommitted and preserved; lap counter1256 was read only.

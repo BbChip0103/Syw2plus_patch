@@ -133,3 +133,197 @@ def test_screen_watch_cache_option_watches_the_terrain_cache_for_the_candidate_l
     assert 'env["SYW2_G1_SCREEN_WATCH_CACHE"] = "1"' in candidate_env
     baseline_env = source[source.index("def _run_lane("):source.index("if candidate:")]
     assert "SYW2_G1_SCREEN_WATCH_CACHE" not in baseline_env
+
+
+def test_screen_watch_state_gate_helpers_default_to_ps3(tmp_path: Path) -> None:
+    """H-PM1 PM1-0: SYW2_G1_SCREEN_WATCH_STATE=23 watches PS23; anything else keeps PS3."""
+    fixture = tmp_path / "screen_watch_state.c"
+    executable = tmp_path / "screen_watch_state"
+    fixture.write_text(
+        r'''#include <assert.h>
+#include "g1_screen_watch.h"
+
+int main(void) {
+    assert(g1_screen_watch_state_parse("23", 2u) == 23u);
+    assert(g1_screen_watch_state_parse("27", 2u) == 27u);
+    assert(g1_screen_watch_state_parse("29", 2u) == 29u);
+    /* H-TM1 TM1-0: the one-digit "9" follows the title-menu PS9 (user-registration popup) */
+    assert(g1_screen_watch_state_parse("9", 1u) == 9u);
+    /* H-SC1 SC1-0: "20" follows the scenario briefing PS20 */
+    assert(g1_screen_watch_state_parse("20", 2u) == 20u);
+    assert(g1_screen_watch_state_parse("200", 3u) == 3u);
+    assert(g1_screen_watch_state_parse("02", 2u) == 3u);
+    assert(g1_screen_watch_state_parse("90", 2u) == 3u);
+    assert(g1_screen_watch_state_parse("09", 2u) == 3u);
+    assert(g1_screen_watch_state_parse("28", 2u) == 3u);
+    assert(g1_screen_watch_state_parse("270", 3u) == 3u);
+    assert(g1_screen_watch_state_parse("3", 1u) == 3u);
+    assert(g1_screen_watch_state_parse("", 0u) == 3u);
+    /* H-OS1 OS1-0: "5" / "7" follow the solo lobby PS5 / connection-method PS7 */
+    assert(g1_screen_watch_state_parse("5", 1u) == 5u);
+    assert(g1_screen_watch_state_parse("7", 1u) == 7u);
+    assert(g1_screen_watch_state_parse("4", 1u) == 3u);
+    assert(g1_screen_watch_state_parse("57", 2u) == 3u);
+    assert(g1_screen_watch_state_parse("05", 2u) == 3u);
+    assert(g1_screen_watch_state_parse("230", 3u) == 3u);
+    assert(g1_screen_watch_state_parse("2", 1u) == 3u);
+    /* PS3 keeps the drift present counter; other states have no drift counter, use the watch's own */
+    assert(g1_screen_watch_present_ordinal(3u, 77ul, 5ul) == 77ul);
+    assert(g1_screen_watch_present_ordinal(20u, 77ul, 5ul) == 5ul);
+    assert(g1_screen_watch_present_ordinal(23u, 77ul, 5ul) == 5ul);
+    assert(g1_screen_watch_present_ordinal(27u, 77ul, 5ul) == 5ul);
+    assert(g1_screen_watch_present_ordinal(29u, 77ul, 5ul) == 5ul);
+    assert(g1_screen_watch_present_ordinal(9u, 77ul, 5ul) == 5ul);
+    assert(g1_screen_watch_present_ordinal(5u, 77ul, 5ul) == 5ul);
+    assert(g1_screen_watch_present_ordinal(7u, 77ul, 5ul) == 5ul);
+    return 0;
+}
+''',
+        encoding="utf-8",
+    )
+    subprocess.run(
+        ["gcc", "-std=c11", "-Wall", "-Wextra", "-Werror", f"-I{STUB}", str(fixture),
+         "-o", str(executable)],
+        check=True,
+    )
+    subprocess.run([str(executable)], check=True)
+
+
+def test_screen_watch_present_hook_uses_the_state_gate() -> None:
+    source = (STUB / "g1_screen_watch.c").read_text(encoding="utf-8")
+    assert '#define G1_SCREEN_WATCH_STATE_ENV "SYW2_G1_SCREEN_WATCH_STATE"' in source
+    present = source[source.index("void g1_screen_watch_on_present("):]
+    present = present[: present.index("\n}\n")]
+    # env absent => g_sw_watch_state stays 3 => the old `!= 3u` early return is unchanged
+    assert "!= 3u) return;" not in present
+    assert "!= g_sw_watch_state) return;" in present
+    assert "g1_screen_watch_present_ordinal(" in present
+    assert "g1_screen_watch_state_parse(" in source[: source.index("void g1_screen_watch_on_present(")]
+
+
+def test_probe_screen_watch_state_option_and_new_game_path_wiring() -> None:
+    source = (ROOT / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    assert '"--screen-watch-state"' in source
+    assert "choices=(3, 5, 7, 9, 20, 23, 27, 29)" in source
+    assert "--screen-watch-state requires --screen-watch" in source
+    assert "screen_watch_state=args.screen_watch_state" in source
+    candidate_env = source[source.index("if candidate:"):source.index("xvfb, display = runtime_env._xvfb")]
+    assert 'env["SYW2_G1_SCREEN_WATCH_STATE"] = str(screen_watch_state)' in candidate_env
+    # the new-game-path branch hands the drift/watch options to the candidate lane only
+    branch = source[source.index("    if args.new_game_path:\n        lanes = {"):]
+    branch = branch[: branch.index("passed = all(")]
+    for needle in ("layer_drift=args.layer_drift if name == \"candidate\" else False",
+                   "screen_watch=args.screen_watch if name == \"candidate\" else False",
+                   "screen_watch_state=args.screen_watch_state",
+                   "screen_watch_cache=args.screen_watch_cache if name == \"candidate\" else False",
+                   "drift_samples=args.drift_samples if name == \"candidate\" else None"):
+        assert needle in branch
+    summary = source[source.index('"schema": "syw2plus.g1-new-game-path.v1"'):]
+    summary = summary[: summary.index("new-game-path-result.json")]
+    assert '"screen_watch"' in summary
+
+
+def test_screen_watch_surface_call_table_names_the_game_side_caller_in_ps23() -> None:
+    """H-PM1 PM1-1b: the DR watch only sees wined3d's memcpy thread; the issuing
+    ddraw Blt/BltFast (caller EIP, rects, surfaces) is tabled per present range."""
+    header = (STUB / "g1_screen_watch.h").read_text(encoding="utf-8")
+    source = (STUB / "g1_screen_watch.c").read_text(encoding="utf-8")
+    trace = (STUB / "direct_draw_trace.c").read_text(encoding="utf-8")
+    assert "g1_screen_watch_on_surface_call(" in header
+    assert '#include "g1_screen_watch.h"' in trace
+    # cheap early-out when the diagnostic is off or the watched state is not PS23
+    call = source[source.index("void g1_screen_watch_on_surface_call("):]
+    call = call[: call.index("\n}\n")]
+    # H-RS1: the table follows any non-PS3 watched state, only while the game is in that state
+    assert "g_sw_state != 2" in call and "g_sw_watch_state == G1_SCREEN_WATCH_STATE_PS3" in call
+    assert "!= g_sw_watch_state" in call
+    assert "SW_PROGRAM_STATE_VA" in call and "SW_CALL_TABLE" in source
+    assert "first_present" in call and "last_present" in call
+    # published with the heartbeat as {"t":"q"} rows
+    summary = source[source.index("static void sw_summary("):source.index("static BOOL sw_buffer_valid(")]
+    assert '\\"t\\":\\"q\\"' in summary and "caller" in summary
+    # both hooks report their caller; the game buffer is not touched
+    blt = trace[trace.rindex("static HRESULT WINAPI hook_blt(LPDIRECTDRAWSURFACE7 self, LPRECT dst,\n"):]
+    blt = blt[: blt.index("\n}\n")]
+    assert "g1_screen_watch_on_surface_call(" in blt and "__builtin_return_address(0)" in blt
+    fast = trace[trace.rindex("static HRESULT WINAPI hook_blt_fast(LPDIRECTDRAWSURFACE7 self, DWORD x, DWORD y,\n"):]
+    fast = fast[: fast.index("present_started_ms = GetTickCount();")]
+    assert "g1_screen_watch_on_surface_call(" in fast
+
+
+def test_probe_title_button_branch_hands_screen_watch_options_to_the_candidate_lane() -> None:
+    """H-TM1 TM1-0: --title-button user can run the PS9 write watch on the candidate lane only."""
+    source = (ROOT / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    branch = source[source.index("    if args.title_button:\n        lanes = {"):]
+    branch = branch[: branch.index("windows = {name:")]
+    for needle in ("layer_drift=args.layer_drift if name == \"candidate\" else False",
+                   "screen_watch=args.screen_watch if name == \"candidate\" else False",
+                   "screen_watch_state=args.screen_watch_state",
+                   "screen_watch_cache=args.screen_watch_cache if name == \"candidate\" else False",
+                   "drift_samples=args.drift_samples if name == \"candidate\" else None"):
+        assert needle in branch
+    summary = source[source.index('"schema": "syw2plus.g1-title-button.v1"'):]
+    summary = summary[: summary.index("title-button-result.json")]
+    assert '"screen_watch"' in summary and '"layer_drift"' in summary
+
+
+def test_probe_title_button_branch_hands_stale_mask_options_to_the_candidate_lane() -> None:
+    """H-SC1 SC1-0: --title-button scenario can dump PS20 stale masks from the candidate lane only."""
+    source = (ROOT / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    branch = source[source.index("    if args.title_button:\n        lanes = {"):]
+    branch = branch[: branch.index("windows = {name:")]
+    assert "stale_mask=args.stale_mask if name == \"candidate\" else None" in branch
+    assert "stale_mask_state=args.stale_mask_state" in branch
+    summary = source[source.index('"schema": "syw2plus.g1-title-button.v1"'):]
+    summary = summary[: summary.index("title-button-result.json")]
+    assert '"stale_mask"' in summary
+
+
+def test_probe_new_game_path_branch_hands_stale_mask_options_to_the_candidate_lane() -> None:
+    """H-PS5W0 W0-0: --new-game-path used to drop --stale-mask, so the lap1210 runs wrote no mask dump."""
+    source = (ROOT / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    branch = source[source.index("    if args.new_game_path:\n        lanes = {"):]
+    branch = branch[: branch.index("passed = all(")]
+    assert "stale_mask=args.stale_mask if name == \"candidate\" else None" in branch
+    assert "stale_mask_state=args.stale_mask_state" in branch
+
+
+def test_screen_watch_call_from_parse_and_gate(tmp_path: Path) -> None:
+    """H-SC1 SC1-2: SYW2_G1_SCREEN_WATCH_CALL_FROM=<present> skips ddraw call-table rows before that watch present."""
+    fixture = tmp_path / "screen_watch_call_from.c"
+    executable = tmp_path / "screen_watch_call_from"
+    fixture.write_text(
+        r'''#include <assert.h>
+#include "g1_screen_watch.h"
+
+int main(void) {
+    assert(g1_screen_watch_call_from_parse("2800", 4ul) == 2800ul);
+    assert(g1_screen_watch_call_from_parse("0", 1ul) == 0ul);
+    assert(g1_screen_watch_call_from_parse("99999", 5ul) == 99999ul);
+    assert(g1_screen_watch_call_from_parse("", 0ul) == 0ul);
+    assert(g1_screen_watch_call_from_parse("123456", 6ul) == 0ul);
+    assert(g1_screen_watch_call_from_parse("28x0", 4ul) == 0ul);
+    assert(g1_screen_watch_call_from_parse("-5", 2ul) == 0ul);
+    return 0;
+}
+''',
+        encoding="utf-8",
+    )
+    subprocess.run(["cc", "-I", str(STUB), str(fixture), "-o", str(executable)], check=True)
+    subprocess.run([str(executable)], check=True)
+    source = (STUB / "g1_screen_watch.c").read_text(encoding="utf-8")
+    assert '#define G1_SCREEN_WATCH_CALL_FROM_ENV "SYW2_G1_SCREEN_WATCH_CALL_FROM"' in source
+    call = source[source.index("void g1_screen_watch_on_surface_call("):]
+    call = call[: call.index("\n}\n")]
+    assert "present < g_sw_call_from" in call
+
+
+def test_probe_screen_watch_call_from_option_wiring() -> None:
+    source = (ROOT / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
+    assert '"--screen-watch-call-from"' in source
+    assert "--screen-watch-call-from requires --screen-watch" in source
+    candidate_env = source[source.index("if candidate:"):source.index("xvfb, display = runtime_env._xvfb")]
+    assert 'env["SYW2_G1_SCREEN_WATCH_CALL_FROM"] = str(screen_watch_call_from)' in candidate_env
+    branch = source[source.index("    if args.title_button:\n        lanes = {"):]
+    branch = branch[: branch.index("windows = {name:")]
+    assert "screen_watch_call_from=args.screen_watch_call_from" in branch

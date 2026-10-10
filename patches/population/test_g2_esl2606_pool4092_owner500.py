@@ -13,8 +13,8 @@ from patches.population.full_tail_relocation_storage_layout_v1 import layout
 
 ROOT = Path(__file__).resolve().parents[2]
 STOCK = ROOT / "Syw2plus" / "syw2plus_original.exe"
-REFERENCE = ROOT.parent / "260921_temp" / "[ESL]Syw2plus 2606_장수7명_전비1600-200-3000.exe"
-FIXED_START_REFERENCE = ROOT.parent / "260921_temp" / (
+REFERENCE = ROOT.parent / "260921_temp" / "archive" / "[ESL]Syw2plus 2606_장수7명_전비1600-200-3000.exe"
+FIXED_START_REFERENCE = ROOT.parent / "260921_temp" / "archive" / (
     "[ESL]Syw2plus 2606_장수7명_전비1600-200-3000_시작자리고정.exe"
 )
 

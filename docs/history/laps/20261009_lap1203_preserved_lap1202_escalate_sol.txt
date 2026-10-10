@@ -1,0 +1,18 @@
+lap1202 work(Sonnet 5.5) -> middle(Opus): H-HDA0 검수 요청 + 마일스톤 경계(사용자 시험판/업스케일러 요청 여부, root 전달) + 디스크 확보(root 대상)
+
+기록: docs/history/laps/20261009_lap1202_work_g1_hda0_full_pack_concurrent_real_game.md
+공유 temp: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261009_lap1202_work_hda0/ (pack_all 합본 팩, pack_all.manifest.sha256, metrics_A1.json, run_A1*, pair_PA*, scripts, merge_log.json, check.json)
+이유: 사전등록(lap1201 §5) H-HDA0 이행 결과 검수 + 이 작업이 HD 그림 경로의 "업스케일러 결과 받을 준비" 경계라서 다음 마일스톤 판단이 필요. 제품 코드 변경 0, 커밋 0.
+
+결과 요약: 현재 도구로 imjin2 팩 재생성(char·tile·fnt 43,622프레임 -> check 위반 0, 확장 이름 657개, 남은 충돌 3 char/bullk*) + 효과(pack_hdb4)·로고 덮어쓰기(같은 경로 다른 바이트 403개, 규칙 = 효과 팩 우선) + 타이틀 계열 3디렉터리 하드링크 = pack_all(29,957 파일).
+충돌 stem 657개 전부 .amb + 확장 이름 파일 존재, 기본 이름 idx8 0개.
+A1 NG5 장기 스크롤(PS3 6,031 present): 안전 7종 0, 자기 검사 불일치 0(blend 6 writer·음영 570,448 px·tinted), rejects 0, ext_hits 137(ext_misses/rejects 0, 마커 stem의 기본 이름 hit 0), p95 6(window 최대 7), cache 33 MB, trace dropped 0, fullscreen hit = present(PS9 70·PS7 161·PS5 724).
+PA save006 pair: PASS·scene_state_equal true, 상태 leaf 200개 중 lap1196 PD 대비 차이 1(v2s_raw FAIL->PASS, 좋은 방향, 원인 미조사).
+후보 판정 PASS(partial, 기술·격리). stand-in 팩이라 사용자에게 보이는 화질 이득 없음.
+
+middle이 이어서 검증할 것:
+1. pack_all manifest(2440260fa3c05757) 재계산, .amb 657개 마커 값/확장 이름 짝, 기본 이름 idx8 0개, 효과 덮어쓰기 403개 규칙(효과 팩 우선)이 타당한지(효과 stem이 기본 팩과 달라도 키 경로 selfcheck가 stand-in과 무관).
+2. 키 로그 재분류(run_A1.keys.jsonl, pair_PA.keys.jsonl): 마커 stem hit 137/67, 기본 이름 hit 0, 0x466D50 32x32 miss 6은 lap1176 이후 모든 run에서 동일한 기존 miss(회귀 아님)인지.
+3. pair_PA vs 기존 pair 200 leaf 대조(차이 1 = v2s_raw 진단).
+4. 마일스톤 경계 판단: 사용자 시험판 재스테이징 / 업스케일러 결과 요청을 root 전달할지. (stand-in 팩만으로는 사용자 화질 이득 없음.)
+5. 디스크: 시작 11 GB -> 끝 6.8 GB(8 GB 미만). root 대상 확보 요청(대량 삭제는 하지 않음, 사용자 승인 사안). 확보 전까지 새 게임 run 시작 금지(game 사본 2.7 GB + prefix).

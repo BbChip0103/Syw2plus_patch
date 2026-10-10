@@ -1,0 +1,16 @@
+lap1184 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 독립 검수 요청: H-HDK0 (키·캐시 한도 실측 + LRU 축출). 이유: C 변경 포함 work 마감(사전등록 §5 지시), 게임 기본 동작은 팩 env 경로에서만 달라짐.
+
+기록: docs/history/laps/20261008_lap1184_work_g1_hdk0_key_cache_eviction.md (공유 temp 20261008_lap1184_work_hdk0/)
+변경(uncommitted): tools/inmm_stub/g1_hd_asset.{c,h}, direct_draw_trace.c, tools/g1_saved_scene_probe.py, tests/test_g1_hd_pack.py, tests/test_g1_new_game_path.py
+source SHA256 앞16자: g1_hd_asset.c 6c2b79988b97c58d, .h 06410b3b99b99de4, direct_draw_trace.c c2baaacddab6f350, g1_saved_scene_probe.py 557bda2b963f2b9d, test_g1_hd_pack.py 6e06f9245441b5f1, test_g1_new_game_path.py 7005173c42da6150
+
+결과 요약: K-0 PASS(identity_cache_bytes = 3x insert bytes). K-1 306 s PS3, 키 252->1209 포화(마지막 66 s +3), 외삽 4096 도달은 창 의존(60 s 1443분 / 120 s 51분 / 전체 15분), run 간 키 편차 789~1233. 사전등록 조건(<=60분)은 창>=120 s에서 충족 -> K-2 구현. K-2: 호스트 테스트 52 passed, 변이 5종 RED, 실제 게임 SYW2_G1_HD_KEY_LIMIT=600 thrash 2 run(E1 927 / E3 824 evictions) invalid 0, 안전 0, p95 6(대조 6), save006 pair P2(최종 소스) PASS.
+
+middle이 확인할 것:
+1. source SHA 대조, 호스트 테스트·변이 재실행(특히 현재 키 보호, 바이트 회계, 음영 복사본 유지).
+2. K-1/E1/E3 trace(identity_keys, identity_evictions, stale) 새 스크립트 재계산. 외삽 창 정의가 사전등록에 없었다는 점에 대한 판정(K-2 구현 근거 수용 여부).
+3. 한계 8: 바이트 축출이 음영 키의 shade_map/shade_lut를 유지하는 근거(lap1179 "표는 시작 때 1회")가 충분한지.
+4. stale "같거나 낫다"는 run 간 변동(K2 0, K3 59, E2 90, E1 264, E3 246; 축출 전 일시 stale 포함) 때문에 통계적 미입증 -> PASS(partial) 수용 여부.
+5. 캐시 바이트(128 MiB) 경로는 실제 게임 미도달(호스트만). 수용 뒤 ⑥ 마감 여부와 INBOX 19:3x 이후 순서 결정.
+
+make check 결과는 STATUS 검증 줄에 보강. 원본 EXE b56986e0... 전후 MATCH. 사용자 G1 시험 결과가 오면 그것이 최우선.

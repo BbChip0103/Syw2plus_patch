@@ -1,0 +1,17 @@
+lap1250 fresh middle — minimap acceptance-scope handoff; G1 remains incomplete
+
+Review record: docs/history/laps/20261010_lap1250_middle_g1_pack2613_review_minimap_scope_handoff.md
+Independent evidence: ../temp/Syw2plus_patch/20261010_lap1250_middle_review/review.json
+SHA256 71cfa51bce41864f3761273a5818be9872b8ef463b6dd366fc37a88a45a557ce
+Historical pair: ../temp/Syw2plus_patch/20261010_lap1248_pack2613_pair/pair-result.json
+SHA256 7e9f4789ad3c9faee598bb9ade608c85e3193ffdca1986ff3977fa9f273cc9c0
+
+Confirmed: registered pair PASS(partial), coherent initial scene, seven semantic inputs, 5tag render, exact native issue cost and completion14->15, owned close/summary. Current probe/test/DLL source identity and raw hashes match. Fresh doctor/focused11 PASS; no fresh game/wholeFast or implementation this lap.
+
+Unresolved: minimap diagnostic exact unit-state parity HOLD. Slot170 pre-click already differs(command1,x147,y99 versus command4,x146,y100); same logical click90,553 reaches four selected units; camera/gate restoration agree. After target slot170 differs(152,91 versus153,89); root cause UNKNOWN. Natural movement/formation timing is a hypothesis, not established attribution. Keep HOLD, never waive it into an exact parity claim; no grounded game-code repair.
+
+Promoted owner: confirm this bounded acceptance scope without repeating the same-source review/fullFast; then route directly to existing G1 actual-play backlog/new user result. lap1249+1250 reach two product-free laps. Do not create another helper/card/review chain or close G1/advance milestone. Windows/DxWnd/user acceptance and prior new-game stale/reject causes stay unverified.
+
+Conditional work ownership: only a newly reproduced actual-play defect from equal pre-click state justifies minimal tools/g1_saved_scene_probe.py + tests/test_g1_saved_scene_probe.py observation repair by work tier. Product C/EXE patch needs concrete defect evidence first; no current implementation authorized by this unexplained difference. No pin/golden/gate relaxation, commit/deploy/delivery/multiplayer expansion.
+
+Prior lap1249 escalation preserved byte-exact in docs/history/laps/20261010_lap1250_preserved_lap1249_escalate_sol.txt. Counter1250 read-only; no owned game process started or pending.

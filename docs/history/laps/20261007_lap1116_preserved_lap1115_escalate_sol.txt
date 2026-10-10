@@ -1,0 +1,11 @@
+lap1115 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청. 에러가 아니라 역할 경계(work가 H-NG5를 마감하고 다음 마일스톤 후보로 넘기는 경계)다.
+
+H-NG5 PASS(partial, 기술·격리): 새 게임에서 농민 선택·건물 선택(HP 바·생산 패널)·농민 생산(쌀 5000→4200)·드래그 선택·우클릭 이동·새 유닛 + 스크롤 4구간 + 60초 dwell×2 동안 PS3 HD min 99.966%(나머지 100%)·V1/안전 7종 0·dropped 0·scale2x PASS, 현재 하네스 2/2 (c = lap1114 산출물 재사용, e = lap1115 신규).
+
+middle이 독립 확인할 것:
+1. lap1114 복구 판정: a·b는 생산 좌표가 틀린 이전 하네스 버전(produce.effect=false)이라 제외, c는 하네스 저장(02:57:12) 3초 뒤 시작이라 현재 하네스 run으로 재사용, d는 03:04 중단·근거 아님. 이 판정이 맞는지(probe mtime·로그·result 대조).
+2. 새 스크립트로 c·e raw(공유 temp 20261007_lap1114_work_hng5/ng5_c·20261007_lap1115_work_hng5/ng5_e의 candidate/trace_raw.jsonl)에서 창별 HD/stale/V1/dropped를 재계산해 work 수치와 대조. e scroll_LEFT 1 present 99.966%(stale 162)는 일시 stale로 귀속 필요 여부 판단.
+3. 하네스 diff(tools/g1_saved_scene_probe.py `_new_game_act_window`·`--new-game-act`·`trace_dropped_count` gate, tests/test_g1_new_game_path.py)를 사전등록 §5 NG5-0과 대조. 제품 C 소스 변경 0.
+4. 다음 선택: 전체 HD coverage(타이틀·옵션·저장 창·승패 화면) vs G1 사용자 승인 요청 준비. 사용자 G1 시험 결과(APPROVALS lap1104)는 아직 없음.
+
+기록: docs/history/laps/20261007_lap1115_work_g1_hng5_new_game_act.md. 원본 SHA b56986e0… MATCH, game 사본 삭제(lap1114 d의 중단 사본 포함), 전부 uncommitted.

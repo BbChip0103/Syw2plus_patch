@@ -1,0 +1,10 @@
+# 2026-10-10 | lap 1239 | G1 work — stale240 raw 독립 재확인
+
+- 역할 / 실제 모델: Codex App native-hook hands-on work. 이 표면은 resolved model ID를 제공하지 않아 Codex Luna/high 지정 계약을 기록하되 실제 ID는 주장하지 않는다.
+- 목표 / 가설: 직전 lap1238의 stale240 미재현 판정이 원시 결과와 일치하는지 독립 확인한다. fresh probe를 반복하지 않고 같은 장면의 stale 재발 조건이 충족되는지 기존 trace/mask에서 판정한다.
+- 변경 파일 / 코드 영향: `docs/STATUS.md`와 본 lap 기록만. 게임·하네스·제품 소스·테스트·pin·golden 변경 0, 커밋 0.
+- 입력 / 식별: `../temp/Syw2plus_patch/20261010_lap1238_stale240/pair-result.json` SHA256 `141e278ceee210d752236cbf599e0b6d576eb412d79b25328e930b02517cee41`; candidate trace `6c845d27b1e962b7b1487465b7fb6c856a49ca7117f10c780e85cf57819ef174`; input trace `f51e3233adac396fa6c4a5c5b02820cb3d10edbf5e9770f412d9a336e0377950`; mask `df384891e7a84ee6381073ae152d0b61d6ab3bcc47c11f5235da3e28be05c1dc`. 원본 실행 입력 SHA `b56986e018b43293be8d9945521d145bba8dbe4e49fe70c6b6488b8c9c08a8ac`; 공식 candidate EXE SHA `818721a5e8539f9ed97090a6d64cfdba429d46ec9caaa5671528005b22f5b724`; fixture save006 SHA `616b79978917c8fd6f996a5cafca50e1e411b24a4fccca05efa3cb9289a0d064`.
+- 독립 재계산: pair JSON은 status PASS·scene equal이며 양 lane private EXE 핀 일치·source unchanged·owned close PASS·run ID/summary 각 1·drop 0·detach/flush complete. mask는 36개 480,032-byte record이고 각 header의 ordinal 55–90/state 3 및 픽셀 480,000개를 직접 읽어 `stale_pixels=0`과 픽셀 값 2 개수 0을 확인했다. Candidate trace ordinal66 seq1418은 `311518617 ms`; input seq85 logical `(450,195)` mouse-down은 `311518658 ms`, 즉 41ms 뒤다. ordinal67 stale 0.
+- 실행 / 검증: 기존 실행명령과 로그 `logs/gates/lap1238-stale240.log`만 read-only 대조; 새 게임 실행·테스트·전체 Fast는 수행하지 않았다. 문서 한도 확인 후 수정; 최종 `checks/context_limits.py` CONTEXT_PASS, `checks/safety.py` SAFETY_PASS, `git diff --check` 오류 0. lap counter는 1239로 읽기만 했다.
+- 판정: **이전 결과의 독립 raw 확인 PASS; stale240 자체는 NOT_REPRODUCED이며 미수리·미해결.** 과거 2612 raw의 stale240은 유지한다. 새 stale 관측이 없어 screen-watch/layer-drift 위치·writer 추적은 실행 조건 미충족으로 SKIP.
+- 미검증 / 다음 한 가지: 이 run 결과만 확인했으며 새 runtime run, Windows/DxWnd, combat, 24k/144k, LAN 멀티, 실제 사용자 G1 승인은 미확인. STATUS 큐대로 stale240 backlog 유지; 새 2613/save006 run에서 stale가 재현될 때만 위치를 고정하고 기존 screen-watch/`--drift-samples` 경로로 writer 추적한다. 사용자 2613 시험결과 또는 업스케일 입력이 오면 우선 반영한다.

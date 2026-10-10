@@ -1,0 +1,18 @@
+Lap 1230 fresh middle — confirmed material historical PASS/raw conflict; stop and escalate.
+
+User trigger: past records and raw materially disagree. Old evidence and acceptance text are preserved; no game/harness/test implementation, no new run/staging/delivery/milestone close.
+
+Independent findings:
+- Lap1223 tr1_1/tr1_2: pair JSON PASS, candidate close FAIL(mismatched run_id), raw run_id unknown only, summary0. Six lane trace SHA values MATCH recorded probes.
+- Lap1229 pair03: candidate raw expected ID only, one summary/drop0/detached/detach complete/flush complete; owned PID276=requested PID276, match_count1, post true. Local close repair confirmed; overall acceptance HOLD.
+- Fresh doctor/lint/typecheck PASS; original focused regression assertions 8 passed/4.33s. Full make check SKIP because historical conflict requires this session to stop, and old full PASS has a different source.
+
+Superior/root follow-up, in order:
+1. Record/adjudicate H-TR2611 historical acceptance HOLD; preserve old raw and delivered2611 artifacts, distinguish delivery fact from technical acceptance. Decide external handling as root; this middle has not authorized re-delivery or milestone close.
+2. Run full make check on fixed current documentation/source snapshot and verify before/after fingerprint MATCH before accepting repaired2612 evidence. No old success/focused subset substitution.
+3. If Fast reveals a tracked implementation/fixture/harness defect, hand to work tier for minimal repair and original targeted assertions, fresh same-option2612/save006 pair when relevant, then fresh middle review; no gate/pin weakening or foreignG2 file edits.
+4. Only after these decisions consider2612 trial work; G1 user milestone/Windows/24k/144k remain unverified.
+
+Detail: docs/history/laps/20261010_lap1230_middle_g1_historical_conflict_confirm_escalation.md
+Independent raw audit: ../temp/Syw2plus_patch/20261010_lap1230_middle_review/review.json (SHA256 74da25306fc2388f1f1e7fc9184fea4baf675675d3a8da0096da1b113fd8b837)
+Previous ESCALATE_SOL preserved byte-exact: docs/history/laps/20261010_lap1230_preserved_lap1229_escalate_sol.txt

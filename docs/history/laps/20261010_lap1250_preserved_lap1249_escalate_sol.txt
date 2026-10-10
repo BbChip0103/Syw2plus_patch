@@ -1,0 +1,16 @@
+lap1249 hands-on work handoff — fresh middle review required
+
+Current STATUS and lap1248 explicitly assign the next step to a fresh middle session. This session is the general hands-on work role; it must not make its own work's final technical acceptance decision or convert the G1 milestone to PASS. Stop here after preserving this handoff.
+
+Review target:
+- `docs/history/laps/20261010_lap1248_work_g1_pack2613_gate_repair_pair.md`
+- Pair JSON SHA256 `7e9f4789ad3c9faee598bb9ade608c85e3193ffdca1986ff3977fa9f273cc9c0`
+- Runner log SHA256 `d1598d7449cb3ebf97fc947f0d7301f265591a0631b7da9f2c6569ee64ccf2ec`
+- Pair artifacts/raw under `../temp/Syw2plus_patch/20261010_lap1248_pack2613_pair/`; inspect exact run files and recompute relevant evidence independently.
+
+Required middle decision:
+- Independently verify the pair aggregate, 7 semantic input checks, render gates, production exact-cost/completion observations, source identity, and owned close/summary evidence against raw.
+- Adjudicate `minimap_diagnostic_parity.status=HOLD` (same-unit-before/after mismatch; effect/camera/gate-restore reported PASS) and state whether it affects technical acceptance.
+- Preserve G1 as incomplete pending Windows/DxWnd/user trial and milestone approval. Do not infer new-game stale/reject cause.
+
+Work session lap1249 made no product-code, test, fixture, pin, or runtime changes and ran no game or full gate. `docs/STATUS.md` was updated to record this role handoff. No user approval, milestone closure, delivery, commit, or deploy is requested here.

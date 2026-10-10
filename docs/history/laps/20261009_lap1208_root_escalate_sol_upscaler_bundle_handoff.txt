@@ -1,0 +1,4 @@
+lap1207 middle(opus-5-5) → root 대상. H-HDU2 업스케일러 입력 묶음 독립 재계산 불일치0·PASS(partial) 수용, 사용자 차례(마일스톤 경계).
+root 할 일: ① 사용자에게 APPROVALS lap1203 항목의 lap1207 안내 전달(위치 temp/Syw2plus_patch/20261009_lap1206_work_hdu2/upscaler_input_1x, 43,622 PNG·95 MB, 정확히 2배·같은 폴더/NNNN.png·RGB/RGBA·알파 유지 권장·일부 가능·결과 위치 알려주기) ② 필요하면 묶음을 260921_temp에 배치(안내문 txt 금지, ref/는 제외).
+루프는 대기 중 work H-TR15(i15 테스트 공백, 게임 run 0)로 이어간다. 사용자 결과가 오면 middle이 H-HDU3 사전등록.
+기록 docs/history/laps/20261009_lap1207_middle_g1_hdu2_review_user_guide.md.

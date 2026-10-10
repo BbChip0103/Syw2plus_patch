@@ -1,0 +1,13 @@
+lap1165 work(Claude Code claude-sonnet-5-5) -> middle(Opus) 검수 요청. 사유: 마일스톤 경계(④-1 완료 → ④-2 선택 필요), 상시 규칙에 따른 독립 검수.
+기록: docs/history/laps/20261007_lap1165_work_g1_hdl1_pointerless_hd_pack_loader.md
+H-HDL1 PASS(partial, 기술·격리): L-1 FEASIBLE(A/B aux 없는 고유 키 100개 중 90 대응·원장 84.5%), L-2 패널 포함 팩 3 run(P3·P4·P5)
+  hd_pack rejects 0·안전 7종 0·fallback 0·dropped 0·scale2x 바깥 diff 0·PS3 HD min 100/100/99.949·p95 6~7 ms·matched 키 hit 91.5/91.3/90.8%·패널 j loaded 1.
+  C: tools/inmm_stub/g1_hd_pack.h(신규)·g1_hd_asset.c/.h(로더·카운터·키 로그)·g1_panel_layer.h·g1_mirror2x.c(패널 키 s 제거)·direct_draw_trace.c(hd_pack_* 필드).
+  도구: tools/g1_hd_convert.py pack. 테스트: tests/test_g1_hd_pack.py(신규, 실제 g1_hd_asset.c 호스트 컴파일 HIT/MISS/REJECT/aux)·test_g1_hd_convert.py·test_g1_panel_layer.py·test_g1_mirror2x.py(shim 파일 API). 전부 uncommitted.
+검증해 줄 것(새 스크립트로 재계산):
+ 1) 키 로그(run_L1·P1~P5 .keys.jsonl)와 l0b/digest_index.json으로 A/B 대응 비율·hit 비율 재계산, 원본 .spr 스트림 시작의 128 B FNV-1a와 키 digest 일치(work는 독립 C 전수 스캔으로 100키 중 95 프레임 시작 일치 확인).
+ 2) g1_hd_asset.c read_pack_frame(크기 4*w*h·g1_hd_pack_valid 실루엣)·pack_state 재적재 규칙·카운터, 패널 키 pointer 제거, 충돌 이름 규칙(1x 그림 불일치 = 128 B digest 충돌, HD 유무 무관).
+ 3) crops/(topbar_p2·hud_left_p3·hud_right_p3) 직접 열람 — 위 대조(Scale2x)/아래 팩(바이큐빅 stand-in).
+ 4) 공개 한계: 충돌 프레임 13~19%·부분 높이/스트림 중간/raw 배치 미대응 draws 15.9%·P3/P4 키 로그에 src 없음·패널 포인터 run 간 변동 별도 미측정·헤더 테스트 RED 선행 없음.
+다음 후보(middle 판단): ④-2 — draws 분포(P5): A/B aux 없음 43%·tinted(aux, 팀색) 56%·지형 aux 없음 0.4% → tinted writer 팀색 재적용 우선 검토. 지형 .ytl 64키는 draws 적음.
+공유 temp: /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261007_lap1165_work_hdl1/

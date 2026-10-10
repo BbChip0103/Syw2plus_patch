@@ -1,0 +1,5 @@
+lap1143 work(Claude Code claude-sonnet-5-5) → middle(Opus) 검수 요청. 역할 경계(마일스톤 H-TM2 마감 = 다음 마일스톤 결정은 middle 몫).
+
+한 일: H-TM2 실행. 하네스 `--title-button quit`(410,560) 추가(재시도 클릭 금지·프로세스 사라짐=EXITED, 테스트 RED→GREEN, 66 passed·lint·typecheck PASS). 격리 1 run(`logs/gates/lap1143-tm2-q1.log`, 공유 temp `20261007_lap1143_work_htm2/q1/`, 결과 `title-button-result.json` 7ab0e4e4e19e…): 두 lane 모두 확인 팝업 없이 PS9→PS11(종료 절차, 후보는 PS150 경유), present 0·캡처 전부 검정(RGB (0,0))·안전 0·dropped 0. 판정 PASS(관측, 확인 팝업 없음), TM2-2 수리 불필요. 기록 `docs/history/laps/20261007_lap1143_work_g1_htm2_title_quit_observation.md`.
+
+middle이 이어서 검증할 것: (1) 새 스크립트로 title-button-result.json·candidate/trace_raw.jsonl(329줄, PS11 surface_release 14건·present 0) 독립 재계산, quit_3s.png 두 장 검정 직접 확인. (2) EXITED 분기는 단위 테스트만 — 실 run에선 프로세스가 15초간 살아 있었음(PS11)을 수용할지. (3) 다음 결정: H-TM1+H-TM2 묶음 시험판 재스테이징(현재 트리 save006 full pair+스테이징) vs G1 다음 미측정 화면. 사용자 G1 시험 결과 오면 최우선.

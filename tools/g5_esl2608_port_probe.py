@@ -43,7 +43,7 @@ from tools.g5_candidate_drag_probe import (
 from tools.g5_screen_world_calibration import decode_xy, fit_affine
 
 REPO = Path(__file__).resolve().parents[1]
-INPUT_ROOT = REPO.parent / "260921_temp"
+INPUT_ROOT = REPO.parent / "260921_temp" / "archive"
 STOCK = REPO / "Syw2plus" / "syw2plus_original.exe"
 LANES = {
     "normal": INPUT_ROOT / "[ESL]Syw2plus 2608_AI상점개설_장수7명_전비1500-500-5000_G2_개인500_공용4092.exe",

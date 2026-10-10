@@ -1,0 +1,9 @@
+lap1099 work (Claude Code claude-sonnet-5-5): H-UA0 FEASIBLE (technical, isolated). Role boundary: next step is a middle (Opus) independent review + user-trial request, not more work.
+
+What the middle must verify (new script, do not reuse work scripts):
+1. u0/u2 pair-result.json under /home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261007_lap1099_work_hua0/ (SHA 8abb79ca6eb3f861 / 1ff4de58611e64a7): pair PASS, input_effect 7/7, V2/V2s/V2q/Scale2x/loaded PASS, source_exe_sha256 = b56986e0..., source_unchanged, cleanup ok. u0 menu/loaded == lap1097 v3 candidate (0 px). u2 candidate ddraw module size 2,994,176 != 2,363,392 (native game-folder ddraw.dll really loaded); u0-vs-u2 loaded diff = tornado animation frame only.
+2. Static: trace env is not required (g1_direct_draw_trace_install gate; trace log is written whenever mirror is on) -> record correction of the card's "no trace file" criterion.
+3. user_test_staging/ SHAs: _inmm.dll aef92b53...97c3 (= u0 bridge build of current tree), g1_trial_direct.bat 803efc51..., g1_trial_via_dxwnd.bat ef75cad5..., Korean guide 2898aac5.... Restore procedure SHA 03192987... MATCH (stock _inmm.dll).
+4. Harness-only changes: tools/g1_saved_scene_probe.py (--candidate-no-present-trace, --candidate-native-ddraw), tests/test_g1_mirror2x.py (+2 tests). Stub C unchanged.
+5. Decide: accept FEASIBLE, then put the G1 user-trial request into APPROVALS and ask root (ESCALATE_SOL) to place the staging in 260921_temp. Open risks to carry honestly: real Windows 1600x1200 mode / 1080p display, DxWnd env passing (.bat unrun), BGM differences of the stub vs stock _inmm.dll, C:\ log files, G2/G5/G6G7 EXE combination unmeasured.
+Record: docs/history/laps/20261007_lap1099_work_g1_hua0_user_trial_feasibility.md

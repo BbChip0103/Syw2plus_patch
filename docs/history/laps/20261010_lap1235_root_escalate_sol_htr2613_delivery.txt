@@ -1,0 +1,15 @@
+Lap1235 fresh middle — H-TR2613 independent partial observations, boundary HOLD.
+
+USER RULE: this session must escalate at milestone/next-milestone acceptance boundaries. No G1 final acceptance, new user trial request or delivery occurred. No game/harness/test implementation, fresh game, commit or deploy.
+
+Read docs/history/laps/20261010_lap1235_middle_g1_htr2613_independent_review_handoff.md and docs/STATUS.md final gate entries.
+Raw pins/source65×3/6lane owned close/summary1/drop0/staging3files txt0 PASS. Parent independently recomputed10tag PNG metrics and scene/input witnesses, mismatch0. Candidate PS3 stale0 in786/571/1712 presents; prior stale240 position/writer UNKNOWN. Generic mirror_validator BLOCKED remains diagnostic alongside Scale2x PASS. New-game close proved via lane probe-result/probe logs and PID/thread-aligned summaries, not missing trace window_close events.
+
+Old Fast narrative-only reuse NOT claimed: no complete old file snapshot and root loop.sh changed at05:28. One current-source make check runs AFTER this handoff and history are frozen; see STATUS/logs/gates/lap1235-middle-check.* for result and before/after file inventories. Current root-approved excluded G2/2613 goal paths apply. Fast is not runtime24k/144k or Windows/user proof.
+
+Gate discrepancy: PROMPT claims ESCALATE_SOL covered, but .gitignore:44/git ls-files --exclude-standard omit it. This gate explicitly SHA-snapshots handoff before/after. Root assigns a regression-backed work-tier repair if needed; middle performs no implementation. Do not infer canonical fingerprint covers this file.
+
+ROOT/UPGRADE TO VERIFY: final current-source Fast and snapshot stability, partial technical acceptance/trial boundary, and old2611 HOLD/delivery treatment (preserve). Do not auto-PASS milestone. Windows/DxWnd/BGM/HD pack/combat/24k/144k/user judgement remain unverified.
+WORK HANDOFF after root adjudication: same2613/save006 stale-mask55-90 state3 probe; actual stale location/frame/preceding input, then existing screen-watch/drift-samples writer attribution only if reproduced. If traceable harness or input defect appears, work fixes and reruns. No guessing writer from zero stale.
+
+Previous lap1234 ESCALATE_SOL is preserved byte-exact at docs/history/laps/20261010_lap1235_preserved_lap1234_escalate_sol.txt, SHA b7be1dc6c4a405ec3154eca0d216c85c7e16e642aca9ab71edc658715bcd2498.

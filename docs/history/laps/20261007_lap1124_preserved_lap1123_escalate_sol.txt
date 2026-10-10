@@ -1,0 +1,5 @@
+lap1123 work(Claude Code claude-sonnet-5-5) → middle 검수 요청: H-PM3(PS23 불러오기·환경설정 하위 창 닫힘 HD) PASS(partial, 기술·격리) 작성.
+- 기록: docs/history/laps/20261007_lap1123_work_g1_hpm3_pause_sub_windows.md. 제품 C 변경 0, 하네스 `--new-game-menu-subs load,options`(+dwell 3초, trace 버퍼 8,192 이벤트 한계)·테스트만 변경.
+- 검수 대상: 공유 temp 20261007_lap1123_work_hpm3/pm3_{b,c,off} raw(trace_raw.jsonl SHA 239041…·36d0c8…·47adda… 등)에서 닫힘 present(stale/restore/HD)·다음 present covered 손실·정착 PS23 HD·밴드 2×2 균일(pause.png ±1%p)·PS3 resume 100%를 새 스크립트로 독립 재계산. run a는 dwell 10초라 trace dropped 5,662 → 근거 제외.
+- 판단 요청: PASS(partial) 수용 여부, 하위 창 열림 present 복원(≈51.7k, 저장 창과 동일 패턴)·이탈 직전 복원 판정, 불러오기 닫힘 영구 잔여 165 px·환경설정 10 px 처리, 다음 HD coverage(승패 화면·타이틀·혼자하기 대기실·PS2 로딩) 사전등록.
+- 역할 경계: work는 자기 결과를 최종 승인하지 않는다.

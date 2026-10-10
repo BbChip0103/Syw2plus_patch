@@ -29,6 +29,15 @@ def main() -> None:
         help="explicit appended ESL2608 pool base (required only for that layout)",
     )
     parser.add_argument(
+        "--unit-existence-base", type=lambda value: int(value, 0), default=None,
+        help=(
+            "explicit existence-array base; when given together with "
+            "--unit-pool-base, both are used verbatim (no layout lookup). This is "
+            "the layout-agnostic path for other relocation schemes such as the "
+            "ESL2610 .g2bss build. Backwards compatible: existing callers omit it."
+        ),
+    )
+    parser.add_argument(
         "--bridge-source", type=Path, default=None,
         help=(
             "override runtime_bridge.c with a private fork (e.g. a probe-scoped "
@@ -40,11 +49,17 @@ def main() -> None:
     root = Path(__file__).resolve().parents[2]
     if not 1200 <= args.unit_pool_capacity <= 5000:
         parser.error("--unit-pool-capacity must be between 1200 and 5000")
+    if args.unit_existence_base is not None and args.unit_pool_base is None:
+        parser.error("--unit-existence-base requires --unit-pool-base")
     if args.unit_pool_capacity == 1200:
         if args.unit_pool_base is not None:
             parser.error("--unit-pool-base is only valid with the ESL2608 4093-slot layout")
         pool_base = 0x0066B790
         existence_base = 0x008990C8
+    elif args.unit_existence_base is not None:
+        # Layout-agnostic explicit pair (e.g. the ESL2610 .g2bss relocation).
+        pool_base = args.unit_pool_base
+        existence_base = args.unit_existence_base
     elif args.unit_pool_base is not None:
         resolved = esl2608_layout(args.unit_pool_base, args.unit_pool_capacity)
         pool_base = resolved.unit_pool_base

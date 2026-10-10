@@ -10,7 +10,7 @@ from patches.selection import g5_esl2608_g2_port as mod
 
 ROOT = Path(__file__).resolve().parents[2]
 STOCK = ROOT / "Syw2plus" / "syw2plus_original.exe"
-INPUT = ROOT.parent / "260921_temp"
+INPUT = ROOT.parent / "260921_temp" / "archive"
 G2 = {
     "normal": INPUT / "[ESL]Syw2plus 2608_AI상점개설_장수7명_전비1500-500-5000_G2_개인500_공용4092.exe",
     "fixed_start": INPUT
