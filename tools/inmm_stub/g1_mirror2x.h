@@ -17,6 +17,7 @@ BOOL g1_mirror2x_input_point(LONG physical_x, LONG physical_y,
                              LONG *logical_x, LONG *logical_y);
 BOOL g1_mirror2x_input_rect(const RECT *physical, RECT *logical);
 BOOL g1_mirror2x_input_install(void);
+BOOL g1_mirror2x_input_subclass(HWND window);
 /* Bounded raw evidence for the input boundary. */
 void g1_mirror2x_input_trace(const char *kind, HWND hwnd, UINT message,
                              LONG physical_x, LONG physical_y,

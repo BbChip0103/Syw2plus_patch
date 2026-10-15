@@ -75,6 +75,7 @@ typedef struct {
     IDirectDraw7Vtbl *original_vtable;
     IDirectDraw7Vtbl *clone_vtable;
     HRESULT (WINAPI *original_set_display_mode)(LPDIRECTDRAW7, DWORD, DWORD, DWORD, DWORD, DWORD);
+    HRESULT (WINAPI *original_set_cooperative_level)(LPDIRECTDRAW7, HWND, DWORD);
     HRESULT (WINAPI *original_create_surface)(LPDIRECTDRAW7, LPDDSURFACEDESC2,
                                                LPDIRECTDRAWSURFACE7 *, IUnknown *);
     BOOL installed;
@@ -1035,6 +1036,20 @@ static void format_desc(char *out, const DDSURFACEDESC2 *desc)
               (unsigned)desc->dwBackBufferCount, (unsigned)desc->ddsCaps.dwCaps,
               (int)desc->lPitch, (unsigned)desc->ddpfPixelFormat.dwFlags,
               (unsigned)desc->ddpfPixelFormat.dwRGBBitCount);
+}
+
+/* G1's window subclass goes on before the renderer's SetCooperativeLevel
+ * subclasses the same window, so the renderer's client->surface mapping runs
+ * first and G1 halves its result (see g1_mirror2x_input_subclass). */
+static HRESULT WINAPI hook_set_cooperative_level(LPDIRECTDRAW7 self, HWND window, DWORD flags)
+{
+    DDRecord *record = dd_record(self);
+    if (!record || !record->original_set_cooperative_level) return DDERR_GENERIC;
+    if (g1_mirror2x_enabled() && window && !g1_mirror2x_input_subclass(window)) {
+        trace_event("install", "failed", ",\"stage\":\"mirror2x_input\",\"reason\":\"cooperative_window_subclass_failed\"");
+        g_trace_failed = 1;
+    }
+    return record->original_set_cooperative_level(self, window, flags);
 }
 
 static HRESULT WINAPI hook_set_display_mode(LPDIRECTDRAW7 self, DWORD width, DWORD height,
@@ -2110,8 +2125,10 @@ static HRESULT WINAPI hook_direct_draw_create_ex(GUID *guid, LPVOID *out,
             slot->clone_vtable = clone;
             slot->original_create_surface = old_vtable->CreateSurface;
             slot->original_set_display_mode = old_vtable->SetDisplayMode;
+            slot->original_set_cooperative_level = old_vtable->SetCooperativeLevel;
             clone->CreateSurface = hook_create_surface;
             clone->SetDisplayMode = hook_set_display_mode;
+            clone->SetCooperativeLevel = hook_set_cooperative_level;
             slot->installed = TRUE;
         }
     }

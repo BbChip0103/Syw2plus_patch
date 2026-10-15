@@ -90,6 +90,21 @@
 #define G1_RENDERER_BLIT 0x00469300u
 #define G1_PRIMARY_READBACK_SITE 0x004C7EE6u
 #define G1_PRIMARY_SURFACE_VA 0x00E5D434u
+/* Between frames the main loop (0x41C8F8) re-reads GetCursorPos and calls
+ * 0x437C90, which locks the 1600x1200 primary itself and restores/saves/draws
+ * the cursor there in 800x600 coordinates.  Under G1 that lands in the primary's
+ * top-left quadrant (a faint cursor ghost at half the real position) and leaves
+ * primary pixels in the save-under buffer.  The per-frame cursor draw at
+ * 0x492700 -> 0x437AF0 still runs on the back buffer, so G1 drops this call. */
+#define G1_FAST_CURSOR_SITE 0x0041C921u
+/* 0x4B8680 is the "please wait" message box (game start 0x41B49D, and
+ * 0x42324F).  It locks the primary, clears it, draws the portrait panel with
+ * 0x4664D0 and the text with GDI, all centred on the 800x600 logical screen,
+ * so under G1 it sits in the primary's top-left quadrant at 1x.  The wrapper
+ * runs it unchanged and then scales that quadrant 2x over the whole primary. */
+#define G1_WAIT_BOX 0x004B8680u
+#define G1_WAIT_BOX_SITE_START 0x0041B49Du
+#define G1_WAIT_BOX_SITE_OTHER 0x0042324Fu
 #define G1_RENDERER_BACK_BUFFER 0x1520u
 /* H-RS3: the PS29 result table draws its gradient bars with 0x468BB0 (thiscall,
  * ret 0x28, ten stack arguments), called from one site, 0x4B5493. */
@@ -700,6 +715,9 @@ static G1GdiFlush g_textout_flush = NULL;
 static BOOL g_textout_slot_active = FALSE;
 static G1HookState g_hook_cache_copy;
 static G1HookState g_hook_primary_readback;
+static G1HookState g_hook_fast_cursor;
+static G1HookState g_hook_wait_box_start;
+static G1HookState g_hook_wait_box_other;
 static G1HookState g_hook_bar_copy;
 static G1HookState g_hook_briefing_compose;
 static G1HookState g_hook_cache_moves[8];
@@ -1140,6 +1158,21 @@ static DWORD WINAPI input_window_thread(LPVOID unused)
     return 0u;
 }
 
+/* Subclass the DirectDraw cooperative window directly, before the renderer's
+ * own SetCooperativeLevel subclasses it.  A renderer that maps client
+ * coordinates in its window procedure then runs first and G1's /2 sees the
+ * already-mapped 1600x1200 point, matching the GetCursorPos chain order. */
+BOOL g1_mirror2x_input_subclass(HWND window)
+{
+    LONG old;
+    if (!env_enabled() || !window || g_input_window) return TRUE;
+    old = SetWindowLongA(window, GWL_WNDPROC, (LONG)(ULONG_PTR)mirror_wndproc);
+    if (old == 0) return FALSE;
+    g_input_original_wndproc = (WNDPROC)(ULONG_PTR)old;
+    g_input_window = window;
+    return TRUE;
+}
+
 BOOL g1_mirror2x_input_install(void)
 {
     if (!env_enabled()) return TRUE;
@@ -1157,7 +1190,7 @@ BOOL g1_mirror2x_input_install(void)
                      (void **)&g_set_cursor_pos);
     patch_user32_iat("ClipCursor", (void *)mirror_clip_cursor,
                      (void **)&g_clip_cursor);
-    if (!CreateThread(NULL, 0, input_window_thread, NULL, 0, NULL)) {
+    if (!g_input_window && !CreateThread(NULL, 0, input_window_thread, NULL, 0, NULL)) {
         InterlockedExchange(&g_input_installed, 0);
         return FALSE;
     }
@@ -1783,6 +1816,54 @@ static DWORD __attribute__((thiscall)) mirror_primary_readback_site(
                                              (flags & 1u) != 0u))
         return 0u;
     return blit(renderer, selector, x, y, source, rect, flags);
+}
+
+/* Call-site replacement for `call 0x437C90` at 0x41C921 (no arguments). */
+static void mirror_fast_cursor_site(void)
+{
+}
+
+/* In-place nearest 2x of the primary's top-left 800x600.  Walking rows and
+ * columns from the bottom-right keeps every source pixel unread-overwritten:
+ * the destination (2x, 2y) block is never left of or above (x, y). */
+static void wait_box_upscale_primary(void)
+{
+    LPDIRECTDRAWSURFACE7 primary =
+        (LPDIRECTDRAWSURFACE7)(ULONG_PTR)read_game_dword(G1_PRIMARY_SURFACE_VA);
+    DDSURFACEDESC2 desc;
+    BYTE *bits;
+    LONG pitch;
+    int x, y;
+    if (!primary) return;
+    zero_bytes(&desc, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    if (FAILED(primary->lpVtbl->Lock(primary, NULL, &desc, DDLOCK_WAIT, NULL))) return;
+    bits = (BYTE *)desc.lpSurface;
+    pitch = desc.lPitch;
+    if (bits && desc.dwWidth == 1600u && desc.dwHeight == 1200u && pitch >= 1600 &&
+        (desc.ddpfPixelFormat.dwRGBBitCount == 8u ||
+         (desc.dwFlags & DDSD_PIXELFORMAT) == 0u)) {
+        for (y = 599; y >= 0; --y) {
+            const BYTE *source_row = bits + y * pitch;
+            BYTE *top = bits + (2 * y) * pitch;
+            BYTE *bottom = top + pitch;
+            for (x = 799; x >= 0; --x) {
+                BYTE value = source_row[x];
+                top[2 * x] = value; top[2 * x + 1] = value;
+                bottom[2 * x] = value; bottom[2 * x + 1] = value;
+            }
+        }
+    }
+    primary->lpVtbl->Unlock(primary, NULL);
+}
+
+typedef void (*G1WaitBoxFn)(DWORD);
+
+/* Call-site replacement for `push 0; call 0x4B8680` (cdecl, caller pops). */
+static void mirror_wait_box_site(DWORD argument)
+{
+    ((G1WaitBoxFn)(ULONG_PTR)G1_WAIT_BOX)(argument);
+    wait_box_upscale_primary();
 }
 
 typedef DWORD (__attribute__((thiscall)) *G1RendererBarCopyFn)(
@@ -6286,6 +6367,9 @@ BOOL g1_mirror2x_primitives_install(void)
     static const BYTE expected_cache_move[8] =
         {0x55,0x8B,0xEC,0x57,0x56,0x8B,0x75,0x0C};
     static const BYTE expected_primary_readback_site[5] = {0xE8, 0x15, 0x14, 0xFA, 0xFF};
+    static const BYTE expected_fast_cursor_site[5] = {0xE8, 0x6A, 0xB3, 0x01, 0x00};
+    static const BYTE expected_wait_box_start_site[5] = {0xE8, 0xDE, 0xD1, 0x09, 0x00};
+    static const BYTE expected_wait_box_other_site[5] = {0xE8, 0x2C, 0x54, 0x09, 0x00};
     static const BYTE expected_bar_copy_site[5] = {0xE8, 0x18, 0x37, 0xFB, 0xFF};
     static const BYTE expected_briefing_compose_site[5] = {0xE8, 0x66, 0x22, 0x02, 0x00};
     static const BYTE expected_cache_copy[8] =
@@ -6502,6 +6586,15 @@ BOOL g1_mirror2x_primitives_install(void)
     }
     if (!install_callsite(G1_PRIMARY_READBACK_SITE, expected_primary_readback_site,
                           (void *)mirror_primary_readback_site, &g_hook_primary_readback)) {
+        g1_mirror2x_primitives_detach();
+        return FALSE;
+    }
+    if (!install_callsite(G1_FAST_CURSOR_SITE, expected_fast_cursor_site,
+                          (void *)mirror_fast_cursor_site, &g_hook_fast_cursor) ||
+        !install_callsite(G1_WAIT_BOX_SITE_START, expected_wait_box_start_site,
+                          (void *)mirror_wait_box_site, &g_hook_wait_box_start) ||
+        !install_callsite(G1_WAIT_BOX_SITE_OTHER, expected_wait_box_other_site,
+                          (void *)mirror_wait_box_site, &g_hook_wait_box_other)) {
         g1_mirror2x_primitives_detach();
         return FALSE;
     }
@@ -6885,6 +6978,9 @@ void g1_mirror2x_primitives_detach(void)
     BOOL restored_blend_6d0 = restore_hook(&g_hook_blend_6d0);
     BOOL restored_cache_copy = restore_hook(&g_hook_cache_copy);
     BOOL restored_primary_readback = restore_hook(&g_hook_primary_readback);
+    BOOL restored_fast_cursor = restore_hook(&g_hook_fast_cursor);
+    BOOL restored_wait_box_start = restore_hook(&g_hook_wait_box_start);
+    BOOL restored_wait_box_other = restore_hook(&g_hook_wait_box_other);
     BOOL restored_bar_copy = restore_hook(&g_hook_bar_copy);
     BOOL restored_briefing_compose = restore_hook(&g_hook_briefing_compose);
     BOOL restored_moves = TRUE;
@@ -6908,7 +7004,8 @@ void g1_mirror2x_primitives_detach(void)
         !restored_blend_clip7 || !restored_flip_blend || !restored_blend_flip7 ||
         !restored_flip_blend7 ||
         !restored_blend_410 ||
-        !restored_blend_6d0 || !restored_cache_copy || !restored_primary_readback ||
+        !restored_blend_6d0 || !restored_cache_copy || !restored_primary_readback || !restored_fast_cursor ||
+        !restored_wait_box_start || !restored_wait_box_other ||
         !restored_bar_copy || !restored_briefing_compose || !restored_moves) return;
     g_original_a = NULL;
     g_original_b = NULL;
@@ -7081,6 +7178,8 @@ BOOL g1_mirror2x_primitives_installed(void)
            g_hook_cache_moves[2].installed && g_hook_cache_moves[3].installed &&
            g_hook_cache_moves[4].installed && g_hook_cache_moves[5].installed &&
            g_hook_cache_moves[6].installed && g_hook_cache_moves[7].installed &&
-           g_hook_primary_readback.installed && g_hook_bar_copy.installed &&
+           g_hook_primary_readback.installed && g_hook_fast_cursor.installed &&
+           g_hook_wait_box_start.installed && g_hook_wait_box_other.installed &&
+           g_hook_bar_copy.installed &&
            g_hook_briefing_compose.installed;
 }
