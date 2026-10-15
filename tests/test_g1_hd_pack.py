@@ -73,6 +73,18 @@ def test_loader_wiring_in_hd_asset() -> None:
     assert "build_scale2x(" in asset                              # fallback retained
 
 
+def test_native_hd_sibling_pairs_are_indexed_with_the_original_parser() -> None:
+    asset = (STUB / "g1_hd_asset.c").read_text(encoding="utf-8")
+    assert "data.cFileName[i + 1u] == 'h'" in asset and "load_hd_single_file" in asset
+    assert "native_add_source_frame" in asset and "native_decode_frame" in asset
+    assert "hw != sw * 2u || hh != sh * 2u || hc != sc" in asset
+    assert "g1_hd_pack_name(name, sizeof(name), digest, width, height)" in asset
+    assert "g1_hd_asset_load_named_frame(key" in (STUB / "g1_mirror2x.c").read_text(encoding="utf-8")
+    assert "initialize_sidecars();" in asset and "build_scale2x(" in asset
+    probe = (ROOT / "tools/g1_variant_display_probe.py").read_text(encoding="utf-8")
+    assert "inmm_asset_log.jsonl" in probe and "hd_named_open_count" in probe
+
+
 _LOADER_C = r"""#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1077,7 +1089,7 @@ def test_fullscreen_env_off_leaves_the_frame_on_scale2x(tmp_path: Path) -> None:
 
 def test_fullscreen_trace_fields_are_emitted() -> None:
     trace = (STUB / "direct_draw_trace.c").read_text(encoding="utf-8")
-    for field in ("hd_pack_fullscreen_hits", "hd_pack_fullscreen_misses", "hd_pack_fullscreen_rejects",
+    for field in ("hd_source_guard_rejects", "hd_pack_fullscreen_hits", "hd_pack_fullscreen_misses", "hd_pack_fullscreen_rejects",
                   "hd_pack_fullscreen_loads"):
         assert f'\\"{field}\\":%u' in trace
 

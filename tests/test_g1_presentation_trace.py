@@ -20,6 +20,11 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPILER = "i686-w64-mingw32-gcc"
 
 
+def test_production_trace_budget_covers_a_480_second_play_window() -> None:
+    source = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
+    assert "#define TRACE_MAX_EVENTS 65536u" in source
+
+
 def _build_serializer_fixture(tmp_path: Path, serializer_source: Path) -> Path:
     executable = tmp_path / "trace_serializer_fixture.exe"
     result = subprocess.run(
@@ -107,6 +112,18 @@ def _assert_production_trace_writer_contract(source: str) -> None:
 def test_production_trace_writer_uses_bounded_serializer_and_exact_write():
     source = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
     _assert_production_trace_writer_contract(source)
+    assert r'\"event_limit\":%u' in source
+    assert "(unsigned)TRACE_MAX_EVENTS);" in source
+
+
+def test_present_trace_preserves_program_state_changes_near_event_cap():
+    source = (ROOT / "tools/inmm_stub/direct_draw_trace.c").read_text(encoding="utf-8")
+    assert 'lstrcmpA(event, "program_state_change") == 0' in source
+    present = source[source.index('trace_event("program_state_change"'):]
+    assert present.index('trace_event("program_state_change"') < present.index(
+        'trace_event("mirror2x_present"'
+    )
+    assert '\\"from\\":%u,\\"to\\":%u' in source
 
 
 def test_non_primary_blt_trace_uses_initialized_base_details():
@@ -246,7 +263,7 @@ def test_valid_identity_chain_passes(tmp_path: Path):
         _event(1, "install", stage="complete", import_name="DirectDrawCreateEx",
                import_thunk="0x004D7938", iat_slot="0x004E5018", loader_target="0x70001000",
                original_pointer="0x70001000", module_start="0x70000000", module_end="0x70100000",
-               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=8192, method_limit=256,
+               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=65536, method_limit=256,
                aggregate_limit=64),
         _event(2, "direct_draw_create_ex", dd_object="0x1000",
                iid="15E65EC0-3B9C-11D2-B92F-00609797EA5B", caller="0x400100",
@@ -300,7 +317,7 @@ def test_native_split_validator_requires_converted_pinned_present(tmp_path: Path
         _event(1, "install", stage="complete", import_name="DirectDrawCreateEx",
                import_thunk="0x004D7938", iat_slot="0x004E5018", loader_target="0x70001000",
                original_pointer="0x70001000", module_start="0x70000000", module_end="0x70100000",
-               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=8192, method_limit=256,
+               dd_vtable_methods=30, surface_vtable_methods=49, event_limit=65536, method_limit=256,
                aggregate_limit=64),
         _event(2, "direct_draw_create_ex", dd_object="0x1000",
                iid="15E65EC0-3B9C-11D2-B92F-00609797EA5B",

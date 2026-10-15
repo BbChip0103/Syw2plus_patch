@@ -1,0 +1,15 @@
+# lap1305 fresh middle → root 다음 배정 인계 (입력 준비 scoped PASS)
+
+lap1303 H-HDGUARD 수리 입력묶음을 독립 확인했다. 입력 준비만 PASS이며 G1 마일스톤/Windows/전달 승인이나 업스케일 품질 PASS가 아니다. 새 실질충돌·구현수리 필요는 없다.
+
+- 입력: `../temp/Syw2plus_patch/20261014_hd_reupscale_input_r1/`
+- 검수: `../temp/Syw2plus_patch/20261014_lap1305_middle_hd_input_review/review.py`·`review.json`
+- 실제 수치: 원본15SHA/size 일치, 이미지14개/1135PNG, 복사ledger·PNG형식/팔레트/tRNS/원본3,765,900픽셀/투명mask 불일치0, 전투명146frame 정상 포함, 비이미지YAV1 원본보존. lap1303 SHA 기록과일치, 검수전후source불변.
+- lap1302의 fnt/yfnt5개 누락 충돌은 새수리묶음에서해소. 과거묶음/HOLD 원문과 guard/PS3게임 국소근거는보존하며 재검수하지 않았다.
+- 이번 제품/게임/업스케일/전달/커밋0. 실제resolved model ID/effort는이표면에서노출되지않아추측하지않음.
+
+## root가 이어서 할 한 가지
+
+입력 준비 scoped PASS와 기존 guard/실게임 수용근거를 받아 현재 STATUS 큐를 갱신한다. 사용자의 “입력만 뽑아두기” 범위는 충족됐다. 같은 evidence 재검수·전체check·새게임·업스케일을 자동추가하지 않는다. 사용자 Windows 결과가오면우선하며 전달/G1마일스톤 미결은그대로둔다. 현재 work수리handoff는불필요; 새 실제결함이면 정확한입력/SHA/FAIL식과최소수리만 work tier로배정한다. 추가strategy/Sol검수판으로보조작업상한을초기화하지않는다.
+
+이전 lap1304 marker는 `docs/history/laps/20261014_lap1305_preserved_lap1304_escalate_sol.md`에1940B byte-exact 보존(SHA256 `3c509848f6c278e37c1f9d05a106a1af2ea1cea9fb8dcf833f72f5d415b86694`). 이번 근거/미검증/검사: `docs/history/laps/20261014_lap1305_middle_hd_input_review.md`. `.lap_counter`는읽기만했다.

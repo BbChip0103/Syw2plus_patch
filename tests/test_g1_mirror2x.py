@@ -25,7 +25,14 @@ G1_ENVIRONMENT_SOURCES = (
 
 def _function_body(source: str, signature: str) -> str:
     start = source.index(signature)
-    opening = source.index("{", start)
+    while True:
+        opening = source.index("{", start)
+        declaration_end = source.find(";", start, opening)
+        if declaration_end < 0:
+            break
+        start = source.find(signature, opening)
+        if start < 0:
+            raise AssertionError(f"function definition not found: {signature}")
     depth = 0
     for index in range(opening, len(source)):
         if source[index] == "{":
@@ -902,6 +909,8 @@ static inline BOOL HeapFree(HANDLE h, DWORD f, void *p) { (void)h; (void)f; free
 #define FILE_SHARE_READ 1u
 #define OPEN_EXISTING 3u
 #define CREATE_ALWAYS 2u
+#define FILE_BEGIN 0u
+#define INVALID_SET_FILE_POINTER 0xFFFFFFFFu
 #define FILE_ATTRIBUTE_NORMAL 0x80u
 #define INVALID_FILE_ATTRIBUTES 0xFFFFFFFFu
 #include <sys/stat.h>
@@ -916,6 +925,8 @@ static inline DWORD GetFileSize(HANDLE h, DWORD *high)
   return (DWORD)n; }
 static inline BOOL ReadFile(HANDLE h, void *b, DWORD n, DWORD *got, void *o)
 { (void)o; *got = (DWORD)fread(b, 1, n, (FILE *)h); return 1; }
+static inline DWORD SetFilePointer(HANDLE h, LONG offset, LONG *high, DWORD origin)
+{ FILE *fp = (FILE *)h; (void)high; if (fseek(fp, offset, origin == FILE_BEGIN ? SEEK_SET : SEEK_CUR) != 0) return INVALID_SET_FILE_POINTER; return (DWORD)ftell(fp); }
 static inline BOOL WriteFile(HANDLE h, const void *b, DWORD n, DWORD *w, void *o)
 { (void)o; *w = (DWORD)fwrite(b, 1, n, (FILE *)h); return 1; }
 static inline BOOL CloseHandle(HANDLE h) { return fclose((FILE *)h) == 0; }
@@ -1330,8 +1341,9 @@ def test_ua2_candidate_no_unit_ticks_flag_is_candidate_only() -> None:
     assert "no_unit_ticks=args.candidate_no_unit_ticks" in probe
     candidate_env = probe[probe.index("if candidate:"):probe.index("xvfb, display = runtime_env._xvfb")]
     assert 'env["INMM_STUB_NO_UNIT_TICKS"] = "1"' in candidate_env
-    # baseline lane / default env never set it
-    assert probe.count('"INMM_STUB_NO_UNIT_TICKS"') == 1
+    display_only = probe[probe.index("if display_only:", probe.index("def _run_lane")):]
+    display_only = display_only[:display_only.index("xvfb, display = runtime_env._xvfb")]
+    assert '"INMM_STUB_NO_UNIT_TICKS": "1"' in display_only
 
 
 _RET_RANGE_FIXTURE = r"""

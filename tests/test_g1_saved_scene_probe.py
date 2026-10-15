@@ -17,6 +17,7 @@ from tools.g1_saved_scene_probe import (
     _compare_input_effects,
     _compare_minimap_diagnostic_parity,
     _disable_present_trace,
+    _display_only_g1_off_env,
     _histogram_percentile,
     _performance_present_metrics,
     _pair_status,
@@ -24,7 +25,24 @@ from tools.g1_saved_scene_probe import (
     _production_effect,
     _poll_stable_observation,
     _scene_identity,
+    _summarize_play_presents,
 )
+
+
+def test_display_only_g1_off_keeps_proxy_render_options_disabled() -> None:
+    assert _display_only_g1_off_env() == {
+        "SYW2_G1_NATIVE_2X_BLIT": "0",
+        "SYW2_G1_MIRROR2X": "0",
+        "SYW2_G1_HD_SOURCE": "off",
+    }
+
+
+def test_display_only_g1_off_disables_rendering_without_removing_proxy() -> None:
+    assert _display_only_g1_off_env() == {
+        "SYW2_G1_NATIVE_2X_BLIT": "0",
+        "SYW2_G1_MIRROR2X": "0",
+        "SYW2_G1_HD_SOURCE": "off",
+    }
 
 
 def test_candidate_capture_barrier_requires_multiple_matching_presents(tmp_path: Path) -> None:
@@ -1907,10 +1925,11 @@ def test_save006_initial_scene_uses_pinned_common_tick_sampler() -> None:
     )
     load_scene = source[source.index('if fixture == "save006":', source.index('def _run_lane')):]
     load_scene = load_scene[:load_scene.index("if rice_phase_diagnostic is not None:")]
-    save006_branch = load_scene[:load_scene.index("        else:")]
+    save006_branch = load_scene[:load_scene.index("        elif not display_only:")]
 
     assert "SAVE006_INITIAL_SCENE_TICK = 24600" in source
-    assert "_read_scene_at_exact_tick(\n                pid, SAVE006_INITIAL_SCENE_TICK, runtime_read," in load_scene
+    assert "if not display_only:" in load_scene
+    assert "_read_scene_at_exact_tick(\n                    pid, SAVE006_INITIAL_SCENE_TICK, runtime_read," in load_scene
     assert '"sim_tick_before", "sim_tick_after"' in load_scene
     assert 'raise ProbeError(f"initial save006 scene sample invalid:' in load_scene
     assert "_g1_scene_snapshot(loaded_detailed, runtime_read)" not in save006_branch
@@ -2097,12 +2116,75 @@ def test_trace_close_summary_checks_run_binding_and_flush(tmp_path: Path) -> Non
     trace.write_text("\n".join(json.dumps(row) for row in [
         {"event": "install", "run_id": "g1-saved-candidate"},
         {"event": "summary", "run_id": "g1-saved-candidate", "install_status": "detached",
-         "dropped_count": 0, "detach": "complete", "flush": "complete"},
+         "dropped_count": 0, "aggregate_output_dropped_count": 0,
+         "detach": "complete", "flush": "complete"},
         {"event": "textout_iat_restore", "run_id": "g1-saved-candidate"},
     ]) + "\n", encoding="utf-8")
 
     assert _trace_close_summary(trace, "g1-saved-candidate")["status"] == "PASS"
     assert _trace_close_summary(trace, "g1-saved-baseline")["status"] == "FAIL"
+
+
+def test_trace_close_summary_reports_failed_install_and_drops(tmp_path: Path) -> None:
+    trace = tmp_path / "trace.jsonl"
+    trace.write_text("\n".join(json.dumps(row) for row in [
+        {"event": "install", "run_id": "g1-saved-candidate"},
+        {"event": "summary", "run_id": "g1-saved-candidate", "install_status": "failed",
+         "dropped_count": 10932, "aggregate_output_dropped_count": 0,
+         "detach": "complete", "flush": "complete"},
+    ]) + "\n", encoding="utf-8")
+
+    summary = _trace_close_summary(trace, "g1-saved-candidate")
+    assert summary["status"] == "FAIL"
+    assert summary["install_status"] == "failed"
+    assert summary["reasons"] == ["install_status_not_detached", "dropped_events"]
+
+
+def test_trace_close_summary_rejects_aggregate_output_loss_and_overflow(tmp_path: Path) -> None:
+    trace = tmp_path / "trace.jsonl"
+    trace.write_text("\n".join(json.dumps(row) for row in [
+        {"event": "install", "run_id": "g1-saved-candidate"},
+        {"event": "overflow", "run_id": "g1-saved-candidate", "scope": "event_limit"},
+        {"event": "summary", "run_id": "g1-saved-candidate", "install_status": "detached",
+         "dropped_count": 0, "aggregate_output_dropped_count": 42,
+         "detach": "complete", "flush": "complete"},
+    ]) + "\n", encoding="utf-8")
+
+    summary = _trace_close_summary(trace, "g1-saved-candidate")
+    assert summary["status"] == "FAIL"
+    assert summary["aggregate_output_dropped_count"] == 42
+    assert summary["overflow_scopes"] == ["event_limit"]
+    assert summary["reasons"] == ["aggregate_output_dropped", "overflow_events"]
+
+
+def test_new_game_play_summary_rejects_match_end_inside_dwell(tmp_path: Path) -> None:
+    trace = tmp_path / "trace.jsonl"
+    rows = [
+        {"event": "mirror2x_present", "program_state": 3, "ts_ms": 1000,
+         "covered_pixels": 480000, "stale_pixels": 0, "elapsed_ms": 15,
+         "success": 1, "fallback": 0},
+        {"event": "mirror2x_present", "program_state": 3, "ts_ms": 2500,
+         "covered_pixels": 480000, "stale_pixels": 0, "elapsed_ms": 16,
+         "success": 1, "fallback": 0},
+        {"event": "mirror2x_present", "program_state": 27, "ts_ms": 3000,
+         "covered_pixels": 480000, "stale_pixels": 0, "elapsed_ms": 16,
+         "success": 1, "fallback": 0},
+        {"event": "mirror2x_present", "program_state": 29, "ts_ms": 3500,
+         "covered_pixels": 480000, "stale_pixels": 0, "elapsed_ms": 16,
+         "success": 1, "fallback": 0},
+    ]
+    trace.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+
+    summary = _summarize_play_presents(
+        trace, [{"name": "dwell", "line_start": 0, "line_end": 4}]
+    )
+    dwell = summary["windows"]["dwell"]
+    assert summary["status"] == "FAIL"
+    assert dwell["presents"] == 2
+    assert dwell["total_presents"] == 4
+    assert dwell["by_state"] == {"3": 2, "27": 1, "29": 1}
+    assert dwell["unexpected_states"] == ["27", "29"]
+    assert dwell["observed_seconds"] == 1.5
 
 
 def test_user_trial_disables_present_trace_but_keeps_owned_run_id() -> None:
@@ -3231,6 +3313,39 @@ def test_esl2613_flag_refuses_a_wrong_executable(monkeypatch, tmp_path: Path) ->
         probe._prepare_lane_game(tmp_path / "rt", None, esl2613=True)
 
 
+def test_esl2614_runtime_accepts_nested_current_source_with_sha_guard(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    from tools import esl2614_runtime
+
+    root = tmp_path / "[ESL]Syw2plus - ESL2614"
+    nested = root / "[ESL]Syw2plus"
+    nested.mkdir(parents=True)
+    exe = nested / esl2614_runtime.ESL2614_EXE_NAME
+    exe.write_bytes(b"official-2614")
+    monkeypatch.setattr(esl2614_runtime, "ESL2614_SOURCE", root)
+    monkeypatch.setattr(esl2614_runtime, "ESL2614_SHA256", hashlib.sha256(b"official-2614").hexdigest())
+
+    source, found = esl2614_runtime.verify_source()
+
+    assert source == nested.resolve()
+    assert found == exe.resolve()
+
+
+def test_esl2614_runtime_keeps_sha_guard_for_nested_source(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    from tools import esl2614_runtime, runtime_env
+
+    nested = tmp_path / "[ESL]Syw2plus - ESL2614" / "[ESL]Syw2plus"
+    nested.mkdir(parents=True)
+    (nested / esl2614_runtime.ESL2614_EXE_NAME).write_bytes(b"wrong")
+    monkeypatch.setattr(esl2614_runtime, "ESL2614_SOURCE", nested.parent)
+
+    with pytest.raises(runtime_env.RuntimeSafetyError, match="SHA-256"):
+        esl2614_runtime.verify_source()
+
+
 def test_esl2613_flag_is_off_by_default_and_also_serves_the_saved_scene_path(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -3354,3 +3469,49 @@ def test_new_game_play_keys_none_skips_scrolling_and_keeps_the_start_camera(
     source = (Path(__file__).parents[1] / "tools/g1_saved_scene_probe.py").read_text(encoding="utf-8")
     assert 'args.new_game_play_keys.strip().lower() == "none"' in source
     assert 'NEW_GAME_PLAY_OVERRIDE["keys"] = ()' in source  # none -> no keys, not the default sequence
+
+
+def test_esl2614_display_lane_pass_requires_nested_trace_and_soak_coverage() -> None:
+    from tools.g1_esl2614_display_probe import lane_passed, soak_ps3_coverage
+
+    base = {
+        "status": "PASS",
+        "private_game_copy_removed_after_run": True,
+        "trace_close": {"status": "PASS"},
+        "trace_summary": {"status": "PASS"},
+    }
+    assert lane_passed(dict(base), case="new_game")
+
+    failed_trace = dict(base)
+    failed_trace["trace_summary"] = {"status": "FAIL", "dropped_count": 10932}
+    assert not lane_passed(failed_trace, case="new_game")
+
+    short_soak = {
+        **base,
+        "new_game_play": {
+            "status": "PASS",
+            "present_summary": {
+                "status": "PASS",
+                "windows": {
+                    "dwell": {
+                        "unexpected_states": [],
+                        "observed_seconds": 159.5,
+                    },
+                },
+            },
+        },
+    }
+    assert not lane_passed(short_soak, case="soak", soak_seconds=160)
+    short_soak["new_game_play"]["present_summary"]["windows"]["dwell"]["observed_seconds"] = 160.0
+    assert lane_passed(short_soak, case="soak", soak_seconds=160)
+    assert soak_ps3_coverage(short_soak, requested_seconds=160) == {
+        "status": "PASS",
+        "requested_seconds": 160,
+        "observed_seconds": 160.0,
+        "presents": None,
+        "total_presents": None,
+        "by_state": None,
+        "unexpected_states": [],
+    }
+    short_soak["new_game_play"]["present_summary"]["windows"]["dwell"]["unexpected_states"] = ["29"]
+    assert not lane_passed(short_soak, case="soak", soak_seconds=160)

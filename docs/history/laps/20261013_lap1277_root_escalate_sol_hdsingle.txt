@@ -1,0 +1,16 @@
+# lap1277 middle — H-HDSINGLE BLOCKED; root/strategy adjudication then explicit work handoff
+
+Scope: original-format `<stem>_hd.<original extension>` per INBOX 2026-10-13 16:56. No custom container, no inferred safe skip, no G1 milestone closure.
+
+Fresh checks: SItem SHA c1575b2f176f4cdbbc10549701a8168034948bcd30ad138819fa1bee1a4f9281 MATCH, 51,775 B; header9/64/32/1, sheet48715/1920/160, RLE307,200 pixels, exact=false. Previous candidate3366 files/1168997818 B MATCH, SItem HD absent. Food31 nonzero references5..119 support but do not prove sheet indexing.
+
+Official2613 SHA818721a5e8539f9ed97090a6d64cfdba429d46ec9caaa5671528005b22f5b724: bounded native transport at0x463D60 reads version9/header0xBF4/data count+0xBC8; static draw0x4672E0 has only pointer/dimensions. Separate0x463E50 sheet encoder is not a demonstrated SItem reader. Frame selection remains UNKNOWN. Generic DLL *_hd.* scan reaches native BMP files but the current loader rejects their non-SPR headers; BMP C map is missing.
+
+Next one thing for elevated owner: follow exact official loader callers to source frame-offset selection and rendering, bind SItem filename, establish frame0/nonzero behavior. If static linkage cannot resolve it, hand one isolated read-only asset-load observation to work, recording filename/header/payload/source pointer/draw dimensions. Do not rerun another document-only middle lap without new evidence. No product runtime proof has been added in laps1276–1277; report this concrete blocker and minimum next action.
+
+After meaning is determined, work owns extractor/converter/native loader and relevant tests: reconcile SItem native writer/reader; implement BM/DIB 8-bit uncompressed BMP parsing and canonical index/FE mask mapping via existing digest/identity/guard paths; verify actual C loader/lookup against Python, native round-trip and fail-closed truncation; preserve existing SPR/YTL/panel/sidecar/display-only behavior. Then run the requested official2613+two variant real-game lanes without pack env, minimum related regression and required full Fast, followed by fresh middle. No automatic trial delivery or user milestone approval.
+
+Preserved previous escalation byte-exact: docs/history/laps/20261013_lap1277_preserved_lap1276_escalate_sol.md, SHA7b4120ae320ccce8d01f746c65a7b3b301bcd42027849a7da6cc37069bd82d33.
+Evidence/limits/commands: docs/history/laps/20261013_lap1277_middle_hdsingle_parser_boundary_handoff.md; analysis/memory_maps/g1_hdsingle_native_parser_boundary_lap1277.md; shared temp20261013_lap1277_middle_hdsingle/raw_review.json and complete REA Evidence ev_516f475f148cee2af520a400c56160343e2b117979060521f611cec7c075f371.
+
+Current role changed no product/test code, original/reference, game, staging, pins, counter, commits, or delivery. Full Fast/runtime SKIP under documentary exception; not PASS. Final document/safety/source-unchanged results are in the lap record. Preserve existing uncommitted work.

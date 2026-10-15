@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -276,6 +277,248 @@ def test_check_reports_frames_without_reference(tmp_path: Path) -> None:
     _save(hd_dir / "x/0000.png", np.full((2, 2), 254, dtype=np.uint8), pal, transparency=254).close()
     report = hc.check_dir(hd_dir, tmp_path / "ref", pal)
     assert report["violation_totals"]["no_reference"] == 1 and not report["pass"]
+
+
+def test_sibling_layout_writes_frame_indexes_without_touching_inputs(tmp_path: Path) -> None:
+    game = tmp_path / "game"
+    pack = tmp_path / "pack"
+    out = tmp_path / "layout"
+    game.mkdir()
+    (game / "char").mkdir()
+    source = game / "char/u.spr"
+    source.write_bytes(b"original stays exact")
+    pal8 = "cecc4681"
+    (pack / pal8).mkdir(parents=True)
+    plain = "h12345678_2x2.idx8"
+    extended = "h87654321_2x2_256_89abcdef.idx8"
+    (pack / pal8 / plain).write_bytes(b"plain")
+    (pack / pal8 / extended).write_bytes(b"extended")
+    (pack / "digest_index.json").write_text(json.dumps({
+        "index": {plain: [["char/u.spr", 3], ["char/u.spr", 3]]},
+        "extended": {"h87654321_2x2.idx8": {"length": 256,
+                    "pictures": {"89abcdef": [["char/u.spr", 4]]}}},
+        "conflicts": {"omitted": [["char/u.spr", 5]]},
+    }), encoding="utf-8")
+
+    report = hc.sibling_layout(game, pack, out)
+
+    hd = out / "char/u.spr.hd"
+    assert report["pass"] and report["files"] == 2 and report["duplicate_frames"] == 1
+    assert (hd / "0003.idx8").read_bytes() == b"plain"
+    assert (hd / "0004.idx8").read_bytes() == b"extended"
+    index = json.loads((hd / "index.json").read_text(encoding="utf-8"))
+    assert index["version"] == 1
+    assert index["frames"] == [
+        {"frame": 3, "digest": plain, "pal8": pal8, "length": 0, "p8": ""},
+        {"frame": 4, "digest": extended, "pal8": pal8, "length": 256, "p8": "89abcdef"},
+    ]
+    assert source.read_bytes() == b"original stays exact"
+
+
+def test_native_writers_round_trip_spr_ytl_and_bmp(tmp_path: Path) -> None:
+    # RLE .spr: header fields and source frame count stay in the original layout.
+    spr = bytearray(hx.SPR_FIXED_HEADER)
+    struct.pack_into("<4I", spr, 0, 9, 2, 1, 1)
+    struct.pack_into("<3I", spr, hx.SPR_SHEET_RECORD, 2, 0, 0)
+    spr_data = bytes(spr) + bytes((5, 6))
+    spr_pixels = np.array([[5, 6, 254, 8], [9, 10, 11, 12]], dtype=np.uint8)
+    spr_hd = hc._encode_spr_native(spr_data, [spr_pixels], [np.ones(spr_pixels.shape, dtype=bool)], "rle")
+    spr_dec = hx.decode_spr(spr_hd)
+    assert (spr_dec.fw, spr_dec.fh, len(spr_dec.idx)) == (4, 2, 1)
+    assert np.array_equal(spr_dec.idx[0], spr_pixels) and spr_dec.exact == [True]
+    assert spr_dec.opaque[0].all()  # literal 0xFE remains opaque in the native RLE format
+
+    # A doubled RLE sheet whose encoded byte count equals its pixel area must
+    # remain distinguishable from raw data; splitting a transparent run is exact.
+    sheet_header = bytearray(hx.SPR_FIXED_HEADER)
+    struct.pack_into("<4I", sheet_header, 0, 9, 2, 1, 1)
+    source_sheet = np.array([[1, 2, 3, 4], [5, 6, 7, 8]], dtype=np.uint8)
+    source_mask = np.array([[False, True, True, True], [False, True, True, True]])
+    source_stream = hx.rle_encode(source_sheet, source_mask)
+    struct.pack_into("<3I", sheet_header, hx.SPR_SHEET_RECORD, len(source_stream), 4, 2)
+    source_data = bytes(sheet_header) + source_stream
+    doubled_sheet = np.repeat(np.repeat(source_sheet, 2, axis=0), 2, axis=1)
+    doubled_mask = np.repeat(np.repeat(source_mask, 2, axis=0), 2, axis=1)
+    assert len(hx.rle_encode(doubled_sheet, doubled_mask)) == doubled_sheet.size
+    safe_sheet = hc._encode_spr_sheet_native(source_data, doubled_sheet, doubled_mask, "rle")
+    sheet_dec = hx.decode_spr_sheet(safe_sheet)
+    assert len(safe_sheet) - hx.SPR_FIXED_HEADER != doubled_sheet.size
+    assert sheet_dec.kind == "sheet" and sheet_dec.exact == [True]
+    assert np.array_equal(sheet_dec.opaque[0], doubled_mask)
+    assert np.array_equal(sheet_dec.idx[0][doubled_mask], doubled_sheet[doubled_mask])
+
+    # Genuine raw .spr data keeps the raw sentinel and all-opaque interpretation.
+    raw_header = bytearray(hx.SPR_FIXED_HEADER)
+    struct.pack_into("<4I", raw_header, 0, 9, 2, 1, 1)
+    struct.pack_into("<3I", raw_header, hx.SPR_SHEET_RECORD, 2, 2, 1)
+    raw_pixels = np.array([[10, 11, 12, 13], [20, 21, 22, 23]], dtype=np.uint8)
+    raw_hd = hc._encode_spr_native(bytes(raw_header) + bytes((1, 2)), [raw_pixels],
+                                   [np.ones(raw_pixels.shape, dtype=bool)], "raw")
+    raw_dec = hx.decode_spr(raw_hd)
+    assert raw_dec.kind == "raw" and raw_dec.exact == [True]
+    assert np.array_equal(raw_dec.idx[0], raw_pixels) and raw_dec.opaque[0].all()
+
+    # .ytl retains its offset table and row [skip][count][bytes] representation.
+    ytl = bytearray(hx.SPR_FIXED_HEADER)
+    struct.pack_into("<4I", ytl, 0, 9, 3, 2, 1)
+    ytl_frame = bytes((0, 3, 1, 2, 3, 1, 2, 4, 5))
+    struct.pack_into("<I", ytl, hx.YTL_OFFSET_TABLE, 0)
+    struct.pack_into("<3I", ytl, hx.SPR_SHEET_RECORD, len(ytl_frame), 0, 0)
+    ytl_pixels = np.repeat(np.repeat(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint8), 2, 0), 2, 1)
+    ytl_pixels[0, 1] = 254
+    ytl_hd = hc._encode_ytl_native(bytes(ytl) + ytl_frame, [ytl_pixels], [np.ones(ytl_pixels.shape, dtype=bool)])
+    ytl_dec = hx.decode_ytl(ytl_hd)
+    assert (ytl_dec.fw, ytl_dec.fh, len(ytl_dec.idx)) == (6, 4, 1)
+    assert ytl_dec.exact == [True]
+    assert ytl_dec.opaque[0][0, 1]
+
+    # 8-bit BMP stays BMP with doubled dimensions and palette bytes intact.
+    width, height = 3, 2
+    palette_bytes = bytes(range(256)) * 4
+    dib = struct.pack("<IiiHHIIiiII", 40, width, height, 1, 8, 0, 8, 2834, 2834, 256, 0)
+    pixel_offset = 14 + 40 + len(palette_bytes)
+    bmp = b"BM" + struct.pack("<IHHI", pixel_offset + 8, 0, 0, pixel_offset) + dib + palette_bytes + bytes((4, 5, 6, 0, 1, 2, 3, 0))
+    source_dec, _ = hx.decode_bmp(bmp)
+    bmp_hd_pixels = np.repeat(np.repeat(source_dec.idx[0], 2, axis=0), 2, axis=1)
+    bmp_hd = hc._encode_bmp_native(bmp, bmp_hd_pixels)
+    bmp_dec, out_palette = hx.decode_bmp(bmp_hd)
+    assert (bmp_dec.fw, bmp_dec.fh) == (6, 4)
+    assert np.array_equal(bmp_dec.idx[0], bmp_hd_pixels) and out_palette == palette_bytes
+
+
+def test_native_layout_writes_same_format_sibling_and_keeps_inputs(tmp_path: Path) -> None:
+    game, pack, out = (tmp_path / name for name in ("game", "pack", "out"))
+    (game / "char").mkdir(parents=True)
+    source = game / "char" / "swordk_plus.Spr"
+    header = bytearray(hx.SPR_FIXED_HEADER)
+    struct.pack_into("<4I", header, 0, 9, 2, 1, 1)
+    struct.pack_into("<3I", header, hx.SPR_SHEET_RECORD, 2, 0, 0)
+    original = bytes(header) + bytes((1, 2))
+    source.write_bytes(original)
+    pal8 = "cecc4681"
+    (pack / pal8).mkdir(parents=True)
+    key = "h12345678_2x1.idx8"
+    packed_pixels = bytes((10, 11, 12, 13, 14, 15, 16, 17))
+    (pack / pal8 / key).write_bytes(packed_pixels)
+    (pack / "digest_index.json").write_text(json.dumps({
+        "index": {key: [["char/swordk_plus.Spr", 0]]}, "extended": {}
+    }), encoding="utf-8")
+
+    report = hc.native_layout(game, pack, out)
+    target = out / "char" / "swordk_plus_hd.Spr"
+    assert report["pass"] and report["files"] == 1 and report["frames"] == 1
+    assert target.is_file() and target.read_bytes()[:2] != b"BM"
+    decoded = hx.decode_spr(target.read_bytes())
+    assert (decoded.fw, decoded.fh, len(decoded.idx)) == (4, 2, 1)
+    assert decoded.idx[0].tobytes() == packed_pixels and decoded.exact == [True]
+    assert source.read_bytes() == original
+    manifest = out / "g1_hd_sources.sha256"
+    assert manifest.read_text(encoding="ascii") == f"{hashlib.sha256(original).hexdigest()}  char/swordk_plus_hd.Spr\n"
+
+
+def test_native_layout_omits_assets_without_an_authored_hd_frame(tmp_path: Path) -> None:
+    game, pack, out = (tmp_path / name for name in ("game", "pack", "out"))
+    (game / "char").mkdir(parents=True)
+    source = game / "char" / "plain.spr"
+    header = bytearray(hx.SPR_FIXED_HEADER)
+    struct.pack_into("<4I", header, 0, 9, 1, 1, 1)
+    struct.pack_into("<3I", header, hx.SPR_SHEET_RECORD, 1, 0, 0)
+    source.write_bytes(bytes(header) + b"\x07")
+    (pack / "cecc4681").mkdir(parents=True)
+    (pack / "digest_index.json").write_text(json.dumps({"index": {}, "extended": {}}), encoding="utf-8")
+
+    report = hc.native_layout(game, pack, out)
+
+    assert report["files"] == 0 and report["source_manifest_entries"] == 0 and list(out.iterdir()) == []
+    assert source.read_bytes() == bytes(header) + b"\x07"
+
+
+def test_native_layout_doubles_full_sprite_sheet_and_substitutes_mapped_cell(tmp_path: Path) -> None:
+    game, pack, out = (tmp_path / name for name in ("game", "pack", "out"))
+    (game / "Online" / "Object").mkdir(parents=True)
+    source = game / "Online" / "Object" / "SItem001.Spr"
+    header = bytearray(hx.SPR_FIXED_HEADER)
+    struct.pack_into("<4I", header, 0, 9, 2, 1, 1)
+    sheet = np.array([[1, 2, 3, 254], [5, 6, 7, 8]], dtype=np.uint8)
+    opaque = np.ones(sheet.shape, dtype=bool)
+    opaque[:, 0] = False
+    source_stream = hx.rle_encode(sheet, opaque)
+    struct.pack_into("<3I", header, hx.SPR_SHEET_RECORD, len(source_stream), 4, 2)
+    original = bytes(header) + source_stream
+    source.write_bytes(original)
+    pal8 = "cecc4681"
+    (pack / pal8).mkdir(parents=True)
+    key = "h12345678_2x1.idx8"
+    hd_cell = np.array([[11, 12, 13, 14], [21, 22, 23, 24]], dtype=np.uint8)
+    (pack / pal8 / key).write_bytes(hd_cell.tobytes())
+    (pack / "digest_index.json").write_text(json.dumps({
+        "index": {key: [["Online/Object/SItem001.Spr", 1]]}, "extended": {}
+    }), encoding="utf-8")
+
+    report = hc.native_layout(game, pack, out)
+    target = out / "Online" / "Object" / "SItem001_hd.Spr"
+    output = target.read_bytes()
+    version, fw, fh, frame_count = struct.unpack_from("<4I", output)
+    sheet_bytes, sheet_width, sheet_height = struct.unpack_from("<3I", output, hx.SPR_SHEET_RECORD)
+    decoded_native = hx.decode_spr_sheet(output)
+
+    assert report["pass"] and report["files"] == 1
+    assert (version, fw, fh, frame_count, sheet_width, sheet_height, decoded_native.exact) == (9, 4, 2, 1, 8, 4, [True])
+    assert decoded_native.kind == "sheet" and (decoded_native.fw, decoded_native.fh) == (sheet_width, sheet_height)
+    decoded_sheet = decoded_native.idx[0]
+    expected = np.repeat(np.repeat(sheet, 2, axis=0), 2, axis=1)
+    expected[:2, 4:8] = hd_cell
+    expected_mask = np.repeat(np.repeat(opaque, 2, axis=0), 2, axis=1)
+    assert np.array_equal(decoded_native.opaque[0], expected_mask)
+    assert np.array_equal(decoded_sheet[expected_mask], expected[expected_mask])
+    assert source.read_bytes() == original
+
+
+def test_bmp_pack_and_native_layout_round_trip_sibling_file(tmp_path: Path) -> None:
+    game, hd_dir, ref_dir, pack, out = (tmp_path / name for name in ("game", "hd", "ref", "pack", "out"))
+    (game / "char").mkdir(parents=True)
+    source = game / "char" / "portrait.bmp"
+    width, height = 16, 8
+    source_pixels = np.arange(width * height, dtype=np.uint8).reshape(height, width) % 200
+    palette_bytes = bytes((value % 256 for _ in range(256) for value in (1, 2, 3, 0)))
+    dib = struct.pack("<IiiHHIIiiII", 40, width, height, 1, 8, 0, width * height, 2834, 2834, 256, 0)
+    pixel_offset = 14 + 40 + len(palette_bytes)
+    source_rows = source_pixels[::-1]
+    stride = (width + 3) & ~3
+    body = b"".join(row.tobytes() + bytes(stride - width) for row in source_rows)
+    source.write_bytes(b"BM" + struct.pack("<IHHI", pixel_offset + len(body), 0, 0, pixel_offset) + dib + palette_bytes + body)
+    decoded_source, _ = hx.decode_bmp(source.read_bytes())
+    pal = np.zeros((256, 3), dtype=np.uint8)
+    ref_frame = ref_dir / "char/portrait.bmp/0000.png"
+    _save(ref_frame, decoded_source.idx[0], pal, transparency=254).close()
+    Image.fromarray(decoded_source.opaque[0].astype(np.uint8) * 255, mode="L").save(ref_frame.with_name("0000_mask.png"))
+    _save(ref_frame.with_name("0000_2x.png"), np.repeat(np.repeat(decoded_source.idx[0], 2, axis=0), 2, axis=1), pal, transparency=254).close()
+    authored = np.repeat(np.repeat(decoded_source.idx[0], 2, axis=0), 2, axis=1)
+    _save(hd_dir / "char/portrait.bmp/0000.png", authored, pal, transparency=254).close()
+
+    palette_pack = pack / "cecc4681"
+    report = hc.pack_dir(game, palette_pack, ("char",), hd_dir, ref_dir, pal, False)
+    native = hc.native_layout(game, palette_pack, out)
+    assert report["pass"] and native["files"] == 1, (report, native)
+    output_path = out / "char/portrait_hd.bmp"
+    decoded_output, output_palette = hx.decode_bmp(output_path.read_bytes())
+
+    assert report["pass"] and report["named"] == 1 and report["pack_files"] == 1
+    assert native["pass"] and native["files"] == 1
+    assert (decoded_output.fw, decoded_output.fh) == (width * 2, height * 2)
+    assert np.array_equal(decoded_output.idx[0], authored)
+    assert output_palette == palette_bytes and source.read_bytes()[pixel_offset:] == body
+
+
+def test_native_panel_pack_keeps_full_source_width_and_uses_2x_fallback_for_folded_tail(tmp_path: Path) -> None:
+    packed = tmp_path / "panel.idx8"
+    packed.write_bytes(bytes([77]) * (1600 * 2))
+    fallback = np.full((2, 1662), 12, dtype=np.uint8)
+    row = {"width": 831, "height": 1, "key": b"w004663e0_h00000001_831x1.idx8"}
+    result = hc._pack_pixels(row, packed, fallback)
+    assert result.shape == fallback.shape
+    assert np.all(result[:, :1600] == 77)
+    assert np.all(result[:, 1600:] == 12)
 
 
 # --- pack (H-HDL1) --------------------------------------------------------------

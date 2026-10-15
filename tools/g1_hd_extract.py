@@ -179,6 +179,26 @@ def decode_spr(data: bytes) -> Decoded:
     return Decoded("rle", fw, fh, idxs, opqs, exact, "rle_runs", f"{sheet}:{sw}x{sh}", warnings)
 
 
+def decode_spr_sheet(data: bytes) -> Decoded:
+    """Decode a `.spr` pixel sheet whose dimensions differ from its frame header.
+
+    Some native assets declare one small frame while storing a larger RLE sheet.
+    Keep the regular frame decoder's contract unchanged; this explicit view lets
+    conversion and round-trip checks inspect the complete native payload.
+    """
+    fw, fh, fc, encoded_bytes, sw, sh = _spr_header(data)
+    if sw < fw or sh < fh or sw * sh <= fw * fh * fc:
+        raise AssetError(".spr sheet record does not describe a larger pixel sheet")
+    payload = data[SPR_FIXED_HEADER:SPR_FIXED_HEADER + encoded_bytes]
+    if len(payload) != encoded_bytes:
+        raise AssetError(".spr sheet payload is truncated")
+    idx, opaque, used = rle_decode(payload, sw * sh)
+    if used != encoded_bytes or _rle_len(payload) != sw * sh:
+        raise AssetError(".spr sheet RLE payload is incomplete or overlong")
+    return Decoded("sheet", sw, sh, [idx.reshape(sh, sw)], [opaque.reshape(sh, sw)], [True],
+                   "rle_runs", f"sheet:{sw}x{sh}", [])
+
+
 def _rle_len(seg: bytes) -> int:
     out = pos = 0
     n = len(seg)

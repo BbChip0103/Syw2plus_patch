@@ -1,0 +1,11 @@
+lap1307 fresh middle → root / delivery-boundary handoff.
+
+SCOPED TECHNICAL PASS: lap1306 two minimal repairs independently accepted. Current work-diff blobs match the preserved work log. Buffer worst case is 1014 bytes plus NUL, now fits 1200; four BMP/sheet success/truncation fixtures use actual source-SHA index rows; production guard unchanged.
+
+Fresh related tests: 164 passed/39.56s; doctor(original SHA), lint and typecheck PASS. Candidate WINMM SHA256 f32ee6190716e705a0376213adbe8fc0722d9a3abdaed07f248bdd4766912655 matches result/manifest; official2614 EXE ac61a28f84f71d602c581a17c835ec4dbb99aad0341c6755e395549005cf88bf unchanged.
+Preserved raw independently confirms PS3 1216 presents/60.755s, HD coverage min100%, source/pack reject/stale/fallback/safety/drop0; owned-close PID/prefix SHA match, final detach/flush complete, prefix PID0/game absent. Final raw has 3511 rows; 3465 is the owned-close prefix count, not a contradictory final count. Result/probe/raw SHA match lap1306.
+
+Root next: freeze the reviewed DLL and prepared stage_hd into the delivery candidate, complete the single delivery-time full make check on the final G1 source, and inspect its actual result. INBOX19:47 preserves the user's19:2x authorization for full-check-then-delivery. Continue that authorized scope without another permission handoff. If the required gate finds an implementation defect, preserve the exact failure and hand the minimum repair to work tier; middle does not implement it.
+
+Do not repeat same-source middle review/game/build/upscale or promote old full-test success. Known mirror validator BLOCKED(2382/min0.614677) remains separate; Windows/DxWnd/audio/new-asset screen coverage/user G1 milestone remain pending. No delivery/full-check/milestone completion in lap1307; this marker preserves the boundary for the promoted owner.
+Evidence: docs/history/laps/20261014_lap1307_middle_hdguard_repair_review.md and shared temp20261014_lap1307_middle_hdguard_repair_review/review.json. Previous marker preserved byte-exact at docs/history/laps/20261014_lap1307_preserved_lap1306_escalate_sol.md(SHA256215a6f74cfe4eb8731f7b69c56246a90715a63184ad0a4f435559887e56a9903).

@@ -149,9 +149,18 @@ def family_operands(data: bytes):
                 yield name, insn, kind, value, osz
 
 
-def build_table(data: bytes, regbase_vas: set[int]) -> list[dict[str, Any]]:
-    """Decide every family operand; raise ValueError listing undecided ones."""
+def build_table(data: bytes, regbase_vas: set[int],
+                extra_decisions: dict[int, dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Decide every family operand; raise ValueError listing undecided ones.
+
+    ``extra_decisions`` is an opt-in, version-profile table for a caller that
+    has independently mapped new code. Each row must include the exact old
+    operand, size, kind, decision, and a rationale. It cannot override an
+    existing classification and every supplied address must be consumed.
+    The default (2610) path is unchanged.
+    """
     cls = _classified()
+    extra = dict(extra_decisions or {})
     rows: list[dict[str, Any]] = []
     undecided = []
     prev: list[Any] = []
@@ -183,12 +192,28 @@ def build_table(data: bytes, regbase_vas: set[int]) -> list[dict[str, Any]]:
             row.update(decision="raise", why=f"pair of {pair['part']}:{pair['va']}")
         elif pair is not None and not pair["action"].startswith("raise"):
             row.update(decision="keep", why=f"pair of keep {pair['va']}")
+        elif insn.address in extra:
+            decision = extra.pop(insn.address)
+            required = {"old", "size", "kind", "decision", "why"}
+            if not required <= decision.keys():
+                raise ValueError(f"0x{insn.address:08x}: incomplete explicit capacity decision")
+            if (decision["old"] != value or decision["size"] != osz
+                    or decision["kind"] != kind):
+                raise ValueError(f"0x{insn.address:08x}: explicit decision preimage mismatch")
+            if decision["decision"] not in ("raise", "keep") or not str(decision["why"]).strip():
+                raise ValueError(f"0x{insn.address:08x}: invalid explicit capacity decision")
+            if "capacity" in decision and (not isinstance(decision["capacity"], int)
+                                               or not 1 <= decision["capacity"] <= 0xFFFF):
+                raise ValueError(f"0x{insn.address:08x}: invalid explicit capacity")
+            row.update(decision=decision["decision"], why=decision["why"])
+            if "capacity" in decision:
+                row["capacity"] = decision["capacity"]
         else:
             undecided.append(row)
             prev.append(insn)
             continue
         if row["decision"] == "raise":
-            cap = row.pop("cap", None) or CAP_OVERRIDE.get(insn.address, CAPACITY)
+            cap = row.pop("cap", None) or row.pop("capacity", None) or CAP_OVERRIDE.get(insn.address, CAPACITY)
             row["new"] = new_value(value, cap)
         rows.append(row)
         prev.append(insn)
@@ -196,6 +221,9 @@ def build_table(data: bytes, regbase_vas: set[int]) -> list[dict[str, Any]]:
     if undecided:
         lines = "\n".join(f"  0x{r['va']:08x} {r['section']} {r['insn']}" for r in undecided)
         raise ValueError(f"{len(undecided)} undecided 1200-family operands:\n{lines}")
+    if extra:
+        addresses = ", ".join(f"0x{va:08x}" for va in sorted(extra))
+        raise ValueError(f"unused explicit capacity decisions: {addresses}")
     return rows
 
 

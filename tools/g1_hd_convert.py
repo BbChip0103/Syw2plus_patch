@@ -569,17 +569,56 @@ def pack_dir(game: Path, out_dir: Path, image_dirs: tuple[str, ...], hd_dir: Pat
              "no_reference": 0, "nonconforming": 0, "ytl_frames": 0, "ytl_narrow": 0}
     roots = tuple(d.lower() for d in image_dirs)
     members: dict[str, list[tuple[str, int, int, int, str]]] = {}   # name -> (rel, frame, stream offset, range, picture)
+    bmp_keys: set[str] = set()
     for path in hx.iter_assets(game):
         rel = path.relative_to(game).as_posix()
         suffix = path.suffix.lower()
-        if suffix not in (".spr", ".ytl") or rel.split("/", 1)[0].lower() not in roots:
+        if suffix not in (".spr", ".ytl", ".bmp") or rel.split("/", 1)[0].lower() not in roots:
             continue
         stats["files"] += 1
         data = path.read_bytes()
         try:
-            dec = hx.decode_ytl(data) if suffix == ".ytl" else hx.decode_spr(data)
+            dec = hx.decode_ytl(data) if suffix == ".ytl" else hx.decode_spr(data) if suffix == ".spr" else hx.decode_bmp(data)[0]
         except hx.AssetError:
             stats["unsupported"] += 1
+            continue
+        if suffix == ".bmp":
+            if not dec.idx or len(dec.idx) != 1:
+                stats["unsupported"] += 1
+                continue
+            pixels = dec.idx[0]
+            digest = fnv1a_128(pixels.tobytes(), 0)
+            if digest is None:
+                stats["tail_short"] += 1
+                continue
+            h, w = pixels.shape
+            name = pack_name(digest, w, h)
+            entry = names.setdefault(name, {"sources": {}, "hd": {}, "refs": []})
+            source = hashlib.sha256(np.where(dec.opaque[0], pixels, TRANSPARENT).astype(np.uint8).tobytes()).hexdigest()
+            entry["sources"].setdefault(source, []).append([rel, 0])
+            entry["refs"].append([rel, 0])
+            bmp_keys.add(name)
+            stats["frames"] += 1
+            stats["named"] += 1
+            if hd_dir is not None:
+                hd_png = hd_dir / rel / "0000.png"
+                if not hd_png.is_file():
+                    stats["no_hd"] += 1
+                    continue
+                try:
+                    ref = load_ref(ref_dir, rel, "0000") if ref_dir else None
+                except ConvertError:
+                    ref = None
+                if ref is None:
+                    stats["no_reference"] += 1
+                    continue
+                with Image.open(hd_png) as img:
+                    counts = check_image(img, ref, palette)
+                    if counts["needs_convert"] or any(counts[k] for k in VIOLATION_KINDS):
+                        stats["nonconforming"] += 1
+                        continue
+                    body = np.array(img, dtype=np.uint8).tobytes()
+                entry["hd"].setdefault(hashlib.sha256(body).hexdigest(), (body, []))[1].append([rel, 0])
             continue
         if dec.kind not in ("rle", "ytl"):
             stats["not_rle"] += len(dec.idx)
@@ -631,6 +670,9 @@ def pack_dir(game: Path, out_dir: Path, image_dirs: tuple[str, ...], hd_dir: Pat
     ext_split = _split_by_prefix(game, names, members)
     for name, entry in sorted(names.items()):
         if len(entry["sources"]) > 1:
+            if name in bmp_keys:
+                conflicts[name] = {c[:8]: refs for c, refs in entry["sources"].items()}
+                continue
             split = ext_split.get(name)
             if split is None:
                 conflicts[name] = {c[:8]: refs for c, refs in entry["sources"].items()}
@@ -683,6 +725,403 @@ def pack_dir(game: Path, out_dir: Path, image_dirs: tuple[str, ...], hd_dir: Pat
     return report
 
 
+def _pack_palettes(pack_dir: Path) -> list[tuple[str, Path]]:
+    if re.fullmatch(r"[0-9a-fA-F]{8}", pack_dir.name):
+        return [(pack_dir.name.lower(), pack_dir)]
+    return [(path.name.lower(), path) for path in sorted(pack_dir.iterdir())
+            if path.is_dir() and re.fullmatch(r"[0-9a-fA-F]{8}", path.name)]
+
+
+def _pack_records(game: Path, pack_dir: Path) -> tuple[dict[str, list[tuple[dict[str, Any], Path]]], int, int]:
+    """Resolve the existing digest pack into source-relative frame records."""
+    if not (pack_dir / "digest_index.json").is_file():
+        roots = [path for _, path in _pack_palettes(pack_dir) if (path / "digest_index.json").is_file()]
+        if len(roots) != 1:
+            raise ConvertError(f"expected digest_index.json in pack root or one palette child: {pack_dir}")
+        pack_dir = roots[0]
+    manifest = json.loads((pack_dir / "digest_index.json").read_text(encoding="utf-8"))
+    records: dict[str, list[tuple[dict[str, Any], Path]]] = {}
+    duplicate_frames = conflicts = 0
+    palettes = _pack_palettes(pack_dir)
+
+    def add(pal8: str, file_name: str, refs: list[list[Any]], *, length: int = 0, p8: str = "") -> None:
+        nonlocal duplicate_frames, conflicts
+        source_file = pack_dir / file_name if pack_dir.name.lower() == pal8 else pack_dir / pal8 / file_name
+        for rel, frame in refs:
+            rel_path = Path(str(rel))
+            if rel_path.is_absolute() or ".." in rel_path.parts:
+                raise ConvertError(f"unsafe source path in pack index: {rel}")
+            try:
+                (game / rel_path).resolve().relative_to(game.resolve())
+            except ValueError as exc:
+                raise ConvertError(f"source path escapes game tree: {rel}") from exc
+            if not source_file.is_file():
+                conflicts += 1
+                continue
+            name_match = re.fullmatch(r"(?:w[0-9a-f]{8}_)?h([0-9a-f]{8})_(\d+)x(\d+)(?:_\d+_[0-9a-f]{8})?\.idx8", file_name)
+            if not name_match:
+                conflicts += 1
+                continue
+            key_name = file_name.encode("ascii")
+            if len(key_name) >= 48:
+                conflicts += 1
+                continue
+            row = {"frame": int(frame), "width": int(name_match.group(2)), "height": int(name_match.group(3)),
+                   "pal8": pal8, "digest": name_match.group(1), "length": int(length),
+                   "p8": int(p8, 16) if p8 else 0, "key": key_name}
+            key = str(rel_path).replace("\\", "/")
+            rows = records.setdefault(key, [])
+            if any(existing[0]["frame"] == row["frame"] for existing in rows):
+                duplicate_frames += 1
+                continue
+            rows.append((row, source_file))
+
+    for pal8, pal_dir in palettes:
+        for digest_name, refs in manifest.get("index", {}).items():
+            if (pal_dir / digest_name).is_file():
+                add(pal8, digest_name, refs)
+        for digest_name, item in manifest.get("extended", {}).items():
+            length = int(item["length"])
+            for p8, group in item.get("pictures", {}).items():
+                data_name = ext_pack_name_from_manifest(digest_name, length, p8)
+                if (pal_dir / data_name).is_file():
+                    add(pal8, data_name, group, length=length, p8=p8)
+    return records, duplicate_frames, conflicts
+
+
+def sibling_layout(game: Path, pack_dir: Path, out_dir: Path) -> dict[str, Any]:
+    """Materialize a pointer-free pack beside each source asset as ``<asset>.hd``.
+
+    ``game`` and ``pack_dir`` are read-only inputs.  ``out_dir`` is a fresh tree
+    mirroring the game-relative source paths; each sidecar index records the
+    frame number and the pack key needed by the runtime loader.
+    """
+    _assert_outputs_safe(out_dir, game, pack_dir)
+    if out_dir.exists() and any(out_dir.iterdir()):
+        raise ConvertError(f"sibling output must be empty: {out_dir}")
+    if not (pack_dir / "digest_index.json").is_file():
+        pal_roots = [path for path in pack_dir.iterdir()
+                     if path.is_dir() and re.fullmatch(r"[0-9a-fA-F]{8}", path.name)
+                     and (path / "digest_index.json").is_file()]
+        if len(pal_roots) != 1:
+            raise ConvertError(f"expected digest_index.json in pack root or one palette child: {pack_dir}")
+        pack_dir = pal_roots[0]
+    manifest = json.loads((pack_dir / "digest_index.json").read_text(encoding="utf-8"))
+    records: dict[tuple[str, str], dict[str, Any]] = {}
+    duplicate_frames = 0
+    conflicts = 0
+
+    def add(name: str, refs: list[list[Any]], *, length: int = 0, p8: str = "") -> None:
+        nonlocal duplicate_frames, conflicts
+        if "/" not in name:
+            conflicts += len(refs)
+            return
+        pal8, file_name = name.split("/", 1)
+        for rel, frame in refs:
+            rel_path = Path(str(rel))
+            if rel_path.is_absolute() or ".." in rel_path.parts:
+                raise ConvertError(f"unsafe source path in pack index: {rel}")
+            frame_id = int(frame)
+            sidecar = out_dir / (str(rel_path) + ".hd")
+            destination = sidecar / f"{frame_id:04d}.idx8"
+            key = (str(rel_path).replace("\\", "/"), f"{frame_id:04d}")
+            source_file = pack_dir / file_name if pack_dir.name.lower() == pal8 else pack_dir / pal8 / file_name
+            if not source_file.is_file():
+                conflicts += 1
+                continue
+            existing = records.get(key)
+            record = {"frame": frame_id, "digest": file_name, "pal8": pal8,
+                      "length": length, "p8": p8}
+            if existing is not None:
+                duplicate_frames += 1
+                continue
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(source_file.read_bytes())
+            records[key] = {"record": record, "sidecar": sidecar}
+
+    pal8_dirs = sorted(p for p in pack_dir.iterdir() if p.is_dir() and re.fullmatch(r"[0-9a-fA-F]{8}", p.name))
+    palettes = [(pack_dir.name.lower(), pack_dir)] if re.fullmatch(r"[0-9a-fA-F]{8}", pack_dir.name) else [
+        (pal_dir.name.lower(), pal_dir) for pal_dir in pal8_dirs]
+    if not palettes:
+        raise ConvertError(f"pack root has no palette identity: {pack_dir}")
+    for pal8, pal8_dir in palettes:
+        for digest_name, refs in manifest.get("index", {}).items():
+            if (pal8_dir / digest_name).is_file():
+                add(f"{pal8}/{digest_name}", refs)
+        for digest_name, item in manifest.get("extended", {}).items():
+            length = int(item["length"])
+            for p8, group in item.get("pictures", {}).items():
+                data_name = ext_pack_name_from_manifest(digest_name, length, p8)
+                if (pal8_dir / data_name).is_file():
+                    add(f"{pal8}/{data_name}", group, length=length, p8=p8)
+
+    by_sidecar: dict[Path, list[dict[str, Any]]] = {}
+    for item in records.values():
+        by_sidecar.setdefault(item["sidecar"], []).append(item["record"])
+    for sidecar, entries in by_sidecar.items():
+        entries.sort(key=lambda entry: entry["frame"])
+        (sidecar / "index.json").write_text(
+            json.dumps({"version": 1, "frames": entries}, sort_keys=False, separators=(",", ":")),
+            encoding="utf-8")
+    return {"tool": "g1_hd_convert", "cmd": "sibling-layout", "files": len(records),
+            "folders": len(by_sidecar), "duplicate_frames": duplicate_frames,
+            "unavailable_or_conflict_frames": conflicts,
+            "bytes": sum((sidecar / f"{entry['frame']:04d}.idx8").stat().st_size
+                         for sidecar, entries in by_sidecar.items() for entry in entries),
+            "pass": bool(records)}
+
+
+def _double_pixels(frame: np.ndarray) -> np.ndarray:
+    return np.repeat(np.repeat(frame, 2, axis=0), 2, axis=1)
+
+
+def _pack_pixels(row: dict[str, Any], source: Path, fallback: np.ndarray) -> np.ndarray:
+    """Read a packed 2x frame, extending the 800-column panel crop with source pixels."""
+    body = source.read_bytes()
+    width, height = int(row["width"]), int(row["height"])
+    key = row["key"]
+    packed_width = 800 if width == PANEL_SOURCE_WIDTH and key.startswith(b"w004663e0_") else width
+    if len(body) != packed_width * height * 4:
+        raise ConvertError(f"{source}: {len(body)} bytes does not match {packed_width}x{height} at 2x")
+    pixels = np.frombuffer(body, dtype=np.uint8).reshape(2 * height, 2 * packed_width)
+    if packed_width == width:
+        return pixels.copy()
+    result = fallback.copy()
+    result[:, :pixels.shape[1]] = pixels
+    return result
+
+
+def _encode_spr_native(source_data: bytes, frames: list[np.ndarray], masks: list[np.ndarray], kind: str) -> bytes:
+    version, width, height, count = struct.unpack_from("<4I", source_data, 0)
+    if len(frames) != count or len(masks) != count or any(frame.shape != (height * 2, width * 2) for frame in frames):
+        raise ConvertError(".spr frame count or 2x dimensions do not match its source")
+    header = bytearray(source_data[:hx.SPR_FIXED_HEADER])
+    struct.pack_into("<4I", header, 0, version, width * 2, height * 2, count)
+    if kind == "raw":
+        body = b"".join(frame.tobytes() for frame in frames)
+        _old_size, old_w, old_h = struct.unpack_from("<3I", source_data, hx.SPR_SHEET_RECORD)
+        struct.pack_into("<3I", header, hx.SPR_SHEET_RECORD,
+                         len(body), old_w * 2 if old_w else 0, old_h * 2 if old_h else 0)
+        total = width * height * 4
+        for i in range(1, 300):
+            struct.pack_into("<I", header, hx.SPR_OFFSET_TABLE + 4 * (i - 1), i * total if i < count else 0)
+        return bytes(header) + body
+    streams = [hx.rle_encode(frame, mask) for frame, mask in zip(frames, masks, strict=True)]
+    _old_size, old_w, old_h = struct.unpack_from("<3I", source_data, hx.SPR_SHEET_RECORD)
+    if old_w and old_h:
+        streams = _avoid_spr_raw_collision(streams, old_w * 2 * old_h * 2)
+    offsets, cursor = [], 0
+    for stream in streams:
+        offsets.append(cursor)
+        cursor += len(stream)
+    for i in range(1, 300):
+        struct.pack_into("<I", header, hx.SPR_OFFSET_TABLE + 4 * (i - 1), offsets[i] if i < count else 0)
+    _old_size, old_w, old_h = struct.unpack_from("<3I", source_data, hx.SPR_SHEET_RECORD)
+    struct.pack_into("<3I", header, hx.SPR_SHEET_RECORD, cursor,
+                     old_w * 2 if old_w else 0, old_h * 2 if old_h else 0)
+    return bytes(header) + b"".join(streams)
+
+
+def _encode_spr_sheet_native(source_data: bytes, pixels: np.ndarray, mask: np.ndarray, kind: str) -> bytes:
+    """Write a header-sized frame and its separately declared pixel sheet at 2x."""
+    version, width, height, count = struct.unpack_from("<4I", source_data, 0)
+    _size, sheet_width, sheet_height = struct.unpack_from("<3I", source_data, hx.SPR_SHEET_RECORD)
+    if not sheet_width or not sheet_height or pixels.shape != (sheet_height * 2, sheet_width * 2) or mask.shape != pixels.shape:
+        raise ConvertError(".spr sheet dimensions do not match its source record")
+    if kind == "raw":
+        payload = pixels.tobytes()
+    else:
+        payload = _avoid_spr_raw_collision([hx.rle_encode(pixels, mask)], (sheet_width * 2) * (sheet_height * 2))[0]
+    header = bytearray(source_data[:hx.SPR_FIXED_HEADER])
+    struct.pack_into("<4I", header, 0, version, width * 2, height * 2, count)
+    struct.pack_into("<3I", header, hx.SPR_SHEET_RECORD, len(payload), sheet_width * 2, sheet_height * 2)
+    for index in range(1, 300):
+        struct.pack_into("<I", header, hx.SPR_OFFSET_TABLE + 4 * (index - 1), 0)
+    return bytes(header) + payload
+
+
+def _avoid_spr_raw_collision(streams: list[bytes], raw_size: int) -> list[bytes]:
+    """Keep an RLE payload distinct from the SPR raw-size sentinel.
+
+    The native format infers raw pixels when its payload byte count equals the
+    declared sheet area. Splitting one transparent run into two legal runs adds
+    two bytes without changing any decoded pixels or masks.
+    """
+    if sum(map(len, streams)) != raw_size:
+        return streams
+    for stream_index, stream in enumerate(streams):
+        pos = 0
+        while pos + 1 < len(stream):
+            if stream[pos] == hx.RLE_MARKER and stream[pos + 1] > 1:
+                count = stream[pos + 1]
+                streams = list(streams)
+                streams[stream_index] = stream[:pos] + bytes((hx.RLE_MARKER, 1, hx.RLE_MARKER, count - 1)) + stream[pos + 2:]
+                return streams
+            pos += 2 if stream[pos] == hx.RLE_MARKER else 1
+    raise ConvertError(".spr RLE payload collides with the declared raw sheet size and has no splittable transparent run")
+
+
+def _encode_ytl_native(source_data: bytes, frames: list[np.ndarray], masks: list[np.ndarray]) -> bytes:
+    version, width, height, count = struct.unpack_from("<4I", source_data, 0)
+    if len(frames) != count or len(masks) != count or any(frame.shape != (height * 2, width * 2) for frame in frames):
+        raise ConvertError(".ytl frame count or 2x dimensions do not match its source")
+    packed_frames = []
+    for frame, mask in zip(frames, masks, strict=True):
+        records = bytearray()
+        for row, opaque in zip(frame, mask, strict=True):
+            cols = np.flatnonzero(opaque)
+            if not cols.size:
+                records += bytes((min(width * 2, 255), 0))
+                continue
+            start, end = int(cols[0]), int(cols[-1]) + 1
+            if start > 255 or end - start > 255:
+                raise ConvertError(".ytl 2x row cannot fit one [skip][count][bytes] record")
+            records += bytes((start, end - start)) + row[start:end].tobytes()
+        packed_frames.append(bytes(records))
+    header = bytearray(source_data[:hx.SPR_FIXED_HEADER])
+    struct.pack_into("<4I", header, 0, version, width * 2, height * 2, count)
+    cursor = 0
+    for i, frame_stream in enumerate(packed_frames):
+        struct.pack_into("<I", header, hx.YTL_OFFSET_TABLE + 4 * i, cursor)
+        cursor += len(frame_stream)
+    struct.pack_into("<I", header, hx.SPR_SHEET_RECORD, cursor)
+    return bytes(header) + b"".join(packed_frames)
+
+
+def _encode_bmp_native(source_data: bytes, pixels: np.ndarray) -> bytes:
+    pixel_offset = struct.unpack_from("<I", source_data, 10)[0]
+    _dib_size, _width, signed_height, _planes, _bpp, _compression, *_ = struct.unpack_from("<IiiHHIIiiII", source_data, 14)
+    height, width = pixels.shape
+    stride = (width + 3) & ~3
+    rows = pixels if signed_height < 0 else pixels[::-1]
+    body = b"".join(row.tobytes() + bytes(stride - width) for row in rows)
+    header = bytearray(source_data[:pixel_offset])
+    struct.pack_into("<I", header, 2, pixel_offset + len(body))
+    struct.pack_into("<ii", header, 18, width, -height if signed_height < 0 else height)
+    struct.pack_into("<I", header, 34, len(body))
+    return bytes(header) + body
+
+
+def native_layout(game: Path, pack_dir: Path, out_dir: Path, palette: np.ndarray | None = None) -> dict[str, Any]:
+    """Write native ``<source>_hd.<ext>`` siblings and their original-file SHA-256 index."""
+    _assert_outputs_safe(out_dir, game, pack_dir)
+    if out_dir.exists() and any(out_dir.iterdir()):
+        raise ConvertError(f"native output must be empty: {out_dir}")
+    records, duplicate_frames, conflicts = _pack_records(game, pack_dir)
+    by_source = {Path(rel): items for rel, items in records.items()}
+    out_dir.mkdir(parents=True, exist_ok=True)
+    files_written = frames_written = byte_count = defaults = 0
+    errors: list[str] = []
+    unmapped_assets: list[str] = []
+    source_hashes: list[tuple[str, str]] = []
+    fe_replacement = int(hx.fe_replacement(palette)) if palette is not None else 253
+    for source_path in hx.iter_assets(game):
+        source_rel = source_path.relative_to(game)
+        mapped = {int(row["frame"]): (row, packed) for row, packed in by_source.get(source_rel, [])}
+        # A native sibling is meaningful only when the accepted pack contains at
+        # least one authored HD frame for this asset. Missing images stay on the
+        # runtime Scale2x path instead of becoming another copy of the source.
+        if not mapped:
+            continue
+        data = source_path.read_bytes()
+        try:
+            decoded, _palette_bytes = hx.decode_file(source_path)
+        except hx.AssetError:
+            continue
+        sheet_size = sheet_width = sheet_height = 0
+        sheet_candidate = False
+        if source_path.suffix.lower() == ".spr" and decoded.kind == "rle":
+            sheet_size, sheet_width, sheet_height = struct.unpack_from("<3I", data, hx.SPR_SHEET_RECORD)
+            declared_pixels = decoded.fw * decoded.fh * len(decoded.idx)
+            sheet_candidate = (not all(decoded.exact) and sheet_width >= decoded.fw and sheet_height >= decoded.fh and
+                               sheet_width * sheet_height > declared_pixels and
+                               sheet_size <= len(data) - hx.SPR_FIXED_HEADER)
+        if not decoded.idx or (not all(decoded.exact) and not sheet_candidate):
+            errors.append(f"{source_rel}: source frame decode is incomplete")
+            continue
+        hd_frames, hd_masks = [], []
+        for frame_index, (idx, opaque) in enumerate(zip(decoded.idx, decoded.opaque, strict=True)):
+            doubled_mask = _double_pixels(opaque)
+            doubled = np.where(doubled_mask, _double_pixels(idx), TRANSPARENT).astype(np.uint8)
+            doubled[doubled_mask & (doubled == TRANSPARENT)] = fe_replacement
+            if frame_index in mapped:
+                row, packed = mapped[frame_index]
+                try:
+                    doubled = _pack_pixels(row, packed, doubled)
+                except ConvertError as error:
+                    errors.append(str(error))
+                    continue
+            else:
+                defaults += 1
+            hd_frames.append(doubled)
+            hd_masks.append(doubled_mask)
+        if len(hd_frames) != len(decoded.idx):
+            continue
+        suffix = source_path.suffix.lower()
+        try:
+            if suffix == ".spr":
+                if sheet_candidate:
+                    if sheet_width % decoded.fw or sheet_height % decoded.fh:
+                        unmapped_assets.append(source_rel.as_posix())
+                        continue
+                    sheet_idx, sheet_mask, used = hx.rle_decode(
+                        data[hx.SPR_FIXED_HEADER:hx.SPR_FIXED_HEADER + sheet_size], sheet_width * sheet_height)
+                    if used != sheet_size:
+                        raise ConvertError(".spr sheet RLE payload is not consumed exactly")
+                    source_sheet = sheet_idx.reshape(sheet_height, sheet_width)
+                    source_mask = sheet_mask.reshape(sheet_height, sheet_width)
+                    hd_sheet_mask = _double_pixels(source_mask)
+                    hd_sheet = np.where(hd_sheet_mask, _double_pixels(source_sheet), TRANSPARENT).astype(np.uint8)
+                    hd_sheet[hd_sheet_mask & (hd_sheet == TRANSPARENT)] = fe_replacement
+                    cells_x, cells_y = sheet_width // decoded.fw, sheet_height // decoded.fh
+                    for cell, (row, packed) in mapped.items():
+                        if cell >= cells_x * cells_y:
+                            raise ConvertError(f".spr sheet frame {cell} is outside the declared cell grid")
+                        y, x = divmod(cell, cells_x)
+                        src_x, src_y = x * decoded.fw, y * decoded.fh
+                        crop = hd_sheet[2 * src_y:2 * (src_y + decoded.fh), 2 * src_x:2 * (src_x + decoded.fw)]
+                        fallback = crop.copy()
+                        replacement = _pack_pixels(row, packed, fallback)
+                        crop[:, :] = replacement
+                    payload = _encode_spr_sheet_native(data, hd_sheet, hd_sheet_mask, decoded.kind)
+                else:
+                    payload = _encode_spr_native(data, hd_frames, hd_masks, decoded.kind)
+            elif suffix == ".ytl":
+                payload = _encode_ytl_native(data, hd_frames, hd_masks)
+            else:
+                payload = _encode_bmp_native(data, hd_frames[0])
+        except (ConvertError, struct.error) as error:
+            errors.append(f"{source_rel}: {error}")
+            continue
+        output_rel = source_rel.with_name(source_rel.stem + "_hd" + source_rel.suffix)
+        destination = out_dir / output_rel
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(payload)
+        source_hashes.append((output_rel.as_posix(), hashlib.sha256(data).hexdigest()))
+        files_written += 1
+        frames_written += len(hd_frames)
+        byte_count += len(payload)
+    manifest_path = out_dir / "g1_hd_sources.sha256"
+    if source_hashes:
+        manifest_path.write_text("".join(f"{digest}  {path}\n" for path, digest in sorted(source_hashes)),
+                                 encoding="ascii", newline="\n")
+    return {"tool": "g1_hd_convert", "cmd": "native-layout", "files": files_written,
+            "frames": frames_written, "default_scale_frames": defaults,
+            "duplicate_frames": duplicate_frames, "unavailable_or_conflict_frames": conflicts,
+            "bytes": byte_count, "errors": errors[:20], "error_count": len(errors),
+            "source_manifest": manifest_path.name if source_hashes else None,
+            "source_manifest_entries": len(source_hashes),
+            "unmapped_assets": unmapped_assets,
+            "pass": files_written > 0 and not errors}
+
+
+def ext_pack_name_from_manifest(base_name: str, length: int, p8: str) -> str:
+    match = re.fullmatch(r"h([0-9a-f]{8})_(\d+)x(\d+)\.idx8", base_name)
+    if not match:
+        raise ConvertError(f"invalid extended pack key: {base_name}")
+    return f"h{match.group(1)}_{match.group(2)}x{match.group(3)}_{length}_{p8}.idx8"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -694,6 +1133,16 @@ def main(argv: list[str] | None = None) -> int:
     pk.add_argument("--out", type=Path, required=True)
     pk.add_argument("--image-dirs", default=",".join(hx.DEFAULT_IMAGE_DIRS))
     pk.add_argument("--dry-run", action="store_true", help="write digest_index.json only")
+    sl = sub.add_parser("sibling-layout", help="copy a pack beside source assets as <asset>.hd folders")
+    sl.add_argument("pack_dir", type=Path, help="read-only pack directory containing digest_index.json")
+    sl.add_argument("--game", type=Path, default=hx.DEFAULT_GAME)
+    sl.add_argument("--pal", type=Path, default=hx.DEFAULT_GAME / "pal" / "imjin2.pal")
+    sl.add_argument("--out", type=Path, required=True, help="new output tree; must be empty")
+    sf = sub.add_parser("native-layout", help="write native-format sibling <asset>_hd.<ext> files from an existing pack")
+    sf.add_argument("pack_dir", type=Path, help="read-only pack directory containing digest_index.json")
+    sf.add_argument("--game", type=Path, default=hx.DEFAULT_GAME)
+    sf.add_argument("--pal", type=Path, default=hx.DEFAULT_GAME / "pal" / "imjin2.pal")
+    sf.add_argument("--out", type=Path, required=True, help="new output tree mirroring the game paths")
     fs = sub.add_parser("fullscreen")
     fs.add_argument("--pal", type=Path, required=True, help="the screen palette the picture is quantised to (out/<pal8>/)")
     fs.add_argument("--game", type=Path, default=hx.DEFAULT_GAME)
@@ -723,25 +1172,37 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("hd_png", type=Path)
             p.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
-    palette = hx.load_palette(args.pal)
+    palette = hx.load_palette(args.pal) if hasattr(args, "pal") else None
     if args.cmd in ("pack", "fullscreen", "logo"):
+        assert palette is not None
         args.out = args.out / palette_pal8(palette)        # H-HDPAL: <pack>\<pal8>\<name>
     if args.cmd == "pack":
+        assert palette is not None
         if args.hd_dir is not None and args.ref is None:
             parser.error("--hd-dir needs --ref")
         report = pack_dir(args.game, args.out, tuple(d for d in args.image_dirs.split(",") if d), args.hd_dir,
                           args.ref, palette, args.dry_run)
     elif args.cmd == "fullscreen":
+        assert palette is not None
         report = fullscreen_pack(args.spr, args.rgb, args.out, palette, args.game)
     elif args.cmd == "logo":
+        assert palette is not None
         report = logo_pack(args.spr, args.rgb, args.out, palette, args.game)
+    elif args.cmd == "sibling-layout":
+        report = sibling_layout(args.game, args.pack_dir, args.out)
+    elif args.cmd == "native-layout":
+        report = native_layout(args.game, args.pack_dir, args.out, hx.load_palette(args.pal))
     elif args.cmd == "check":
+        assert palette is not None
         report = check_dir(args.hd_dir, args.ref, palette)
     elif args.cmd == "convert":
+        assert palette is not None
         report = convert_dir(args.rgb_dir, args.ref, args.out, palette, args.game)
     elif args.cmd == "draft":
+        assert palette is not None
         report = draft_dir(args.ref, args.out, palette, args.game)
     else:
+        assert palette is not None
         report = panel_idx8(args.hd_png, args.ref, args.out, palette, args.game)
     text = json.dumps(report, indent=1, sort_keys=True, ensure_ascii=False)
     if args.cmd == "check" and args.json:

@@ -58,3 +58,19 @@ def test_read_preserves_short_or_negative_read_error(count, errno, monkeypatch):
 
     assert caught.value.errno == errno
     assert str(caught.value) == f"[Errno {errno}] read 321:1234, got {count}/4"
+
+
+def test_display_state_reads_only_program_state_and_simulation_tick(monkeypatch):
+    addresses = []
+
+    def read(pid, address, size):
+        addresses.append((pid, address, size))
+        return (9 if address == 0x4ED818 else 24600).to_bytes(size, "little", signed=True)
+
+    monkeypatch.setattr(runtime_driver, "read", read)
+
+    result = runtime_driver.display_state(321)
+
+    assert result["ps"] == 9
+    assert result["tick"] == 24600
+    assert addresses == [(321, 0x4ED818, 4), (321, 0x8924B8, 4)]

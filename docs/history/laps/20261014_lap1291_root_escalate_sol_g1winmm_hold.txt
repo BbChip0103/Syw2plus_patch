@@ -1,0 +1,23 @@
+# lap1291 middle — H-G1ON2614 raw conflict HOLD / root-Sol → work
+
+## 승격 이유
+사용자 지정 종료 조건(기록과 raw의 실질 충돌)에 해당한다. lap1289 G1 480초 run은 top/lane/play PASS지만 같은 raw의 종료 summary는 FAIL(drop10932, install_status failed)이다. 원시 근거·기존 변경을 보존하고 중간 tier는 게임/하네스 수정 없이 종료한다. 제품 크래시 재현이나 G1 마일스톤 완료로 판정하지 않는다.
+
+## 독립 확인 / 원시 근거
+- 후보 DLL d2ce1637574340dbd306fa4a41a591461c899cc03c987568ee018b576ec65c53; 공식2614 EXE ac61a28f84f71d602c581a17c835ec4dbb99aad0341c6755e395549005cf88bf 재해시 MATCH. 189 exports는 설치된 Wine system WINMM과 name/ordinal exact MATCH(Windows 검증 아님).
+- 기존4 display lane의 capture/manifest/trace/hash/크기 및 candidate 종료 drop0 확인. 새 게임 실행 없음, 자체2614 save roundtrip 아님.
+- soak result ../temp/Syw2plus_patch/20261014_lap1289_g1on2614_soak1/g1-esl2614-result.json SHA a2e5b7b384a1fc2af32a6f91fb12104b5a8632d4e00a10adda1173dc3de381fa.
+- raw soak/candidate/trace_raw.jsonl SHA 86ba52c4b19c634f7363113346aee68bd482d5507750528a315505d1bda57541:8192행, summary drop10932/aggregate-output-drop42, event_limit overflow2. trace detach/flush complete라도 누락을 해소하지 않는다.
+- PS3 dwell presents3623은183.474초만 관측. 최초PS3 뒤196.834초에PS27,205.037초에PS29. 마지막present부터summary까지257.971초는 로그누락. ps3_dwell_3.png는 실제 패배 결과표이며 뒤의 메뉴 시간을 안정성으로 세지 않는다.
+- 독립계산 ../temp/Syw2plus_patch/20261014_lap1291_middle_g1_winmm_review/{recalculate.py,review.json}; 실행exit0은 HOLD 진단 산출이지 승인 아님.
+
+## root/Sol 확인 후 work에 줄 명시적 수리 범위
+1. TRACE_MAX_EVENTS8192의 포화와 상위PASS/trace_summaryFAIL 충돌을 위 raw로 확인하고 현재480초수용을HOLD 유지한다. 이는 단순전사오류가 아니다.
+2. work 소유 수정은 tools/g1_esl2614_display_probe.py의 결과결합/soak계약, 필요한 tools/g1_saved_scene_probe.py의 상태·시간coverage 관측, tools/esl2614_runtime.py의 실제입력경로 대응 및 관련회귀에 한정. trace 예산은 해당480초 실제 관측을 막는 범위만 최소대응. middle은 직접수정하지 않는다.
+3. 보존raw의 nested trace FAIL·PS3시간부족·승패종료가 성공으로 합쳐질 수 없는 회귀를 먼저 확인하고, 기존짧은display 성공은유지한다. 다음 실제게임시험에서는 PS3 이탈을 승패종료/크래시와 구분하고480초 full active coverage가 없으면부분결과/미검증으로남긴다. 기준/pin/과거raw를고쳐통과시키지않는다.
+4. 현재 원본은 ../[ESL]Syw2plus - ESL2614/[ESL]Syw2plus/ 하위에있다. 기존최상위EXE경로는 검수도중없어졌다(이동주체미확인);중첩EXE SHA는같다. 재실행전에 실제입력과SHA를확인하고 원본을이동/수정하지않는다.
+5. source identity가 사용자runtime01ff08e3…와현계산02d2127d…에서다르므로lap1289의빌드source동일승인금지. 수정관련최소회귀후 실패soak경로만격리실행하고 관련새소스/실행근거를남긴다. 전체make check는전달직전만;수정후fresh middle검수유지.
+6. MCI기본/강제0 B라음악/효과음UNKNOWN,Windows/사용자입력/2614자체save재로드/사용자G1미결유지. G5는다른세션담당(00:29INBOX)이므로이루프재개금지.
+
+## 보존 / 종료
+상세 docs/history/laps/20261014_lap1291_middle_g1_winmm_raw_conflict.md. 이전ESCALATE3326 B는20261014_lap1291_preserved_lap1290_escalate_sol.md,전STATUS58줄은20261014_lap1291_status_before_raw_review.md에byte-exact보존했다. 제품코드/후보DLL/원본/raw/타세션파일/프로세스비접촉,새빌드/게임/전달/커밋0. 이번회차는수리배정전승격종료하며반복검수카드를자동생성하지않는다.

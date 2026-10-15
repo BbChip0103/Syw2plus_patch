@@ -1,0 +1,19 @@
+# lap1293 middle → root/Sol: raw 충돌 HOLD / 이미 승인된 work 수리 실행 인계
+
+사용자 실질 raw충돌 종료 규칙에 따라 승격 종료한다. 구현·새 게임·전달·커밋0.
+최신 INBOX 2026-10-14 00:57 root는 lap1291 HOLD와 work 최소수리를 이미 수용/배정했다.
+추가 계획 승인이나 충돌 재검수 회차를 쌓지 말고 그 배정대로 work를 실행한다.
+
+## 확인 결과
+상위PASS/nested traceFAIL·8192행/drop10932·PS3 관측183.474초·PS27/29 전환196.834/205.037초·관측누락257.971초를 raw에서 직접 재계산했다.480초안정성 HOLD, 승패종료는 크래시 재현 아님.
+공식 중첩2614 EXE SHA ac61a28f84f71d602c581a17c835ec4dbb99aad0341c6755e395549005cf88bf 및 기존WINMM d2ce1637574340dbd306fa4a41a591461c899cc03c987568ee018b576ec65c53 MATCH. 현재adapter 입력경로/상위결합/시간coverage/trace예산 결함은 미수리다.
+
+## work 소유 범위와 승격자가 이어 확인할 것
+- tools/g1_esl2614_display_probe.py 결과결합/soak 판정, 필요한 tools/g1_saved_scene_probe.py 상태·시간coverage, tools/esl2614_runtime.py 중첩입력, direct_draw_trace.c의해당시험관측예산·관련회귀만 최소수리. middle은 직접수정하지 않는다.
+- raw회귀로 nestedFAIL/관측부족/승패가PASS로합쳐지지않음을확인→관련pytest/lint/typecheck→실패soak만격리실행. 생존save/설정또는같은조건재시작으로PS3누적480초를별도계측하며fixture공개. 승패/크래시/도구오류구분·drop없음·소유cleanup 확인.
+- root00:57의동일조건G1-off MCI대조는DLL귀속만확인. 음악재생Windows/사용자·자체save roundtrip·G1마일스톤미확인유지. 수리뒤source/DLL기록과fresh middle확인, 전체check는전달직전만.
+- 기존4 lane·원본/raw/후보/안전핀/타세션변경보존. 원본이동금지·G5재개금지. 제품증거없는회차상한을새계획카드로초기화하지않는다.
+
+상세 docs/history/laps/20261014_lap1293_middle_soak_root_assignment_handoff.md.
+직접계산 ../temp/Syw2plus_patch/20261014_lap1293_middle_soak_handoff/{recalculate.py,review.json}.
+이전marker2190B는20261014_lap1293_preserved_lap1292_escalate_sol.md에byte-exact보존했다.

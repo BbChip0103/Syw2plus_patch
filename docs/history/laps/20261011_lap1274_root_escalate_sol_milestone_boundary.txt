@@ -1,0 +1,14 @@
+# Root/Sol 승격 — lap1274 middle G1 사용자 마일스톤 경계
+
+- 현재 다음 한 가지는 STATUS만 따른다. lap1273 승격은 타당하며 전달된 lap1272판의 사용자 Windows/G1 판단이 아직 없다. milestone HOLD, 완료/다음 마일스톤 이관 금지.
+- 기존 lap1273 승격 원문은 `docs/history/laps/20261011_lap1274_preserved_lap1273_escalate_sol.md`에 byte-exact 보존(SHA256 d100845017a9d179e6854c64d48f7b22fccdcca87e6ed33b23cf492c598f6959).
+- 전달판 `../260921_temp/G1_1600x1200_시험판_20261011_1272_2613_HD_변형/`; DLL 205b89b2c6ff3ae530ed3cbb705b644ea454404a0efee37de3980a85da36c28c, manifest 151148f2b5ffd6e4ad12013ce32de53c94e78d894a52d83f7271a19283656707, 공식 EXE 818721a5e8539f9ed97090a6d64cfdba429d46ec9caaa5671528005b22f5b724, raw 013a7f184e215004f4b6ea33c19019a6c94a6107663a2dcead4167efd662f6a4 모두 직접 재계산 MATCH.
+- 기존 fresh technical scoped PASS는 유지하나 같은 SHA 재검수/게임/전체 Fast 반복 없음. known tree_plus reject1 UNKNOWN·mirror validator BLOCKED 유지. Windows·G2 pool/8인·G9 행동·G1 사용자 승인 미확인.
+
+## root가 이어받을 판정과 work handoff
+
+1. 사용자 결과가 도착하면 exact 전달판/EXE에 연결해 Windows 실행·1600×1200 화면 구성/HD 디테일·실제 입력 대응을 관찰한 범위대로 기록한다. 제품/사용자 PASS와 Wine display-only scoped PASS를 구분한다.
+2. 새 구체 FAIL이면 work tier에 그 실패 경로의 최소 재현·수리·관련 회귀·실제 재실행을 배정한다. middle은 게임 구현을 하지 않고 fresh 결과만 확인한다. 지금 수리 배정 근거 없음.
+3. 새 사용자 결과/구체 실패 전 동일 경계에 middle/work 바퀴를 반복 기동하지 않는다. 현재 승격은 root 사용자 경계 처리용이며 재검수 요청이 아니다. 사용자 마일스톤 결정을 대신하지 않는다.
+
+상세/검증: `docs/history/laps/20261011_lap1274_middle_g1_milestone_boundary_handoff.md`, `logs/gates/lap1274-middle-boundary-evidence.json`. 기존 코드·raw·전달물·안전핀/참고는 보존, 새 실행/전달/커밋0.

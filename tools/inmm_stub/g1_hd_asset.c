@@ -8,12 +8,16 @@
  */
 
 #include <string.h>
+#ifdef _WIN32
+#include <stdlib.h>
+#endif
 
 #include "g1_hd_asset.h"
 #include "g1_hd_pack.h"
 #include "g1_perf_sections.h"
 #include "g1_scale2x_core.h"
 #include "g1_scratch_bounds.h"
+#include "g1_sha256.h"
 
 #define G1_HD_SOURCE_ENV "SYW2_G1_HD_SOURCE"
 #define G1_HD_SOURCE_IDENTITY "identity"
@@ -154,6 +158,30 @@ static BYTE g_last_clip_replay_value = 0u;
 static volatile LONG g_env_state = 0;
 static DWORD g_hd_source_mode = 0u;
 static char g_hd_pack_dir[MAX_PATH];
+#ifdef _WIN32
+#define G1_HD_SIDECAR_LIMIT 524288u
+#define G1_HD_SIDECAR_DIR_LIMIT 4096u
+#define G1_HD_SIDECAR_HASH_SIZE 1048576u
+#define G1_HD_SOURCE_GUARD_LIMIT 4096u
+typedef struct { char name[64]; char pal8[9]; DWORD frame; DWORD directory; DWORD length; DWORD p8; DWORD width; DWORD height; BYTE native; BYTE ambiguous; } G1HdSidecarEntry;
+typedef struct { char path[MAX_PATH]; BYTE sha256[32]; } G1HdSourceGuardEntry;
+static G1HdSidecarEntry *g_sidecar_entries;
+static DWORD g_sidecar_count;
+static DWORD *g_sidecar_hash;
+static char (*g_sidecar_dirs)[MAX_PATH];
+static DWORD g_sidecar_dir_count;
+static char (*g_hd_single_files)[MAX_PATH];
+static DWORD g_hd_single_file_count;
+static DWORD g_sidecar_duplicates;
+static BOOL g_sidecar_enabled;
+static char g_sidecar_root[MAX_PATH];
+static G1HdSourceGuardEntry *g_source_guard_entries;
+static DWORD g_source_guard_count;
+static BOOL g_source_guard_active;
+static BOOL g_source_guard_invalid;
+static DWORD g_source_guard_rejects;
+#endif
+static void initialize_environment(void);
 static char g_hd_key_log_path[MAX_PATH];
 static HANDLE g_hd_key_log = INVALID_HANDLE_VALUE;
 static DWORD g_pack_hits = 0u;
@@ -225,6 +253,868 @@ static DWORD g_reject_first_x = 0u;
 static DWORD g_reject_first_y = 0u;
 static DWORD g_reject_last_x = 0u;
 static DWORD g_reject_last_y = 0u;
+static BOOL readable_range(const BYTE *source, SIZE_T bytes);
+
+#ifdef _WIN32
+static DWORD sidecar_hash_key(const char *name, const char *pal8)
+{
+    DWORD hash = 2166136261u;
+    const unsigned char *p;
+    for (p = (const unsigned char *)name; *p; ++p) { hash ^= *p; hash *= 16777619u; }
+    for (p = (const unsigned char *)pal8; *p; ++p) { hash ^= *p; hash *= 16777619u; }
+    return hash & (G1_HD_SIDECAR_HASH_SIZE - 1u);
+}
+
+static char *sidecar_find_text(char *text, const char *wanted)
+{
+    DWORD length = (DWORD)lstrlenA(wanted);
+    char *p;
+    DWORD i;
+    for (p = text; *p; ++p) {
+        for (i = 0u; i < length && p[i] && p[i] == wanted[i]; ++i) { }
+        if (i == length) return p;
+    }
+    return NULL;
+}
+
+static BOOL sidecar_prefix(const char *text, const char *wanted, DWORD length)
+{
+    DWORD i;
+    for (i = 0u; i < length; ++i) if (text[i] != wanted[i]) return FALSE;
+    return TRUE;
+}
+
+static DWORD sidecar_hex(const char *text)
+{
+    DWORD value = 0u;
+    while (*text) {
+        BYTE c = (BYTE)*text++;
+        DWORD digit;
+        if (c >= '0' && c <= '9') digit = c - '0';
+        else if (c >= 'a' && c <= 'f') digit = c - 'a' + 10u;
+        else if (c >= 'A' && c <= 'F') digit = c - 'A' + 10u;
+        else break;
+        value = (value << 4) | digit;
+    }
+    return value;
+}
+
+static DWORD parse_json_uint(const char **cursor, DWORD *value)
+{
+    DWORD n = 0u;
+    const char *p = *cursor;
+    if (*p < '0' || *p > '9') return 0u;
+    while (*p >= '0' && *p <= '9') { n = n * 10u + (DWORD)(*p - '0'); ++p; }
+    *cursor = p; *value = n; return 1u;
+}
+
+static DWORD parse_json_string(const char **cursor, char *out, DWORD capacity)
+{
+    DWORD n = 0u;
+    const char *p = *cursor;
+    if (*p++ != '"') return 0u;
+    while (*p && *p != '"') {
+        if (*p == '\\' || n + 1u >= capacity) return 0u;
+        out[n++] = *p++;
+    }
+    if (*p != '"') return 0u;
+    out[n] = '\0'; *cursor = p + 1; return 1u;
+}
+
+static DWORD sidecar_find(const char *name, const char *pal8)
+{
+    DWORD slot = sidecar_hash_key(name, pal8), probes;
+    for (probes = 0u; probes < G1_HD_SIDECAR_HASH_SIZE; ++probes) {
+        DWORD ref = g_sidecar_hash ? g_sidecar_hash[slot] : 0u;
+        if (!ref) return 0u;
+        if (!lstrcmpA(g_sidecar_entries[ref - 1u].name, name) &&
+            !lstrcmpA(g_sidecar_entries[ref - 1u].pal8, pal8)) return ref;
+        slot = (slot + 1u) & (G1_HD_SIDECAR_HASH_SIZE - 1u);
+    }
+    return 0u;
+}
+
+static DWORD read_le32(const BYTE *p)
+{
+    return (DWORD)p[0] | ((DWORD)p[1] << 8) | ((DWORD)p[2] << 16) | ((DWORD)p[3] << 24);
+}
+
+static void native_copy(BYTE *destination, const BYTE *source, DWORD bytes)
+{
+    DWORD index;
+    for (index = 0u; index < bytes; ++index) destination[index] = source[index];
+}
+
+static BOOL native_equal(const BYTE *left, const BYTE *right, DWORD bytes)
+{
+    DWORD index;
+    for (index = 0u; index < bytes; ++index) if (left[index] != right[index]) return FALSE;
+    return TRUE;
+}
+
+static char *native_last_dot(char *text)
+{
+    char *last = NULL;
+    while (*text) { if (*text == '.') last = text; ++text; }
+    return last;
+}
+
+static DWORD native_hash_bytes(const BYTE *bytes, DWORD count)
+{
+    DWORD value = 2166136261u, index;
+    for (index = 0u; index < count; ++index) { value ^= bytes[index]; value *= 16777619u; }
+    return value;
+}
+
+static void native_add_kind(const char *name, DWORD file_id, DWORD frame, DWORD width, DWORD height, BYTE kind)
+{
+    DWORD found = sidecar_find(name, ""), slot;
+    G1HdSidecarEntry *entry;
+    if (found) { g_sidecar_entries[found - 1u].ambiguous = 1u; ++g_sidecar_duplicates; return; }
+    if (g_sidecar_count >= G1_HD_SIDECAR_LIMIT || file_id >= g_hd_single_file_count) return;
+    entry = &g_sidecar_entries[g_sidecar_count];
+    lstrcpyA(entry->name, name); entry->pal8[0] = '\0';
+    entry->frame = frame; entry->directory = file_id;
+    entry->length = 0xFFFFFFFFu; entry->p8 = 0u;
+    entry->width = width; entry->height = height; entry->native = kind; entry->ambiguous = 0u;
+    slot = sidecar_hash_key(name, "");
+    while (g_sidecar_hash[slot]) slot = (slot + 1u) & (G1_HD_SIDECAR_HASH_SIZE - 1u);
+    g_sidecar_hash[slot] = ++g_sidecar_count;
+}
+
+static void native_add(const char *name, DWORD file_id, DWORD frame, DWORD width, DWORD height)
+{
+    native_add_kind(name, file_id, frame, width, height, 1u);
+}
+
+static BOOL native_bmp_read(const char *path, BYTE *pixels, DWORD capacity, DWORD *width_out,
+                            DWORD *height_out, BYTE palette_out[1024])
+{
+    BYTE header[54], palette[1024];
+    HANDLE file;
+    DWORD high = 0u, size, got = 0u, offset, dib, width, height, row, stride, colors;
+    LONG signed_width, signed_height;
+    WORD planes, bpp;
+    DWORD compression;
+    if (!path) return FALSE;
+    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) return FALSE;
+    size = GetFileSize(file, &high);
+    if (high || size == INVALID_FILE_SIZE || size < sizeof(header) ||
+        !ReadFile(file, header, sizeof(header), &got, NULL) || got != sizeof(header) ||
+        header[0] != 'B' || header[1] != 'M') { CloseHandle(file); return FALSE; }
+    offset = read_le32(header + 10); dib = read_le32(header + 14);
+    signed_width = (LONG)read_le32(header + 18); signed_height = (LONG)read_le32(header + 22);
+    planes = (WORD)(header[26] | ((WORD)header[27] << 8));
+    bpp = (WORD)(header[28] | ((WORD)header[29] << 8)); compression = read_le32(header + 30);
+    colors = read_le32(header + 46); if (!colors) colors = 256u;
+    if (dib < 40u || signed_width <= 0 || signed_height == 0 || signed_height == (-2147483647L - 1L) ||
+        planes != 1u || bpp != 8u || compression != 0u || colors != 256u || offset < 14u + dib + 1024u) {
+        CloseHandle(file); return FALSE;
+    }
+    width = (DWORD)signed_width; height = (DWORD)(signed_height < 0 ? -signed_height : signed_height);
+    if (!width || !height || width > 32768u || height > 32768u || width > 0xFFFFFFFFu / height) {
+        CloseHandle(file); return FALSE;
+    }
+    stride = (width + 3u) & ~3u;
+    if (stride > 0xFFFFFFFFu / height || offset > size || size - offset < stride * height ||
+        (pixels && capacity < width * height) ||
+        SetFilePointer(file, 14u + dib, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+        !ReadFile(file, palette, sizeof(palette), &got, NULL) || got != sizeof(palette)) {
+        CloseHandle(file); return FALSE;
+    }
+    if (palette_out) native_copy(palette_out, palette, sizeof(palette));
+    if (pixels) {
+        BYTE *line = (BYTE *)HeapAlloc(GetProcessHeap(), 0, stride);
+        if (!line) { CloseHandle(file); return FALSE; }
+        for (row = 0u; row < height; ++row) {
+            DWORD source_row = signed_height < 0 ? row : height - 1u - row;
+            if (SetFilePointer(file, offset + source_row * stride, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+                !ReadFile(file, line, stride, &got, NULL) || got != stride) {
+                HeapFree(GetProcessHeap(), 0, line); CloseHandle(file); return FALSE;
+            }
+            native_copy(pixels + row * width, line, width);
+        }
+        HeapFree(GetProcessHeap(), 0, line);
+    }
+    if (width_out) *width_out = width;
+    if (height_out) *height_out = height;
+    CloseHandle(file);
+    return TRUE;
+}
+
+static BOOL native_decode_rle(HANDLE file, DWORD file_size, DWORD offset, DWORD encoded_bytes,
+                              BYTE *pixels, DWORD pixel_count)
+{
+    DWORD pos = 0u, emitted = 0u, got = 0u;
+    BYTE value, run;
+    if (!pixels || offset > file_size || encoded_bytes > file_size - offset ||
+        SetFilePointer(file, offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) return FALSE;
+    while (pos < encoded_bytes && emitted < pixel_count) {
+        if (!ReadFile(file, &value, 1u, &got, NULL) || got != 1u) return FALSE;
+        ++pos;
+        if (value == 0xFEu) {
+            if (pos >= encoded_bytes || !ReadFile(file, &run, 1u, &got, NULL) || got != 1u) return FALSE;
+            ++pos;
+            if (!run) pixels[emitted++] = 0xFEu;
+            else if (run <= pixel_count - emitted) { memset(pixels + emitted, 0xFE, run); emitted += run; }
+            else return FALSE;
+        } else pixels[emitted++] = value;
+    }
+    return pos == encoded_bytes && emitted == pixel_count;
+}
+
+static void native_add_sheet_cells(HANDLE source_file, DWORD source_size, DWORD file_id,
+                                   DWORD frame_width, DWORD frame_height, DWORD sheet_width,
+                                   DWORD sheet_height, DWORD encoded_bytes)
+{
+    DWORD cells_x, cells_y, cell, x, y, row, cell_bytes;
+    BYTE *sheet, *cell_pixels;
+    if (!frame_width || !frame_height || frame_width > 0xFFFFFFFFu / frame_height ||
+        sheet_width % frame_width || sheet_height % frame_height ||
+        sheet_width <= frame_width || sheet_height < frame_height || sheet_width > 32768u || sheet_height > 32768u ||
+        sheet_width > 0xFFFFFFFFu / sheet_height || sheet_width * sheet_height > 64u * 1024u * 1024u) return;
+    sheet = (BYTE *)HeapAlloc(GetProcessHeap(), 0, sheet_width * sheet_height);
+    cell_bytes = frame_width * frame_height;
+    cell_pixels = (BYTE *)HeapAlloc(GetProcessHeap(), 0, cell_bytes);
+    if (!sheet || !cell_pixels) { if (sheet) HeapFree(GetProcessHeap(), 0, sheet); if (cell_pixels) HeapFree(GetProcessHeap(), 0, cell_pixels); return; }
+    if (!native_decode_rle(source_file, source_size, 0xBF4u, encoded_bytes, sheet, sheet_width * sheet_height)) goto done;
+    cells_x = sheet_width / frame_width; cells_y = sheet_height / frame_height;
+    for (cell = 0u; cell < cells_x * cells_y; ++cell) {
+        DWORD digest;
+        char name[64];
+        x = (cell % cells_x) * frame_width; y = (cell / cells_x) * frame_height;
+        for (row = 0u; row < frame_height; ++row)
+            native_copy(cell_pixels + row * frame_width, sheet + (y + row) * sheet_width + x, frame_width);
+        digest = native_hash_bytes(cell_pixels, cell_bytes);
+        if (g1_hd_pack_name(name, sizeof(name), digest, frame_width, frame_height))
+            native_add(name, file_id, cell, frame_width, frame_height);
+    }
+done:
+    HeapFree(GetProcessHeap(), 0, cell_pixels); HeapFree(GetProcessHeap(), 0, sheet);
+}
+
+static DWORD native_ytl_width(HANDLE file, DWORD offset, DWORD rows)
+{
+    DWORD row, width = 0u, got, end;
+    BYTE record[2];
+    for (row = 0u; row < rows; ++row) {
+        if (SetFilePointer(file, offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+            !ReadFile(file, record, 2u, &got, NULL) || got != 2u) return 0u;
+        end = (DWORD)record[0] + (DWORD)record[1];
+        if (end > width) width = end;
+        offset += 2u + (DWORD)record[1];
+    }
+    return width;
+}
+
+static void native_add_source_frame(HANDLE source_file, DWORD source_size, DWORD file_id,
+                                    DWORD frame, DWORD offset, DWORD range_bytes, DWORD width, DWORD height)
+{
+    BYTE prefix[G1_HD_PACK_EXT_MAX];
+    DWORD available, want, digest, length, hash;
+    DWORD got = 0u;
+    char name[64], extended[64];
+    if (offset > source_size || source_size - offset < G1_HD_DIGEST_BYTES || width == 0u || height == 0u ||
+        SetFilePointer(source_file, offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) return;
+    available = source_size - offset;
+    if (range_bytes && available > range_bytes) available = range_bytes;
+    want = available < sizeof(prefix) ? available : (DWORD)sizeof(prefix);
+    if (!ReadFile(source_file, prefix, want, &got, NULL) || got != want) return;
+    digest = native_hash_bytes(prefix, G1_HD_DIGEST_BYTES);
+    if (g1_hd_pack_name(name, sizeof(name), digest, width, height)) native_add(name, file_id, frame, width, height);
+    if (width == 831u) {
+        wsprintfA(name, "w004663e0_h%08lx_831x%lu.idx8", (unsigned long)digest, (unsigned long)height);
+        native_add(name, file_id, frame, width, height);
+    }
+    for (length = 256u; length <= G1_HD_PACK_EXT_MAX && length <= want; length *= 2u) {
+        hash = native_hash_bytes(prefix, length);
+        if (g1_hd_pack_ext_name(extended, sizeof(extended), digest, width, height, length, hash))
+            native_add(extended, file_id, frame, width, height);
+        if (length > G1_HD_PACK_EXT_MAX / 2u) break;
+    }
+}
+
+static int source_guard_hex(char value)
+{
+    if (value >= '0' && value <= '9') return value - '0';
+    if (value >= 'a' && value <= 'f') return value - 'a' + 10;
+    if (value >= 'A' && value <= 'F') return value - 'A' + 10;
+    return -1;
+}
+
+static BOOL source_guard_prefix_equal(const char *value, const char *prefix, DWORD length)
+{
+    DWORD i;
+    for (i = 0u; i < length; ++i) {
+        char a = value[i], b = prefix[i];
+        if (a >= 'A' && a <= 'Z') a = (char)(a + ('a' - 'A'));
+        if (b >= 'A' && b <= 'Z') b = (char)(b + ('a' - 'A'));
+        if (a != b) return FALSE;
+    }
+    return TRUE;
+}
+
+static BOOL load_source_guard(const char *root)
+{
+    char path[MAX_PATH];
+    HANDLE file;
+    DWORD high = 0u, size, got = 0u, start = 0u, i;
+    char *data;
+    g_source_guard_active = TRUE;
+    if (lstrlenA(root) + 24u >= MAX_PATH) { g_source_guard_invalid = TRUE; return FALSE; }
+    wsprintfA(path, "%s\\g1_hd_sources.sha256", root);
+    /* Native HD siblings fail closed unless the sidecar records their source identities. */
+    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) { g_source_guard_invalid = TRUE; return FALSE; }
+    size = GetFileSize(file, &high);
+    if (high || size == INVALID_FILE_SIZE || size > 4u * 1024u * 1024u) {
+        g_source_guard_invalid = TRUE; CloseHandle(file); return TRUE;
+    }
+    data = (char *)HeapAlloc(GetProcessHeap(), 0, size + 1u);
+    g_source_guard_entries = (G1HdSourceGuardEntry *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+        sizeof(G1HdSourceGuardEntry) * G1_HD_SOURCE_GUARD_LIMIT);
+    if (!data || !g_source_guard_entries || !ReadFile(file, data, size, &got, NULL) || got != size) {
+        if (data) HeapFree(GetProcessHeap(), 0, data);
+        g_source_guard_invalid = TRUE; CloseHandle(file); return TRUE;
+    }
+    CloseHandle(file); data[size] = '\0';
+    for (i = 0u; i <= size; ++i) {
+        if (data[i] == '\n' || data[i] == '\0') {
+            char *line = data + start, *relative;
+            DWORD line_length = i - start, path_length, j;
+            G1HdSourceGuardEntry *entry;
+            start = i + 1u;
+            if (line_length && line[line_length - 1u] == '\r') --line_length;
+            if (!line_length) continue;
+            if (line_length < 67u || line[64] != ' ' || line[65] != ' ') { g_source_guard_invalid = TRUE; break; }
+            path_length = line_length - 66u;
+            if (!path_length || path_length >= MAX_PATH || g_source_guard_count >= G1_HD_SOURCE_GUARD_LIMIT) {
+                g_source_guard_invalid = TRUE; break;
+            }
+            line[64] = '\0'; relative = line + 66;
+            entry = &g_source_guard_entries[g_source_guard_count];
+            for (j = 0u; j < 32u; ++j) {
+                int high_nibble = source_guard_hex(line[j * 2u]), low_nibble = source_guard_hex(line[j * 2u + 1u]);
+                if (high_nibble < 0 || low_nibble < 0) { g_source_guard_invalid = TRUE; break; }
+                entry->sha256[j] = (BYTE)((high_nibble << 4) | low_nibble);
+            }
+            if (g_source_guard_invalid) break;
+            for (j = 0u; j < path_length; ++j) {
+                if (relative[j] == '\\') relative[j] = '/';
+                if ((BYTE)relative[j] < 0x20u) { g_source_guard_invalid = TRUE; break; }
+                entry->path[j] = relative[j];
+            }
+            entry->path[path_length] = '\0';
+            if (g_source_guard_invalid) break;
+            for (j = 0u; j < g_source_guard_count; ++j) {
+                if (!lstrcmpiA(entry->path, g_source_guard_entries[j].path)) { g_source_guard_invalid = TRUE; break; }
+            }
+            if (g_source_guard_invalid) break;
+            ++g_source_guard_count;
+        }
+    }
+    if (!g_source_guard_count) g_source_guard_invalid = TRUE;
+    HeapFree(GetProcessHeap(), 0, data);
+    return TRUE;
+}
+
+static BOOL source_guard_matches(const char *hd_path, HANDLE source_file)
+{
+    char relative[MAX_PATH];
+    DWORD root_length = lstrlenA(g_sidecar_root), path_length = lstrlenA(hd_path), i, got;
+    G1Sha256 sha;
+    BYTE digest[32], buffer[16384];
+    G1HdSourceGuardEntry *expected = NULL;
+    if (!g_source_guard_active) return TRUE;
+    if (g_source_guard_invalid || path_length <= root_length || !source_guard_prefix_equal(hd_path, g_sidecar_root, root_length) ||
+        (hd_path[root_length] != '\\' && hd_path[root_length] != '/')) goto reject;
+    if (path_length - root_length - 1u >= sizeof(relative)) goto reject;
+    lstrcpyA(relative, hd_path + root_length + 1u);
+    for (i = 0u; relative[i]; ++i) if (relative[i] == '\\') relative[i] = '/';
+    for (i = 0u; i < g_source_guard_count; ++i) {
+        if (!lstrcmpiA(relative, g_source_guard_entries[i].path)) { expected = &g_source_guard_entries[i]; break; }
+    }
+    if (!expected || SetFilePointer(source_file, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) goto reject;
+    g1_sha256_init(&sha);
+    for (;;) {
+        if (!ReadFile(source_file, buffer, sizeof(buffer), &got, NULL)) goto reject;
+        if (!got) break;
+        g1_sha256_update(&sha, buffer, got);
+    }
+    g1_sha256_final(&sha, digest);
+    if (SetFilePointer(source_file, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) goto reject;
+    for (i = 0u; i < sizeof(digest); ++i) if (digest[i] != expected->sha256[i]) goto reject;
+    return TRUE;
+reject:
+    ++g_source_guard_rejects;
+    return FALSE;
+}
+
+static void load_hd_single_file(const char *path)
+{
+    BYTE source_header[0xBF4], hd_header[0xBF4];
+    char source_path[MAX_PATH], *mark, *dot;
+    HANDLE source_file, hd_file;
+    DWORD source_high = 0u, hd_high = 0u, source_size, hd_size, got = 0u;
+    DWORD sw, sh, sc, hw, hh, hc, i, j, width, source_offset, hd_offset, next_offset, range_bytes;
+    DWORD hd_table, source_sheet, hd_sheet, source_sheet_width, source_sheet_height, hd_sheet_width, hd_sheet_height;
+    DWORD file_id;
+    BOOL ytl = FALSE, raw = FALSE;
+    if (!g_sidecar_entries) {
+        g_sidecar_entries = (G1HdSidecarEntry *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(G1HdSidecarEntry) * G1_HD_SIDECAR_LIMIT);
+        g_sidecar_hash = (DWORD *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DWORD) * G1_HD_SIDECAR_HASH_SIZE);
+        g_sidecar_dirs = (char (*)[MAX_PATH])HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MAX_PATH * G1_HD_SIDECAR_DIR_LIMIT);
+        g_hd_single_files = (char (*)[MAX_PATH])HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MAX_PATH * G1_HD_SIDECAR_DIR_LIMIT);
+        if (!g_sidecar_entries || !g_sidecar_hash || !g_sidecar_dirs || !g_hd_single_files) return;
+    }
+    if (lstrlenA(path) >= MAX_PATH || g_hd_single_file_count >= G1_HD_SIDECAR_DIR_LIMIT) return;
+    lstrcpyA(source_path, path);
+    dot = native_last_dot(source_path);
+    if (!dot) return;
+    mark = dot - 3;
+    if (mark < source_path || mark[0] != '_' || mark[1] != 'h' || mark[2] != 'd') return;
+    { DWORD n; for (n = 0u; dot[n]; ++n) mark[n] = dot[n]; mark[n] = '\0'; }
+    hd_file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    source_file = CreateFileA(source_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hd_file == INVALID_HANDLE_VALUE || source_file == INVALID_HANDLE_VALUE) { if (hd_file != INVALID_HANDLE_VALUE) CloseHandle(hd_file); if (source_file != INVALID_HANDLE_VALUE) CloseHandle(source_file); return; }
+    if (!source_guard_matches(path, source_file)) goto done;
+    source_size = GetFileSize(source_file, &source_high); hd_size = GetFileSize(hd_file, &hd_high);
+    dot = native_last_dot(source_path);
+    if (dot && !lstrcmpiA(dot, ".bmp")) {
+        DWORD source_width = 0u, source_height = 0u, hd_width = 0u, hd_height = 0u;
+        DWORD area, digest;
+        BYTE source_palette[1024], hd_palette[1024], *pixels;
+        char name[64];
+        if (source_high || hd_high || source_size == INVALID_FILE_SIZE || hd_size == INVALID_FILE_SIZE ||
+            !native_bmp_read(source_path, NULL, 0u, &source_width, &source_height, source_palette) ||
+            !native_bmp_read(path, NULL, 0u, &hd_width, &hd_height, hd_palette) ||
+            hd_width != source_width * 2u || hd_height != source_height * 2u ||
+            !native_equal(source_palette, hd_palette, sizeof(source_palette)) ||
+            source_width > 0xFFFFFFFFu / source_height || source_width * source_height < G1_HD_DIGEST_BYTES ||
+            source_width * source_height > 64u * 1024u * 1024u || g_hd_single_file_count >= G1_HD_SIDECAR_DIR_LIMIT) goto done;
+        area = source_width * source_height;
+        pixels = (BYTE *)HeapAlloc(GetProcessHeap(), 0, area);
+        if (!pixels) goto done;
+        if (native_bmp_read(source_path, pixels, area, &source_width, &source_height, NULL)) {
+            digest = native_hash_bytes(pixels, G1_HD_DIGEST_BYTES);
+            if (g1_hd_pack_name(name, sizeof(name), digest, source_width, source_height)) {
+                file_id = g_hd_single_file_count;
+                lstrcpyA(g_hd_single_files[g_hd_single_file_count++], path);
+                native_add_kind(name, file_id, 0u, source_width, source_height, 2u);
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, pixels);
+        goto done;
+    }
+    if (source_high || hd_high || source_size == INVALID_FILE_SIZE || hd_size == INVALID_FILE_SIZE ||
+        source_size < sizeof(source_header) || hd_size < sizeof(hd_header) ||
+        !ReadFile(source_file, source_header, sizeof(source_header), &got, NULL) || got != sizeof(source_header)) goto done;
+    if (SetFilePointer(hd_file, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+        !ReadFile(hd_file, hd_header, sizeof(hd_header), &got, NULL) || got != sizeof(hd_header)) goto done;
+    sw = read_le32(source_header + 4); sh = read_le32(source_header + 8); sc = read_le32(source_header + 12);
+    hw = read_le32(hd_header + 4); hh = read_le32(hd_header + 8); hc = read_le32(hd_header + 12);
+    if (read_le32(source_header) != 9u || read_le32(hd_header) != 9u || !sw || !sh || !sc || sc > 300u ||
+        hw != sw * 2u || hh != sh * 2u || hc != sc) goto done;
+    source_sheet = read_le32(source_header + 0xBC8);
+    hd_sheet = read_le32(hd_header + 0xBC8); hd_table = read_le32(hd_header + 0x4C4);
+    source_sheet_width = read_le32(source_header + 0xBCC); source_sheet_height = read_le32(source_header + 0xBD0);
+    hd_sheet_width = read_le32(hd_header + 0xBCC); hd_sheet_height = read_le32(hd_header + 0xBD0);
+    dot = native_last_dot(source_path); if (!dot) goto done;
+    ytl = !lstrcmpiA(dot, ".ytl");
+    if (!ytl) raw = read_le32(source_header + 0xBCC) != 0u &&
+                       source_sheet == read_le32(source_header + 0xBCC) * read_le32(source_header + 0xBD0);
+    file_id = g_hd_single_file_count;
+    lstrcpyA(g_hd_single_files[g_hd_single_file_count++], path);
+    if (!ytl && !raw && source_sheet_width >= sw && source_sheet_height >= sh &&
+        source_sheet_width % sw == 0u && source_sheet_height % sh == 0u &&
+        (source_sheet_width > sw || source_sheet_height > sh) &&
+        source_sheet_width * source_sheet_height > sw * sh * sc &&
+        hd_sheet_width == source_sheet_width * 2u && hd_sheet_height == source_sheet_height * 2u) {
+        native_add_sheet_cells(source_file, source_size, file_id, sw, sh,
+                               source_sheet_width, source_sheet_height, source_sheet);
+        goto done;
+    }
+    if (raw) {
+        DWORD frame_bytes = sw * sh;
+        BYTE *pixels = (BYTE *)HeapAlloc(GetProcessHeap(), 0, frame_bytes);
+        if (!pixels) goto done;
+        for (i = 0u; i < sc; ++i) {
+            char name[64];
+            source_offset = 0xBF4u + i * frame_bytes;
+            if (source_offset > source_size || source_size - source_offset < frame_bytes ||
+                SetFilePointer(source_file, source_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+                !ReadFile(source_file, pixels, frame_bytes, &got, NULL) || got != frame_bytes) continue;
+            wsprintfA(name, "f%08lx_%lux%lu.idx8", (unsigned long)native_hash_bytes(pixels, frame_bytes),
+                      (unsigned long)sw, (unsigned long)sh);
+            native_add(name, file_id, i, sw, sh);
+        }
+        HeapFree(GetProcessHeap(), 0, pixels);
+        goto done;
+    }
+    for (i = 0u; i < sc; ++i) {
+        if (ytl) {
+            source_offset = 0xBF4u + read_le32(source_header + 0x4C0u + 4u * i);
+            hd_offset = 0xBF4u + read_le32(hd_header + 0x4C0u + 4u * i);
+            width = native_ytl_width(source_file, source_offset, sh);
+        } else {
+            source_offset = 0xBF4u + (i ? read_le32(source_header + 0x4C4u + 4u * (i - 1u)) : 0u);
+            hd_offset = 0xBF4u + (i ? read_le32(hd_header + 0x4C4u + 4u * (i - 1u)) : 0u);
+            width = sw;
+        }
+        next_offset = source_size;
+        for (j = i + 1u; j < sc; ++j) {
+            DWORD candidate = ytl ? 0xBF4u + read_le32(source_header + 0x4C0u + 4u * j)
+                                 : 0xBF4u + read_le32(source_header + 0x4C4u + 4u * (j - 1u));
+            if (candidate > source_offset && candidate < next_offset) next_offset = candidate;
+        }
+        range_bytes = next_offset > source_offset ? next_offset - source_offset : 0u;
+        (void)hd_offset; (void)hd_sheet; (void)hd_table;
+        native_add_source_frame(source_file, source_size, file_id, i, source_offset, range_bytes, width, sh);
+    }
+done:
+    CloseHandle(source_file); CloseHandle(hd_file);
+}
+
+static DWORD native_find(const char *name)
+{
+    DWORD found = sidecar_find(name, "");
+    if (!found || !g_sidecar_entries[found - 1u].native || g_sidecar_entries[found - 1u].ambiguous) return 0u;
+    return found;
+}
+
+static BOOL native_decode_bitmap(const char *path, DWORD source_width, DWORD source_height,
+                                 BYTE *output, DWORD output_bytes)
+{
+    DWORD width = 0u, height = 0u;
+    if (!source_width || !source_height || source_width > 0xFFFFFFFFu / source_height ||
+        source_width * source_height > 0xFFFFFFFFu / 4u ||
+        output_bytes != source_width * source_height * 4u ||
+        !native_bmp_read(path, output, output_bytes, &width, &height, NULL)) return FALSE;
+    return width == source_width * 2u && height == source_height * 2u;
+}
+
+static BOOL native_decode_frame(const char *path, DWORD frame, DWORD source_width, DWORD source_height,
+                                BYTE *output, DWORD output_bytes)
+{
+    BYTE header[0xBF4], pair[2], signature[2];
+    HANDLE file;
+    DWORD got = 0u, high = 0u, size, width, height, count, row, out_width, out_height;
+    DWORD offset, sheet, sheet_width, sheet_height, pixel_count, emitted, run;
+    BOOL ytl, raw;
+    if (!path || !output || !source_width || !source_height ||
+        output_bytes != source_width * source_height * 4u) return FALSE;
+    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) return FALSE;
+    size = GetFileSize(file, &high);
+    if (high || size == INVALID_FILE_SIZE || size < 2u ||
+        SetFilePointer(file, 0u, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+        !ReadFile(file, signature, 2u, &got, NULL) || got != 2u) { CloseHandle(file); return FALSE; }
+    if (signature[0] == 'B' && signature[1] == 'M') { CloseHandle(file); return native_decode_bitmap(path, source_width, source_height, output, output_bytes); }
+    if (size < sizeof(header) ||
+        SetFilePointer(file, 0u, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+        !ReadFile(file, header, sizeof(header), &got, NULL) || got != sizeof(header) || read_le32(header) != 9u) {
+        CloseHandle(file); return FALSE;
+    }
+    width = read_le32(header + 4); height = read_le32(header + 8); count = read_le32(header + 12);
+    out_width = source_width * 2u; out_height = source_height * 2u; pixel_count = out_width * out_height;
+    if (width < out_width || height != out_height || width > 32768u || height > 32768u ||
+        width > 0xFFFFFFFFu / height || count > 300u) { CloseHandle(file); return FALSE; }
+    { volatile BYTE *fill = output; DWORD i; for (i = 0u; i < output_bytes; ++i) fill[i] = 0xFEu; }
+    sheet = read_le32(header + 0xBC8); sheet_width = read_le32(header + 0xBCC); sheet_height = read_le32(header + 0xBD0);
+    { DWORD path_length = lstrlenA(path); ytl = path_length >= 4u && !lstrcmpiA(path + path_length - 4u, ".ytl"); }
+    if (!ytl && sheet_width >= width && sheet_height >= height && sheet_width <= 32768u && sheet_height <= 32768u &&
+        sheet_width <= 0xFFFFFFFFu / sheet_height && sheet_width % width == 0u &&
+        sheet_height % height == 0u && sheet_width * sheet_height > width * height * count) {
+        DWORD cells_x = sheet_width / width, cells_y = sheet_height / height;
+        DWORD cell_x, cell_y, sheet_area = sheet_width * sheet_height;
+        BYTE *pixels;
+        if (frame >= cells_x * cells_y || sheet_area > 64u * 1024u * 1024u) { CloseHandle(file); return FALSE; }
+        pixels = (BYTE *)HeapAlloc(GetProcessHeap(), 0, sheet_area);
+        if (!pixels) { CloseHandle(file); return FALSE; }
+        if (!native_decode_rle(file, size, 0xBF4u, sheet, pixels, sheet_area)) {
+            HeapFree(GetProcessHeap(), 0, pixels); CloseHandle(file); return FALSE;
+        }
+        cell_x = (frame % cells_x) * width; cell_y = (frame / cells_x) * height;
+        for (row = 0u; row < height; ++row)
+            native_copy(output + row * out_width, pixels + (cell_y + row) * sheet_width + cell_x, out_width);
+        HeapFree(GetProcessHeap(), 0, pixels); CloseHandle(file); return TRUE;
+    }
+    if (frame >= count) { CloseHandle(file); return FALSE; }
+    raw = !ytl && sheet_width && sheet == sheet_width * sheet_height;
+    if (raw) {
+        offset = 0xBF4u + frame * width * height;
+        if (offset > size || size - offset < width * height) { CloseHandle(file); return FALSE; }
+        for (row = 0u; row < out_height; ++row) {
+            if (SetFilePointer(file, offset + row * width, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+                !ReadFile(file, output + row * out_width, out_width, &got, NULL) || got != out_width) { CloseHandle(file); return FALSE; }
+        }
+        CloseHandle(file); return TRUE;
+    }
+    if (ytl) {
+        offset = 0xBF4u + read_le32(header + 0x4C0u + 4u * frame);
+        for (row = 0u; row < out_height; ++row) {
+            BYTE skip, count_bytes;
+            if (SetFilePointer(file, offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+                !ReadFile(file, pair, 2u, &got, NULL) || got != 2u) { CloseHandle(file); return FALSE; }
+            skip = pair[0]; count_bytes = pair[1]; offset += 2u;
+            if ((DWORD)skip + count_bytes > width || offset > size || size - offset < count_bytes) { CloseHandle(file); return FALSE; }
+            if (count_bytes && skip < out_width) {
+                DWORD take = count_bytes;
+                if ((DWORD)skip + take > out_width) take = out_width - skip;
+                if (SetFilePointer(file, offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER ||
+                    !ReadFile(file, output + row * out_width + skip, take, &got, NULL) || got != take) { CloseHandle(file); return FALSE; }
+            }
+            offset += count_bytes;
+        }
+        CloseHandle(file); return TRUE;
+    }
+    offset = 0xBF4u + (frame ? read_le32(header + 0x4C4u + 4u * (frame - 1u)) : 0u);
+    if (offset >= size || SetFilePointer(file, offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) { CloseHandle(file); return FALSE; }
+    emitted = 0u;
+    while (emitted < pixel_count) {
+        BYTE value;
+        if (!ReadFile(file, &value, 1u, &got, NULL) || got != 1u) { CloseHandle(file); return FALSE; }
+        if (value == 0xFEu) {
+            if (!ReadFile(file, pair + 1, 1u, &got, NULL) || got != 1u) { CloseHandle(file); return FALSE; }
+            run = pair[1];
+            if (!run) output[emitted++] = 0xFEu;
+            else if (run <= pixel_count - emitted) emitted += run;
+            else { CloseHandle(file); return FALSE; }
+        } else output[emitted++] = value;
+    }
+    CloseHandle(file); return TRUE;
+}
+
+static BOOL native_load_key(const char *name, DWORD width, DWORD height, BYTE *output, DWORD bytes)
+{
+    DWORD found = native_find(name), file_id;
+    G1HdSidecarEntry *entry;
+    if (!found) return FALSE;
+    entry = &g_sidecar_entries[found - 1u];
+    file_id = entry->directory;
+    if (file_id >= g_hd_single_file_count || entry->height != height) return FALSE;
+    if (entry->width == 831u && width == 800u) { /* panel writer consumes 800 of 831 columns */ }
+    else if (entry->width != width) return FALSE;
+    return native_decode_frame(g_hd_single_files[file_id], entry->frame, width, height, output, bytes);
+}
+
+static void load_sidecar_index(const char *directory)
+{
+    char path[MAX_PATH], name[64], pal8[9];
+    HANDLE file;
+    DWORD high = 0u, size, read = 0u, directory_id, slot;
+    char *json, *scan;
+    if (!g_sidecar_entries) {
+        g_sidecar_entries = (G1HdSidecarEntry *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(G1HdSidecarEntry) * G1_HD_SIDECAR_LIMIT);
+        g_sidecar_hash = (DWORD *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DWORD) * G1_HD_SIDECAR_HASH_SIZE);
+        g_sidecar_dirs = (char (*)[MAX_PATH])HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, MAX_PATH * G1_HD_SIDECAR_DIR_LIMIT);
+        if (!g_sidecar_entries || !g_sidecar_hash || !g_sidecar_dirs) return;
+    }
+    if (g_sidecar_dir_count >= G1_HD_SIDECAR_DIR_LIMIT ||
+        lstrlenA(directory) + 12u >= MAX_PATH) return;
+    lstrcpyA(g_sidecar_dirs[g_sidecar_dir_count], directory);
+    directory_id = g_sidecar_dir_count++;
+    wsprintfA(path, "%s\\index.json", directory);
+    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) return;
+    size = GetFileSize(file, &high);
+    if (high || size == INVALID_FILE_SIZE || size > 16u * 1024u * 1024u) { CloseHandle(file); return; }
+    json = (char *)HeapAlloc(GetProcessHeap(), 0, size + 1u);
+    if (!json) { CloseHandle(file); return; }
+    if (!ReadFile(file, json, size, &read, NULL) || read != size) { HeapFree(GetProcessHeap(), 0, json); CloseHandle(file); return; }
+    CloseHandle(file); json[size] = '\0';
+    scan = sidecar_find_text(json, "\"frames\":[");
+    if (!scan) { HeapFree(GetProcessHeap(), 0, json); return; }
+    scan += 10;
+    while ((scan = sidecar_find_text(scan, "\"frame\":")) != NULL) {
+        const char *p = scan + 8;
+        DWORD frame, length, p8_value = 0u;
+        char p8_text[9];
+        G1HdSidecarEntry *entry;
+        if (!parse_json_uint(&p, &frame) || !sidecar_prefix(p, ",\"digest\":", 10u)) break;
+        p += 10;
+        if (!parse_json_string(&p, name, sizeof(name)) || !sidecar_prefix(p, ",\"pal8\":", 8u)) break;
+        p += 8;
+        if (!parse_json_string(&p, pal8, sizeof(pal8)) || !sidecar_prefix(p, ",\"length\":", 10u)) break;
+        p += 10;
+        if (!parse_json_uint(&p, &length) || !sidecar_prefix(p, ",\"p8\":", 6u)) break;
+        p += 6;
+        if (!parse_json_string(&p, p8_text, sizeof(p8_text))) break;
+        p8_value = sidecar_hex(p8_text);
+        if (!pal8[0] || lstrlenA(pal8) != 8 || frame > 9999u || (DWORD)lstrlenA(name) >= sizeof(name)) break;
+        slot = sidecar_find(name, pal8);
+        if (slot) { ++g_sidecar_duplicates; scan = (char *)p; continue; }
+        if (g_sidecar_count >= G1_HD_SIDECAR_LIMIT) break;
+        entry = &g_sidecar_entries[g_sidecar_count];
+        lstrcpyA(entry->name, name); lstrcpyA(entry->pal8, pal8);
+        entry->frame = frame; entry->directory = directory_id; entry->length = length; entry->p8 = p8_value;
+        slot = sidecar_hash_key(name, pal8);
+        while (g_sidecar_hash[slot]) slot = (slot + 1u) & (G1_HD_SIDECAR_HASH_SIZE - 1u);
+        g_sidecar_hash[slot] = ++g_sidecar_count;
+        scan = (char *)p;
+    }
+    HeapFree(GetProcessHeap(), 0, json);
+}
+
+static void scan_sidecar_tree(const char *directory, DWORD depth)
+{
+    char pattern[MAX_PATH], child[MAX_PATH];
+    WIN32_FIND_DATAA data;
+    HANDLE find;
+    DWORD length;
+    if (depth > 12u || lstrlenA(directory) + 4u >= MAX_PATH) return;
+    length = lstrlenA(directory);
+    wsprintfA(pattern, "%s\\*", directory);
+    find = FindFirstFileA(pattern, &data);
+    if (find == INVALID_HANDLE_VALUE) return;
+    do {
+        if (data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ||
+            !lstrcmpA(data.cFileName, ".") || !lstrcmpA(data.cFileName, "..")) continue;
+        if (length + 1u + lstrlenA(data.cFileName) >= MAX_PATH) continue;
+        lstrcpyA(child, directory); child[length] = '\\'; lstrcpyA(child + length + 1u, data.cFileName);
+        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            if (lstrlenA(data.cFileName) >= 3 && !lstrcmpiA(data.cFileName + lstrlenA(data.cFileName) - 3, ".hd"))
+                load_sidecar_index(child);
+            else
+                scan_sidecar_tree(child, depth + 1u);
+        } else {
+            DWORD n = lstrlenA(data.cFileName), i;
+            for (i = 0u; i + 4u < n; ++i) if (data.cFileName[i] == '_' && data.cFileName[i + 1u] == 'h' &&
+                data.cFileName[i + 2u] == 'd' && data.cFileName[i + 3u] == '.') {
+                load_hd_single_file(child);
+                break;
+            }
+        }
+    } while (FindNextFileA(find, &data));
+    FindClose(find);
+}
+
+static void initialize_sidecars(void)
+{
+    char root[MAX_PATH];
+    DWORD size = GetModuleFileNameA(NULL, root, MAX_PATH);
+    if (!size || size >= MAX_PATH) return;
+    while (size && root[size - 1u] != '\\' && root[size - 1u] != '/') --size;
+    if (!size) return;
+    root[size - 1u] = '\0';
+    lstrcpynA(g_sidecar_root, root, sizeof(g_sidecar_root));
+    (void)load_source_guard(root);
+    scan_sidecar_tree(root, 0u);
+    g_sidecar_enabled = g_sidecar_count != 0u;
+}
+
+static BOOL sidecar_path(char *path, DWORD capacity, const char *name, const char *pal8, DWORD length, DWORD p8, DWORD *offset)
+{
+    char extended[64];
+    DWORD ref = sidecar_find(name, pal8), i;
+    if (!ref && length) {
+        char base[64];
+        lstrcpyA(base, name);
+        i = 0u;
+        while (base[i] && base[i] != '.') ++i;
+        if (base[i] == '.') base[i] = '\0';
+        wsprintfA(extended, "%s_%lu_%08lx.idx8", base, (unsigned long)length, (unsigned long)p8);
+        ref = sidecar_find(extended, pal8);
+    }
+    if (!ref) return FALSE;
+    if (offset) *offset = 0u;
+    if (g_sidecar_entries[ref - 1u].frame > 9999u) {
+        DWORD file_id = g_sidecar_entries[ref - 1u].directory;
+        if (file_id >= g_hd_single_file_count) return FALSE;
+        lstrcpynA(path, g_hd_single_files[file_id], capacity);
+        if ((DWORD)lstrlenA(path) >= capacity) return FALSE;
+        if (offset) *offset = g_sidecar_entries[ref - 1u].frame;
+        return TRUE;
+    }
+    if (wsprintfA(path, "%s\\%04lu.idx8", g_sidecar_dirs[g_sidecar_entries[ref - 1u].directory],
+                  (unsigned long)g_sidecar_entries[ref - 1u].frame) >= (int)capacity) return FALSE;
+    return TRUE;
+}
+
+BOOL g1_hd_asset_load_named_frame(const char *name, DWORD palette, BYTE *output, DWORD bytes)
+{
+    char path[MAX_PATH], pal8[9];
+    DWORD offset = 0u, high = 0u, size, read = 0u;
+    HANDLE file;
+    if (!name || !output || !bytes || !g1_hd_pack_format_pal(pal8, sizeof(pal8), palette)) return FALSE;
+    initialize_environment();
+#ifdef _WIN32
+    {
+        DWORD found = native_find(name);
+        if (found) {
+            G1HdSidecarEntry *entry = &g_sidecar_entries[found - 1u];
+            DWORD width = entry->width == 831u && bytes == 800u * entry->height * 4u ? 800u : entry->width;
+            if (entry->height == 0u || bytes != width * entry->height * 4u ||
+                entry->directory >= g_hd_single_file_count) return FALSE;
+            return native_decode_frame(g_hd_single_files[entry->directory], entry->frame,
+                                       width, entry->height, output, bytes);
+        }
+    }
+#endif
+    if (!sidecar_path(path, sizeof(path), name, pal8, 0u, 0u, &offset)) return FALSE;
+    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) return FALSE;
+    size = GetFileSize(file, &high);
+    if (high == 0u && size != INVALID_FILE_SIZE &&
+        ((!offset && size == bytes) || (offset && size >= offset && size - offset >= bytes)) &&
+        (!offset || SetFilePointer(file, offset, NULL, FILE_BEGIN) != INVALID_SET_FILE_POINTER) &&
+        ReadFile(file, output, bytes, &read, NULL) && read == bytes) {
+        CloseHandle(file);
+        return TRUE;
+    }
+    CloseHandle(file);
+    return FALSE;
+}
+
+static BOOL sibling_pack_path(const G1HdKey *key, char *path, DWORD path_size, DWORD *offset)
+{
+    char name[40], pal8[9];
+    DWORD length, hash, i;
+    const BYTE *source = g_current_source;
+    if (!g_sidecar_enabled || !g1_hd_pack_name(name, sizeof(name), key->digest, key->width, key->height) ||
+        !g1_hd_pack_format_pal(pal8, sizeof(pal8), key->pal)) return FALSE;
+    if (sidecar_path(path, path_size, name, pal8, 0u, 0u, offset)) return TRUE;
+    if (g_hd_ext_off || !source) return FALSE;
+    for (length = 256u; length <= G1_HD_PACK_EXT_MAX; length *= 2u) {
+        if (!readable_range(source, length)) break;
+        hash = 2166136261u;
+        for (i = 0u; i < length; ++i) { hash ^= source[i]; hash *= 16777619u; }
+        if (sidecar_path(path, path_size, name, pal8, length, hash, offset)) return TRUE;
+        if (length > G1_HD_PACK_EXT_MAX / 2u) break;
+    }
+    return FALSE;
+}
+
+static BOOL sibling_native_load(const G1HdKey *key, BYTE *output, DWORD bytes)
+{
+    char name[40], extended[64];
+    DWORD length, hash, index;
+    const BYTE *source = g_current_source;
+    if (!key || !source || !g1_hd_pack_name(name, sizeof(name), key->digest, key->width, key->height)) return FALSE;
+    if (native_load_key(name, key->width, key->height, output, bytes)) return TRUE;
+    if (g_hd_ext_off) return FALSE;
+    for (length = 256u; length <= G1_HD_PACK_EXT_MAX; length *= 2u) {
+        if (!readable_range(source, length)) break;
+        hash = 2166136261u;
+        for (index = 0u; index < length; ++index) { hash ^= source[index]; hash *= 16777619u; }
+        if (g1_hd_pack_ext_name(extended, sizeof(extended), key->digest, key->width, key->height, length, hash) &&
+            native_load_key(extended, key->width, key->height, output, bytes)) return TRUE;
+        if (length > G1_HD_PACK_EXT_MAX / 2u) break;
+    }
+    return FALSE;
+}
+
+static BOOL has_pack_assets(void)
+{
+    return g_hd_pack_dir[0] != '\0' || g_sidecar_enabled;
+}
+#endif
+#ifdef _WIN32
+#define G1_HD_PACK_AVAILABLE() has_pack_assets()
+#else
+#define G1_HD_PACK_AVAILABLE() (g_hd_pack_dir[0] != '\0')
+#endif
 
 static void initialize_environment(void)
 {
@@ -244,6 +1134,9 @@ static void initialize_environment(void)
         size = GetEnvironmentVariableA(G1_HD_PACK_ENV, g_hd_pack_dir,
                                        sizeof(g_hd_pack_dir));
         if (size == 0u || size >= sizeof(g_hd_pack_dir)) g_hd_pack_dir[0] = '\0';
+#ifdef _WIN32
+        if (!g_hd_pack_dir[0]) initialize_sidecars();
+#endif
         size = GetEnvironmentVariableA(G1_HD_PACK_TINTED_ENV, value, sizeof(value));
         g_hd_tinted_off = size == 1u && value[0] == '0';
         size = GetEnvironmentVariableA(G1_HD_PACK_FLIP_ENV, value, sizeof(value));
@@ -862,7 +1755,7 @@ BOOL g1_hd_asset_begin_with_aux(const BYTE *source, DWORD writer,
         slot = &g_keys[g_key_count];
         appended = TRUE;
     }
-    memset(slot, 0, sizeof(*slot));
+    { BYTE *bytes = (BYTE *)slot; DWORD i; for (i = 0u; i < sizeof(*slot); ++i) bytes[i] = 0u; }
     slot->source = (DWORD)(ULONG_PTR)source;
     slot->writer = writer;
     slot->auxiliary = (DWORD)(ULONG_PTR)auxiliary;
@@ -886,7 +1779,7 @@ BOOL g1_hd_asset_begin_with_aux(const BYTE *source, DWORD writer,
     slot->pack_state = PACK_UNTRIED;
     slot->pack_applied = 0u;
     slot->lut_valid = 0u;
-    if (auxiliary && g_hd_pack_dir[0] && g_hd_source_mode == 2u &&
+    if (auxiliary && G1_HD_PACK_AVAILABLE() && g_hd_source_mode == 2u &&
         ((!g_hd_tinted_off && (is_tinted_pack_writer(writer) || is_remap_blend_writer(writer))) ||
          (!g_hd_flip_off && is_flip_pack_writer(writer))))
         slot->lut_valid = capture_lut(slot, auxiliary,
@@ -898,7 +1791,7 @@ BOOL g1_hd_asset_begin_with_aux(const BYTE *source, DWORD writer,
     slot->shade_src_bytes = 0u;
     slot->shade_lut = NULL;
     slot->shade_lut_bytes = 0u;
-    if (auxiliary && g_hd_pack_dir[0] && !g_hd_shade_off && g_hd_source_mode == 2u &&
+    if (auxiliary && G1_HD_PACK_AVAILABLE() && !g_hd_shade_off && g_hd_source_mode == 2u &&
         is_shade_pack_writer(writer))
         capture_shade(slot, source, auxiliary, auxiliary_digest);
     slot->draws = 0u;
@@ -1152,22 +2045,50 @@ static BYTE read_pack_frame(const G1HdKey *key, BYTE *hd, DWORD hd_bytes)
     char name[40], path[MAX_PATH];
     DWORD file_high = 0u;
     DWORD file_bytes, bytes_read = 0u;
+    DWORD sibling_offset = 0u;
     HANDLE file;
     BYTE state = PACK_REJECT;
+    BOOL sibling = FALSE;
     g_last_ext = 0u;
     if (key->width != key->identity_width || key->height != key->identity_height ||
-        !g1_hd_pack_name(name, sizeof(name), key->digest, key->width, key->height) ||
-        !pack_file_path(path, sizeof(path), key->pal, name))
+        !g1_hd_pack_name(name, sizeof(name), key->digest, key->width, key->height))
         return PACK_REJECT;
-    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                       FILE_ATTRIBUTE_NORMAL, NULL);
+    if (!g_hd_pack_dir[0]) {
+#ifdef _WIN32
+        if (sibling_native_load(key, hd, hd_bytes)) {
+            if (is_flip_pack_writer(key->writer) || is_flip_blend_writer(key->writer))
+                flip_pack_rows(hd, key->width * 2u, key->height * 2u);
+            if (g1_hd_pack_valid(key->identity_written, key->identity_width,
+                                 key->identity_width, key->identity_height, hd, hd_bytes)) return PACK_HIT;
+            note_reject_detail(key, hd);
+            return PACK_REJECT;
+        }
+        if (!sibling_pack_path(key, path, sizeof(path), &sibling_offset)) return PACK_MISS;
+        sibling = TRUE;
+        file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL, NULL);
+#else
+        return PACK_MISS;
+#endif
+    } else {
+        if (!pack_file_path(path, sizeof(path), key->pal, name)) return PACK_REJECT;
+        file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL, NULL);
+    }
     if (file == INVALID_HANDLE_VALUE) {
+        if (sibling) return PACK_MISS;
         note_missing_file(path);
         file = open_extended_pack_file(key);
         if (file == INVALID_HANDLE_VALUE) return PACK_MISS;
     }
     file_bytes = GetFileSize(file, &file_high);
-    if (file_high == 0u && file_bytes == hd_bytes &&
+    if (sibling && sibling_offset && (file_high != 0u || file_bytes < sibling_offset || file_bytes - sibling_offset < hd_bytes)) {
+        CloseHandle(file);
+        return PACK_REJECT;
+    }
+    if ((!sibling_offset && file_high == 0u && file_bytes == hd_bytes) ||
+        (sibling_offset && SetFilePointer(file, sibling_offset, NULL, FILE_BEGIN) != INVALID_SET_FILE_POINTER)) {
+      if ((sibling_offset || (file_high == 0u && file_bytes == hd_bytes)) &&
         ReadFile(file, hd, hd_bytes, &bytes_read, NULL) && bytes_read == hd_bytes) {
         if (is_flip_pack_writer(key->writer) || is_flip_blend_writer(key->writer))
             flip_pack_rows(hd, key->width * 2u, key->height * 2u);
@@ -1176,6 +2097,7 @@ static BYTE read_pack_frame(const G1HdKey *key, BYTE *hd, DWORD hd_bytes)
             state = PACK_HIT;
         else
             note_reject_detail(key, hd);
+      }
     }
     CloseHandle(file);
     return state;
@@ -1200,7 +2122,7 @@ static BOOL build_hd_frame(G1HdKey *key)
         BYTE state;
         BOOL lut_pack = FALSE, shade_pack = FALSE;
         g_last_ext = 0u;
-        if (!g_hd_pack_dir[0]) state = PACK_NONE;
+        if (!G1_HD_PACK_AVAILABLE()) state = PACK_NONE;
         else if (key->auxiliary != 0u) {
             if (((is_tinted_pack_writer(key->writer) || is_remap_blend_writer(key->writer)) && !g_hd_tinted_off) ||
                 (is_flip_pack_writer(key->writer) && !g_hd_flip_off)) {
@@ -1620,21 +2542,40 @@ DWORD g1_hd_asset_identity_key_mismatches(void) { return g_identity_key_mismatch
 BOOL g1_hd_asset_pack_enabled(void)
 {
     initialize_environment();
-    return g_hd_pack_dir[0] != '\0';
+    return G1_HD_PACK_AVAILABLE();
+}
+
+DWORD g1_hd_asset_sibling_duplicates(void)
+{
+#ifdef _WIN32
+    initialize_environment();
+    return g_sidecar_duplicates;
+#else
+    return 0u;
+#endif
+}
+DWORD g1_hd_asset_source_guard_rejects(void)
+{
+#ifdef _WIN32
+    initialize_environment();
+    return g_source_guard_rejects;
+#else
+    return 0u;
+#endif
 }
 /* The flip writers 0x466B50 / 0x466BE0 take the identity key path only when a Scale2x pack run is on and the
  * switch SYW2_G1_HD_PACK_FLIP is not 0; otherwise the caller keeps the plain diff mirror. */
 BOOL g1_hd_asset_flip_key_path(void)
 {
     initialize_environment();
-    return g_hd_pack_dir[0] != '\0' && g_hd_source_mode == 2u && !g_hd_flip_off;
+    return G1_HD_PACK_AVAILABLE() && g_hd_source_mode == 2u && !g_hd_flip_off;
 }
 /* H-HDB0/H-HDB1/H-HDB2: the translucent writers 0x4672E0 (logo), 0x467580 (weighted) and 0x467B00 (weighted, clipped) take the identity key path only with a Scale2x pack run and the
  * switch SYW2_G1_HD_PACK_BLEND not 0; the pack frame it hits is blended with the HD destination by the caller. */
 BOOL g1_hd_asset_blend_key_path(void)
 {
     initialize_environment();
-    return g_hd_pack_dir[0] != '\0' && g_hd_source_mode == 2u && !g_hd_blend_off;
+    return G1_HD_PACK_AVAILABLE() && g_hd_source_mode == 2u && !g_hd_blend_off;
 }
 /* H-HDB3: the left/right flipped translucent writers 0x467FD0 and 0x4685C0 additionally need SYW2_G1_HD_PACK_FLIP not 0. */
 BOOL g1_hd_asset_blend_flip_key_path(void)
@@ -1672,7 +2613,7 @@ const BYTE *g1_hd_asset_fullscreen_frame(DWORD hash, DWORD width, DWORD height)
     HANDLE file;
     BYTE *frame;
     initialize_environment();
-    if (!g_hd_pack_dir[0] || g_hd_fullscreen_off || g_hd_source_mode != 2u) return NULL;
+    if (!G1_HD_PACK_AVAILABLE() || g_hd_fullscreen_off || g_hd_source_mode != 2u) return NULL;
     pal = g1_hd_asset_palette_digest();
     if (g_fullscreen_frame && g_fullscreen_hash == hash && g_fullscreen_width == width &&
         g_fullscreen_height == height && g_fullscreen_pal == pal) {
@@ -1685,12 +2626,31 @@ const BYTE *g1_hd_asset_fullscreen_frame(DWORD hash, DWORD width, DWORD height)
             else ++g_fullscreen_misses;
             return NULL;
         }
-    if (!g1_hd_pack_fullscreen_name(name, sizeof(name), hash, width, height) ||
-        !pack_file_path(path, sizeof(path), pal, name)) return NULL;
+    if (!g1_hd_pack_fullscreen_name(name, sizeof(name), hash, width, height)) return NULL;
     bytes = width * 2u * height * 2u;
-    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-                       FILE_ATTRIBUTE_NORMAL, NULL);
     frame = NULL;
+#ifdef _WIN32
+    if (!g_hd_pack_dir[0]) {
+        frame = (BYTE *)HeapAlloc(GetProcessHeap(), 0, bytes);
+        if (!frame || !native_load_key(name, width, height, frame, bytes)) {
+            if (frame) HeapFree(GetProcessHeap(), 0, frame);
+            frame = NULL;
+        } else {
+            for (index = 0u; index < bytes; ++index) if (frame[index] == G1_HD_PACK_KEY) {
+                HeapFree(GetProcessHeap(), 0, frame);
+                frame = NULL;
+                break;
+            }
+        }
+        file = INVALID_HANDLE_VALUE;
+    } else {
+#endif
+        if (!pack_file_path(path, sizeof(path), pal, name)) return NULL;
+        file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL, NULL);
+#ifdef _WIN32
+    }
+#endif
     if (file != INVALID_HANDLE_VALUE) {
         file_bytes = GetFileSize(file, &file_high);
         if (file_high == 0u && file_bytes == bytes &&

@@ -1,0 +1,15 @@
+kind=raw-evidence-conflict
+lap=1302
+role=middle
+scope=H-HDGUARD extraction outputs; no delivery or milestone acceptance
+verdict=HOLD
+record=docs/history/laps/20261014_lap1302_middle_hdguard_extraction_hold.md
+review=/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261014_lap1302_middle_hdguard_review/review.json
+review_sha256=14a9fdf4b36a16cff2eaaaaa46597a99347312b5abe98c7e4c80b45087b7d2fe
+previous_handoff=docs/history/laps/20261014_lap1302_preserved_lap1301_escalate_sol.md
+
+The work lap1301 inventory/history claims 14 extracted image assets. Actual extractor manifest has image_dirs char,tile,BattleSpr,portrait, excluding fnt and yfnt. Five assets have rendered=false and no output directory/PNG: portrait_plus195, button_plus298, title1, poisonfield49, poisonfx24 = 567 missing base frames. Nine other assets and unchanged YAV are present; current original15 source SHA and YAV copy match. This is substantive output loss, not a hash typo. tools/g1_hd_extract.py render eligibility uses image_dirs; --only does not override it, and CLI exit0 means source_unchanged only.
+
+Root/Sol: confirm this conflict and explicitly assign work to extract ONLY the five missing images into a new shared-temp repair folder with --image-dirs fnt,yfnt and exact --only paths. Preserve previous bundle, inventory, raw and candidate. Make final referenced inventory match actual14 images/1135 base frames plus YAV1; no upscaling, game-code changes, new cards or unrelated repairs. Detailed command and measurable completion criteria are in the lap record.
+
+Scoped existing guard evidence: current DLL1798913f.../official EXEac61a28f.../index/raw SHA match;782 entries (781 match plus intentional eagle mismatch), installed773; PS3 60.906s/1216, reject1/hits391/drop0, close prefix/final raw/cleanup match. Fresh related129 tests, doctor, lint and typecheck pass. Missing/corrupt index dynamic trial SKIP; static fail-closed inspection only. Reuse same candidate's existing Wine evidence; do not rerun full check or game solely for extraction repair. No G1 acceptance, delivery or legacy2608 Windows resolution. User Windows report takes priority if received.

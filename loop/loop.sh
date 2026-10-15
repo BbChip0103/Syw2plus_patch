@@ -428,7 +428,7 @@ validation_fingerprint() {
       ':(exclude)README.md' ':(exclude)loop/PROMPT.md' \
       ':(exclude)docs/STATUS.md' ':(exclude)docs/feedback/APPROVALS.md' \
       ':(exclude)docs/feedback/INBOX.md' \
-      ':(exclude)patches/esl2610/**' ':(exclude)analysis/esl2610/**' ':(exclude)tools/g2_esl261*' \
+      ':(exclude)patches/esl2610/**' ':(exclude)patches/esl2614/**' ':(exclude)analysis/memory_maps/esl2614_*' ':(exclude)docs/work/active/ESL2614_*' ':(exclude).omx/**' ':(exclude)tests/test_esl2614_g5_windows.py' ':(exclude)analysis/esl2610/**' ':(exclude)tools/g2_esl261*' \
       ':(exclude)tests/test_g2_esl261*' ':(exclude)docs/history/*esl2613_goal_contract*' \
       "$@" | LC_ALL=C sort -zu)
   } | git hash-object --stdin

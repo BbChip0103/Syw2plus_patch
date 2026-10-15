@@ -32,6 +32,18 @@
 #include "final_d3d9_trace.h"
 #include "ai_shadow.h"
 
+#ifdef SYW2_WINMM_PROXY
+#define INMM_EXPORT
+/* Resolve the real system WINMM.dll without loading this app-local proxy again. */
+MMRESULT WINAPI g1_winmm_time_begin_period(UINT period);
+MMRESULT WINAPI g1_winmm_time_end_period(UINT period);
+MCIERROR WINAPI g1_winmm_mci_send_command_a(MCIDEVICEID device, UINT command,
+                                             DWORD_PTR flags, DWORD_PTR params);
+DWORD WINAPI g1_winmm_time_get_time(void);
+#else
+#define INMM_EXPORT __declspec(dllexport)
+#endif
+
 /* ------------------------------------------------------------------ */
 /* 정적 DLL 의존성 강제 — _inmm_orig.dll import table 매칭            */
 /* ------------------------------------------------------------------ */
@@ -635,27 +647,35 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved)
 /* ------------------------------------------------------------------ */
 /* Export: _imeBeginPeriod  (ordinal 101)                             */
 /* ------------------------------------------------------------------ */
-__declspec(dllexport)
+INMM_EXPORT
 MMRESULT WINAPI _imeBeginPeriod(UINT uPeriod)
 {
     ensure_initialized();
     InterlockedIncrement(&g_call_count);
     log_msg("[inmm_stub] _imeBeginPeriod(%u) [#%u]\n",
             uPeriod, (unsigned)g_call_count);
+#ifdef SYW2_WINMM_PROXY
+    return g1_winmm_time_begin_period(uPeriod);
+#else
     return timeBeginPeriod(uPeriod);
+#endif
 }
 
 /* ------------------------------------------------------------------ */
 /* Export: _imeEndPeriod    (ordinal 102)                             */
 /* ------------------------------------------------------------------ */
-__declspec(dllexport)
+INMM_EXPORT
 MMRESULT WINAPI _imeEndPeriod(UINT uPeriod)
 {
     ensure_initialized();
     InterlockedIncrement(&g_call_count);
     log_msg("[inmm_stub] _imeEndPeriod(%u) [#%u]\n",
             uPeriod, (unsigned)g_call_count);
+#ifdef SYW2_WINMM_PROXY
+    return g1_winmm_time_end_period(uPeriod);
+#else
     return timeEndPeriod(uPeriod);
+#endif
 }
 
 /* ------------------------------------------------------------------ */
@@ -663,7 +683,7 @@ MMRESULT WINAPI _imeEndPeriod(UINT uPeriod)
 /* 원본 _inmm_orig.dll: ret $0x10 = 4 params × 4 bytes               */
 /* mciSendCommandA 와 동일한 4-arg 시그니처 (mciSendStringA 아님!)   */
 /* ------------------------------------------------------------------ */
-__declspec(dllexport)
+INMM_EXPORT
 MCIERROR WINAPI _ciSendCommandA(MCIDEVICEID mciId, UINT uMsg,
                                  DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
@@ -754,14 +774,18 @@ MCIERROR WINAPI _ciSendCommandA(MCIDEVICEID mciId, UINT uMsg,
         }
     }
 
+#ifdef SYW2_WINMM_PROXY
+    return g1_winmm_mci_send_command_a(mciId, uMsg, dwParam1, dwParam2);
+#else
     return mciSendCommandA(mciId, uMsg, dwParam1, dwParam2);
+#endif
 }
 
 /* ------------------------------------------------------------------ */
 /* Export: _imeGetTime      (ordinal 105)                             */
 /* lazy-start polling worker thread                                    */
 /* ------------------------------------------------------------------ */
-__declspec(dllexport)
+INMM_EXPORT
 DWORD WINAPI _imeGetTime(void)
 {
     ensure_initialized();
@@ -782,5 +806,9 @@ DWORD WINAPI _imeGetTime(void)
      *      main thread(여기)에서 실행한다. 대기 중인 slot이 없으면 즉시 반환. */
     chb_drain_slot_mainthread();
 
+#ifdef SYW2_WINMM_PROXY
+    return g1_winmm_time_get_time();
+#else
     return timeGetTime();
+#endif
 }

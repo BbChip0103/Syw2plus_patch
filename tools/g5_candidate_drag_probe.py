@@ -10,16 +10,19 @@ never edited.
 from __future__ import annotations
 
 import argparse
+import datetime
 import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
 from typing import Any, Callable, Mapping, cast
 
 from patches.selection import g5_selection_cap50_v3 as g5
+from patches.selection import g5_selection_on2614 as g5on2614
 from tools import runtime_env
 from patches.population.runtime_driver import read as read_memory
 from patches.population.runtime_driver import state as read_state
@@ -192,7 +195,7 @@ class SupplyProbe:
 def selection_snapshot(pid: int, *, base: int, capacity: int) -> dict[str, Any]:
     count = int.from_bytes(read_memory(pid, base, 4), "little", signed=True)
     if not 0 <= count <= capacity:
-        raise ProbeError(f"candidate selection count outside 0..50: {count}")
+        raise ProbeError(f"selection count outside 0..{capacity}: {count}")
     raw_entries = [
         int.from_bytes(
             read_memory(pid, base + 4 + index * SELECTION_ENTRY_BYTES, 4),
@@ -243,7 +246,9 @@ def unit_snapshot(pid: int, slot: int) -> dict[str, Any]:
     }
 
 
-def dense_fixture_requests(worker: Mapping[str, Any]) -> list[dict[str, int]]:
+def dense_fixture_requests(
+    worker: Mapping[str, Any], *, target_count: int = SEED_COUNT,
+) -> list[dict[str, int]]:
     """Return every non-worker cell in the worker-centered 7x8 grid.
 
     The minimap click changes the camera between runs, so a fixed world-space
@@ -256,15 +261,23 @@ def dense_fixture_requests(worker: Mapping[str, Any]) -> list[dict[str, int]]:
     """
     worker_x = int(worker["x"])
     worker_y = int(worker["y"])
-    requests: list[dict[str, int]] = []
-    for dy in range(-3, 5):
-        for dx in range(-3, 4):
-            if dx == 0 and dy == 0:
-                continue
-            requests.append({"x": worker_x + dx, "y": worker_y + dy, "count": 1})
+    if target_count <= 0:
+        raise ProbeError(f"fixture target must be positive: {target_count}")
+    if target_count <= SEED_COUNT:
+        offsets = ((dx, dy) for dy in range(-3, 5) for dx in range(-3, 4) if (dx, dy) != (0, 0))
+    else:
+        # Eleven by eleven gives 120 unique cells after excluding the worker.
+        # Its screen footprint remains inside the existing drag rectangle.
+        offsets = ((dx, dy) for dy in range(-5, 6) for dx in range(-5, 6) if (dx, dy) != (0, 0))
+    requests = [
+        {"x": worker_x + dx, "y": worker_y + dy, "count": 1}
+        for dx, dy in list(offsets)[:target_count]
+    ]
+    if len(requests) != target_count:
+        raise ProbeError(f"fixture grid cannot supply {target_count} distinct cells")
     if any(not 0 <= item[axis] < 180 for item in requests for axis in ("x", "y")):
         raise ProbeError(f"dense fixture falls outside the 180x180 map: {requests}")
-    if sum(item["count"] for item in requests) != SEED_COUNT:
+    if sum(item["count"] for item in requests) != target_count:
         raise ProbeError(f"dense fixture count mismatch: {requests}")
     return requests
 
@@ -446,6 +459,8 @@ def capture(display: str, path: Path, log: Any) -> dict[str, Any]:
 def run_probe(
     source: Path, runtime_root: Path, artifact_root: Path, *, variant: str,
     ui_roundtrip: bool = False, attack_probe: bool = False,
+    target_exe: Path | None = None, overlay_root: Path | None = None,
+    fixture_count: int = SEED_COUNT,
 ) -> dict[str, Any]:
     if variant not in {"original", "candidate"}:
         raise ProbeError(f"unsupported variant: {variant}")
@@ -464,23 +479,53 @@ def run_probe(
     if sha256(source_exe) != ORIGINAL_SHA:
         raise ProbeError("protected source executable SHA mismatch before run")
 
-    candidate_path = artifact_root / "g5_selection_cap50.exe"
+    is_2614 = target_exe is not None
+    candidate_path = artifact_root / ("g5_selection_on2614.exe" if is_2614 else "g5_selection_cap50.exe")
     candidate_sha: str | None = None
-    if variant == "candidate":
+    target_input_sha: str | None = None
+    target_bytes: bytes | None = None
+    if is_2614:
+        if overlay_root is None:
+            raise ProbeError("2614 probe requires its full overlay package root")
+        target_exe = target_exe.expanduser().resolve()
+        overlay_root = overlay_root.expanduser().resolve()
+        runtime_env._reject_path_links(overlay_root)
+        if target_exe.parent != overlay_root or not target_exe.is_file():
+            raise ProbeError("2614 executable must be a regular file at the overlay root")
+        target_bytes = target_exe.read_bytes()
+        target_input_sha = sha256(target_exe)
+        if target_input_sha != g5on2614.ORIGINAL_SHA256:
+            raise ProbeError(f"2614 input SHA mismatch: {target_input_sha}")
+    if variant == "candidate" and is_2614:
+        assert target_bytes is not None
+        candidate, patch_audit = g5on2614.build_candidate(target_bytes)
+        candidate_path.write_bytes(candidate)
+        candidate_sha = sha256(candidate_path)
+        write_json(artifact_root / "patch-audit.json", patch_audit)
+    elif variant == "candidate":
         candidate_path.write_bytes(g5.build_candidate(source_exe.read_bytes())[0])
         candidate_sha = sha256(candidate_path)
         if candidate_sha != TARGET_SHA:
             raise ProbeError(f"G5 candidate SHA mismatch: {candidate_sha}")
 
     bridge_dir = artifact_root / "stock_bridge"
-    subprocess.run(
-        [sys.executable, str(REPO / "patches/population/build_runtime_bridge.py"),
-         "--out-dir", str(bridge_dir), "--unit-pool-capacity", "1200"],
-        cwd=REPO, check=True, env=dict(os.environ, PYTHONPATH=str(REPO)),
-    )
-    bridge = bridge_dir / "_inmm.dll"
+    if is_2614:
+        assert target_exe is not None
+        subprocess.run(
+            [sys.executable, str(REPO / "tools/build_g5on2614_probe_bridge.py"),
+             "--target-exe", str(target_exe), "--out-dir", str(bridge_dir)],
+            cwd=REPO, check=True, env=dict(os.environ, PYTHONPATH=str(REPO)),
+        )
+        bridge = bridge_dir / "winmm.dll"
+    else:
+        subprocess.run(
+            [sys.executable, str(REPO / "patches/population/build_runtime_bridge.py"),
+             "--out-dir", str(bridge_dir), "--unit-pool-capacity", "1200"],
+            cwd=REPO, check=True, env=dict(os.environ, PYTHONPATH=str(REPO)),
+        )
+        bridge = bridge_dir / "_inmm.dll"
     manifest = runtime_env.prepare(
-        source, runtime_root=runtime_root, bridge=bridge, timeout=60,
+        source, runtime_root=runtime_root, bridge=None if is_2614 else bridge, timeout=60,
     )
     manifest_output = manifest.get("output")
     manifest_game = manifest.get("game")
@@ -503,18 +548,51 @@ def run_probe(
     if sha256(private_exe) != ORIGINAL_SHA:
         raise ProbeError("private original copy failed pre-install check")
 
-    if variant == "candidate":
+    overlay_files: list[str] = []
+    if is_2614:
+        assert overlay_root is not None and target_bytes is not None
+        runtime_env._reject_links(overlay_root)
+        for path in sorted(overlay_root.rglob("*")):
+            if path.is_dir():
+                continue
+            relative = path.relative_to(overlay_root)
+            if path.suffix.lower() == ".exe" or relative.name.lower() in {"_inmm.dll", "_inmm.log", "hqcdd.log", "ipxwrapper.log"}:
+                continue
+            destination = game / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, destination)
+            overlay_files.append(str(relative))
+        private_winmm = game / "winmm.dll"
+        if private_winmm.exists() or private_winmm.is_symlink():
+            raise ProbeError("private 2614 game already contains a winmm.dll; refusing to replace it")
+        shutil.copy2(bridge, private_winmm)
+
+    if is_2614:
+        assert target_bytes is not None
+        executable_bytes = candidate_path.read_bytes() if variant == "candidate" else target_bytes
+        private_exe.write_bytes(executable_bytes)
+        expected_private_sha = candidate_sha if variant == "candidate" else target_input_sha
+        if sha256(private_exe) != expected_private_sha:
+            raise ProbeError("private 2614 executable SHA verification failed")
+    elif variant == "candidate":
         private_exe.write_bytes(candidate_path.read_bytes())
         if sha256(private_exe) != TARGET_SHA:
             raise ProbeError("private candidate SHA verification failed")
     private_exe_sha = sha256(private_exe)
-    selection_base = g5.SELECTION_BASE if variant == "candidate" else STOCK_SELECTION_BASE
-    selection_capacity = g5.TARGET_CAPACITY if variant == "candidate" else STOCK_SELECTION_CAPACITY
+    selection_base = g5.SELECTION_BASE if variant == "candidate" and not is_2614 else STOCK_SELECTION_BASE
+    selection_capacity = (
+        g5on2614.TARGET_CAPACITY if is_2614 and variant == "candidate"
+        else STOCK_SELECTION_CAPACITY if variant == "original"
+        else g5.TARGET_CAPACITY
+    )
     provenance: dict[str, Any] = {
         "schema": "syw2plus.g5-drag-runtime.v4",
         "variant": variant,
         "source_root": str(source),
         "source_exe_sha256": sha256(source_exe),
+        "target_input_sha256": target_input_sha,
+        "overlay_root": str(overlay_root) if is_2614 and overlay_root is not None else None,
+        "overlay_files": overlay_files,
         "candidate_source": str(candidate_path) if variant == "candidate" else None,
         "candidate_sha256": candidate_sha,
         "private_run": run_dir_text,
@@ -535,7 +613,7 @@ def run_probe(
         "schema": "syw2plus.g5-drag-probe.v3",
         "status": "UNKNOWN",
         "provenance": provenance,
-        "fixture": {"owner": 0, "type": SEED_TYPE, "count": SEED_COUNT,
+        "fixture": {"owner": 0, "type": SEED_TYPE, "count": fixture_count,
                      "synthetic": True,
                      "method": "stock-layout diagnostic op5 engine-seeded dense rows",
                      "anchor": {"slot": VISIBLE_WORKER_SLOT,
@@ -546,6 +624,21 @@ def run_probe(
     }
     log_path = artifact_root / "probe.log"
     log = log_path.open("a", encoding="utf-8")
+    capture_dir = artifact_root
+    capture_prefix: str | None = None
+    if is_2614:
+        capture_dir = runtime_env.SCREENSHOT_ROOT
+        capture_dir.mkdir(parents=True, exist_ok=True)
+        capture_prefix = datetime.datetime.now().strftime(
+            f"%Y%m%d_%H%M%S_lap1288_g5on2614_{variant}"
+        )
+
+    def take_capture(name: str) -> dict[str, Any]:
+        path = capture_dir / (
+            f"{capture_prefix}_{Path(name).stem}.png" if capture_prefix else name
+        )
+        return capture(display, path, log)
+
     children: list[Any] = []
     xvfb: Any = None
     display = ""
@@ -553,7 +646,8 @@ def run_probe(
     try:
         env = dict(
             os.environ, WINEPREFIX=str(prefix), WINEARCH="win32", WINEDEBUG="-all",
-            LANG="ko_KR.UTF-8", LC_ALL="ko_KR.UTF-8", WINEDLLOVERRIDES="ddraw=b",
+            LANG="ko_KR.UTF-8", LC_ALL="ko_KR.UTF-8",
+            WINEDLLOVERRIDES="ddraw=b;winmm=n,b" if is_2614 else "ddraw=b",
             SYW2_SUPPLY_PROBE="1",
         )
         xvfb, display = runtime_env._xvfb(log, "1600x1200x24")
@@ -641,7 +735,7 @@ def run_probe(
         if worker["owner"] != 0 or worker["unit_type"] in {0, SEED_TYPE}:
             raise ProbeError(f"slot1198 is not the expected pre-existing worker: {worker}")
         result["visible_worker_before_fixture"] = worker
-        fixture_requests = dense_fixture_requests(worker)
+        fixture_requests = dense_fixture_requests(worker, target_count=fixture_count)
         result["fixture"]["requests"] = fixture_requests
         receipts: list[dict[str, Any]] = []
         supply = SupplyProbe(prefix)
@@ -654,7 +748,7 @@ def run_probe(
             if not receipt.get("ok") or receipt.get("fixture_added") != request["count"]:
                 raise ProbeError(f"dense fixture batch failed: {receipt}")
         result["fixture_receipts"] = receipts
-        if sum(int(receipt.get("fixture_added", 0)) for receipt in receipts) != SEED_COUNT:
+        if sum(int(receipt.get("fixture_added", 0)) for receipt in receipts) != fixture_count:
             raise ProbeError(f"dense fixture total failed: {receipts}")
         time.sleep(1)
         result["fixture_units"] = fixture_units(pid)
@@ -692,7 +786,7 @@ def run_probe(
                 "owner_raw": int.from_bytes(read_memory(pid, target_base + UNIT_OWNER_OFFSET, 1), "little"),
                 "type_raw": int.from_bytes(read_memory(pid, target_base + 0x8D, 1), "little"),
             }
-        result["captures"] = [capture(display, artifact_root / "after-fixture.png", log)]
+        result["captures"] = [take_capture("after-fixture.png")]
         click(235, 555)
         time.sleep(1)
         result["camera_after_minimap"] = list(
@@ -701,7 +795,7 @@ def run_probe(
         )
         before = selection_snapshot(pid, base=selection_base, capacity=selection_capacity)
         result["selection_before"] = before
-        result["captures"].append(capture(display, artifact_root / "before-drag.png", log))
+        result["captures"].append(take_capture("before-drag.png"))
         wait_for_selection_trace_gate(pid, artifact_root)
         # Cover the worker-centered grid while keeping the lower edge above
         # the command HUD (y >= 480).  The original and candidate use the
@@ -710,7 +804,7 @@ def run_probe(
         time.sleep(1)
         after = selection_snapshot(pid, base=selection_base, capacity=selection_capacity)
         result["selection_after"] = after
-        result["captures"].append(capture(display, artifact_root / "after-drag.png", log))
+        result["captures"].append(take_capture("after-drag.png"))
         if after["count"] == 0:
             # A debugger attach/continue can consume the first synthetic mouse
             # gesture even after the tick gate has opened.  The lap649
@@ -721,14 +815,14 @@ def run_probe(
             time.sleep(1)
             after = selection_snapshot(pid, base=selection_base, capacity=selection_capacity)
             result["selection_after_retry"] = after
-            result["captures"].append(capture(display, artifact_root / "after-drag-retry.png", log))
+            result["captures"].append(take_capture("after-drag-retry.png"))
             if after["count"] == 0:
                 raise ProbeError("drag produced no selection after one retry")
 
         if attack_probe:
             target_slot = int(result["attack_fixture"]["slot"])
             attack_before = selected_unit_raw(pid, after)
-            result["captures"].append(capture(display, artifact_root / "before-attack.png", log))
+            result["captures"].append(take_capture("before-attack.png"))
             # This is the product input under test: enter the stock attack
             # mode, then left-click the visible enemy target.  The earlier
             # right-click-only input was accepted as movement on the original
@@ -750,7 +844,7 @@ def run_probe(
             result["attack_probe"]["before"] = attack_before
             result["attack_probe"]["immediate"] = attack_immediate
             result["attack_probe"]["after"] = attack_after
-            result["captures"].append(capture(display, artifact_root / "after-attack.png", log))
+            result["captures"].append(take_capture("after-attack.png"))
 
         if ui_roundtrip:
             result["ui_roundtrip"] = {}
@@ -759,7 +853,7 @@ def run_probe(
                 "selection": after,
                 "group": control_group_snapshot(pid),
             }
-            result["captures"].append(capture(display, artifact_root / "ui-selected.png", log))
+            result["captures"].append(take_capture("ui-selected.png"))
 
             wait_for_ui_trace_gate(pid, artifact_root)
             send_key(display, "1", ctrl=True, env=env, log=log)
@@ -769,7 +863,7 @@ def run_probe(
                 "group": control_group_snapshot(pid),
                 "fixture_units": fixture_unit_group_snapshot(pid, fixture_units_for_trace),
             }
-            result["captures"].append(capture(display, artifact_root / "ui-ctrl1-stored.png", log))
+            result["captures"].append(take_capture("ui-ctrl1-stored.png"))
 
             click(*DESELECT_POINT)
             time.sleep(0.5)
@@ -778,7 +872,7 @@ def run_probe(
                 "group": control_group_snapshot(pid),
                 "fixture_units": fixture_unit_group_snapshot(pid, fixture_units_for_trace),
             }
-            result["captures"].append(capture(display, artifact_root / "ui-deselected.png", log))
+            result["captures"].append(take_capture("ui-deselected.png"))
 
             send_key(display, "1", env=env, log=log)
             time.sleep(0.5)
@@ -787,7 +881,7 @@ def run_probe(
                 "group": control_group_snapshot(pid),
                 "fixture_units": fixture_unit_group_snapshot(pid, fixture_units_for_trace),
             }
-            result["captures"].append(capture(display, artifact_root / "ui-recalled.png", log))
+            result["captures"].append(take_capture("ui-recalled.png"))
 
             send_key(display, "Escape", env=env, log=log)
             wait_for(lambda item: item.get("ps") == 23, "pause_for_save")
@@ -804,7 +898,7 @@ def run_probe(
                 "sha256": sha256(save_path),
                 "size": save_path.stat().st_size,
             }
-            result["captures"].append(capture(display, artifact_root / "ui-saved.png", log))
+            result["captures"].append(take_capture("ui-saved.png"))
 
             click(*SAVE_MENU_RETURN_POINT)
             click(*RESUME_POINT)
@@ -823,7 +917,7 @@ def run_probe(
                 "selection": selection_snapshot(pid, base=selection_base, capacity=selection_capacity),
                 "group": control_group_snapshot(pid),
             }
-            result["captures"].append(capture(display, artifact_root / "ui-loaded.png", log))
+            result["captures"].append(take_capture("ui-loaded.png"))
             click(*DESELECT_POINT)
             time.sleep(0.3)
             send_key(display, "1", env=env, log=log)
@@ -832,30 +926,36 @@ def run_probe(
                 "selection": selection_snapshot(pid, base=selection_base, capacity=selection_capacity),
                 "group": control_group_snapshot(pid),
             }
-            result["captures"].append(capture(display, artifact_root / "ui-recalled-after-load.png", log))
+            result["captures"].append(take_capture("ui-recalled-after-load.png"))
 
             stored = result["ui_roundtrip"]["stored"]
             recalled = result["ui_roundtrip"]["recalled"]
             loaded = result["ui_roundtrip"]["loaded"]
             recalled_after_load = result["ui_roundtrip"]["recalled_after_load"]
             result["ui_roundtrip"]["checks"] = {
-                "selected_50": after["count"] == 50 and after["unique_slots"] == 50,
+                "selected_expected_capacity": (
+                    after["count"] == selection_capacity
+                    and after["unique_slots"] == selection_capacity
+                ),
                 # The accepted v2 layout deliberately keeps the stock
                 # PlayerStruct row at 20 and persists overflow members in
                 # unit+0x344.  Together these represent the 50-member group
                 # without corrupting adjacent group metadata.
-                "group_stored_stock20_plus_overflow49": (
-                    stored["group"]["group1_count"] == 20
-                    and stored["fixture_units"]["group_counts"] == {"-1": 6, "1": 49}
-                ),
+                "group_state_recalled": recalled["group"] == stored["group"],
                 "deselected": result["ui_roundtrip"]["deselected"]["selection"]["count"] == 0,
-                "recalled_50": recalled["selection"]["count"] == 50,
+                "recalled_expected_capacity": (
+                    recalled["selection"]["count"] == selection_capacity
+                    and recalled["selection"]["slots"] == after["slots"]
+                ),
                 "save_created": bool(result["ui_roundtrip"]["save"]["sha256"]),
                 "group_retained_after_load": (
                     loaded["group"]["group1_count"] == 20
                     and loaded["group"]["group1_first_id"] == stored["group"]["group1_first_id"]
                 ),
-                "recalled_50_after_load": recalled_after_load["selection"]["count"] == 50,
+                "recalled_expected_capacity_after_load": (
+                    recalled_after_load["selection"]["count"] == selection_capacity
+                    and recalled_after_load["selection"]["slots"] == after["slots"]
+                ),
             }
         click(*DRAG_END, button=3)
         time.sleep(1)
@@ -863,8 +963,25 @@ def run_probe(
         result["selected_unit_raw"] = selected_unit_raw(pid, result["move_selection"])
         moved = [row for row in result["selected_unit_raw"] if isinstance(row.get("command"), int) and row["command"] != 0]
         result["movement_command_nonzero"] = len(moved)
+        result["inputs"].append({"key": "s", "action": "stop selected units"})
+        stop_before = result["selected_unit_raw"]
+        send_key(display, "s", env=env, log=log)
+        time.sleep(0.5)
+        stop_after = selected_unit_raw(pid, result["move_selection"])
+        before_by_slot = {int(row["slot"]): row for row in stop_before}
+        changed_stop_slots = [
+            int(row["slot"]) for row in stop_after
+            if row.get("command") != before_by_slot.get(int(row["slot"]), {}).get("command")
+            or row.get("pending_command") != before_by_slot.get(int(row["slot"]), {}).get("pending_command")
+        ]
+        result["stop_probe"] = {
+            "before": stop_before, "after": stop_after,
+            "changed_member_count": len(changed_stop_slots),
+            "changed_slots": changed_stop_slots,
+        }
         if variant == "candidate":
-            drag_pass = after["count"] == 50 and after["unique_slots"] == 50
+            expected_selection = selection_capacity
+            drag_pass = after["count"] == expected_selection and after["unique_slots"] == expected_selection
             ui_pass = not ui_roundtrip or all(result["ui_roundtrip"]["checks"].values())
             attack_pass = not attack_probe or result.get("attack_probe", {}).get("pass", False)
             if attack_probe:
@@ -920,6 +1037,9 @@ def run_probe(
         result["cleanup"]["ok"] = not result["cleanup"]["prefix_processes_after"] and cleanup_error is None
         result["source_sha_after"] = sha256(source_exe)
         result["source_unchanged"] = result["source_sha_after"] == ORIGINAL_SHA
+        if is_2614 and target_exe is not None:
+            result["target_input_sha_after"] = sha256(target_exe)
+            result["target_input_unchanged"] = result["target_input_sha_after"] == target_input_sha
         write_json(artifact_root / "probe-result.json", result)
         log.close()
     return result
@@ -931,6 +1051,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--runtime-root", type=Path, default=DEFAULT_RUNTIME_ROOT)
     parser.add_argument("--artifact-root", type=Path, required=True)
+    parser.add_argument("--target-exe", type=Path,
+                        help="pin an alternate executable inside the private runtime (2614 work lane)")
+    parser.add_argument("--overlay-root", type=Path,
+                        help="merge a version's game-folder overlay into the private runtime")
+    parser.add_argument("--fixture-count", type=int, default=SEED_COUNT)
     parser.add_argument("--ui-roundtrip", action="store_true",
                         help="exercise portrait/group/save/load inputs after the drag")
     parser.add_argument("--attack-probe", action="store_true",
@@ -938,7 +1063,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     result = run_probe(args.source, args.runtime_root, args.artifact_root,
                        variant=args.variant, ui_roundtrip=args.ui_roundtrip,
-                       attack_probe=args.attack_probe)
+                       attack_probe=args.attack_probe, target_exe=args.target_exe,
+                       overlay_root=args.overlay_root, fixture_count=args.fixture_count)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result.get("status", "").startswith("PASS") and result.get("cleanup", {}).get("ok") else 2
 

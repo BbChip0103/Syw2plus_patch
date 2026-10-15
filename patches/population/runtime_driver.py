@@ -374,6 +374,16 @@ def state(pid, detailed=False, profile="original"):
     return result
 
 
+def display_state(pid):
+    """Read only program state and simulation tick for display-only probes."""
+
+    def integer(address):
+        return struct.unpack("<i", read(pid, address, 4))[0]
+
+    return {"pid": pid, "time": time.time(), "ps": integer(0x4ED818),
+            "tick": integer(0x8924B8)}
+
+
 def atomic_json(path: Path, data: object) -> None:
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2))

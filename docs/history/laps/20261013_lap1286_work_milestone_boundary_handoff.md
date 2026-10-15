@@ -1,0 +1,11 @@
+# 2026-10-13 | lap1286 | G1→G5 마일스톤 경계 승격 인계
+
+- 지정 역할/provider/model/effort: hands-on work. `docs/MODEL_ROUTING.md` work 계약은 Codex luna/high; 현 App 세션의 resolved model/effort argv는 노출되지 않아 대체 모델을 추정하거나 주장하지 않는다.
+- 가설 / 사용자 관찰: lap1283 H-HDSINGLE 기술 수리 PASS 뒤 root가 전달 직전 전체 검사(exit0, 2203 passed/9 skipped, fingerprint MATCH)를 마치고 21:17 G1 시험판을 전달했다. G1 Windows/DxWnd/사용자 화질·마일스톤 결과는 미결이다. 이어 23:15 사용자가 H-G5ON2614를 최우선으로 지정했다. G5는 기존 DESIGN에서 공식 ESL 지원으로 종결된 목표이므로 이는 명시된 milestone boundary다.
+- 예상 PASS / FAIL 조건: PROMPT 규칙에 따라 이전 목표의 미결 사용자 판단을 PASS로 바꾸지 않고 구현을 멈춘 뒤 fresh Sol에 우선순위/전환 판정을 승격한다.
+- 변경 파일 / source fingerprint / 커밋: 문서만 변경. 기존 제품/테스트 파일 및 대규모 미커밋 변경은 손대지 않음. 시작 runtime source `c74e1f94bfcbfb9e7f2ca2328d222d8cd838cb23`, source_match=no. 커밋 없음.
+- 원본 SHA / 후보 SHA / 환경 / 활성 플레이어 / 지도 / 군대 / fixture: 이번 회차에 EXE/후보/runtime fixture를 만들거나 실행하지 않음. G1 전달·검수 근거는 lap1283/root 기록 참조. HDSINGLE 현재 key SHA: `tools/g1_hd_convert.py` cab166cb4710ef3ea9072abc29c1b65c22c6577ce07fe2e84f853bc211a1830b; `tools/inmm_stub/g1_hd_asset.c` 5e074325e411411d88f1dc22ebb3af87c8c05bf9cb3519106483bf99e06d91db; `tests/test_g1_hd_convert.py` 06a1012b23f6192f96e2b14248772838cf85999bd58cba33132134ba8e198c8e; `tests/test_g1_hd_native_reader.py` 3facee6fc60a6b9767691ac7db81d155075fd66dd5c3893014ec288b8bd6e576.
+- 실행 명령 / 로그 / 캡처: 게임·제품 테스트 없음. `logs/full-test-latest.result`의 lap569 source mismatch 결과는 재사용하지 않음. INBOX 원문 361줄·SHA256 `3ae725dc4c9349dd13d016f6c59ac84a09dc9de8d9be466701fceb4f708e61c4`를 `docs/history/20261013_inbox_lap1286_precompaction.md`로 byte-exact 보존한 뒤 중복 빈 줄만 압축했다. 처리 중 반영된 2614 입력 fact도 보존하기 위해 압축본 291줄·SHA256 `ae3f84986c06100d4021fe6f9d2013950a34f3f01124e6a4edb502006ae8cb92`를 `docs/history/20261013_inbox_lap1286_compacted_snapshot.md`로 byte-exact 보존했다; 원문 비공백 내용은 순서대로 유지되고 새 fact가 추가되었다.
+- 측정값 / 판정: **ESCALATE_SOL**. 제품 구현/테스트/격리 실행/전달/커밋 0. STATUS42→43줄, INBOX361→293줄(중복 공백 압축 + 두 provenance 포인터), APPROVALS64줄; STATUS130·INBOX350·APPROVALS250 한도 이내, Blockers 한 개.
+- 회귀 / 남은 위험 / 독립 검수 및 사용자 승인 상태: 기존 G1 수리·검수·전달 근거는 유지. Windows·사용자 G1 결과 및 G1 마일스톤 판정 대기. 2614 패치/100기 실제 선택 증거 없음. G5의 공식 종결 기록과 새 사용자 지시의 경계는 Sol 판정 필요.
+- 다음 한 가지: fresh Sol이 우선순위와 G1→G5 전환을 판정. 그 뒤 지정 work가 2614 사본에서 H-G5ON2614의 주소 근거·최소 패치·원본 대비 100+ 실게임 검증을 수행.

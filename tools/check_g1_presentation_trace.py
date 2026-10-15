@@ -15,7 +15,8 @@ EXPECTED_DD_IID = "15E65EC0-3B9C-11D2-B92F-00609797EA5B"
 EXPECTED_SURFACE_INTERFACE = "IDirectDrawSurface7"
 DD_VTABLE_METHODS = 30
 SURFACE_VTABLE_METHODS = 49
-MAX_EVENTS = 8192
+MAX_EVENTS = 65536
+SUPPORTED_EVENT_LIMITS = {8192, MAX_EVENTS}
 MAX_METHOD_EVENTS = 256
 MAX_AGGREGATES = 64
 SUPPORTED_CLIENT_SIZES = {(800, 600), (1600, 1200)}
@@ -150,7 +151,7 @@ def validate(trace: Path, *, capture: Mapping[str, Any] | None = None) -> dict[s
             errors.append("install DD7 vtable method count is invalid")
         if item.get("surface_vtable_methods") != SURFACE_VTABLE_METHODS:
             errors.append("install Surface7 vtable method count is invalid")
-        if (item.get("event_limit") != MAX_EVENTS or
+        if (item.get("event_limit") not in SUPPORTED_EVENT_LIMITS or
                 item.get("method_limit") != MAX_METHOD_EVENTS or
                 item.get("aggregate_limit") != MAX_AGGREGATES):
             errors.append("install trace limits are invalid")

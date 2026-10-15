@@ -1,0 +1,14 @@
+lap1298 fresh middle: lap1297 scoped MCI observation accepted; root boundary handoff.
+
+Record: docs/history/laps/20261014_lap1298_middle_g1_mci_pair_review.md
+Independent raw calculation: ../temp/Syw2plus_patch/20261014_lap1298_middle_mci_review/review.json
+Previous marker preserved byte-exact: docs/history/laps/20261014_lap1298_preserved_lap1297_escalate_sol.md
+
+Verified: same ESL2614 EXE ac61a28f84f71d602c581a17c835ec4dbb99aad0341c6755e395549005cf88bf and proxy 0e5ef5fdb1b191957ad61e5c5976271a82c19156028f0b068722f770b4f9d728; off800x600/on1600x1200; both MCI logs exist/0B. On PS3 dwell1216/60.749s. Owned cleanup/raw SHA/close-prefix/final flush match. Targeted6/doctor/lint/typecheck PASS. No implementation change or rerun.
+
+Accepted only: zero mciSendCommandA records observed under both configured conditions.
+Overall runner stays HOLD: off PS3 timestamp dwell unavailable. Audio playback/forwarding correctness/Windows/DxWnd/user G1 milestone UNKNOWN. Both lanes use the same proxy, so no categorical DLL-blame conclusion. Existing failures/raw/approvals preserved.
+
+Next owner root/Sol: apply this scoped result to the ESL2614 user report and trial-candidate readiness decision, preserving the existing instruction that real audio playback is Windows-side. This is a user-report/delivery-candidate boundary, not milestone completion. Do not repeat the same MCI pair/middle review without new conflicting evidence. If delivery proceeds, freeze the candidate then run the required same-source full make check once, using the latest drop-in UX. No automatic delivery or approval in this lap.
+
+Work handoff only if root makes off continuous60s proof essential: minimally connect existing rendering-off state/tick/DirectDraw timestamp evidence, targeted regression then matched real run. No current reproduced repair defect is claimed; middle does not implement game/harness changes. Do not expand instrumentation to block the product.

@@ -1,0 +1,11 @@
+# lap1271 middle — H-TRVAR2613 delivery HOLD / required official runtime gap
+
+Static staging scoped PASS: manifest39942 entries, sidecar39937, four launchers, staged DLL SHA205b89b2; reused lap1264 eight variant lanes match their exact EXE/DLL SHAs, close/cleanup/source PASS. Raw and existing changes preserved; prior handoff preserved byte-exact in docs/history/laps/20261011_lap1271_preserved_lap1270_escalate_sol.md.
+
+HOLD: latest INBOX 2026-10-11 03:14 explicitly requires official2613 newgame and official save006 pair with the staged default-on DLL. Lap1270 skipped game runs and reused variant-only lap1264 evidence. official_2613_sha256 there is a constant, not an executed official lane. Do not approve delivery or G1 milestone using it.
+
+Escalated worker: confirm this gap, then hand the minimum official2613 display-only run to work tier. Use frozen stage/default-on DLL (205b89b2c6ff3ae530ed3cbb705b644ea454404a0efee37de3980a85da36c28c), same sidecars, existing private lane machinery, fresh private game/prefix/display. Official newgame off/on + save006 off/on only; exact SHA, PS3, HD hit/reject/stale/safety, trace close/summary/drop0, owned cleanup/source unchanged. No diagnostic/stock-unit reader or supply bridge. Reuse variant eight lanes and unchanged Fast; no new broad test gate. Necessary helper implementation belongs to work tier, not this middle.
+
+Fresh middle reviews only new official evidence/change scope; root alone performs already authorized delivery/archive after PASS. Current delivery0/G1 milestone0, Windows/G2 pool/eight-player/G9 seat order unverified, known tree_plus reject1 UNKNOWN preserved. This session ends at the evidence/delivery boundary.
+
+Details: docs/history/laps/20261011_lap1271_middle_htrvar_staging_hold.md. Audit: ../temp/Syw2plus_patch/20261011_lap1271_middle_review/evidence.json.

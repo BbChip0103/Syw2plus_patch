@@ -1,0 +1,41 @@
+# 2026-10-13 | lap1280 | G1 H-HDSINGLE fresh middle — HOLD
+
+- 지정 역할: middle (진단·독립 확인). MODEL_ROUTING 선택은 Codex sol/gpt-6.1-sol/high; 이 App 세션의 실제 resolved ID/effort는 노출되지 않아 추측하지 않는다. 게임/하네스 소스 수정·provider fallback·subagent·커밋·전달 0.
+- ① 기준: 최신 DESIGN/INBOX가 우선. G1 및 사용자 16:56/18:17 원본 형식 `_hd` 요구만 확인; G2 종료/G3 중단/G4·G5·G7 종결과 별도 EXE 목표는 비접촉.
+- ② 입력: PROMPT→AGENTS·INBOX·APPROVALS→STATUS 전체→DESIGN 1~4→MODEL_ROUTING·lap1278 기록. runtime lap 파일은 1280, 쓰지 않음. STOP/ESCALATE_SOL/FULL_TEST는 시작 시 없음. INBOX19:57가 fresh middle 독립 검수를 지정함.
+- ③~④ 이번 가설/종료 조건: lap1278 후보의 원본 형식·프레임 순서·2배 크기·픽셀/실루엣 및 실행 대상/종료 근거가 일치하면 scoped 기술 수용. 실질 충돌 또는 전달/마일스톤 경계면 근거 보존·ESCALATE_SOL; 직접 수리하지 않음. 전체 make check는 전달 후보 고정 후 1회이며 이번 middle에서 실행하지 않음.
+
+## 독립 확인 결과
+
+- **HOLD/FAIL(native opacity round-trip):** 후보 782파일/187,750,672 B·39,814프레임(HD 39,155·fallback659) 중 **3 SPR/11프레임의 투명 마스크 18,872픽셀이 불투명으로 바뀌어 재추출**됨. 기존 opaque 픽셀 값은 일치하며 투명 영역이 새로 불투명으로 분류되는 결함이다. 단순 장부 오타/잘린 SHA가 아님. lap1278 `roundtrip_audit.json`의 counts/pass 원문은 변경하지 않는다; 그 기록의 전체 round-trip PASS를 현재 기술 수용으로 사용하지 않는다.
+- 원인: `_encode_spr_native`가 합법적 RLE를 썼지만 payload 길이 cursor가 doubled sheet width×height와 같아진다. `decode_spr`와 C `native_decode_frame`은 이 equality를 raw 판별에 사용한다. 원본은 rle, 후보는 raw로 분류되어 `FE n` 투명 run을 indexed pixel bytes로 읽는다. `exact=True`/프레임 크기만으로는 이를 검출하지 못한다.
+- `fnt/FOG01.Spr`: source sheet(92256,960,96)→candidate(368640,1920,192), frames19~26 mask diff20/36/36/24/48/56/92/72 (384).
+- `fnt/FOG11.Spr`: (92162,960,96)→(368640,1920,192), frames23/25 각4 (8).
+- `fnt/itembox_gray_line.spr`: (13860,220,42)→(36960,440,84), frame0 diff18480.
+- source SHA: FOG01 `5cced2a0873410a14778a77270426a99270068e9b1db3bc3410edbc9a1f7da63`; FOG11 `847a177d4f0b38962614b0ddc5f1b3beb5b5d4233ab14fbc6e115117ab71e246`; itembox `7f67a8db89a17d1511c089a20236195af228b4b57fe0e25fe3b75f0452e065ea`.
+- candidate SHA: FOG01 `744d7f553a44449a75bfe324bc55210845fb6fe61ae0bed2744f659e0f5a1724`; FOG11 `de2a5783f4bc737d2cfd2126033aa6a35845635f6c8f268810e1c3a7a110d04b`; itembox `1a6ee2d80ed759f136b83b4b43f8eda37cb705d5ae6613992ec2014663293831`.
+- **PASS(scoped runtime provenance):** official + two variants × new-game/save006 off/on 12 lanes: exact EXE/DLL/result/raw SHA, PS3, owned close, final summary detach/flush/drop0, cleanup(empty prefix process list·game copy absent), source unchanged·asset log `_hd.*` opens0 MATCH. Candidate PS3 stale/fallback/viewport restore/clip replay/palette violations0. This display-only evidence does not exercise all 39,814 frames and cannot override the round-trip failure.
+- key `hit` rows official60/77, V8 73/77, V89 66/79 exactly match lap1278. Trace cumulative PS3 max hits274/200·268/188·281/200 are a different counter, not a conflict. Three new-game runs each retain tree_plus reject1 (`0x00466EA0`, `44c611f6`); save runs reject0; Scale2x PASS, mirror BLOCKED unchanged.
+- **PASS(DLL identity):** original `_G1MM.dll` SHA `3c31b86dc3eab6ad6b58980af03a4d9253f67ec2488aa148d9ad3e03d5c2bcd0`, independent build `6dc88f98110975acc443c29d38eb738289c11df2d68165e0b98e2545edc49b7d`, both520381B; differences6 bytes only COFF/export timestamps/checksum. Same implementation confirmed, no source edits.
+- **PASS(scoped visual):** inspected official save006 off/on loaded captures; layout/world/HUD/minimap/selection positions retain 2x framing, score94. Separate simulation times/HD texture changes are explicit; actual input effects/Windows/G1 milestone are not approved. Visual verdict persisted `.omx/state/lap1280-middle-hdsingle/ralph-progress.json` and shared evidence folder.
+
+## ⑤~⑥ commands / evidence / limitations
+
+- Shared evidence: `/home/dev_00/sharedfolder/260320_Syw2plus/temp/Syw2plus_patch/20261013_lap1280_middle_hdsingle/` (`native-audit.json`, `native-11frame-differences.json`, `format-collision.json`, `runtime-audit.json`, `dll-audit.json`, `source-hashes.json`, `visual-verdict.json`). Original candidate/raw/prefixes and all pre-existing changes preserved.
+- `make doctor` setup/original SHA PASS; default runtime manifest absence is not fresh runtime PASS.
+- `.venv/bin/python -m pytest -q tests/test_g1_hd_convert.py tests/test_g1_hd_extract.py tests/test_g1_hd_pack.py tests/test_g1_hd_native_reader.py` →150 passed/52.64s (including isolated synthetic C BMP/sheet/truncation); `make lint`·`make typecheck` PASS. Logs `logs/gates/lap1280-middle-{targeted,lint,typecheck}.log`.
+- Fresh copied-source `make -B -C ../temp/Syw2plus_patch/20261013_lap1280_middle_hdsingle/dll_build default-on` PASS, log `logs/gates/lap1280-middle-dll-build.log` (existing unrelated warnings).
+- **Repro command:** `.venv/bin/python ../temp/Syw2plus_patch/20261013_lap1280_middle_hdsingle/reproduce_format_collision.py` →exit1/affected_frames11, expected diagnostic FAIL; log `logs/gates/lap1280-format-collision.log`. Read-only on source/candidate; checks source/candidate kind, sheet equality, and exact doubled mask.
+- Native audit compares re-decoded HD to pack opaque indexed pixels and exact doubled source masks, all782files. Initial comparator incorrectly compared undefined transparent gap placeholders (Python0 vs pack254); that artifact is preserved as `native-audit-initial-transparent-placeholder.json`. Normalized comparison leaves the real11 mask failures above. Asset log non-UTF8 uses the producer's `errors=replace` decoding. Owned SHA is measured before WM_CLOSE; all12 recorded SHA values match the exact prefix of the final owned trace. Comparing to the whole postclose file was a reviewer assumption, not a product failure.
+- Native audit SHA `90bbf99fd6e925d8d563e1707f95ddc4d38da1e290f310d88dc9729f214b1dd7`; format diagnosis `7124a9ecc6d012efbe26ba3632212b74490fb9601a831305748c749da7da4213`. Full file hashes/tree digest are in the audit; no golden/pin update.
+- Full check/game rerun/delivery/Windows/G1 milestone: SKIP/not approved. Old lap569 source mismatch unused. lap1278 full check2202/9skip predates final reader fix and is not a delivery gate for this source.
+- Before adding records STATUS130/INBOX335/APPROVALS60 lines. STATUS full130lines preserved byte-exact in `docs/history/20261013_status_lap1280_precompaction.md`, SHA `70bbe8de22709e84e566fb940867f42dc2c0967458429762ee24f9c14ab42f76`; unresolved/approval history pointers retained.
+
+## Narrow handoff (middle→root/Sol→work)
+
+1. Confirm this three-asset format/mask collision; keep H-HDSINGLE technical/delivery HOLD and assign the traceable writer fix to work tier. No additional broad RE/strategy/validator project.
+2. Smallest candidate repair: retain RLE source kind by choosing an equivalent legal `FE n` encoding whose total length cannot equal declared sheet pixel area (e.g. split a transparent run into two positive runs at the equality boundary). Update payload size/frame offsets from the real encoded bytes. Do not fabricate header dimensions, add a new container, change palettes/silhouettes, or alter true-raw files. Work must prove the chosen encoding on a minimal fixture before generating a new sibling candidate.
+3. Regression must assert source/HD RLE classification, frame order/2x dimensions, exact opacity masks and opaque pixels for these three assets; cover the same C reader result and preserve true raw handling. Existing count/exact-only audit is insufficient.
+4. Regenerate into a new shared temp folder (preserve retry2). Changed writer means relevant regression + lint/typecheck and required official/variant display runs on the new candidate; fix traceable failures and rerun. Fresh middle confirms the repair, reusing unchanged DLL evidence if appropriate. Full make check only once the repaired delivery candidate/source is fixed immediately before delivery; root decides user delivery question per INBOX19:57. User milestone remains pending.
+
+- Final document/safety/diff checks: `checks/context_limits.py` CONTEXT_PASS, `checks/safety.py --require-game` SAFETY_PASS, `git diff --check` PASS. Initial STATUS compaction omitted required `## 바퀴 기록`; added that section and reran both document/safety checks successfully (traceable documentation defect, no gate relaxation). STATUS37/INBOX337/APPROVALS64 lines, one Blockers section. Source snapshot hashes all unchanged; no implementation or safety pin change.

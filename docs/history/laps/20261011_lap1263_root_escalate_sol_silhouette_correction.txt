@@ -1,0 +1,11 @@
+# lap1263 middle — substantive root/source contradiction confirmed
+
+Root/Sol decision required; no milestone closure or delivery authorized by this session.
+Root01:37 instruction says four opaque pixels are outside the original silhouette and requests transparency cleanup. Fresh direct comparison disproves that basis: original fnt/tree_plus.spr frame0, exact reference PNG and sidecar masks agree everywhere (5261 source opaque pixels; source-sidecar mismatch0). Actual raw mask has5257; first(51,104)/last(53,105) are source literal pixels. Runtime identity-mask cause remains UNKNOWN. This is not a transcription error; do not erase source detail to suppress a runtime reject.
+
+Required continuation:
+1. Read docs/history/laps/20261011_lap1263_middle_source_silhouette_adjudication.md and shared temp 20261011_lap1263_middle_silhouette/evidence.json (SHA256 976bb91778741d46fc0f5a49fb259c613ad05bc7de2e5eb082a97d9f497761e2). Confirm correction of root transparency instruction; preserve sidecar/converter/silhouette guard and historical reject1/HOLD.
+2. Return hands-on work to the existing lap1261 FEASIBLE display-only variant probe, excluding converter transparency cleanup/new regression. Private default-on/no runtime_bridge, unit/SFX/shadow/snapshot diagnostics off, same variant G1 off/on, PS/tick/camera/screens only, known reject absolute/key disclosed. No additional planning/review-only lap to extend tool work. Runtime mask cause investigation only if new actual evidence warrants it.
+3. User delivery/milestone boundary remains separate. Do not use process exit0 or source comparison as variant/runtime/G1 acceptance.
+
+No product code/test/asset/binary changes, new game/build, delivery or commit. Prior lap1262 escalation preserved byte-exact in docs/history/laps/20261011_lap1263_preserved_lap1262_escalate_sol.md; SHA256 97b150d30dacc3420dc824d2cbaf3254fd4ce5bcb6c986d1bc9eca9bc131039e. Existing uncommitted edits/raw preserved; counter1263 unchanged.

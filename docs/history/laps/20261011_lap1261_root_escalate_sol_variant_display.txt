@@ -1,0 +1,30 @@
+# lap1261 middle decision — WORK_HANDOFF, not milestone approval
+
+Previous lap1260 request preserved byte-exact in
+`docs/history/laps/20261011_lap1261_preserved_lap1260_escalate_sol.md`
+(SHA256 cc4b3fd6b85a2964dbe66ed17481805f254868bd12b93d8f665406e5e27c97f4).
+
+Decision: unchanged diagnostic DLL/full-unit pair HOLD. The ordinary build
+calls sfx_probe_live_units at PS3 automatically; INMM_STUB_SFX_PROBE=0 only
+works in SYW2_G1_DEFAULT_ON builds. Host full-scene readers also use stock1200.
+Both exact variants have pool 0x01AB5000/existence 0x0220B9F8/4093 slots,
+confirmed in allocator instructions, not inferred from section size alone.
+
+FEASIBLE next work: existing default-on private build without runtime_bridge.c,
+explicit SFX/unit/shadow/snapshot diagnostics off, fresh private game/prefix/
+display; same variant G1 off/on display-only boot/new-game/save006 title-load
+comparison. Read PS/tick/camera/render trace only. No stock unit evidence,
+production/control/pool writes, EXE changes, pin changes or gate relaxation.
+Detailed minimal work ownership, build/env, measurements and stop conditions:
+`docs/history/laps/20261011_lap1261_middle_g1_variant_display_boundary_handoff.md`.
+Address proof: `analysis/memory_maps/g1_esl2613_g2_variant_display_boundary_lap1261.md`.
+
+Prior reject diagnosis independently MATCH: one key reject, runtime mask vs
+pack four opaque 2x2 blocks; candidate raw reject max1, stale/fallback/safety0.
+Do not rewrite it as whole-run reject0 or claim original full silhouette damage.
+Evidence JSON SHA256 77e58803e1ac16f4800230e18c9f4537e50d565111fb247a38328bb49cdd5062.
+
+Disposition: send to work tier for this bounded actual probe; do not spend
+another document-only Sol/strategy round repeating the same static checks.
+This middle performed no game/harness implementation or variant runtime.
+User delivery and G1 milestone remain unapproved; no commit/publish/deploy.

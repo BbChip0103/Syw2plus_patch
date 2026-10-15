@@ -33,7 +33,7 @@ sub-ranges instead.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Any, Iterable
 
 from patches.esl2610 import g2_scan
 
@@ -170,8 +170,9 @@ STATE_SECTIONS: tuple[StateSection, ...] = (
 )
 
 
-def section_for(value: int) -> StateSection | None:
-    for sec in STATE_SECTIONS:
+def section_for(value: int, state_sections: tuple[StateSection, ...] | None = None) -> StateSection | None:
+    candidates = STATE_SECTIONS if state_sections is None else tuple(reversed(state_sections))
+    for sec in candidates:
         if sec.contains(value):
             return sec
     return None
@@ -190,15 +191,16 @@ ENCODED_BASES = (
 ARRAY_CAPACITY = {"r17_B": 4095, "f2_flag": 4096, "a16_path": 4096, "sel_list": 4096}
 
 
-def _array(name: str) -> tuple[StateSection, PerUnit]:
-    for sec in STATE_SECTIONS:
+def _array(name: str, state_sections: tuple[StateSection, ...] | None = None) -> tuple[StateSection, PerUnit]:
+    state_sections = STATE_SECTIONS if state_sections is None else state_sections
+    for sec in state_sections:
         for arr in sec.arrays:
             if arr.name == name:
                 return sec, arr
     raise KeyError(name)
 
 
-def layout(base: int) -> dict[str, int]:
+def layout(base: int, state_sections: tuple[StateSection, ...] | None = None) -> dict[str, int]:
     """New start VA per state section, packed from ``base``.
 
     Each start is 0x100-aligned and then nudged (4-byte steps) until every
@@ -206,10 +208,12 @@ def layout(base: int) -> dict[str, int]:
     """
     out: dict[str, int] = {}
     cursor = base
-    for sec in STATE_SECTIONS:
+    state_sections = STATE_SECTIONS if state_sections is None else state_sections
+    for sec in state_sections:
         sec.validate()
         cursor = (cursor + 0xFF) & ~0xFF
-        need = [(_array(n)[1], m) for n, m, _ in ENCODED_BASES if _array(n)[0] is sec]
+        need = [(_array(n, state_sections)[1], m) for n, m, _ in ENCODED_BASES
+                if _array(n, state_sections)[0].name == sec.name]
         for _ in range(0x1000):
             if all(sec.map(arr.base, cursor) % m == 0 for arr, m in need):
                 break
@@ -222,14 +226,16 @@ def layout(base: int) -> dict[str, int]:
     return out
 
 
-def map_value(value: int, starts: dict[str, int]) -> int:
-    sec = section_for(value)
+def map_value(value: int, starts: dict[str, int], *,
+              state_profile: tuple[StateSection, ...] | None = None) -> int:
+    sec = section_for(value, state_profile)
     if sec is None:
         raise ValueError(f"0x{value:08x} is not in a moved state range")
     return sec.map(value, starts[sec.name])
 
 
-def absolute_refs(data: bytes, sections: Iterable[str] | None = None):
+def absolute_refs(data: bytes, sections: Iterable[str] | None = None,
+                  state_sections: tuple[StateSection, ...] | None = None):
     """Yield (section, insn, kind, value) for every disp/imm into a moved range."""
     from capstone import x86
 
@@ -245,11 +251,12 @@ def absolute_refs(data: bytes, sections: Iterable[str] | None = None):
                     kind, value = "disp", op.mem.disp & 0xFFFFFFFF
                 else:
                     continue
-                if section_for(value) is not None:
+                if section_for(value, state_sections) is not None:
                     yield name, insn, kind, value
 
 
-def register_base_uses(data: bytes, window: int = 60):
+def register_base_uses(data: bytes, window: int = 60,
+                       state_sections: tuple[StateSection, ...] | None = None):
     """Find ``[reg + disp]`` uses where ``reg`` holds an image address.
 
     Yields (section, load_insn, use_insn, base_value, disp).  A use is reported
@@ -262,10 +269,10 @@ def register_base_uses(data: bytes, window: int = 60):
     """
     from capstone import x86
 
-    starts = layout(0x02000000)
+    starts = layout(0x02000000, state_sections)
 
     def moved(value: int) -> int:
-        sec = section_for(value)
+        sec = section_for(value, state_sections)
         return value if sec is None else sec.map(value, starts[sec.name])
 
     for name, va, vsize, raw_size, raw_ptr in g2_scan._executable_sections(data):  # noqa: SLF001
@@ -286,7 +293,7 @@ def register_base_uses(data: bytes, window: int = 60):
                 continue
             if not 0x00400000 <= base < 0x03000000:
                 continue
-            base_moves = section_for(base) is not None
+            base_moves = section_for(base, state_sections) is not None
             reg = dst.reg
             for use in insns[k + 1 : k + 1 + window]:
                 for op in use.operands:
@@ -295,7 +302,7 @@ def register_base_uses(data: bytes, window: int = 60):
                                  or (op.mem.index == reg and op.mem.scale == 1))):
                         disp = op.mem.disp
                         target = (base + disp) & 0xFFFFFFFF
-                        if not base_moves and section_for(target) is None:
+                        if not base_moves and section_for(target, state_sections) is None:
                             continue
                         if moved(target) - moved(base) != disp:
                             yield name, ins, use, base, disp
@@ -338,8 +345,10 @@ BLOB_LENGTHS = (
 # the grown and the official size load.)
 
 
-def blob_length(pair: tuple[int, int], starts: dict[str, int]) -> int:
-    return map_value(pair[1], starts) - map_value(pair[0], starts)
+def blob_length(pair: tuple[int, int], starts: dict[str, int], *,
+                state_profile: tuple[StateSection, ...] | None = None) -> int:
+    return (map_value(pair[1], starts, state_profile=state_profile)
+            - map_value(pair[0], starts, state_profile=state_profile))
 
 
 # Initialised data holding a moved address (aligned dword scan of every
@@ -361,24 +370,61 @@ STACK_BITSET_GROW = 0x200
 STACK_BITSET_CLEAR = -0x98
 
 
-def _moved(value: int, starts: dict[str, int], *, tail: int = 0) -> int:
+def _moved(value: int, starts: dict[str, int], *, tail: int = 0,
+           state_sections: tuple[StateSection, ...] | None = None) -> int:
     """Map ``value`` if it is in a moved range (or within ``tail`` past its end)."""
-    sec = section_for(value)
+    state_sections = STATE_SECTIONS if state_sections is None else state_sections
+    sec = section_for(value, state_sections)
     if sec is not None:
         return sec.map(value, starts[sec.name])
     if tail:
-        for cand in STATE_SECTIONS:
+        for cand in state_sections:
             if cand.end < value <= cand.end + tail and cand.arrays[-1].end == cand.end:
                 return cand.map(cand.end, starts[cand.name]) + (value - cand.end)
     return value
 
 
-def block_size() -> int:
-    starts = layout(0)
+def _profile_sections(state_profile: tuple[StateSection, ...] | None = None,
+                     extra_sections: tuple[StateSection, ...] = ()) -> tuple[StateSection, ...]:
+    if state_profile is not None and extra_sections:
+        raise ValueError("choose a complete state profile or appended extra sections, not both")
+    if state_profile is None:
+        return STATE_SECTIONS + tuple(extra_sections)
+    profile = tuple(state_profile)
+    names = {sec.name for sec in profile}
+    missing = {sec.name for sec in STATE_SECTIONS} - names
+    if missing:
+        raise ValueError("complete G2 state profile missing sections: " + ", ".join(sorted(missing)))
+    for arr_name, _m, _sites in ENCODED_BASES:
+        _array(arr_name, profile)
+    return profile
+
+
+def block_size(extra_sections: tuple[StateSection, ...] = (), *,
+               state_profile: tuple[StateSection, ...] | None = None) -> int:
+    state_sections = _profile_sections(state_profile, extra_sections)
+    _validate_state_sections(state_sections)
+    starts = layout(0, state_sections)
     return starts["__end__"]
 
 
-def apply(image: bytes, base_data: bytes, state_base: int) -> tuple[bytes, dict]:
+def _validate_state_sections(state_sections: tuple[StateSection, ...]) -> None:
+    """Fail closed on duplicate names, overlaps, or malformed section arrays."""
+    if len({sec.name for sec in state_sections}) != len(state_sections):
+        raise ValueError("duplicate G2 state section name")
+    ordered = sorted(state_sections, key=lambda sec: sec.start)
+    for sec in ordered:
+        sec.validate()
+    for left, right in zip(ordered, ordered[1:]):
+        if left.end > right.start:
+            raise ValueError(f"G2 state ranges overlap: {left.name} and {right.name}")
+
+
+def apply(image: bytes, base_data: bytes, state_base: int, *,
+          bounds_decisions: dict[int, dict] | None = None,
+          extra_state_sections: tuple[StateSection, ...] = (),
+          state_profile: tuple[StateSection, ...] | None = None,
+          extra_regbase_rows: tuple[dict[str, Any], ...] = ()) -> tuple[bytes, dict]:
     """Move the module state to ``state_base`` and raise every capacity constant.
 
     ``image`` is a layer-1+2 build of ``base_data`` whose ``.g2bss`` has room
@@ -389,19 +435,21 @@ def apply(image: bytes, base_data: bytes, state_base: int) -> tuple[bytes, dict]
     from patches.esl2610 import g2_bounds_2610, pe_extend
     from patches.esl2610.g2_newcode_2610 import _insn, _patch_operand
 
-    starts = layout(state_base)
+    state_sections = _profile_sections(state_profile, extra_state_sections)
+    _validate_state_sections(state_sections)
+    starts = layout(state_base, state_sections)
     out = bytearray(image)
     counts = {"absolute": 0, "regbase": 0, "encoded": 0, "raise": 0, "div": 0}
-    uses = list(register_base_uses(base_data))
+    uses = list(register_base_uses(base_data, state_sections=state_sections))
     relative = {(u.address, d & 0xFFFFFFFF) for _, _, u, _, d in uses}
     # 1. absolute operands into moved ranges, every code section
-    for name, insn, kind, value in absolute_refs(base_data):
+    for name, insn, kind, value in absolute_refs(base_data, state_sections=state_sections):
         if insn.mnemonic in ("call", "jmp") or insn.mnemonic.startswith("j"):
             continue  # linear-sweep misdecode of data inside a code section
         if kind == "disp" and (insn.address, value) in relative:
             counts["absolute_skipped_relative"] = counts.get("absolute_skipped_relative", 0) + 1
             continue  # a displacement off a base register: step 2
-        _patch_operand(out, insn.address, value, _moved(value, starts), kind=kind)
+        _patch_operand(out, insn.address, value, _moved(value, starts, state_sections=state_sections), kind=kind)
         counts["absolute"] += 1
     # 2. displacements off a moved base held in a register
     seen: dict[tuple[int, int], int] = {}
@@ -413,19 +461,52 @@ def apply(image: bytes, base_data: bytes, state_base: int) -> tuple[bytes, dict]
             continue
         seen[key] = base
         target = (base + disp) & 0xFFFFFFFF
-        new = _moved(target, starts, tail=0x40) - _moved(base, starts)
+        new = (_moved(target, starts, tail=0x40, state_sections=state_sections)
+               - _moved(base, starts, state_sections=state_sections))
         _patch_operand(out, use.address, disp & 0xFFFFFFFF, new, kind="disp")
         counts["regbase"] += 1
+    # A version profile may add a small number of proven register-base uses
+    # beyond the bounded linear scan (e.g. a base kept live across a branch).
+    # Each row pins the base load, exact old operand, and target relation.
+    for row in extra_regbase_rows:
+        required = {"use_va", "load_va", "load_old", "base", "old_disp", "old_target", "why"}
+        if not required <= row.keys() or not str(row["why"]).strip():
+            raise ValueError("incomplete explicit state register-base row")
+        use_va, load_va = int(row["use_va"]), int(row["load_va"])
+        base, disp, target = int(row["base"]), int(row["old_disp"]), int(row["old_target"])
+        if use_va in seen:
+            raise ValueError(f"0x{use_va:08x}: duplicate automatic/manual regbase coverage")
+        if (base + disp) & 0xFFFFFFFF != target:
+            raise ValueError(f"0x{use_va:08x}: manual regbase target arithmetic mismatch")
+        load_off = pe_extend.va_to_offset(base_data, load_va)
+        load_old = bytes.fromhex(str(row["load_old"]))
+        if bytes(base_data[load_off:load_off + len(load_old)]) != load_old:
+            raise ValueError(f"0x{load_va:08x}: manual regbase load preimage mismatch")
+        load_ins = _insn(base_data, load_va)
+        if load_ins.mnemonic != "mov" or load_ins.op_str.split(",", 1)[-1].strip() != hex(base):
+            raise ValueError(f"0x{load_va:08x}: manual regbase load does not establish pinned base")
+        use_ins = _insn(base_data, use_va)
+        if use_ins.disp & 0xFFFFFFFF != disp & 0xFFFFFFFF:
+            raise ValueError(f"0x{use_va:08x}: manual regbase operand preimage mismatch")
+        base_sec, target_sec = section_for(base, state_sections), section_for(target, state_sections)
+        if base_sec is None or target_sec is None:
+            raise ValueError(f"0x{use_va:08x}: manual regbase base/target not in profile ranges")
+        new = (map_value(target, starts, state_profile=state_sections)
+               - map_value(base, starts, state_profile=state_sections))
+        _patch_operand(out, use_va, disp & 0xFFFFFFFF, new, kind="disp")
+        counts["regbase_manual"] = counts.get("regbase_manual", 0) + 1
+        seen[use_va] = base
     # 3. bases encoded divided by a constant
     for arr_name, m, sites in ENCODED_BASES:
-        sec, arr = _array(arr_name)
+        sec, arr = _array(arr_name, state_sections)
         old, new = arr.base // m, sec.map(arr.base, starts[sec.name]) // m
         for va in sites:
             _patch_operand(out, va, old, new)
             counts["encoded"] += 1
     # 4. capacity constants (gates, spans, loop/clear lengths)
-    regbase_vas = {u.address for _, _, u, _, _ in uses}
-    table = g2_bounds_2610.build_table(base_data, regbase_vas)
+    regbase_vas = ({u.address for _, _, u, _, _ in uses}
+                   | {int(row["use_va"]) for row in extra_regbase_rows})
+    table = g2_bounds_2610.build_table(base_data, regbase_vas, bounds_decisions)
     for row in table:
         if row["decision"] != "raise":
             continue
@@ -456,7 +537,7 @@ def apply(image: bytes, base_data: bytes, state_base: int) -> tuple[bytes, dict]
         counts["text_raise"] = counts.get("text_raise", 0) + 1
     # 4b. fixed save-blob / clear lengths that now cover grown arrays
     for va, old, unit, pair in BLOB_LENGTHS:
-        length = blob_length(pair, starts)
+        length = blob_length(pair, starts, state_profile=state_sections)
         if length % unit:
             raise ValueError(f"0x{va:08x}: blob length 0x{length:x} not a multiple of {unit}")
         _patch_operand(out, va, old, length // unit, kind="imm")
@@ -466,7 +547,7 @@ def apply(image: bytes, base_data: bytes, state_base: int) -> tuple[bytes, dict]
         off = pe_extend.va_to_offset(bytes(out), va)
         if int.from_bytes(out[off : off + 4], "little") != old:
             raise ValueError(f"data pointer at 0x{va:08x} does not hold 0x{old:08x}")
-        out[off : off + 4] = _moved(old, starts).to_bytes(4, "little")
+        out[off : off + 4] = _moved(old, starts, state_sections=state_sections).to_bytes(4, "little")
         counts["data_ptr"] = counts.get("data_ptr", 0) + 1
     # 6. widen the roster-dedupe stack bitsets (their gates are raised in 4.)
     for frame_sites, frame, clears, disps, base in STACK_BITSETS:
@@ -497,6 +578,12 @@ def apply(image: bytes, base_data: bytes, state_base: int) -> tuple[bytes, dict]
     return result, {
         "schema": "syw2plus.esl2610.g2-state.v1",
         "state_base": hex(state_base),
+        "state_ranges": [{"name": sec.name, "old_start": hex(sec.start),
+                          "old_size": hex(sec.size), "new_size": hex(sec.new_size),
+                          "arrays": [{"name": arr.name, "base": hex(arr.base),
+                                      "stride": hex(arr.stride), "capacity": arr.capacity}
+                                     for arr in sec.arrays]}
+                         for sec in state_sections],
         "starts": {k: hex(v) for k, v in starts.items()},
         "counts": counts,
         "text_table": {d: sum(r["decision"] == d for r in text_rows)

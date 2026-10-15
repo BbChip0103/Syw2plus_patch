@@ -3664,13 +3664,21 @@ static BOOL panel_load_hd_pack(const BYTE *source, DWORD height,
     DWORD file_bytes, bytes_read = 0u;
     BOOL valid = FALSE;
     directory_length = lstrlenA(g_panel_hd_pack_dir);
-    if (!directory_length ||
-        !readable_bytes(source, 128u)) return FALSE;
+    if (!readable_bytes(source, 128u)) return FALSE;
     digest = g1_panel_source_digest(source, 128u);
     if (!g1_panel_asset_key(key, sizeof(key), G1_PANEL_RLE,
                             831u, height, digest)) return FALSE;
     /* H-HDPAL: <pack>\<pal8>\<key>, pal8 = the screen palette the panel picture was quantised to */
     if (!g1_hd_pack_format_pal(pal8, sizeof(pal8), g1_hd_asset_palette_digest())) return FALSE;
+    expected_bytes = G1_PANEL_WIDTH * height * 4u;
+    if (g1_hd_asset_load_named_frame(key, g1_hd_asset_palette_digest(), g_panel_pack, expected_bytes) &&
+        g1_panel_hd_pack_valid(panel_frame, G1_PANEL_WIDTH, G1_PANEL_WIDTH, height,
+                               g_panel_pack, expected_bytes)) {
+        panel_copy_bytes(g_panel_mirror, g_panel_pack, expected_bytes);
+        return TRUE;
+    }
+    /* Legacy pack override remains useful for diagnostics; normal use auto-discovers _hd files. */
+    if (!directory_length) return FALSE;
     if (directory_length + 1u + 8u + 1u + lstrlenA(key) >= sizeof(path)) return FALSE;
     panel_copy_bytes((BYTE *)path, (const BYTE *)g_panel_hd_pack_dir,
                      directory_length);
@@ -3686,7 +3694,6 @@ static BOOL panel_load_hd_pack(const BYTE *source, DWORD height,
                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (file == INVALID_HANDLE_VALUE) return FALSE;
     file_bytes = GetFileSize(file, &file_high);
-    expected_bytes = G1_PANEL_WIDTH * height * 4u;
     if (file_high == 0u && file_bytes == expected_bytes &&
         ReadFile(file, g_panel_pack, expected_bytes, &bytes_read, NULL) &&
         bytes_read == expected_bytes &&

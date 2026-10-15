@@ -36,7 +36,7 @@
 #define TRACE_RUN_ENV "SYW2_G1_TRACE_RUN_ID"
 #define TRACE_SCHEMA "g1-directdraw-trace-v1"
 #define TRACE_MAX_METHOD 256u
-#define TRACE_MAX_EVENTS 8192u
+#define TRACE_MAX_EVENTS 65536u
 #define TRACE_MAX_DD 8u
 #define TRACE_MAX_SURFACES 32u
 #define TRACE_MAX_AGGREGATES 64u
@@ -143,6 +143,7 @@ static BOOL g_s3_pattern_trace_emitted = FALSE;
 static DWORD g_primary_required_states_seen = 0;
 static DWORD g_aggregate_output_dropped_count = 0;
 static DWORD g_overflow_emitted = 0;
+static DWORD g_last_mirror_program_state = 0xFFFFFFFFu;
 static BOOL g_perf_window_was_active = FALSE;
 static DWORD g_input_trace_seq = 0;
 #define INPUT_TRACE_MAX_EVENTS 512u
@@ -562,8 +563,9 @@ static void trace_overflow(const char *scope)
 static void trace_event(const char *event, const char *install_status, const char *details)
 {
     DWORD call_seq = next_source_seq();
-    BOOL reserved_diagnostic = lstrcmpA(event, "ret_range_diag") == 0;
-    /* Keep slots for both overflow markers, the opt-in final diagnostic, and summary. */
+    BOOL reserved_diagnostic = lstrcmpA(event, "ret_range_diag") == 0 ||
+                               lstrcmpA(event, "program_state_change") == 0;
+    /* Keep slots for both overflow markers, opt-in/state diagnostics, and summary. */
     if (lstrcmpA(event, "summary") != 0 && !reserved_diagnostic &&
         g_event_count >= TRACE_MAX_EVENTS - TRACE_RESERVED_EVENTS) {
         ++g_dropped_count;
@@ -571,7 +573,7 @@ static void trace_event(const char *event, const char *install_status, const cha
         trace_overflow("event_limit");
         return;
     }
-    /* The return-range counts are only emitted at detach, so let them use their reserved slot. */
+    /* Reserved diagnostics are rare and keep match-end state changes visible near the cap. */
     if (reserved_diagnostic && g_event_count >= TRACE_MAX_EVENTS - 1u) {
         ++g_dropped_count;
         g_trace_failed = 1;
@@ -720,6 +722,8 @@ static void trace_emit_aggregates(void)
         /* Leave the final event slot for the summary, even when aggregates remain. */
         if (g_event_count >= TRACE_MAX_EVENTS - 1u) {
             ++g_aggregate_output_dropped_count;
+            ++g_dropped_count;
+            g_trace_failed = 1;
             continue;
         }
         wsprintfA(details,
@@ -1595,7 +1599,7 @@ static HRESULT WINAPI hook_blt_fast(LPDIRECTDRAWSURFACE7 self, DWORD x, DWORD y,
         char mirror_source_json[160];
         char mirror_dump_details[260];
         char mirror_identity_details[980];
-        char mirror_pack_details[1000];
+        char mirror_pack_details[1200];
         char mirror_cache_clip_details[260];
         LONG cache_clip_viewport[4];
         char mirror_perf_details[1100];
@@ -1653,8 +1657,10 @@ static HRESULT WINAPI hook_blt_fast(LPDIRECTDRAWSURFACE7 self, DWORD x, DWORD y,
                   (unsigned)g1_mirror2x_viewport_restore_failures());
         lstrcatA(mirror_details, mirror_identity_details);
         wsprintfA(mirror_pack_details,
-                  ",\"hd_pack_enabled\":%u,\"hd_pack_hits\":%u,\"hd_pack_misses\":%u,\"hd_pack_rejects\":%u,\"hd_pack_skipped_aux\":%u,\"hd_pack_lookup_blocks\":%u,\"hd_pack_lut_hits\":%u,\"hd_pack_lut_rejects\":%u,\"hd_pack_lut_key_color\":%u,\"hd_pack_lut_nonidentity\":%u,\"hd_pack_shade_hits\":%u,\"hd_pack_shade_rejects\":%u,\"hd_pack_shade_reject_aux\":%u,\"hd_pack_shade_reject_table\":%u,\"hd_pack_shade_reject_range\":%u,\"hd_pack_shade_reject_source\":%u,\"hd_pack_shade_reject_selfcheck\":%u,\"hd_pack_shade_reject_refresh\":%u,\"hd_pack_shade_selfcheck_pixels\":%u,\"hd_pack_shade_multi_keys\":%u,\"hd_pack_shade_key_color\":%u,\"hd_pack_shade_lut_bytes\":%u,\"hd_pack_fullscreen_hits\":%u,\"hd_pack_fullscreen_misses\":%u,\"hd_pack_fullscreen_rejects\":%u,\"hd_pack_fullscreen_loads\":%u",
+                  ",\"hd_pack_enabled\":%u,\"hd_pack_sibling_duplicates\":%u,\"hd_source_guard_rejects\":%u,\"hd_pack_hits\":%u,\"hd_pack_misses\":%u,\"hd_pack_rejects\":%u,\"hd_pack_skipped_aux\":%u,\"hd_pack_lookup_blocks\":%u,\"hd_pack_lut_hits\":%u,\"hd_pack_lut_rejects\":%u,\"hd_pack_lut_key_color\":%u,\"hd_pack_lut_nonidentity\":%u,\"hd_pack_shade_hits\":%u,\"hd_pack_shade_rejects\":%u,\"hd_pack_shade_reject_aux\":%u,\"hd_pack_shade_reject_table\":%u,\"hd_pack_shade_reject_range\":%u,\"hd_pack_shade_reject_source\":%u,\"hd_pack_shade_reject_selfcheck\":%u,\"hd_pack_shade_reject_refresh\":%u,\"hd_pack_shade_selfcheck_pixels\":%u,\"hd_pack_shade_multi_keys\":%u,\"hd_pack_shade_key_color\":%u,\"hd_pack_shade_lut_bytes\":%u,\"hd_pack_fullscreen_hits\":%u,\"hd_pack_fullscreen_misses\":%u,\"hd_pack_fullscreen_rejects\":%u,\"hd_pack_fullscreen_loads\":%u",
                   (unsigned)g1_hd_asset_pack_enabled(),
+                  (unsigned)g1_hd_asset_sibling_duplicates(),
+                  (unsigned)g1_hd_asset_source_guard_rejects(),
                   (unsigned)g1_hd_asset_pack_hits(),
                   (unsigned)g1_hd_asset_pack_misses(),
                   (unsigned)g1_hd_asset_pack_rejects(),
@@ -1916,8 +1922,21 @@ static HRESULT WINAPI hook_blt_fast(LPDIRECTDRAWSURFACE7 self, DWORD x, DWORD y,
                       camera_x, camera_y, (unsigned)sim_tick);
             lstrcatA(mirror_details, scroll_details);
         }
-        trace_event("mirror2x_present", mirror_metrics.success ? "active" : "failed",
-                    mirror_details);
+        {
+            DWORD mirror_program_state = read_state(0x004ED818u);
+            if (g_last_mirror_program_state == 0xFFFFFFFFu) {
+                g_last_mirror_program_state = mirror_program_state;
+            } else if (g_last_mirror_program_state != mirror_program_state) {
+                char state_details[96];
+                wsprintfA(state_details, ",\"from\":%u,\"to\":%u",
+                          (unsigned)g_last_mirror_program_state,
+                          (unsigned)mirror_program_state);
+                trace_event("program_state_change", "active", state_details);
+                g_last_mirror_program_state = mirror_program_state;
+            }
+            trace_event("mirror2x_present", mirror_metrics.success ? "active" : "failed",
+                        mirror_details);
+        }
         if (g1_mirror2x_s3_pattern_applied() && !g_s3_pattern_trace_emitted) {
             char s3_details[240];
             wsprintfA(s3_details,
@@ -2125,11 +2144,12 @@ int g1_direct_draw_trace_install(void)
         }
     }
     g_trace_installed = 1;
-    wsprintfA(details, ",\"stage\":\"complete\",\"import_name\":\"DirectDrawCreateEx\",\"import_thunk\":\"0x004D7938\",\"iat_slot\":\"0x004E5018\",\"loader_target\":\"0x%08X\",\"original_pointer\":\"0x%08X\",\"module_start\":\"0x%08X\",\"module_end\":\"0x%08X\",\"dd_vtable_methods\":%u,\"surface_vtable_methods\":%u,\"event_limit\":8192,\"method_limit\":256,\"aggregate_limit\":64",
+    wsprintfA(details, ",\"stage\":\"complete\",\"import_name\":\"DirectDrawCreateEx\",\"import_thunk\":\"0x004D7938\",\"iat_slot\":\"0x004E5018\",\"loader_target\":\"0x%08X\",\"original_pointer\":\"0x%08X\",\"module_start\":\"0x%08X\",\"module_end\":\"0x%08X\",\"dd_vtable_methods\":%u,\"surface_vtable_methods\":%u,\"event_limit\":%u,\"method_limit\":256,\"aggregate_limit\":64",
                 (unsigned)(ULONG_PTR)g_iat_original, (unsigned)(ULONG_PTR)g_original_create_ex,
                 (unsigned)(ULONG_PTR)GetModuleHandleA("ddraw.dll"),
                 (unsigned)(ULONG_PTR)module_end(GetModuleHandleA("ddraw.dll")),
-                (unsigned)TRACE_DD_VTABLE_METHODS, (unsigned)TRACE_SURFACE_VTABLE_METHODS);
+                (unsigned)TRACE_DD_VTABLE_METHODS, (unsigned)TRACE_SURFACE_VTABLE_METHODS,
+                (unsigned)TRACE_MAX_EVENTS);
     trace_event("install", "active", details);
     open_input_log();
     if (scroll_trace_enabled() && !CreateThread(NULL, 0, scroll_trace_arm_thread,

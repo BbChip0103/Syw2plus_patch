@@ -24,6 +24,19 @@ def test_g5_fixture_shifts_one_row_positive_and_keeps_55_unique_cells() -> None:
     assert max(x for x, _ in coordinates) == worker["x"] + 3
 
 
+def test_g5_2614_fixture_provides_120_unique_visible_cells() -> None:
+    worker = {"x": 142, "y": 42}
+
+    requests = dense_fixture_requests(worker, target_count=120)
+    coordinates = {(item["x"], item["y"]) for item in requests}
+
+    assert len(requests) == 120
+    assert len(coordinates) == 120
+    assert (worker["x"], worker["y"]) not in coordinates
+    assert min(x for x, _ in coordinates) == worker["x"] - 5
+    assert max(x for x, _ in coordinates) == worker["x"] + 5
+
+
 def test_g5_attack_observation_requires_command_and_target_for_every_member() -> None:
     before = [{"slot": 10, "command": 0}, {"slot": 11, "command": 0}]
     after = [

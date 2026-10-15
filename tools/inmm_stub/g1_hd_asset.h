@@ -63,6 +63,8 @@ DWORD g1_hd_asset_identity_negative_lookup_misses(void);
 DWORD g1_hd_asset_identity_key_mismatches(void);
 /* Pointer-free HD pack (SYW2_G1_HD_PACK): per-key counters of the first attempt. */
 BOOL g1_hd_asset_pack_enabled(void);
+DWORD g1_hd_asset_sibling_duplicates(void);
+DWORD g1_hd_asset_source_guard_rejects(void);
 DWORD g1_hd_asset_pack_hits(void);
 DWORD g1_hd_asset_pack_misses(void);
 DWORD g1_hd_asset_pack_rejects(void);
@@ -79,6 +81,7 @@ BOOL g1_hd_asset_blend_key_path(void);
 /* H-HDB3: the flipped translucent writers 0x467FD0 and 0x4685C0; they also follow SYW2_G1_HD_PACK_FLIP=0 (diff mirror only). */
 BOOL g1_hd_asset_blend_flip_key_path(void);
 const BYTE *g1_hd_asset_current_pack_frame(DWORD *hd_width, DWORD *hd_height);
+BOOL g1_hd_asset_load_named_frame(const char *name, DWORD palette, BYTE *output, DWORD bytes);
 /* H-HDN0: frames found under the extended (prefix length) name when the plain name collides; SYW2_G1_HD_PACK_EXT=0 disables the lookup. */
 DWORD g1_hd_asset_pack_ext_hits(void);
 DWORD g1_hd_asset_pack_ext_misses(void);

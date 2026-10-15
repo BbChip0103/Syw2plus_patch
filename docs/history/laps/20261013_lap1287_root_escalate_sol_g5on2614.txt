@@ -1,0 +1,15 @@
+lap1287 fresh middle — H-G5ON2614 scope confirmed; milestone boundary to root
+
+INBOX 2026-10-13 23:15 사용자 지시가 과거 G5 종결/재개 금지를 해당 범위에서 대체한다.
+G1 미완료·Windows/user 결과 미결을 보존한 채 G5를 최우선으로 진행한다.
+이는 범위/권한 확인이며 100기 기술 PASS나 사용자 마일스톤 승인/마감이 아니다.
+
+이어받을 root/Sol의 확인·인계:
+1. docs/history/laps/20261013_lap1287_middle_g5on2614_scope_handoff.md의 범위와 이전 인계 보존을 확인하고 다음 지정 work로 연결한다. 최신 사용자 권한은 충분하며 새 사용자 허가/반복 middle 계획은 필요 없다.
+2. work가 공식2614(ac61a28f84f71d602c581a17c835ec4dbb99aad0341c6755e395549005cf88bf) 원본 대비 실제 상한·스위치 근거를 확인하고 그것만 사본에 최소 패치한다. 스위치 주소/현재cap/비활성화 이유는 아직 UNKNOWN.
+3. legacy g5_candidate_drag_probe.py는 구판SHA·55fixture·50판정 고정이므로 그대로 실행하지 않는다.2614 입력/관측주소/100초과fixture 최소 대응은 work 소유다.100기 선택·UI·각UID 이동/공격/정지·Shift·부대지정·저장로드·크래시를 원본과 실제 비교한다.
+4. 구현 결과 뒤 fresh middle이 바이트/원복·실행raw를 검수한다. 전체check는 전달 직전1회. G1결과 대기·2614 HD갱신·멀티를 G5착수/싱글합격 조건에 추가하지 않는다. 전달/마일스톤은 이 회차에서 승인하지 않았다.
+
+lap1286 ESCALATE 전문: docs/history/laps/20261013_lap1287_preserved_lap1286_escalate_sol.md
+SHA256 d3c6368d25b1fc2fdc9a2c0927357ba3c83e243576b3063fe95da19631eba2a9
+이번 회차 게임코드/하네스/테스트/실행/전달/커밋0. 문서/안전/구현불변 결과는 lap1287 기록.

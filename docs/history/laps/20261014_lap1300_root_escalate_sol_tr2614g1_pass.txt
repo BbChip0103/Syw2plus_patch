@@ -1,0 +1,39 @@
+ROOT HANDOFF — lap1300 fresh middle H-TR2614G1 scoped technical PASS.
+
+Candidate freeze / delivery decision belongs to root. No milestone closed,
+no game implementation, fresh runtime, full check, commit or delivery performed.
+Prior marker preserved byte-exact:
+docs/history/laps/20261014_lap1300_preserved_lap1299_escalate_sol.md
+
+Independently verified:
+- Official2614 EXE ac61a28f84f71d602c581a17c835ec4dbb99aad0341c6755e395549005cf88bf.
+- Candidate WINMM3976fa88070bbea192700d7a7e9034a67130410e7074bc1bb2431fa63f9c59e4.
+  Six-byte COFF/export timestamp/checksum difference only versus retained lap1296
+  independent DLL; normalized bytes equal; recorded build inputs unchanged.
+- SHA ledger777/777,782HD=773included+9excluded; original/excluded HD SHA MATCH.
+- Retained raw PS3 60.800s/1217 presents,max gap67ms,HDmin100%,stale/fallback/safety0.
+  Terminal drop0,complete detach/flush,owned-close prefix SHA and8captures/logs MATCH.
+- Owned prefix PID0,game absent,prefix/output/manifest/raw retained.
+- Related pytest7 passed;doctor setup/original SHA,lint,typecheck PASS.
+
+Root next: freeze exact candidate and774file drop-in payload; run same-source
+make check once before the user's delivery decision under INBOX02:37.
+Wait for actual completion and inspect output; lap569 old/source-mismatched exit0
+is not usable. Do not repeat game/fresh-middle or add another document-only lap.
+If source/candidate changes, check the affected change only.
+
+Stage: ../temp/Syw2plus_patch/20261014_tr2614g1/user_test_staging/
+Payload: winmm.dll+773HD=774files/184489750B.
+Exclude operator_helpers/BAT2,manifest.json,SHA256SUMS from user drop-in payload;
+keep these as internal evidence. Helpers' %~dp0 targets operator_helpers itself,
+so they are not accepted as ready user launchers. User payload requires no BAT/EXE/txt.
+Preserve prior delivery; no automatic original deploy/overwrite.
+
+Windows/DxWnd/audio/actual input/visual user G1 approval remain UNKNOWN/open.
+Existing mirror-validator BLOCKED,historical raw HOLD and pending approvals stay.
+No reproducible game-code defect requiring work implementation found in this scope.
+If root identifies one, assign a minimal fix explicitly to work; middle does not implement.
+
+Review: ../temp/Syw2plus_patch/20261014_lap1300_middle_tr2614g1_review/review.json
+Record: docs/history/laps/20261014_lap1300_middle_tr2614g1_staging_review.md
+This middle session ends with root handoff; technical PASS is not user/milestone PASS.

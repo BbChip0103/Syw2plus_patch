@@ -383,11 +383,13 @@ def _zero_old(va: int, regions: list[SimpleNamespace]) -> bytes:
 
 
 def apply(image: bytes, six_base: int, state_base: int, flag_va: int,
-          scratch_va: int) -> tuple[bytes, dict[str, Any]]:
+          scratch_va: int, *,
+          state_profile: tuple[g2_state_2610.StateSection, ...] | None = None,
+          code_reserved_size: int | None = None) -> tuple[bytes, dict[str, Any]]:
     """Add ``.g2code`` with the wrappers and redirect the stream calls."""
     if SECTION_NAME in pe_extend.section_names(image):
         raise ValueError("G2 persistence is already applied")
-    starts = g2_state_2610.layout(state_base)
+    starts = g2_state_2610.layout(state_base, state_profile)
     regions = _regions(six_base)
     sidecars = [(r.new_start, r.new_end - r.new_start) for r in regions]
     layout = layout_hash(sidecars, starts)
@@ -395,14 +397,16 @@ def apply(image: bytes, six_base: int, state_base: int, flag_va: int,
                            *[size for _, size in sidecars])
     code_va = pe_extend.IMAGE_BASE + struct.unpack_from(
         "<I", image, struct.unpack_from("<I", image, 0x3C)[0] + 24 + 56)[0]
-    kill_new = g2_state_2610.map_value(g2_state_2610.KILL_FROM, starts)
-    stage_new = g2_state_2610.map_value(g2_state_2610.KILL_TO, starts)
-    table_new = g2_state_2610.map_value(0x01165600, starts)
+    kill_new = g2_state_2610.map_value(g2_state_2610.KILL_FROM, starts, state_profile=state_profile)
+    stage_new = g2_state_2610.map_value(g2_state_2610.KILL_TO, starts, state_profile=state_profile)
+    table_new = g2_state_2610.map_value(0x01165600, starts, state_profile=state_profile)
     new_kill = stage_new - kill_new
-    psn_blob = g2_state_2610.map_value(g2_state_2610.PSN_FROM, starts)
-    psn_stage = g2_state_2610.map_value(g2_state_2610.PSN_TO, starts)
-    psn_hdr = g2_state_2610.map_value(0x0112C000, starts)
+    psn_blob = g2_state_2610.map_value(g2_state_2610.PSN_FROM, starts, state_profile=state_profile)
+    psn_stage = g2_state_2610.map_value(g2_state_2610.PSN_TO, starts, state_profile=state_profile)
+    psn_hdr = g2_state_2610.map_value(0x0112C000, starts, state_profile=state_profile)
     psn_new = psn_stage - psn_blob
+    if code_reserved_size is not None and code_reserved_size < 0x1000:
+        raise ValueError("profile-owned .g2code reservation must be at least 0x1000 bytes")
     blob = bytearray(CODE_SIZE)
     for off, code in (
         (SAVE_OFF, _save_wrapper(code_va + SAVE_OFF, code_va + MANIFEST_OFF, sidecars)),
@@ -417,7 +421,12 @@ def apply(image: bytes, six_base: int, state_base: int, flag_va: int,
         (MANIFEST_OFF, manifest),
     ):
         blob[off : off + len(code)] = code
-    out = bytearray(pe_extend.add_section(image, SECTION_NAME, bytes(blob), 0x1000,
+    if code_reserved_size is not None:
+        if code_reserved_size & 0xFFF:
+            raise ValueError("profile-owned .g2code reservation must be file/section aligned")
+        blob.extend(b"\0" * (code_reserved_size - len(blob)))
+    out = bytearray(pe_extend.add_section(image, SECTION_NAME, bytes(blob),
+                                          max(0x1000, code_reserved_size or 0x1000),
                                           pe_extend.CODE_RX))
     if pe_extend.section_va(out, SECTION_NAME) != code_va:
         raise ValueError(".g2code was not placed at the first free RVA")
@@ -447,6 +456,7 @@ def apply(image: bytes, six_base: int, state_base: int, flag_va: int,
     return result, {
         "schema": "syw2plus.esl2610.g2-persist.v2",
         "g2code_va": hex(code_va),
+        "g2code_reserved_size": hex(code_reserved_size or 0x1000),
         "flag_va": hex(flag_va),
         "scratch_va": hex(scratch_va),
         "marker": "S2P2",

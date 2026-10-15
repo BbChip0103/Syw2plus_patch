@@ -1,0 +1,19 @@
+lap1283 fresh middle — H-HDSINGLE RLE/raw 수리 scoped PASS / root 전달 경계 인계
+
+PROMPT ①~⑥을 수행하고 lap1281 work 결과를 독립 확인했다. 이번 세션은 middle이며 게임/하네스 구현·새 게임·전체 make check·전달·마일스톤 승인 없음. 기존 lap1282 인계 전문은 docs/history/laps/20261013_lap1283_preserved_lap1282_escalate_sol.md에 byte-exact 보존(SHA256 60642accd3e6a77f71a9aab5cfa0b58d22afc5b14169b5c2f52c82e499088d03).
+
+판정과 근거:
+- 수리 범위 기술 PASS: 후보782파일/187,750,678B, 변경3·불변779; 기존 lap1280 782파일 SHA 일치 확인. 이전11프레임/18,872px mask FAIL 재현 → 수리61프레임 mask0·이전payload 강제RLE 대비opaque indexed pixel 차이0. 합법 투명run 분할 +2bytes와 뒤 frame offset 재계산 확인, genuine raw branch 보존.
+- 관련150 tests(31.69s, skip0), lint/typecheck·doctor 원본SHA PASS. synthetic MinGW/Wine C reader collision-sheet 대조 포함; 실제61개 asset 전부 C로 재실행했다는 뜻은 아니다.
+- lap1281 official2613·두변형의12 display lane 기존 raw/identity/owned close/summary detach+flush/drop0/cleanup·game사본없음·engine direct_hd opens0 대조 일치. 후보PS3 present266/4씩3종, raw stale/fallback/restore/viewport mutation/clip/palette/key mismatch max0. 이번 fresh 게임 실행으로 표현하지 않는다.
+- native audit SHA256 bd2c44d68eebc443e791cd9a2b309c514d2d2654d0e1ead45fe9f8f6d38f7ad0. 후보 inventory digest e5c00d4edf16f76126d678f24280e9e520f01d68a1a0d8445ed455936b790c49(JSON inventory digest). DLL 6dc88f98110975acc443c29d38eb738289c11df2d68165e0b98e2545edc49b7d.
+- 원시byte prefix 추가확인: 12/12 owned SHA가 같은 final trace의 정확한 종료전prefix와 일치, final SHA도 일치. lap1280 별도빌드 DLL 실제SHA도 6dc88...9b7d MATCH. 보조 verifier의 JSON재직렬화/종료후summary 비교·다른DLL 경로·shade/lut hit의reject 오분류는 reviewer 가정 오류로 정정했다. 최초artifact 보존·corrected independent-prefix-dll-audit.json 기록, 새 제품/raw 충돌 없음.
+- known mirror validator BLOCKED·tree_plus reject1 원인UNKNOWN, 과거FAIL/미결 승인·Windows/DxWnd/BGM/사용자 화질·G1 미완료 유지. 이 검수는 G2 pool/8인/G9 행동 승인도 아니다.
+
+승격 root가 이어서 할 다음 한 가지:
+1. docs/STATUS.md와 docs/history/laps/20261013_lap1283_middle_hdsingle_repair_review.md의 scoped PASS를 받아 전달 후보를 고정한다. 기술 수리의 추가 work handoff는 현재 필요 없다; 새 기술 결함이 생긴 경우에만 work tier에 좁은 수정 범위를 배정한다.
+2. 최신 INBOX19:31 규칙대로 고정 후보·같은 source에서 전체 make check 1회를 전달 직전에 완주한다. lap569 source mismatch 성공이나 lap1278 최종reader fix 이전 성공을 재사용하지 않는다. middle 기록 추가는 validation fingerprint를 바꾸지만 product implementation은 불변이다.
+3. INBOX19:57/20:17의 root 전달 판단·권한 경계를 처리한다. 원본/기존raw는 보호하고 전달 시 txt0·대체판 archive·SHA 대조를 따른다. 이번 세션에서 후보 고정·전달 또는 사용자 G1 마일스톤을 임의 PASS로 만들지 않았다.
+
+수리 후보/raw: ../temp/Syw2plus_patch/20261013_lap1281_work_hdsingle/
+독립 검수 evidence: ../temp/Syw2plus_patch/20261013_lap1283_middle_hdsingle/

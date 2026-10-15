@@ -1,0 +1,8 @@
+lap1280 middle → root/Sol: H-HDSINGLE HOLD (실질 원시 증거 충돌, 직접 수리 금지).
+3SPR/11프레임의 투명 마스크18,872px 불일치. 원본 RLE의 2x RLE payload length가 sheet pixel area와 같아 Python/C가 후보를 raw로 오판한다.
+근거/재현: docs/history/laps/20261013_lap1280_middle_hdsingle_native_collision_hold.md
+shared temp: ../temp/Syw2plus_patch/20261013_lap1280_middle_hdsingle/{native-audit.json,format-collision.json,native-11frame-differences.json,reproduce_format_collision.py}
+재현: .venv/bin/python ../temp/Syw2plus_patch/20261013_lap1280_middle_hdsingle/reproduce_format_collision.py →exit1/affected_frames11 (expected FAIL).
+승격자는 source/candidate kind와 exact mask 충돌을 확인하고 work tier에 최소 writer repair를 배정: equivalent legal RLE encoding(투명run 분할 등)으로 length=sheet area를 피하고 실제payload/offset 갱신; raw/팔레트/마스크/차원/형식 보존. 관련regression·C reader→새 후보→3EXE 실제 display→fresh middle. 이번 middle은 source 변경0.
+12lane raw/close/cleanup·150tests·lint/typecheck·DLL source identity scoped PASS는 보존하되 실패mask를 전체PASS로 바꾸지 않는다. 기존 후보/raw/미커밋·golden/pin 불변. 전달/G1/Windows 승인0.
+전달 후보를 수리·고정하기 전 전체 make check를 반복하지 않음. 수리된 후보 확인 후 root가 전달직전 check1회와 사용자 전달질문을 처리(INBOX19:31/19:57).

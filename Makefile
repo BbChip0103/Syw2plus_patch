@@ -3,7 +3,7 @@ PYTHON ?= .venv/bin/python
 
 # 2026-10-09 user decision: the loop Fast gate excludes the separate 2611 G2 session's
 # untracked work-in-progress files. `make check-all` (FOREIGN_IGNORE=) still checks them.
-FOREIGN_PATHS ?= patches/esl2610 tools/g2_esl2610_spike_probe.py tools/g2_esl2611_replication.py tools/g2_esl2611_saveload_replication.py tests/test_g2_esl2610_spike_probe.py tests/test_g2_esl2611_replication.py tests/test_g2_esl2611_saveload_replication.py
+FOREIGN_PATHS ?= patches/esl2610 patches/esl2614 tests/test_esl2614_g5_windows.py tools/g2_esl2610_spike_probe.py tools/g2_esl2611_replication.py tools/g2_esl2611_saveload_replication.py tests/test_g2_esl2610_spike_probe.py tests/test_g2_esl2611_replication.py tests/test_g2_esl2611_saveload_replication.py
 FOREIGN_IGNORE ?= $(FOREIGN_PATHS)
 comma := ,
 empty :=
