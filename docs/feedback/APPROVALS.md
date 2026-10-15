@@ -212,3 +212,11 @@
 - 각12SetDisplayMode raw:800×600×8→1600×1200×8,중간640×480×16그대로,모두HRESULT0. 실제trace후미detach/flush/drop0 확인(과거fresh-run trace-closeFAIL을소급PASS로바꾸지않음). 공통5설정/Data/ESLData파일SHA는세시점불변;고정판은hqcdd.ini/syw2x.ini추가2개도불변. 일반판두INI미수집으로불변확대금지. Wineuser/system.reg SHA변화는기록됐으나Windows현재상태/변경주체/원인으로추정하지않음.
 - 소유WM_CLOSE는창/PID확인→post_result=true→exit0이며forcedkill로첫종료를가리지않았다. 마지막에만게임/prefix/Xvfb회수·소유PID부재. 첫PS3편의artifact는둘째가같은파일명으로덮었지만중앙공유캡처원본/각SHA는보존·독립확인. 초기창선택/xdotool잘못된옵션/WM_CLOSE상태문자열helper오류로second미실행한시도는FAIL/미시험그대로보존.
 - 실제증거/변화파일사본/각첫·둘째Wine로그: 공유temp `20261014_2608_restart/artifacts_final/`(일반), `artifacts_fixed/`(고정). freshSol독립검수 `independent_restart_review.json` SHA `3ef6911125d401f4c74cef3a647190f7e4e35f38c0c0e81f1e05375655bdeab4`: Wine동일사본재실행 scoped PASS / Windows원인 UNKNOWN. 설정파일손상으로단정·삭제/원본변경/추측수리/새판전달0,전체검사/멀티/상세시험0. 최소남은구분근거는현재Windows두번째실패의EXE옆 `syw2plus_g1_exception.log`(자동기록ESI/AVop/AVaddr/caller)또는실제Application Error. 별도2614 H-G1BOOT중단/STATUS는건드리지않음.
+
+## 2026-10-15 — G1 시작즉시종료 원인 수리: hqcdd.asi 공존 DLL 2종
+
+- 원인(사용자 Windows 로그): G1이 DllMain에서 `DirectDrawCreateEx` IAT(0x004E5018)를 먼저 바꿔 hqcdd.asi가 `ASI disabled: DirectDraw import already intercepted`로 꺼짐 → native DirectDraw에서 표면 NULL → `0x00464F20` AV(esi=0). 크래시3건 PID가 모두 hqcdd disabled PID와 일치.
+- 수리(`tools/inmm_stub/direct_draw_trace.c`): IAT 대신 호출부 `0x00464374` E8 rel32(old `0x000735BF`)를 hook으로 돌리고 원본은 import thunk `0x004D7938` 경유(호출 시점 IAT=hqcdd). IAT 대상 ddraw 범위검사 완화. mirror2x 입력(GetCursorPos IAT/WndProc)은 첫 SetDisplayMode 뒤 설치해 hqcdd 매핑 다음에 /2.
+- 빌드: Windows WinLibs GCC13.3 i686, `-D_WIN32_WINNT=0x0601`. export 표 기존 a33/f32와 이름·ordinal 일치. 2608 R5용 `_inmm.dll`은 현재 repo source default-on이라 a33의 타이틀 `G1 HD ON` 문구·G1DIAG 기록은 없음.
+- 실제 Windows 시험(게임폴더 사본, 20초): 2608 R5 일반·2614_G2_G5_G6_G8 모두 hqcdd `ASI active`, `SetDisplayMode 1600x1200 8-bit` 수락, 예외0·생존, 2614 타이틀 화면 정상 캡처. 인게임 진입·마우스·HD·장시간·자리고정판/G9판 미검증(사용자 확인).
+- 전달 `E:\gm\조선의반격_자료\G1_hqcdd호환_DLL_20261015\`: `_inmm.dll` `4b75f3e088e00d829e05f3eb9e5d35b5067f01268de29602f1f1d99e7519f9d7`, `winmm.dll` `ef8f76491024905c02a0ce3772294aff4d78e4121ebbbdaff8bc09dbdabfd6c4`. 원본 게임폴더 불변, 원복은 기존 a33/f32 DLL.

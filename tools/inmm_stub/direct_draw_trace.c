@@ -51,6 +51,12 @@
 #define DIRECT_DRAW_IMPORT_THUNK 0x004D7938u
 #define DIRECT_DRAW_IAT_SLOT 0x004E5018u
 #define DIRECT_DRAW_IAT_THUNK_SIZE 6u
+/* The renderer's only DirectDrawCreateEx call (E8 rel32 -> import thunk).  G1 hooks
+ * this call instead of the IAT slot so an ASI renderer (hqcdd) can still claim the
+ * IAT afterwards; the hook forwards through the thunk, i.e. whatever the IAT holds
+ * at call time. */
+#define DIRECT_DRAW_CALL_SITE 0x00464374u
+#define DIRECT_DRAW_CALL_REL32_ORIGINAL 0x000735BFu
 #define NATIVE_2X_SET_DISPLAY_RETURN 0x0046457Du
 #define NATIVE_2X_PRESENT_RETURN 0x0049273Fu
 
@@ -162,6 +168,8 @@ static char g_perf_window_id[96] = "unset";
 static DirectDrawCreateExFn g_original_create_ex = NULL;
 static void **g_iat_slot = NULL;
 static void *g_iat_original = NULL;
+static LONG g_call_site_patched = 0;
+static LONG g_deferred_input_installed = 0;
 static DDRecord g_dd_records[TRACE_MAX_DD];
 static SurfaceRecord g_surface_records[TRACE_MAX_SURFACES];
 static TraceAggregate g_aggregates[TRACE_MAX_AGGREGATES];
@@ -847,6 +855,23 @@ static BOOL write_pointer(void **location, void *expected, void *value, void **o
     return TRUE;
 }
 
+/* Code pages must stay executable while patched (unlike write_pointer's data slots). */
+static BOOL write_code_dword(DWORD address, DWORD expected, DWORD value)
+{
+    DWORD *location = (DWORD *)(ULONG_PTR)address;
+    DWORD old_protect = 0;
+    DWORD restored = 0;
+    if (!VirtualProtect(location, sizeof(DWORD), PAGE_EXECUTE_READWRITE, &old_protect)) return FALSE;
+    if (*location != expected) {
+        VirtualProtect(location, sizeof(DWORD), old_protect, &restored);
+        return FALSE;
+    }
+    *location = value;
+    VirtualProtect(location, sizeof(DWORD), old_protect, &restored);
+    FlushInstructionCache(GetCurrentProcess(), location, sizeof(DWORD));
+    return TRUE;
+}
+
 static BOOL replace_object_vtable(void *object, void **clone, void **old_out)
 {
     return write_pointer((void **)object, NULL, clone, old_out);
@@ -915,8 +940,8 @@ static BOOL find_ddraw_iat(DirectDrawImport *import)
             name = (IMAGE_IMPORT_BY_NAME *)(base + oft->u1.AddressOfData);
             if (lstrcmpA((const char *)name->Name, "DirectDrawCreateEx") != 0) continue;
             if ((DWORD)(ULONG_PTR)&ft->u1.Function != DIRECT_DRAW_IAT_SLOT) return FALSE;
-            if ((DWORD)(ULONG_PTR)ft->u1.Function < ddraw_start ||
-                (DWORD)(ULONG_PTR)ft->u1.Function >= ddraw_stop) return FALSE;
+            /* The slot may already point at an ASI renderer; G1 no longer writes it. */
+            if (!ft->u1.Function) return FALSE;
             import->slot = (void **)&ft->u1.Function;
             import->loader_target = (void *)(ULONG_PTR)ft->u1.Function;
             import->ddraw_module = ddraw;
@@ -1037,6 +1062,11 @@ static HRESULT WINAPI hook_set_display_mode(LPDIRECTDRAW7 self, DWORD width, DWO
     result = record->original_set_display_mode(self, forwarded_width, forwarded_height,
                                                 bpp, refresh, flags);
     if (native_2x_applied && SUCCEEDED(result)) InterlockedExchange(&g_native_2x_split_applied, 1);
+    if (g1_mirror2x_enabled() && InterlockedCompareExchange(&g_deferred_input_installed, 1, 0) == 0 &&
+        !g1_mirror2x_input_install()) {
+        trace_event("install", "failed", ",\"stage\":\"mirror2x_input\",\"reason\":\"user32_iat_or_window_subclass_failed\"");
+        g_trace_failed = 1;
+    }
     wsprintfA(details, ",\"object\":\"0x%08X\",\"dd_vtable_methods\":%u,\"original_pointer\":\"0x%08X\",\"width\":%u,\"height\":%u,\"bpp\":%u,\"refresh\":%u,\"flags\":%u,\"requested_width\":%u,\"requested_height\":%u,\"requested_bpp\":%u,\"forwarded_width\":%u,\"forwarded_height\":%u,\"forwarded_bpp\":%u,\"native_2x_opt_in\":%u,\"native_2x_applied\":%u,\"native_2x_skip_reason\":\"%s\",\"caller\":\"0x%08X\",\"return_address\":\"0x%08X\",\"hresult\":%ld",
               (unsigned)(ULONG_PTR)self, (unsigned)TRACE_DD_VTABLE_METHODS,
               (unsigned)(ULONG_PTR)record->original_set_display_mode,
@@ -2133,15 +2163,16 @@ int g1_direct_draw_trace_install(void)
         trace_event("install", "failed", ",\"stage\":\"g1_state_snapshot\",\"reason\":\"old_bytes_or_runtime_install_failed\"");
         return 0;
     }
-    g_original_create_ex = (DirectDrawCreateExFn)g_iat_original;
+    g_original_create_ex = (DirectDrawCreateExFn)(ULONG_PTR)DIRECT_DRAW_IMPORT_THUNK;
     {
-        void *old = NULL;
-        if (!write_pointer(g_iat_slot, g_iat_original, (void *)hook_direct_draw_create_ex, &old) || old != g_iat_original) {
+        DWORD rel = (DWORD)(ULONG_PTR)hook_direct_draw_create_ex - (DIRECT_DRAW_CALL_SITE + 5u);
+        if (!write_code_dword(DIRECT_DRAW_CALL_SITE + 1u, DIRECT_DRAW_CALL_REL32_ORIGINAL, rel)) {
             g_trace_failed = 1;
             g_original_create_ex = NULL;
-            trace_event("install", "failed", ",\"stage\":\"iat\",\"reason\":\"slot patch failed or target changed; rollback attempted\"");
+            trace_event("install", "failed", ",\"stage\":\"call_site\",\"reason\":\"call patch failed or old bytes changed\"");
             return 0;
         }
+        g_call_site_patched = 1;
     }
     g_trace_installed = 1;
     wsprintfA(details, ",\"stage\":\"complete\",\"import_name\":\"DirectDrawCreateEx\",\"import_thunk\":\"0x004D7938\",\"iat_slot\":\"0x004E5018\",\"loader_target\":\"0x%08X\",\"original_pointer\":\"0x%08X\",\"module_start\":\"0x%08X\",\"module_end\":\"0x%08X\",\"dd_vtable_methods\":%u,\"surface_vtable_methods\":%u,\"event_limit\":%u,\"method_limit\":256,\"aggregate_limit\":64",
@@ -2158,10 +2189,9 @@ int g1_direct_draw_trace_install(void)
                     ",\"stage\":\"scroll_receiver\",\"reason\":\"thread_create_failed\"");
         g_trace_failed = 1;
     }
-    if (g1_mirror2x_enabled() && !g1_mirror2x_input_install()) {
-        trace_event("install", "failed", ",\"stage\":\"mirror2x_input\",\"reason\":\"user32_iat_or_window_subclass_failed\"");
-        g_trace_failed = 1;
-    }
+    /* mirror2x input (GetCursorPos IAT + WndProc) is installed on the first
+     * SetDisplayMode: an ASI renderer hooks GetCursorPos at SetCooperativeLevel,
+     * and G1's /2 mapping must run on its already-mapped coordinates. */
     if (g1_mirror2x_enabled() && !g1_mirror2x_primitives_install()) {
         trace_event("install", "failed", ",\"stage\":\"mirror2x_primitives\",\"reason\":\"old_bytes_or_runtime_install_failed\"");
         g_trace_failed = 1;
@@ -2184,13 +2214,10 @@ void g1_direct_draw_trace_detach(void)
     DWORD i;
     if (!g_trace_enabled) return;
     g1_state_snapshot_detach();
-    if (g_iat_slot && g_trace_installed) {
-        DWORD old_protect = 0, restored = 0;
-        if (VirtualProtect(g_iat_slot, sizeof(void *), PAGE_READWRITE, &old_protect)) {
-            *g_iat_slot = g_iat_original;
-            VirtualProtect(g_iat_slot, sizeof(void *), old_protect, &restored);
-            FlushInstructionCache(GetCurrentProcess(), g_iat_slot, sizeof(void *));
-        }
+    if (g_call_site_patched && g_trace_installed) {
+        DWORD rel = (DWORD)(ULONG_PTR)hook_direct_draw_create_ex - (DIRECT_DRAW_CALL_SITE + 5u);
+        if (write_code_dword(DIRECT_DRAW_CALL_SITE + 1u, rel, DIRECT_DRAW_CALL_REL32_ORIGINAL))
+            g_call_site_patched = 0;
     }
     for (i = 0; i < TRACE_MAX_SURFACES; ++i) {
         SurfaceRecord *record = &g_surface_records[i];

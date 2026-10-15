@@ -8,6 +8,8 @@ lap1307 및이전상세요약을포함한검수전STATUS **130줄/SHA256 `0433d9
 
 ## 지금 상태
 
+- **2026-10-15 Windows 세션(H-G1BOOT 수리):** 원인 = G1의 DirectDrawCreateEx IAT 선점으로 hqcdd.asi 자기비활성 → native DDraw 표면NULL → 0x464F20 AV. `direct_draw_trace.c`를 호출부(0x464374) hook+thunk 경유로 바꿔 hqcdd 공존, 2608 R5/2614 둘 다 시작 PASS(상세 APPROVALS 2026-10-15). **남은 것:** 사용자 보고 "타이틀·대기실 정상, 인게임부터 잔상" 원인 미확정(캡처 대기). 후보①G1 HD 캐시(g_covered/expected_snapshot) 우연일치 stale ②이번 수정이 mirror2x WndProc subclass까지 첫 SetDisplayMode 뒤로 미뤄 hqcdd와 메시지 순서가 뒤집혔을 위험 → GetCursorPos만 지연하고 WndProc 스레드는 원래대로 install 시점에 두는 분리 수정 필요(미적용). 사용자 데스크톱에서 임의 게임 실행 금지.
+
 - G1 현재 H-G1BOOT 원인 HOLD: root HD2(`f32ee619…`) 전달 뒤 사용자2614 Windows 시작즉시종료 FAIL. Wine no-desktop 두 lane도 시작중단; 초기1600 성공→후속640×480×32 E_NOTIMPL이며 실제예외 target/호출스택 미확보. 기존 가상데스크톱 PS3·483.503초 및 MCI0call scoped 근거는 보존하되 사용자형/Windows 합격으로 쓰지 않는다. G5는별도세션이관, G2종료/G3중단/G4·G7공식지원종결 유지.
 - 최신 APPROVALS 사용자 결과는 legacy2608 **일반판 Windows 정상·자리고정판 충돌**이다. 이전 두 판 FAIL은 역사로 보존하며, 기존464F20 예외가 현재 자리고정판의 것인지는 미확인. 이 2608 이슈를 2614 H-HDGUARD 결과에 합치지 않는다.
 - 별도 G2+G6+G8 / +G9 싱글·README 목표는 G1과 분리. 멀티 goal 제외·과거 FAIL/미검증 유지; 이번 display-only 결과는 G2 pool/부하·G9 자리순서 승인 아님.
